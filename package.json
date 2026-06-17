@@ -1,0 +1,10 @@
+{
+  "name": "carrera-fc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Compañero web del Modo Carrera de EA Sports FC: tracking, clasificaciones, retos e historia del club.",
+  "scripts": {
+    "build": "node build.js",
+    "start": "node build.js && node server.js"
+  }
+}
