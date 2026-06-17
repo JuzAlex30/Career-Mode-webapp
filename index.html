@@ -1570,9 +1570,19 @@ textarea { resize: vertical; min-height: 80px; }
   const SESSION_KEY = "carrerafc:cloud:session"; // tokens FUERA de db: el export/import nunca los filtra
   const C = {};
 
-  /* ---------- config (url + anonKey en db.settings.cloud; la anonKey es pública) ---------- */
-  C.config = () => (S.settings().cloud || {});
-  C.isConfigured = () => { const c = C.config(); return !!(c.url && c.anonKey); };
+  /* ---------- config ---------- */
+  // Credenciales públicas de la comunidad (anon key — segura en navegador con RLS activo).
+  // Los usuarios no necesitan configurar nada; se conectan automáticamente a la comunidad.
+  const DEFAULT_CFG = {
+    url: "https://tqyehsahytpdafehapoi.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxeWVoc2FoeXRwZGFmZWhhcG9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDk0NDgsImV4cCI6MjA5NzI4NTQ0OH0.QzeS_10TrqyErxYHPoEQGZ3YahPUygbOQ5t5AmyAtzw",
+  };
+  C.config = () => {
+    const stored = S.settings().cloud || {};
+    if (stored.url && stored.anonKey) return stored;
+    return { url: DEFAULT_CFG.url, anonKey: DEFAULT_CFG.anonKey, lastBackup: stored.lastBackup || null, shares: stored.shares || {} };
+  };
+  C.isConfigured = () => true;
   C.validUrl = (u) => /^https:\/\/[a-z0-9-]+\.supabase\.(co|in|net)$/i.test(String(u || "").trim());
   C.setConfig = (url, anonKey) => {
     url = String(url || "").trim().replace(/\/+$/, "");
