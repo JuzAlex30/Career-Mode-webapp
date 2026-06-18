@@ -928,6 +928,7 @@ body.live-active { overflow: hidden; }
     dice: P('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1.3"/><circle cx="15.5" cy="8.5" r="1.3"/><circle cx="8.5" cy="15.5" r="1.3"/><circle cx="15.5" cy="15.5" r="1.3"/><circle cx="12" cy="12" r="1.3"/>'),
     cloud: P('<path d="M7 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17 9.5a3.5 3.5 0 0 1 .5 8.5H7Z"/>'),
     play: P('<path d="M7 5v14l11-7L7 5Z"/>'),
+    bandage: P('<path d="m9.5 9.5 5 5M10 14l-1.5 1.5a3.5 3.5 0 0 1-5-5L5 9M14 10l1.5-1.5a3.5 3.5 0 0 1 5 5L19 15"/><rect x="7.5" y="7.5" width="9" height="9" rx="2" transform="rotate(45 12 12)"/>'),
   };
   FC.icons = ICONS;
   U.icon = (name) => ICONS[name] || "";
@@ -985,7 +986,7 @@ body.live-active { overflow: hidden; }
   // acceder a season.id, c.matches.find, etc.
   function normalizeCareer(c) {
     if (!c || typeof c !== "object") return c;
-    ["players", "matches", "trophies", "awards", "transfers", "challenges", "achievements", "notes", "youth"]
+    ["players", "matches", "trophies", "awards", "transfers", "challenges", "achievements", "notes", "youth", "injuries"]
       .forEach(k => { if (!Array.isArray(c[k])) c[k] = []; });
     c.players.forEach(p => { if (p && !Array.isArray(p.ovrHistory)) p.ovrHistory = []; });
     if (!Array.isArray(c.seasons)) c.seasons = [];
@@ -1219,6 +1220,15 @@ body.live-active { overflow: hidden; }
   S.addChallenge = (c, ch) => { ch.id = ch.id || U.uid(); pushTo(c, "challenges", ch); emit(); };
   S.updateChallenge = (c, id, patch) => { const ch = c.challenges.find(x => x.id === id); if (ch) Object.assign(ch, patch); emit(); };
   S.deleteChallenge = (c, id) => { c.challenges = c.challenges.filter(x => x.id !== id); emit(); };
+
+  /* ---------- LESIONES ---------- */
+  S.activeInjuries = (c) => (c.injuries || []).filter(i => i.active !== false);
+  S.addInjury = (c, data) => {
+    (c.injuries || (c.injuries = [])).push({ id: U.uid(), active: true, player: String(data.player || "").trim(), type: String(data.type || "").trim(), matchesOut: Number(data.matchesOut) || 0, createdAt: Date.now() });
+    emit();
+  };
+  S.recoverInjury = (c, id) => { const i = (c.injuries || []).find(x => x.id === id); if (i) { i.active = false; emit(); } };
+  S.deleteInjury = (c, id) => { c.injuries = (c.injuries || []).filter(x => x.id !== id); emit(); };
 
   // called after data that affects achievements/standings changes
   S.afterChange = (c) => { S.evaluateAchievements(c); emit(); };
@@ -2290,6 +2300,7 @@ body.live-active { overflow: hidden; }
     const activeChallenges = (c.challenges || []).filter(ch => ch.status === "active");
     const violations = activeChallenges.reduce((s, ch) => s + S.ruleViolations(c, ch).length, 0);
     const fin = S.financeSummary(c, season.id);
+    const injuries = S.activeInjuries(c);
     const finAlert = fin.hasBudget
       ? (fin.remaining < 0
           ? alertRow("coin", "Presupuesto excedido en " + U.money(-fin.remaining), "danger", "finance")
@@ -2344,9 +2355,32 @@ body.live-active { overflow: hidden; }
             ${alertRow("coin", expiring.length ? expiring.length + " contrato(s) a vencer" : "Sin contratos urgentes", expiring.length ? "warn" : "ok", "squad")}
             ${finAlert}
             ${alertRow("trophy", (c.trophies||[]).filter(t=>t.seasonId===season.id&&t.result==="winner").length + " título(s) esta temporada", "ok", "history")}
+            ${injuries.length ? alertRow("bandage", injuries.length + " jugador" + (injuries.length > 1 ? "es" : "") + " lesionado" + (injuries.length > 1 ? "s" : ""), "danger", "squad") : ""}
           </div>
         </div>
       </div>
+
+      ${(!ms.length && !(c.players||[]).length) ? `
+      <div class="card" style="margin-top:16px">
+        <div class="card-head"><h3><span class="ni-icon" data-icon="star"></span> Primeros pasos</h3></div>
+        <div class="list">
+          <div class="list-row" data-goto="squad" style="cursor:pointer">
+            <span class="ni-icon" data-icon="shirt" style="color:var(--accent)"></span>
+            <div class="lr-main"><b>Añade tu plantilla</b><small class="faint">Registra tus jugadores para seguir sus stats y desarrollo</small></div>
+            <span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>
+          </div>
+          <div class="list-row" id="dash-first-match" style="cursor:pointer">
+            <span class="ni-icon" data-icon="ball" style="color:var(--accent)"></span>
+            <div class="lr-main"><b>Registra tu primer partido</b><small class="faint">El Panel, la Clasificación y la Narrativa se alimentan de tus resultados</small></div>
+            <span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>
+          </div>
+          <div class="list-row" data-goto="challenges" style="cursor:pointer">
+            <span class="ni-icon" data-icon="target" style="color:var(--accent)"></span>
+            <div class="lr-main"><b>Activa un reto o logro</b><small class="faint">Pon reglas a tu carrera para hacerla más desafiante</small></div>
+            <span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>
+          </div>
+        </div>
+      </div>` : ""}
     `);
 
     // fixtures
@@ -2360,6 +2394,8 @@ body.live-active { overflow: hidden; }
     document.getElementById("dash-add").addEventListener("click", () => UI.openMatchModal(c));
     document.getElementById("dash-live").addEventListener("click", () => FC.router.go("live"));
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
+    const firstMatch = document.getElementById("dash-first-match");
+    if (firstMatch) firstMatch.addEventListener("click", () => UI.openMatchModal(c));
     fx.querySelectorAll("[data-match]").forEach(r => r.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, r.dataset.match))));
   };
   function renderObjectives(c, season) {
@@ -2605,17 +2641,30 @@ body.live-active { overflow: hidden; }
     const season = S.currentSeason(c);
     const agg = S.playerAggregates(c, season.id);
     const players = (c.players || []).slice().sort((a,b) => (D.POS_ORDER[a.position]||99) - (D.POS_ORDER[b.position]||99) || (b.ovr||0) - (a.ovr||0));
+    const injuries = S.activeInjuries(c);
+    const injuredNames = new Set(injuries.map(i => (i.player||"").trim().toLowerCase()));
     UI.mount(`
       <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
-        <button class="btn btn-primary" id="sq-add"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
+        <div class="flex gap center wrap">
+          <button class="btn btn-ghost" id="sq-injury"><span class="ni-icon" data-icon="bandage"></span> Enfermería${injuries.length ? ` <span class="chip" style="background:var(--danger);color:#fff;padding:1px 7px">${injuries.length}</span>` : ""}</button>
+          <button class="btn btn-primary" id="sq-add"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
+        </div>
       </div>
+      ${injuries.length ? `<div class="card tight" style="margin-bottom:16px">
+        <div class="card-head"><h3 style="color:var(--danger)"><span class="ni-icon" data-icon="bandage"></span> Enfermería</h3></div>
+        <div class="list">${injuries.map(i => `<div class="list-row">
+          <div class="lr-main"><b>${U.esc(i.player)}</b>${i.type ? `<span class="faint" style="margin-left:8px">${U.esc(i.type)}</span>` : ""}${i.matchesOut ? `<span class="chip" style="margin-left:8px">${i.matchesOut} partido${i.matchesOut>1?"s":""}</span>` : ""}</div>
+          <button class="btn btn-ghost btn-sm" data-recover="${i.id}">Alta</button>
+          <button class="icon-btn sm" data-del-injury="${i.id}"><span class="ni-icon" data-icon="trash"></span></button>
+        </div>`).join("")}</div>
+      </div>` : ""}
       <div class="card tight">
         ${players.length ? `<div class="table-wrap"><table class="tbl"><thead><tr>
           <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th></th>
         </tr></thead><tbody>
-        ${players.map(p => { const a = agg[(p.name||"").trim().toLowerCase()] || {}; return `<tr data-player="${p.id}" style="cursor:pointer">
+        ${players.map(p => { const a = agg[(p.name||"").trim().toLowerCase()] || {}; const injured = injuredNames.has((p.name||"").trim().toLowerCase()); return `<tr data-player="${p.id}" style="cursor:pointer${injured ? ";background:color-mix(in srgb,var(--danger) 8%,transparent)" : ""}">
           <td><div class="flex gap center"><div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
-            <div><b>${U.esc(p.name)}</b>${p.fromYouth?' <span class="chip accent" style="padding:1px 6px;font-size:10px">cantera</span>':""}<br><small class="faint">${U.esc(p.nationality||"")}</small></div></div></td>
+            <div><b>${U.esc(p.name)}</b>${injured ? ' <span class="chip" style="background:var(--danger);color:#fff;padding:1px 6px;font-size:10px">lesión</span>' : ""}${p.fromYouth?' <span class="chip accent" style="padding:1px 6px;font-size:10px">cantera</span>':""}<br><small class="faint">${U.esc(p.nationality||"")}</small></div></div></td>
           <td><span class="chip">${U.esc(p.position||"—")}</span></td>
           <td class="num"><span class="ovr ${U.ovrClass(p.ovr)}">${p.ovr||"—"}</span></td>
           <td class="num faint">${p.potential||"—"}</td><td class="num">${p.age||"—"}</td>
@@ -2625,12 +2674,15 @@ body.live-active { overflow: hidden; }
       </div>
     `);
     document.getElementById("sq-add").addEventListener("click", () => playerModal(c));
+    document.getElementById("sq-injury").addEventListener("click", () => injuryModal(c));
     content().querySelectorAll("[data-player]").forEach(r => r.addEventListener("click", (e) => {
       if (e.target.closest("[data-del-player]")) return;
       playerModal(c, c.players.find(p => p.id === r.dataset.player));
     }));
     content().querySelectorAll("[data-del-player]").forEach(b => b.addEventListener("click", () =>
       UI.confirm("¿Eliminar a este jugador?", () => { S.deletePlayer(c, b.dataset.delPlayer); UI.toast("Jugador eliminado"); }, true)));
+    content().querySelectorAll("[data-recover]").forEach(b => b.addEventListener("click", () => { S.recoverInjury(c, b.dataset.recover); UI.toast("Jugador recuperado"); }));
+    content().querySelectorAll("[data-del-injury]").forEach(b => b.addEventListener("click", () => { S.deleteInjury(c, b.dataset.delInjury); UI.toast("Lesión eliminada"); }));
   };
   function playerModal(c, ex) {
     ex = ex || {};
@@ -2682,6 +2734,29 @@ body.live-active { overflow: hidden; }
         S.addPlayer(c, data); UI.toast("Jugador añadido", "ok");
       }
       UI.closeModal();
+    });
+  }
+
+  function injuryModal(c) {
+    const players = (c.players || []).map(p => p.name).filter(Boolean);
+    UI.openModal("Registrar lesión", `
+      <div class="field"><label>Jugador</label>
+        <input type="text" id="inj-player" list="dl-inj-players" placeholder="Nombre del jugador"/>
+        <datalist id="dl-inj-players">${players.map(n => `<option value="${U.esc(n)}">`).join("")}</datalist>
+      </div>
+      <div class="field"><label>Tipo de lesión (opcional)</label>
+        <input type="text" id="inj-type" placeholder="p.ej. Muscular, Rodilla, Tobillo..."/>
+      </div>
+      <div class="field"><label>Partidos de baja estimados</label>
+        <input type="number" id="inj-out" min="0" value="0" placeholder="0"/>
+      </div>`,
+      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="inj-save">Añadir lesión</button>`);
+    document.getElementById("inj-save").addEventListener("click", () => {
+      const player = document.getElementById("inj-player").value.trim();
+      if (!player) { UI.toast("Indica el jugador", "err"); return; }
+      S.addInjury(c, { player, type: document.getElementById("inj-type").value.trim(), matchesOut: Number(document.getElementById("inj-out").value) || 0 });
+      UI.closeModal();
+      UI.toast("Lesión registrada", "ok");
     });
   }
 

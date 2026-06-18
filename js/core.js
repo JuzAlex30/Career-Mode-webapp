@@ -103,6 +103,7 @@
     dice: P('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1.3"/><circle cx="15.5" cy="8.5" r="1.3"/><circle cx="8.5" cy="15.5" r="1.3"/><circle cx="15.5" cy="15.5" r="1.3"/><circle cx="12" cy="12" r="1.3"/>'),
     cloud: P('<path d="M7 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17 9.5a3.5 3.5 0 0 1 .5 8.5H7Z"/>'),
     play: P('<path d="M7 5v14l11-7L7 5Z"/>'),
+    bandage: P('<path d="m9.5 9.5 5 5M10 14l-1.5 1.5a3.5 3.5 0 0 1-5-5L5 9M14 10l1.5-1.5a3.5 3.5 0 0 1 5 5L19 15"/><rect x="7.5" y="7.5" width="9" height="9" rx="2" transform="rotate(45 12 12)"/>'),
   };
   FC.icons = ICONS;
   U.icon = (name) => ICONS[name] || "";
@@ -160,7 +161,7 @@
   // acceder a season.id, c.matches.find, etc.
   function normalizeCareer(c) {
     if (!c || typeof c !== "object") return c;
-    ["players", "matches", "trophies", "awards", "transfers", "challenges", "achievements", "notes", "youth"]
+    ["players", "matches", "trophies", "awards", "transfers", "challenges", "achievements", "notes", "youth", "injuries"]
       .forEach(k => { if (!Array.isArray(c[k])) c[k] = []; });
     c.players.forEach(p => { if (p && !Array.isArray(p.ovrHistory)) p.ovrHistory = []; });
     if (!Array.isArray(c.seasons)) c.seasons = [];
@@ -394,6 +395,15 @@
   S.addChallenge = (c, ch) => { ch.id = ch.id || U.uid(); pushTo(c, "challenges", ch); emit(); };
   S.updateChallenge = (c, id, patch) => { const ch = c.challenges.find(x => x.id === id); if (ch) Object.assign(ch, patch); emit(); };
   S.deleteChallenge = (c, id) => { c.challenges = c.challenges.filter(x => x.id !== id); emit(); };
+
+  /* ---------- LESIONES ---------- */
+  S.activeInjuries = (c) => (c.injuries || []).filter(i => i.active !== false);
+  S.addInjury = (c, data) => {
+    (c.injuries || (c.injuries = [])).push({ id: U.uid(), active: true, player: String(data.player || "").trim(), type: String(data.type || "").trim(), matchesOut: Number(data.matchesOut) || 0, createdAt: Date.now() });
+    emit();
+  };
+  S.recoverInjury = (c, id) => { const i = (c.injuries || []).find(x => x.id === id); if (i) { i.active = false; emit(); } };
+  S.deleteInjury = (c, id) => { c.injuries = (c.injuries || []).filter(x => x.id !== id); emit(); };
 
   // called after data that affects achievements/standings changes
   S.afterChange = (c) => { S.evaluateAchievements(c); emit(); };
