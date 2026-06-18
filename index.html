@@ -1714,7 +1714,7 @@ body.live-active { overflow: hidden; }
   function api(path, opts) { return apiWith(C.config(), path, opts); }
 
   /* ---------- auth passwordless (código OTP por email) ---------- */
-  C.sendCode = (email) => api("/auth/v1/otp", { method: "POST", body: { email: String(email || "").trim(), create_user: true } });
+  C.sendCode = (email) => api("/auth/v1/otp", { method: "POST", body: { email: String(email || "").trim(), create_user: true, redirect_to: "https://juzalex30.github.io/Career-Mode-webapp/" } });
   // handleMagicLink: procesa el hash #access_token=... que Supabase añade al redirect tras el clic en el email.
   C.handleMagicLink = (hash) => {
     try {
