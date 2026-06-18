@@ -38,6 +38,7 @@
   function saveSession(s) { session = s; try { if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s)); else localStorage.removeItem(SESSION_KEY); } catch (e) { } }
   C.user = () => (session && session.user) ? session.user : null;
   C.isLoggedIn = () => !!(session && session.access_token);
+  C.myOwnerId = () => (C.user() || {}).id || null;
   C.logout = () => saveSession(null);
 
   /* ---------- fetch de bajo nivel a la API de Supabase ---------- */
@@ -161,7 +162,28 @@
     return (rows && rows[0]) || null;
   };
   // Ranking global (lectura pública con apikey, sin sesión): carreras publicadas ordenadas por títulos.
-  C.leaderboard = (limit) => api("/rest/v1/shared_careers?select=share_id,club,league,manager,titles,best_points,summary&order=titles.desc,best_points.desc&limit=" + (parseInt(limit, 10) || 20));
+  C.leaderboard = (limit) => api("/rest/v1/shared_careers?select=share_id,owner_id,club,league,manager,titles,best_points,summary&order=titles.desc,best_points.desc&limit=" + (parseInt(limit, 10) || 20));
+
+  /* ---------- perfil público del manager (todas sus carreras publicadas) ---------- */
+  C.profileCareers = (ownerId, cfgOverride) => apiWith(cfgOverride || C.config(), "/rest/v1/shared_careers?select=*&owner_id=eq." + encodeURIComponent(String(ownerId || "").trim()) + "&order=titles.desc,best_points.desc", { method: "GET" });
+  C.profileLink = (ownerId) => { const cfg = C.config(); const b = btoa(JSON.stringify({ o: ownerId, u: cfg.url, k: cfg.anonKey })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); return location.origin + location.pathname + "#profile=" + b; };
+
+  /* ---------- comentarios en carreras compartidas (públicos en lectura; escribir requiere sesión) ---------- */
+  C.getComments = (shareId, cfgOverride) => apiWith(cfgOverride || C.config(), "/rest/v1/shared_comments?select=id,author,body,created_at,author_id&share_id=eq." + encodeURIComponent(String(shareId || "").trim()) + "&order=created_at.asc", { method: "GET" });
+  C.addComment = async (shareId, body) => {
+    if (!(await ensureFresh())) throw new Error("Inicia sesión primero");
+    const text = String(body || "").trim().slice(0, 500);
+    if (!text) throw new Error("Escribe un comentario");
+    const author = (((C.user() || {}).email) || "Anónimo").split("@")[0];
+    // author_id explícito (mismo patrón probado que C.publish con owner_id) para no depender solo del default RLS.
+    await api("/rest/v1/shared_comments", { method: "POST", auth: true, headers: { Prefer: "return=minimal" }, body: [{ share_id: String(shareId || "").trim(), author_id: session.user.id, author, body: text }] });
+    return { ok: true };
+  };
+  C.deleteComment = async (id) => {
+    if (!(await ensureFresh())) throw new Error("Inicia sesión primero");
+    await api("/rest/v1/shared_comments?id=eq." + encodeURIComponent(String(id || "").trim()), { method: "DELETE", auth: true });
+    return { ok: true };
+  };
 
   // SQL que el usuario ejecuta una vez en Supabase (mostrado en la UI).
   C.SETUP_SQL = [
@@ -193,6 +215,21 @@
     "create policy \"shared owner write\" on shared_careers for insert with check (owner_id = auth.uid());",
     "create policy \"shared owner update\" on shared_careers for update using (owner_id = auth.uid()) with check (owner_id = auth.uid());",
     "create policy \"shared owner delete\" on shared_careers for delete using (owner_id = auth.uid());",
+    "",
+    "-- 3) Comentarios en carreras compartidas (lectura pública; escribir requiere sesión)",
+    "create table if not exists shared_comments (",
+    "  id uuid primary key default gen_random_uuid(),",
+    "  share_id text not null references shared_careers(share_id) on delete cascade,",
+    "  author_id uuid not null default auth.uid() references auth.users(id) on delete cascade,",
+    "  author text,",
+    "  body text not null,",
+    "  created_at timestamptz not null default now()",
+    ");",
+    "alter table shared_comments enable row level security;",
+    "create policy \"comments public read\" on shared_comments for select using (true);",
+    "create policy \"comments owner write\" on shared_comments for insert with check (author_id = auth.uid());",
+    "create policy \"comments owner delete\" on shared_comments for delete using (author_id = auth.uid());",
+    "create index if not exists shared_comments_share_idx on shared_comments(share_id, created_at);",
   ].join("\n");
 
   loadSession();

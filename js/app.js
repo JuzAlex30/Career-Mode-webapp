@@ -78,6 +78,17 @@
   }
   function openShare(s) { if (s && FC.ui && FC.ui.openSharedByCode) FC.ui.openSharedByCode(s.code, s.cfg); }
 
+  // Enlace público de perfil de manager: #profile=<base64 {o,u,k}>. Igual que share.
+  function parseProfileHash() {
+    const h = location.hash || "";
+    if (h.indexOf("#profile=") !== 0) return null;
+    let out = null;
+    try { let raw = decodeURIComponent(h.slice(9)).replace(/-/g, "+").replace(/_/g, "/"); while (raw.length % 4) raw += "="; const p = JSON.parse(atob(raw)); if (p && p.o) out = { ownerId: p.o, cfg: (p.u && p.k) ? { url: p.u, anonKey: p.k } : null }; } catch (e) { }
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { location.hash = ""; }
+    return out;
+  }
+  function openProfile(p) { if (p && FC.ui && FC.ui.openProfileModal) FC.ui.openProfileModal(p.ownerId, p.cfg); }
+
   // Magic link de Supabase: tras clic en email redirige con #access_token=... en el hash.
   async function handleMagicLinkHash() {
     const h = location.hash || "";
@@ -101,9 +112,11 @@
     if (onboardHost) onboardHost.remove();
     const magicLink = await handleMagicLinkHash();
     const share = parseShareHash();
+    const profile = parseProfileHash();
     if (!S.getActiveCareer()) {
       V.onboarding();
       openShare(share);
+      openProfile(profile);
       if (magicLink) FC.ui.toast("¡Sesión iniciada! Ve a Comunidad.", "ok");
       return;
     }
@@ -111,6 +124,7 @@
     App.refreshChrome();
     R.render();
     openShare(share);
+    openProfile(profile);
     if (magicLink) FC.ui.toast("¡Sesión iniciada! Ve a Comunidad.", "ok");
   };
 

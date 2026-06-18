@@ -101,8 +101,67 @@
     try {
       const row = await FC.cloud.getShared(code, cfgOverride);
       if (!row) { UI.toast("No se encontró esa carrera compartida", "err"); return; }
-      UI.openModal("Carrera compartida", UI.sharedCardHTML(row), '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
+      UI.openSharedModal(row, cfgOverride);
     } catch (e) { UI.toast(e.message || "Error al cargar", "err"); }
+  };
+  // Visor unificado: tarjeta + perfil del manager + comentarios. Lo usan el ranking, el código y los enlaces.
+  UI.openSharedModal = (row, cfg) => {
+    if (!row) return;
+    const shareId = row.share_id || "", ownerId = row.owner_id || "";
+    const extra = ownerId ? `<div style="margin-top:14px"><button class="btn btn-ghost btn-sm" id="sc-profile"><span class="ni-icon" data-icon="cloud"></span> Ver más carreras de este manager</button></div>` : "";
+    const body = UI.sharedCardHTML(row) + extra + `<div class="section-title">Comentarios</div><div id="sc-comments"><p class="faint">Cargando…</p></div>`;
+    UI.openModal("Carrera compartida", body, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
+    const modal = document.getElementById("modal");
+    const pb = modal && modal.querySelector("#sc-profile");
+    if (pb) pb.addEventListener("click", () => UI.openProfileModal(ownerId, cfg));
+    if (shareId) UI.renderComments(shareId, cfg);
+  };
+  // Render (+wiring) de comentarios dentro del visor. body remoto → escapar SIEMPRE con U.esc.
+  UI.renderComments = async (shareId, cfg) => {
+    const box = document.getElementById("sc-comments");
+    if (!box) return;
+    const sameProject = !cfg || (FC.cloud.config().url === cfg.url);
+    const canComment = FC.cloud.isLoggedIn() && sameProject;
+    let list = [];
+    try { list = (await FC.cloud.getComments(shareId, cfg)) || []; }
+    catch (e) { box.innerHTML = `<p class="faint">No se pudieron cargar los comentarios.</p>`; return; }
+    const myId = FC.cloud.myOwnerId();
+    const listHTML = list.length
+      ? `<div class="list">${list.map(c => `<div class="list-row"><div class="lr-main"><b>${U.esc(c.author || "Anónimo")}</b> <small class="faint">${U.fmtDate(c.created_at)}</small><div style="margin-top:4px;white-space:pre-wrap;word-break:break-word">${U.esc(c.body || "")}</div></div>${(myId && c.author_id === myId) ? `<button class="btn btn-ghost btn-sm" data-delc="${U.esc(c.id)}">Borrar</button>` : ""}</div>`).join("")}</div>`
+      : `<p class="faint">Sé el primero en comentar.</p>`;
+    const formHTML = canComment
+      ? `<div class="field" style="margin-top:12px"><textarea id="sc-input" rows="2" maxlength="500" placeholder="Escribe un comentario…"></textarea></div><button class="btn btn-primary btn-sm" id="sc-send"><span class="ni-icon" data-icon="check"></span> Comentar</button>`
+      : `<p class="faint" style="font-size:12px;margin-top:12px">${FC.cloud.isLoggedIn() ? "Solo puedes comentar en carreras de tu propia comunidad." : "Inicia sesión en Comunidad para comentar."}</p>`;
+    box.innerHTML = listHTML + formHTML;
+    U.hydrateIcons(box);
+    box.querySelectorAll("[data-delc]").forEach(b => b.addEventListener("click", () => UI.confirm("¿Borrar tu comentario?", async () => {
+      try { await FC.cloud.deleteComment(b.dataset.delc); UI.renderComments(shareId, cfg); } catch (e) { UI.toast(e.message || "Error", "err"); }
+    }, true)));
+    const send = document.getElementById("sc-send");
+    if (send) send.addEventListener("click", async () => {
+      const val = (document.getElementById("sc-input") || {}).value || "";
+      if (!val.trim()) { UI.toast("Escribe un comentario", "err"); return; }
+      send.disabled = true;
+      try { await FC.cloud.addComment(shareId, val); UI.renderComments(shareId, cfg); }
+      catch (e) { UI.toast(e.message || "Error", "err"); send.disabled = false; }
+    });
+  };
+  // Perfil público: todas las carreras publicadas de un manager (por owner_id).
+  UI.openProfileModal = async (ownerId, cfg) => {
+    if (!ownerId) return;
+    UI.openModal("Perfil del manager", `<div id="pf-body"><p class="faint">Cargando…</p></div>`, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
+    let rows = [];
+    try { rows = (await FC.cloud.profileCareers(ownerId, cfg)) || []; }
+    catch (e) { const b = document.getElementById("pf-body"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar el perfil.</p>`; return; }
+    const box = document.getElementById("pf-body");
+    if (!box) return;
+    if (!rows.length) { box.innerHTML = `<p class="faint">Este manager aún no tiene carreras publicadas.</p>`; return; }
+    const manager = (rows[0].manager || "").trim();
+    const totalTitles = rows.reduce((a, r) => a + (Number(r.titles) || 0), 0);
+    box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || "Manager")}</b><br><small class="faint">${rows.length} carrera(s) · ${totalTitles} título(s) en total</small></div></div>
+      <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.safeColor(null, U.colorFor(r.club || ""))}">${U.initials(r.club || "?")}</span><div class="lr-main"><b>${U.esc(r.club || "Club")}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} títulos</small></div></div>`).join("")}</div>`;
+    U.hydrateIcons(box);
+    box.querySelectorAll("[data-pf]").forEach(el => el.addEventListener("click", () => UI.openSharedModal(rows[+el.dataset.pf], cfg)));
   };
   FC.ui = UI;
 
@@ -1602,6 +1661,12 @@
       <div class="card">
         <p class="faint" style="font-size:12px;margin-top:0">Publicar genera un enlace público de SOLO LECTURA con el <b>resumen</b> de tu carrera (club, palmarés, récords). No expone notas, plantilla ni finanzas.</p>
         <div class="list" id="cl-shares"></div>
+        <div class="divider"></div>
+        <p class="faint" style="font-size:12px;margin-top:0">Tu <b>perfil público</b> reúne todas tus carreras publicadas en una sola página.</p>
+        <div class="flex gap wrap">
+          <button class="btn btn-ghost btn-sm" id="cl-myprofile"><span class="ni-icon" data-icon="cloud"></span> Ver mi perfil público</button>
+          <button class="btn btn-ghost btn-sm" id="cl-myprofile-link"><span class="ni-icon" data-icon="share"></span> Copiar enlace de mi perfil</button>
+        </div>
       </div>
       <div class="section-title">Ver carrera compartida</div>
       <div class="card">
@@ -1670,6 +1735,13 @@
       };
       renderShares();
       $("cl-view").addEventListener("click", busy("cl-view", async () => { await UI.openSharedByCode($("cl-viewcode").value.trim()); }));
+      if ($("cl-myprofile")) $("cl-myprofile").addEventListener("click", () => { const id = CL.myOwnerId(); if (id) UI.openProfileModal(id, null); else UI.toast("Inicia sesión primero", "err"); });
+      if ($("cl-myprofile-link")) $("cl-myprofile-link").addEventListener("click", () => {
+        const id = CL.myOwnerId(); if (!id) { UI.toast("Inicia sesión primero", "err"); return; }
+        const link = CL.profileLink(id);
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(() => UI.toast("Enlace de perfil copiado 🔗", "ok"), () => UI.toast(link, "ok"));
+        else UI.toast(link, "ok");
+      });
       $("cl-disconnect").addEventListener("click", () => UI.confirm("¿Desconectar la nube de este navegador? (no borra nada de la nube)", () => { CL.disconnect(); UI.toast("Nube desconectada"); rerender(); }, true));
     }
     if (configured && $("cl-lb-load")) {
@@ -1686,7 +1758,7 @@
                   <td class="faint">${U.esc(r.league || "")}</td><td class="num">${Number(r.titles) || 0}</td><td class="num">${Number(r.best_points) || 0}</td></tr>`).join("")}
                 </tbody></table></div>`
             : `<p class="faint">Aún no hay carreras publicadas. ¡Publica la tuya y estrena el ranking!</p>`;
-          box.querySelectorAll("[data-lb]").forEach(tr => tr.addEventListener("click", () => UI.openModal("Carrera compartida", UI.sharedCardHTML(lbRows[+tr.dataset.lb]), '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true })));
+          box.querySelectorAll("[data-lb]").forEach(tr => tr.addEventListener("click", () => UI.openSharedModal(lbRows[+tr.dataset.lb], null)));
           btn.disabled = false;
         } catch (e) { UI.toast(e.message || "Error al cargar", "err"); btn.disabled = false; }
       });
