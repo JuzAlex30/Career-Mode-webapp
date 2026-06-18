@@ -30,14 +30,17 @@ const BODY = `
         <a class="nav-item" data-route="dashboard"><span class="ni-icon" data-icon="home"></span><span>Panel</span></a>
         <a class="nav-item" data-route="matches"><span class="ni-icon" data-icon="ball"></span><span>Partidos</span></a>
         <a class="nav-item" data-route="standings"><span class="ni-icon" data-icon="table"></span><span>Clasificación</span></a>
+        <div class="nav-label">Club</div>
         <a class="nav-item" data-route="squad"><span class="ni-icon" data-icon="shirt"></span><span>Plantilla</span></a>
         <a class="nav-item" data-route="development"><span class="ni-icon" data-icon="growth"></span><span>Desarrollo</span></a>
         <a class="nav-item" data-route="youth"><span class="ni-icon" data-icon="sprout"></span><span>Academia</span></a>
         <a class="nav-item" data-route="finance"><span class="ni-icon" data-icon="coin"></span><span>Finanzas</span></a>
+        <div class="nav-label">Carrera</div>
         <a class="nav-item" data-route="challenges"><span class="ni-icon" data-icon="target"></span><span>Retos</span></a>
         <a class="nav-item" data-route="story"><span class="ni-icon" data-icon="news"></span><span>Narrativa</span></a>
         <a class="nav-item" data-route="history"><span class="ni-icon" data-icon="trophy"></span><span>Historia</span></a>
         <a class="nav-item" data-route="hall"><span class="ni-icon" data-icon="medal"></span><span>Salón de la fama</span></a>
+        <div class="nav-label">Herramientas</div>
         <a class="nav-item" data-route="scouting"><span class="ni-icon" data-icon="search"></span><span>Scouting</span></a>
         <a class="nav-item" data-route="tools"><span class="ni-icon" data-icon="dice"></span><span>Generador</span></a>
       </nav>
