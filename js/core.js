@@ -560,6 +560,8 @@
     if (sum.wonLeague) s += " ¡Campeones de Liga!";
     else if (sum.winPct >= 70) s += " Una temporada soberbia.";
     else if (sum.winPct < 35) s += " Un curso para olvidar.";
+    const sa = S.statsAverages(c, season.id);
+    if (sa && sa.possession) s += ` Posesión media del ${sa.possession.f}%.`;
     return s;
   };
   // Feed de titulares DERIVADO de los datos (no persiste nada). title/sub salen
@@ -600,6 +602,23 @@
       Object.keys(tally).forEach(k => { if (tally[k].n >= 3) push({ phase: 1, date, tone: "good", icon: "star",
         title: phrase("hattrick", "ht:" + m.id + ":" + k, { player: tally[k].name }),
         sub: `${tally[k].n} goles · vs ${esc(rival)}` }); });
+      // Beat de stats avanzadas (máximo uno por partido). La roja siempre es noticia;
+      // el resto solo en resultados "normales" (los extremos ya tienen su propio beat).
+      const st = m.stats;
+      if (st) {
+        const arr = (k) => Array.isArray(st[k]) ? st[k] : null;
+        const red = arr("red"), xg = arr("xg"), shots = arr("shots");
+        const res = S.userResult(c, m);
+        let kind = null, vars = { team: T, rival }, tone = "good", icon = "growth";
+        if (red && Number(red[0]) >= 1) { kind = "redcard"; tone = "bad"; icon = "flag"; }
+        else if (Math.abs(diff) < 3) {
+          if (xg && res === "W" && Number(xg[0]) + 0.5 < Number(xg[1])) { kind = "clinical"; icon = "star"; }
+          else if (xg && (res === "L" || res === "D") && Number(xg[0]) >= Number(xg[1]) + 1) { kind = "unlucky"; tone = "neutral"; }
+          else if (shots && Number(shots[0]) >= 18 && g.for <= 1) { kind = "wasteful"; tone = "neutral"; vars.shots = Number(shots[0]); }
+          else if (typeof st.possession === "number" && st.possession >= 65) { kind = "domination"; vars.poss = Math.round(st.possession); }
+        }
+        if (kind) push({ phase: 1, date, tone, icon, title: phrase(kind, "stat:" + kind + ":" + m.id, vars), sub: (m.competition ? esc(m.competition) + " · " : "") + scoreline });
+      }
     });
 
     (c.transfers || []).filter(t => t.seasonId === sid).forEach(t => {

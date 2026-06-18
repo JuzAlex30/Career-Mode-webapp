@@ -291,6 +291,11 @@
     saleOut:     ["{player} hace las maletas rumbo al {club}", "Venta: {player} se marcha al {club}", "Adiós a {player}: ficha por el {club}"],
     youth:       ["De la cantera al primer equipo: sube {player}", "La cantera manda: {player} asciende", "Nueva perla del filial: {player} llega arriba"],
     streak:      ["Racha imbatible: {n} partidos sin perder", "El {team} no sabe perder: {n} seguidos", "Imparables: {n} jornadas invicto"],
+    domination:  ["Dominio absoluto del {team}: {poss}% de posesión", "El {team} monopolizó el balón ({poss}%)", "Recital de control: {poss}% de posesión del {team}"],
+    clinical:    ["Pegada letal: el {team} fue clínico ante el {rival}", "El {team} ganó con eficacia de killer", "Cirugía fina del {team}: marcó lo justo y ganó"],
+    unlucky:     ["El marcador fue injusto con el {team}: mereció más", "El fútbol fue cruel con el {team}", "El {team} generó de sobra, pero no le entró"],
+    wasteful:    ["{shots} remates y poco premio: al {team} le faltó puntería", "El {team} disparó mucho y acertó poco", "Dominó los disparos pero no la red: el {team}"],
+    redcard:     ["Tarde caliente: el {team} acabó con uno menos", "Drama y expulsión en el partido del {team}", "El {team} sufrió en inferioridad numérica"],
   };
 
   /* ============================================================
