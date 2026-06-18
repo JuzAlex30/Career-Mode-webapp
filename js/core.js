@@ -297,6 +297,27 @@
   S.updateMatch = (c, id, patch) => { const m = (c.matches || []).find(x => x.id === id); if (m) Object.assign(m, patch); S.afterChange(c); };
   S.deleteMatch = (c, id) => { c.matches = (c.matches || []).filter(x => x.id !== id); S.afterChange(c); };
 
+  // Medias/totales de stats avanzadas de la temporada (solo partidos con m.stats; null si no hay).
+  // stats está centrado en tu equipo: { possession:%, shots:[tú,rival], sot, xg, corners, fouls, yellow, red, pens }.
+  S.statsAverages = (c, seasonId) => {
+    const ms = S.userMatches(c, seasonId).filter(m => m && m.stats);
+    if (!ms.length) return null;
+    const r1 = (x) => Math.round(x * 10) / 10;
+    const out = { count: ms.length };
+    const possVals = ms.map(m => m.stats.possession).filter(v => typeof v === "number" && isFinite(v));
+    if (possVals.length) { const avg = possVals.reduce((s, x) => s + x, 0) / possVals.length; out.possession = { f: r1(avg), a: r1(100 - avg) }; }
+    const aggPair = (key, mode) => {
+      const rows = ms.map(m => m.stats[key]).filter(p => Array.isArray(p));
+      if (!rows.length) return null;
+      const f = rows.reduce((s, p) => s + (Number(p[0]) || 0), 0);
+      const a = rows.reduce((s, p) => s + (Number(p[1]) || 0), 0);
+      return mode === "avg" ? { f: r1(f / rows.length), a: r1(a / rows.length) } : { f: r1(f), a: r1(a) };
+    };
+    ["shots", "sot", "xg", "corners", "fouls"].forEach(k => { const v = aggPair(k, "avg"); if (v) out[k] = v; });
+    ["yellow", "red", "pens"].forEach(k => { const v = aggPair(k, "sum"); if (v) out[k] = v; });
+    return out;
+  };
+
   // Parser CSV minimal: soporta campos entrecomillados ("" escapa comilla), comas
   // internas, y saltos \n/\r\n. Devuelve filas (arrays de celdas), sin filas vacías.
   function parseCSV(text) {

@@ -283,6 +283,31 @@
       <div id="m-scorers"></div>
       <button type="button" class="btn btn-ghost btn-sm" id="m-add-scorer"><span class="ni-icon" data-icon="plus"></span> Añadir gol</button>
       <div class="field" style="margin-top:16px"><label>Jugador del partido (MOTM)</label><input type="text" id="m-motm" list="${dlId}" value="${U.esc(ex.motm||"")}" placeholder="Nombre"/></div>
+      ${(function(){
+        const st = ex.stats || {};
+        const v = (x) => (x == null ? "" : x);
+        const pair = (key, label, step) => {
+          const p = Array.isArray(st[key]) ? st[key] : [];
+          return `<div class="field-row">
+            <div class="field"><label>${label} · tú</label><input type="number" min="0" ${step?`step="${step}"`:""} id="ms-${key}-f" value="${v(p[0])}"/></div>
+            <div class="field"><label>${label} · rival</label><input type="number" min="0" ${step?`step="${step}"`:""} id="ms-${key}-a" value="${v(p[1])}"/></div>
+          </div>`;
+        };
+        return `<details style="margin-top:16px">
+          <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Estadísticas avanzadas (opcional)</summary>
+          <div style="margin-top:6px">
+            <div class="field-row"><div class="field"><label>Posesión tuya (%)</label><input type="number" min="0" max="100" id="ms-poss" value="${v(st.possession)}"/></div><div class="field"></div></div>
+            ${pair("shots","Remates")}
+            ${pair("sot","Tiros a puerta")}
+            ${pair("xg","xG","0.1")}
+            ${pair("corners","Córners")}
+            ${pair("fouls","Faltas")}
+            ${pair("yellow","Amarillas")}
+            ${pair("red","Rojas")}
+            ${pair("pens","Penaltis")}
+          </div>
+        </details>`;
+      })()}
     `;
     UI.openModal(existing ? "Editar partido" : "Registrar partido", body,
       `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="m-save"><span class="ni-icon" data-icon="check"></span> Guardar</button>`, { lg: true });
@@ -328,11 +353,18 @@
       });
       const motm = document.getElementById("m-motm").value.trim();
       const motmP = (c.players||[]).find(x => x.name === motm);
+      // stats avanzadas (opcional, centradas en tu equipo). Vacío total → no se guarda.
+      const num = (id) => { const el = document.getElementById(id); const val = el ? el.value.trim() : ""; if (val === "") return null; const n = Number(val); return (Number.isFinite(n) && n >= 0) ? n : null; };
+      const pairOf = (key) => { const f = num("ms-" + key + "-f"), a = num("ms-" + key + "-a"); return (f == null && a == null) ? null : [f == null ? 0 : f, a == null ? 0 : a]; };
+      const stats = {};
+      const poss = num("ms-poss"); if (poss != null) stats.possession = poss;
+      ["shots", "sot", "xg", "corners", "fouls", "yellow", "red", "pens"].forEach(k => { const p = pairOf(k); if (p) stats[k] = p; });
       const data = {
         seasonId: season.id, competition: document.getElementById("m-comp").value,
         round: document.getElementById("m-round").value.trim(),
         date: document.getElementById("m-date").value, home, away, homeScore, awayScore,
         events, motm: motm || "", motmId: motmP && motmP.id,
+        stats: Object.keys(stats).length ? stats : undefined,
       };
       if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
       UI.closeModal();
@@ -474,10 +506,25 @@
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const ms = (c.matches || []).filter(m => m.seasonId === season.id).slice().sort((a,b)=> new Date(b.date||0)-new Date(a.date||0));
+    const sa = S.statsAverages(c, season.id);
+    const statsCard = sa ? `
+      <div class="card">
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Estadísticas avanzadas <span class="faint" style="font-weight:400">· ${sa.count} ${sa.count===1?"partido":"partidos"} con datos</span></div>
+        ${sa.possession ? statCompareRow("Posesión", sa.possession.f, sa.possession.a, "%") : ""}
+        ${sa.shots ? statCompareRow("Remates (media)", sa.shots.f, sa.shots.a) : ""}
+        ${sa.sot ? statCompareRow("Tiros a puerta (media)", sa.sot.f, sa.sot.a) : ""}
+        ${sa.xg ? statCompareRow("xG (media)", sa.xg.f, sa.xg.a) : ""}
+        ${sa.corners ? statCompareRow("Córners (media)", sa.corners.f, sa.corners.a) : ""}
+        ${sa.fouls ? statCompareRow("Faltas (media)", sa.fouls.f, sa.fouls.a) : ""}
+        ${sa.yellow ? statCompareRow("Amarillas (total)", sa.yellow.f, sa.yellow.a) : ""}
+        ${sa.red ? statCompareRow("Rojas (total)", sa.red.f, sa.red.a) : ""}
+        ${sa.pens ? statCompareRow("Penaltis (total)", sa.pens.f, sa.pens.a) : ""}
+      </div>` : "";
     UI.mount(`
       <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados</div></div>
         <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-primary" id="mt-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button></div>
       </div>
+      ${statsCard}
       <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>
     `);
     document.getElementById("mt-add").addEventListener("click", () => UI.openMatchModal(c));
@@ -1819,6 +1866,15 @@
     return `<div class="card stat-tile"><div class="st-glow"></div><div class="st-label">${label}</div>
       <div class="st-value">${value}</div><div class="st-sub">${sub||""}</div></div>`;
   }
+  // Barra comparativa tú-vs-rival. La barra representa tu cuota del total.
+  function statCompareRow(label, f, a, suffix) {
+    const fv = Number(f) || 0, av = Number(a) || 0, tot = fv + av;
+    const pct = tot ? Math.round(fv / tot * 100) : 50;
+    suffix = suffix || "";
+    return `<div style="margin-bottom:10px">
+      <div class="flex between" style="font-size:12px;margin-bottom:4px"><span><b>${fv}${suffix}</b> tú</span><span class="faint">${U.esc(label)}</span><span class="faint">rival <b style="color:var(--text)">${av}${suffix}</b></span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }
   function alertRow(icon, text, tone, route) {
     const col = tone === "danger" ? "var(--danger)" : tone === "warn" ? "var(--warn)" : "var(--ok)";
     return `<div class="list-row" ${route ? `data-goto="${route}" style="cursor:pointer"` : ""}>
@@ -1829,7 +1885,7 @@
     const g = S.userGoals(c, m); const r = S.userResult(c, m);
     const cls = r === "W" ? "win" : r === "L" ? "loss" : "";
     return `<div class="fixture" data-match="${m.id}" style="cursor:pointer">
-      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
+      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}</span>
       <div class="fx-teams"><span class="t ${m.home===c.clubName?"":""}" style="${m.home===c.clubName?"font-weight:700":""}">${U.esc(m.home)}</span>
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
         <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${U.esc(m.away)}</span></div>
