@@ -104,6 +104,7 @@
     cloud: P('<path d="M7 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17 9.5a3.5 3.5 0 0 1 .5 8.5H7Z"/>'),
     play: P('<path d="M7 5v14l11-7L7 5Z"/>'),
     bandage: P('<path d="m9.5 9.5 5 5M10 14l-1.5 1.5a3.5 3.5 0 0 1-5-5L5 9M14 10l1.5-1.5a3.5 3.5 0 0 1 5 5L19 15"/><rect x="7.5" y="7.5" width="9" height="9" rx="2" transform="rotate(45 12 12)"/>'),
+    calendar: P('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/>'),
   };
   FC.icons = ICONS;
   U.icon = (name) => ICONS[name] || "";
@@ -419,9 +420,22 @@
     const g = S.userGoals(c, m); if (!g) return null;
     return g.for > g.against ? "W" : g.for < g.against ? "L" : "D";
   };
+  // Un partido está "jugado" si tiene marcador numérico válido en ambos lados.
+  // Los partidos PROGRAMADOS (futuros) viven en c.matches sin marcador.
+  S.isPlayed = (m) => {
+    if (!m) return false;
+    const ok = (v) => v !== "" && v != null && isFinite(Number(v));
+    return ok(m.homeScore) && ok(m.awayScore);
+  };
   S.userMatches = (c, seasonId) => (c.matches || [])
-    .filter(m => S.isUserMatch(c, m) && (!seasonId || m.seasonId === seasonId));
+    .filter(m => S.isUserMatch(c, m) && S.isPlayed(m) && (!seasonId || m.seasonId === seasonId));
   S.anyMatch = (c, fn) => S.userMatches(c).some(m => fn(m));
+  // Próximos partidos (programados, aún sin marcador), ordenados por fecha
+  // ascendente; los que no tienen fecha van al final.
+  S.upcomingMatches = (c, seasonId) => (c.matches || [])
+    .filter(m => S.isUserMatch(c, m) && !S.isPlayed(m) && (!seasonId || m.seasonId === seasonId))
+    .sort((a, b) => (a.date ? new Date(a.date).getTime() : Infinity) - (b.date ? new Date(b.date).getTime() : Infinity));
+  S.nextMatch = (c, seasonId) => S.upcomingMatches(c, seasonId)[0] || null;
 
   S.computeStandings = (c, seasonId) => {
     const league = (c.matches || []).filter(m => m.seasonId === seasonId && /liga/i.test(m.competition || ""));
@@ -430,8 +444,8 @@
     const ensure = (name) => (tbl[name] || (tbl[name] = { team: name, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 }));
     (season && season.teams || []).forEach(ensure);
     league.forEach(m => {
+      if (m.home == null || m.away == null || !S.isPlayed(m)) return;
       const hs = Number(m.homeScore), as = Number(m.awayScore);
-      if (m.home == null || m.away == null || isNaN(hs) || isNaN(as)) return;
       const H = ensure(m.home), A = ensure(m.away);
       H.pj++; A.pj++; H.gf += hs; H.gc += as; A.gf += as; A.gc += hs;
       if (hs > as) { H.pg++; A.pp++; H.pts += 3; }
@@ -697,7 +711,7 @@
     const list = [];
     careers.forEach(c => {
       totals.seasons += (c.seasons || []).length;
-      totals.matches += (c.matches || []).length;
+      totals.matches += S.userMatches(c).length;
       totals.trophies += (c.trophies || []).length;
       const titles = (c.trophies || []).filter(t => t.result === "winner").length;
       list.push({ id: c.id, clubName: c.clubName, leagueName: c.leagueName, badgeColor: c.badgeColor, seasons: (c.seasons || []).length, trophies: (c.trophies || []).length, titles });

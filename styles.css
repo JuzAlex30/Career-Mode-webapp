@@ -292,6 +292,18 @@ textarea { resize: vertical; min-height: 80px; }
 .fixture .fx-teams .t.away { text-align: right; }
 .fixture .fx-score { font-weight: 800; font-variant-numeric: tabular-nums; padding: 3px 9px; border-radius: 8px; background: var(--bg-2); border:1px solid var(--line); min-width: 48px; text-align:center; }
 .fixture .fx-score.win { color: var(--ok); } .fixture .fx-score.loss { color: var(--danger); }
+/* Próximos partidos (programados, sin marcador) */
+.fixture.upcoming .fx-vs { font-weight: 700; font-size: 12px; color: var(--text-dim); padding: 3px 9px; border-radius: 8px; background: var(--bg-2); border: 1px dashed var(--line); min-width: 48px; text-align: center; }
+.fixture .up-date { font-size: 11px; color: var(--text-dim); width: 74px; text-align: right; flex: none; }
+.fixture .up-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+
+/* Banner "próximo partido" en el panel */
+.next-match { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 16px; border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.next-match .nm-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.next-match .nm-left > .ni-icon { color: var(--accent); width: 22px; height: 22px; flex: none; }
+.next-match .nm-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
+.next-match .nm-teams { font-weight: 700; font-size: 16px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.next-match .nm-vs { color: var(--text-dim); font-weight: 600; font-size: 13px; margin: 0 4px; }
 
 /* ===================== Empty states ===================== */
 .empty { text-align: center; padding: 46px 20px; color: var(--text-dim); }
@@ -409,6 +421,9 @@ body.live-active { overflow: hidden; }
 .live-add .ni-icon { width: 26px; height: 26px; }
 .live-add:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -14px color-mix(in srgb, var(--accent) 80%, transparent); }
 .live-add:active { transform: translateY(0); }
+.live-next { text-align: center; color: var(--text-dim); font-size: 14px; margin: -4px 0 2px; }
+.live-next b { color: var(--text); }
+.live-next .ni-icon { width: 15px; height: 15px; vertical-align: -2px; color: var(--accent); }
 .live-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
 .live-stat {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);

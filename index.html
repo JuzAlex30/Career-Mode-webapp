@@ -300,6 +300,18 @@ textarea { resize: vertical; min-height: 80px; }
 .fixture .fx-teams .t.away { text-align: right; }
 .fixture .fx-score { font-weight: 800; font-variant-numeric: tabular-nums; padding: 3px 9px; border-radius: 8px; background: var(--bg-2); border:1px solid var(--line); min-width: 48px; text-align:center; }
 .fixture .fx-score.win { color: var(--ok); } .fixture .fx-score.loss { color: var(--danger); }
+/* Próximos partidos (programados, sin marcador) */
+.fixture.upcoming .fx-vs { font-weight: 700; font-size: 12px; color: var(--text-dim); padding: 3px 9px; border-radius: 8px; background: var(--bg-2); border: 1px dashed var(--line); min-width: 48px; text-align: center; }
+.fixture .up-date { font-size: 11px; color: var(--text-dim); width: 74px; text-align: right; flex: none; }
+.fixture .up-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+
+/* Banner "próximo partido" en el panel */
+.next-match { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 16px; border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.next-match .nm-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.next-match .nm-left > .ni-icon { color: var(--accent); width: 22px; height: 22px; flex: none; }
+.next-match .nm-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
+.next-match .nm-teams { font-weight: 700; font-size: 16px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.next-match .nm-vs { color: var(--text-dim); font-weight: 600; font-size: 13px; margin: 0 4px; }
 
 /* ===================== Empty states ===================== */
 .empty { text-align: center; padding: 46px 20px; color: var(--text-dim); }
@@ -417,6 +429,9 @@ body.live-active { overflow: hidden; }
 .live-add .ni-icon { width: 26px; height: 26px; }
 .live-add:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -14px color-mix(in srgb, var(--accent) 80%, transparent); }
 .live-add:active { transform: translateY(0); }
+.live-next { text-align: center; color: var(--text-dim); font-size: 14px; margin: -4px 0 2px; }
+.live-next b { color: var(--text); }
+.live-next .ni-icon { width: 15px; height: 15px; vertical-align: -2px; color: var(--accent); }
 .live-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
 .live-stat {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
@@ -716,7 +731,7 @@ body.live-active { overflow: hidden; }
      ============================================================ */
   D.ACHIEVEMENTS = [
     { id:"first-match", name:"Primer pitido", emoji:"🟢", tier:"bronze", desc:"Registra tu primer partido.",
-      check:(c)=> (c.matches||[]).length >= 1 },
+      check:(c)=> FC.store.userMatches(c).length >= 1 },
     { id:"first-win", name:"Estreno triunfal", emoji:"✅", tier:"bronze", desc:"Gana tu primer partido.",
       check:(c)=> FC.store.anyMatch(c, m => FC.store.userResult(c,m) === "W") },
     { id:"big-win", name:"Manita y más", emoji:"🖐️", tier:"bronze", desc:"Gana un partido por 5+ goles de diferencia.",
@@ -934,6 +949,7 @@ body.live-active { overflow: hidden; }
     cloud: P('<path d="M7 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17 9.5a3.5 3.5 0 0 1 .5 8.5H7Z"/>'),
     play: P('<path d="M7 5v14l11-7L7 5Z"/>'),
     bandage: P('<path d="m9.5 9.5 5 5M10 14l-1.5 1.5a3.5 3.5 0 0 1-5-5L5 9M14 10l1.5-1.5a3.5 3.5 0 0 1 5 5L19 15"/><rect x="7.5" y="7.5" width="9" height="9" rx="2" transform="rotate(45 12 12)"/>'),
+    calendar: P('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/>'),
   };
   FC.icons = ICONS;
   U.icon = (name) => ICONS[name] || "";
@@ -1249,9 +1265,22 @@ body.live-active { overflow: hidden; }
     const g = S.userGoals(c, m); if (!g) return null;
     return g.for > g.against ? "W" : g.for < g.against ? "L" : "D";
   };
+  // Un partido está "jugado" si tiene marcador numérico válido en ambos lados.
+  // Los partidos PROGRAMADOS (futuros) viven en c.matches sin marcador.
+  S.isPlayed = (m) => {
+    if (!m) return false;
+    const ok = (v) => v !== "" && v != null && isFinite(Number(v));
+    return ok(m.homeScore) && ok(m.awayScore);
+  };
   S.userMatches = (c, seasonId) => (c.matches || [])
-    .filter(m => S.isUserMatch(c, m) && (!seasonId || m.seasonId === seasonId));
+    .filter(m => S.isUserMatch(c, m) && S.isPlayed(m) && (!seasonId || m.seasonId === seasonId));
   S.anyMatch = (c, fn) => S.userMatches(c).some(m => fn(m));
+  // Próximos partidos (programados, aún sin marcador), ordenados por fecha
+  // ascendente; los que no tienen fecha van al final.
+  S.upcomingMatches = (c, seasonId) => (c.matches || [])
+    .filter(m => S.isUserMatch(c, m) && !S.isPlayed(m) && (!seasonId || m.seasonId === seasonId))
+    .sort((a, b) => (a.date ? new Date(a.date).getTime() : Infinity) - (b.date ? new Date(b.date).getTime() : Infinity));
+  S.nextMatch = (c, seasonId) => S.upcomingMatches(c, seasonId)[0] || null;
 
   S.computeStandings = (c, seasonId) => {
     const league = (c.matches || []).filter(m => m.seasonId === seasonId && /liga/i.test(m.competition || ""));
@@ -1260,8 +1289,8 @@ body.live-active { overflow: hidden; }
     const ensure = (name) => (tbl[name] || (tbl[name] = { team: name, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 }));
     (season && season.teams || []).forEach(ensure);
     league.forEach(m => {
+      if (m.home == null || m.away == null || !S.isPlayed(m)) return;
       const hs = Number(m.homeScore), as = Number(m.awayScore);
-      if (m.home == null || m.away == null || isNaN(hs) || isNaN(as)) return;
       const H = ensure(m.home), A = ensure(m.away);
       H.pj++; A.pj++; H.gf += hs; H.gc += as; A.gf += as; A.gc += hs;
       if (hs > as) { H.pg++; A.pp++; H.pts += 3; }
@@ -1527,7 +1556,7 @@ body.live-active { overflow: hidden; }
     const list = [];
     careers.forEach(c => {
       totals.seasons += (c.seasons || []).length;
-      totals.matches += (c.matches || []).length;
+      totals.matches += S.userMatches(c).length;
       totals.trophies += (c.trophies || []).length;
       const titles = (c.trophies || []).filter(t => t.result === "winner").length;
       list.push({ id: c.id, clubName: c.clubName, leagueName: c.leagueName, badgeColor: c.badgeColor, seasons: (c.seasons || []).length, trophies: (c.trophies || []).length, titles });
@@ -2163,15 +2192,24 @@ body.live-active { overflow: hidden; }
   function playersDatalist(c, id) {
     return `<datalist id="${id}">${(c.players || []).map(p => `<option value="${U.esc(p.name)}">`).join("")}</datalist>`;
   }
-  UI.openMatchModal = function (c, existing) {
+  UI.openMatchModal = function (c, existing, opts) {
+    opts = opts || {};
     const season = S.currentSeason(c);
     const teams = (season.teams || []).filter(t => t !== c.clubName);
     const ex = existing || {};
     const isHome = ex.home ? ex.home === c.clubName : true;
     const oppName = ex.home ? (ex.home === c.clubName ? ex.away : ex.home) : "";
+    // Modo: "result" (con marcador) o "schedule" (partido futuro sin jugar).
+    let mode = opts.mode || (existing && !S.isPlayed(existing) ? "schedule" : "result");
     const dlId = "dl-players";
     const body = `
       ${playersDatalist(c, dlId)}
+      <div class="field"><label>Tipo de partido</label>
+        <div class="seg" id="m-mode">
+          <button type="button" data-m="result" class="${mode==="result"?"active":""}">Resultado</button>
+          <button type="button" data-m="schedule" class="${mode==="schedule"?"active":""}">Próximo (sin jugar)</button>
+        </div>
+      </div>
       <div class="field-row">
         <div class="field"><label>Competición</label><select id="m-comp">${D.COMPETITIONS.map(x => `<option ${x === (ex.competition||"Liga") ? "selected" : ""}>${x}</option>`).join("")}</select></div>
         <div class="field"><label>Jornada / ronda</label><input type="text" id="m-round" value="${U.esc(ex.round||"")}" placeholder="p.ej. J5 / Octavos"/></div>
@@ -2189,6 +2227,7 @@ body.live-active { overflow: hidden; }
         <input type="text" id="m-opp" list="dl-teams" value="${U.esc(oppName)}" placeholder="Nombre del rival"/>
         <datalist id="dl-teams">${teams.map(t => `<option value="${U.esc(t)}">`).join("")}</datalist>
       </div>
+      <div id="m-result-fields"${mode==="schedule"?" hidden":""}>
       <div class="field-row">
         <div class="field"><label>Goles ${U.esc(c.clubName)}</label><input type="number" id="m-gf" min="0" value="${ex._gf!=null?ex._gf:""}"/></div>
         <div class="field"><label>Goles rival</label><input type="number" id="m-ga" min="0" value="${ex._ga!=null?ex._ga:""}"/></div>
@@ -2222,8 +2261,12 @@ body.live-active { overflow: hidden; }
           </div>
         </details>`;
       })()}
+      </div>
     `;
-    UI.openModal(existing ? "Editar partido" : "Registrar partido", body,
+    const title = mode === "schedule"
+      ? (existing ? "Editar próximo partido" : "Programar partido")
+      : (existing && !S.isPlayed(existing) ? "Registrar resultado" : existing ? "Editar partido" : "Registrar partido");
+    UI.openModal(title, body,
       `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="m-save"><span class="ni-icon" data-icon="check"></span> Guardar</button>`, { lg: true });
 
     const scorersBox = document.getElementById("m-scorers");
@@ -2247,15 +2290,36 @@ body.live-active { overflow: hidden; }
       document.querySelectorAll("#m-venue button").forEach(x => x.classList.toggle("active", x === b));
     }));
 
+    const resultFields = document.getElementById("m-result-fields");
+    document.querySelectorAll("#m-mode button").forEach(b => b.addEventListener("click", () => {
+      mode = b.dataset.m;
+      document.querySelectorAll("#m-mode button").forEach(x => x.classList.toggle("active", x === b));
+      if (resultFields) resultFields.hidden = (mode === "schedule");
+    }));
+
     document.getElementById("m-save").addEventListener("click", () => {
       const opp = document.getElementById("m-opp").value.trim();
-      const gf = document.getElementById("m-gf").value, ga = document.getElementById("m-ga").value;
       if (!opp) { UI.toast("Indica el rival", "err"); return; }
+      const home = venue === "home" ? c.clubName : opp;
+      const away = venue === "home" ? opp : c.clubName;
+      const base = {
+        seasonId: season.id, competition: document.getElementById("m-comp").value,
+        round: document.getElementById("m-round").value.trim(),
+        date: document.getElementById("m-date").value, home, away,
+      };
+      if (mode === "schedule") {
+        // Partido futuro: sin marcador ni eventos. Si editamos uno ya jugado y lo
+        // pasamos a "Próximo", se limpia su resultado (Object.assign copia undefined).
+        const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined });
+        if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
+        UI.closeModal();
+        UI.toast(existing ? "Partido actualizado" : "Partido programado 📅", "ok");
+        return;
+      }
+      const gf = document.getElementById("m-gf").value, ga = document.getElementById("m-ga").value;
       if (gf === "" || ga === "") { UI.toast("Completa el marcador", "err"); return; }
       const gfN = Number(gf), gaN = Number(ga);
       if (!Number.isFinite(gfN) || !Number.isFinite(gaN) || gfN < 0 || gaN < 0) { UI.toast("El marcador debe ser un número de 0 o más", "err"); return; }
-      const home = venue === "home" ? c.clubName : opp;
-      const away = venue === "home" ? opp : c.clubName;
       const homeScore = venue === "home" ? gfN : gaN;
       const awayScore = venue === "home" ? gaN : gfN;
       const events = [];
@@ -2273,13 +2337,11 @@ body.live-active { overflow: hidden; }
       const stats = {};
       const poss = num("ms-poss"); if (poss != null) stats.possession = poss;
       ["shots", "sot", "xg", "corners", "fouls", "yellow", "red", "pens"].forEach(k => { const p = pairOf(k); if (p) stats[k] = p; });
-      const data = {
-        seasonId: season.id, competition: document.getElementById("m-comp").value,
-        round: document.getElementById("m-round").value.trim(),
-        date: document.getElementById("m-date").value, home, away, homeScore, awayScore,
+      const data = Object.assign({}, base, {
+        homeScore, awayScore,
         events, motm: motm || "", motmId: motmP && motmP.id,
         stats: Object.keys(stats).length ? stats : undefined,
-      };
+      });
       if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
       UI.closeModal();
       UI.toast(existing ? "Partido actualizado" : "Partido registrado ⚽", "ok");
@@ -2306,6 +2368,7 @@ body.live-active { overflow: hidden; }
     const violations = activeChallenges.reduce((s, ch) => s + S.ruleViolations(c, ch).length, 0);
     const fin = S.financeSummary(c, season.id);
     const injuries = S.activeInjuries(c);
+    const nextM = S.nextMatch(c, season.id);
     const finAlert = fin.hasBudget
       ? (fin.remaining < 0
           ? alertRow("coin", "Presupuesto excedido en " + U.money(-fin.remaining), "danger", "finance")
@@ -2326,6 +2389,14 @@ body.live-active { overflow: hidden; }
           <button class="btn btn-primary" id="dash-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button>
         </div>
       </div>
+
+      ${nextM ? `<div class="card next-match" id="dash-next" style="cursor:pointer">
+        <div class="nm-left"><span class="ni-icon" data-icon="calendar"></span>
+          <div><div class="nm-label">Próximo partido${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
+          <div class="nm-teams">${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${U.esc(nextM.away||"—")}</div></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
+      </div>` : ""}
 
       <div class="grid cols-4 keep-2">
         ${statTile("Posición liga", pos ? pos.pos + "º" : "—", pos ? "de " + pos.total : "Registra partidos")}
@@ -2398,6 +2469,11 @@ body.live-active { overflow: hidden; }
 
     document.getElementById("dash-add").addEventListener("click", () => UI.openMatchModal(c));
     document.getElementById("dash-live").addEventListener("click", () => FC.router.go("live"));
+    const nextEl = document.getElementById("dash-next");
+    if (nextEl) {
+      document.getElementById("dash-next-play").addEventListener("click", (e) => { e.stopPropagation(); UI.openMatchModal(c, nextM, { mode: "result" }); });
+      nextEl.addEventListener("click", () => UI.openMatchModal(c, nextM, { mode: "schedule" }));
+    }
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
     const firstMatch = document.getElementById("dash-first-match");
     if (firstMatch) firstMatch.addEventListener("click", () => UI.openMatchModal(c));
@@ -2447,7 +2523,8 @@ body.live-active { overflow: hidden; }
   FC.views.matches = function () {
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
-    const ms = (c.matches || []).filter(m => m.seasonId === season.id).slice().sort((a,b)=> new Date(b.date||0)-new Date(a.date||0));
+    const ms = (c.matches || []).filter(m => m.seasonId === season.id && S.isPlayed(m)).slice().sort((a,b)=> new Date(b.date||0)-new Date(a.date||0));
+    const upcoming = S.upcomingMatches(c, season.id);
     const sa = S.statsAverages(c, season.id);
     const statsCard = sa ? `
       <div class="card">
@@ -2463,16 +2540,28 @@ body.live-active { overflow: hidden; }
         ${sa.pens ? statCompareRow("Penaltis (total)", sa.pens.f, sa.pens.a) : ""}
       </div>` : "";
     UI.mount(`
-      <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados</div></div>
-        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-primary" id="mt-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button></div>
+      <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados${upcoming.length ? " · " + upcoming.length + " programado" + (upcoming.length>1?"s":"") : ""}</div></div>
+        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost" id="mt-sched"><span class="ni-icon" data-icon="calendar"></span> Programar</button><button class="btn btn-primary" id="mt-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button></div>
       </div>
+      ${upcoming.length ? `<div class="card">
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> Próximos partidos <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
+        ${upcoming.map(m => upcomingRow(c, m)).join("")}
+      </div>` : ""}
       ${statsCard}
       <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>
     `);
     document.getElementById("mt-add").addEventListener("click", () => UI.openMatchModal(c));
+    document.getElementById("mt-sched").addEventListener("click", () => UI.openMatchModal(c, null, { mode: "schedule" }));
     content().querySelectorAll("[data-match]").forEach(r => r.addEventListener("click", (e) => {
       if (e.target.closest("[data-del-match]")) return;
       UI.openMatchModal(c, findMatch(c, r.dataset.match));
+    }));
+    content().querySelectorAll("[data-up]").forEach(r => r.addEventListener("click", (e) => {
+      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]")) return;
+      UI.openMatchModal(c, findMatch(c, r.dataset.up), { mode: "schedule" });
+    }));
+    content().querySelectorAll("[data-play-match]").forEach(b => b.addEventListener("click", () => {
+      UI.openMatchModal(c, findMatch(c, b.dataset.playMatch), { mode: "result" });
     }));
     content().querySelectorAll("[data-del-match]").forEach(b => b.addEventListener("click", () => {
       UI.confirm("¿Eliminar este partido?", () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast("Partido eliminado"); }, true);
@@ -2599,6 +2688,7 @@ body.live-active { overflow: hidden; }
     const pos = S.userPosition(c, season.id);
     const ms = S.userMatches(c, season.id).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     const last5 = ms.slice(0, 5).map(m => S.userResult(c, m)).reverse();
+    const nextM = S.nextMatch(c, season.id);
     const n = table.length;
     UI.mount(`
       <div class="live-screen">
@@ -2610,6 +2700,7 @@ body.live-active { overflow: hidden; }
           <button class="btn btn-ghost" id="live-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
         </div>
 
+        ${nextM ? `<div class="live-next"><span class="ni-icon" data-icon="calendar"></span> Próximo: <b>${U.esc(nextM.home||"—")} vs ${U.esc(nextM.away||"—")}</b>${nextM.competition?` · ${U.esc(nextM.competition)}`:""}${nextM.date?` · ${U.fmtDate(nextM.date)}`:""}</div>` : ""}
         <button class="live-add" id="live-add"><span class="ni-icon" data-icon="plus"></span> Registrar resultado</button>
 
         <div class="live-stats">
@@ -2635,7 +2726,7 @@ body.live-active { overflow: hidden; }
       </div>
     `);
     document.getElementById("live-exit").addEventListener("click", () => FC.router.go("dashboard"));
-    document.getElementById("live-add").addEventListener("click", () => UI.openMatchModal(c));
+    document.getElementById("live-add").addEventListener("click", () => UI.openMatchModal(c, nextM || undefined, nextM ? { mode: "result" } : undefined));
   };
 
   /* ============================================================
@@ -3924,6 +4015,20 @@ body.live-active { overflow: hidden; }
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
         <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${U.esc(m.away)}</span></div>
       ${withDelete ? `<button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>` : `<span class="faint" style="font-size:11px;width:60px;text-align:right">${U.fmtDate(m.date)}</span>`}</div>`;
+  }
+  function upcomingRow(c, m) {
+    const home = m.home === c.clubName, away = m.away === c.clubName;
+    return `<div class="fixture upcoming" data-up="${m.id}" style="cursor:pointer">
+      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
+      <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${U.esc(m.home||"—")}</span>
+        <span class="fx-vs">vs</span>
+        <span class="t away" style="${away?"font-weight:700":""}">${U.esc(m.away||"—")}</span></div>
+      <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
+      <div class="up-actions">
+        <button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>
+        <button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>
+      </div>
+    </div>`;
   }
   function findMatch(c, id) { return (c.matches || []).find(m => m.id === id); }
   function seasonSelect(c) {

@@ -229,7 +229,7 @@
      ============================================================ */
   D.ACHIEVEMENTS = [
     { id:"first-match", name:"Primer pitido", emoji:"🟢", tier:"bronze", desc:"Registra tu primer partido.",
-      check:(c)=> (c.matches||[]).length >= 1 },
+      check:(c)=> FC.store.userMatches(c).length >= 1 },
     { id:"first-win", name:"Estreno triunfal", emoji:"✅", tier:"bronze", desc:"Gana tu primer partido.",
       check:(c)=> FC.store.anyMatch(c, m => FC.store.userResult(c,m) === "W") },
     { id:"big-win", name:"Manita y más", emoji:"🖐️", tier:"bronze", desc:"Gana un partido por 5+ goles de diferencia.",
