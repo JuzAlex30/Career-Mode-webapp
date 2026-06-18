@@ -383,6 +383,56 @@ textarea { resize: vertical; min-height: 80px; }
 }
 @media (min-width: 861px) { .topbar { display: none; } }
 
+/* ===================== Modo en vivo ===================== */
+/* Pantalla a pantalla completa (z-index entre sidebar=40 y modal=100, así el
+   modal de registrar resultado aparece por encima). Pensada para usar mientras
+   juegas: botón gigante, tabla grande y racha legibles de un vistazo. */
+body.live-active { overflow: hidden; }
+.live-screen {
+  position: fixed; inset: 0; z-index: 60;
+  background: var(--bg);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 22px clamp(16px, 5vw, 48px) 64px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.live-screen > * { width: 100%; max-width: 760px; margin-inline: auto; }
+.live-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.live-club { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.live-club .career-badge { width: 46px; height: 46px; border-radius: 12px; font-size: 16px; flex: none; }
+.live-club-meta { display: flex; flex-direction: column; min-width: 0; }
+.live-club-meta b { font-size: 18px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-club-meta small { color: var(--text-dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-add {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  width: 100%; max-width: 760px; margin-inline: auto;
+  padding: 26px; border: none; border-radius: var(--radius-lg); cursor: pointer;
+  font-family: var(--font); font-size: 22px; font-weight: 800; letter-spacing: .2px;
+  color: #03110c;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 62%, var(--accent-2)));
+  box-shadow: 0 14px 34px -14px color-mix(in srgb, var(--accent) 70%, transparent);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.live-add .ni-icon { width: 26px; height: 26px; }
+.live-add:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -14px color-mix(in srgb, var(--accent) 80%, transparent); }
+.live-add:active { transform: translateY(0); }
+.live-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+.live-stat {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 12px; display: flex; flex-direction: column; gap: 5px; align-items: center; text-align: center;
+}
+.ls-val { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+.ls-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); font-weight: 700; }
+.ls-form { display: flex; gap: 5px; align-items: center; min-height: 30px; }
+.live-screen .pill-w, .live-screen .pill-d, .live-screen .pill-l { width: 30px; height: 30px; font-size: 14px; border-radius: 8px; }
+.live-table table.tbl { font-size: 15px; min-width: 360px; }
+.live-table table.tbl th, .live-table table.tbl td { padding: 13px 14px; }
+/* En móvil dejamos que las 5 columnas quepan (Pts es la clave de un vistazo). */
+@media (max-width: 520px) {
+  .live-screen { padding-left: 12px; padding-right: 12px; }
+  .live-table table.tbl { min-width: 0; font-size: 14px; }
+  .live-table table.tbl th, .live-table table.tbl td { padding: 11px 9px; }
+}
+
   </style>
 </head>
 <body data-theme="dark">
@@ -877,6 +927,7 @@ textarea { resize: vertical; min-height: 80px; }
     news: P('<path d="M4 5h13v14H5a1 1 0 0 1-1-1V5Z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M7 9h7M7 12h7M7 15h5"/>'),
     dice: P('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1.3"/><circle cx="15.5" cy="8.5" r="1.3"/><circle cx="8.5" cy="15.5" r="1.3"/><circle cx="15.5" cy="15.5" r="1.3"/><circle cx="12" cy="12" r="1.3"/>'),
     cloud: P('<path d="M7 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17 9.5a3.5 3.5 0 0 1 .5 8.5H7Z"/>'),
+    play: P('<path d="M7 5v14l11-7L7 5Z"/>'),
   };
   FC.icons = ICONS;
   U.icon = (name) => ICONS[name] || "";
@@ -2255,6 +2306,7 @@ textarea { resize: vertical; min-height: 80px; }
         </div>
         <div class="flex gap center wrap">
           ${seasonSelect(c)}
+          <button class="btn btn-ghost" id="dash-live"><span class="ni-icon" data-icon="play"></span> Modo en vivo</button>
           <button class="btn btn-primary" id="dash-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button>
         </div>
       </div>
@@ -2306,6 +2358,7 @@ textarea { resize: vertical; min-height: 80px; }
     renderObjectives(c, season);
 
     document.getElementById("dash-add").addEventListener("click", () => UI.openMatchModal(c));
+    document.getElementById("dash-live").addEventListener("click", () => FC.router.go("live"));
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
     fx.querySelectorAll("[data-match]").forEach(r => r.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, r.dataset.match))));
   };
@@ -2490,6 +2543,59 @@ textarea { resize: vertical; min-height: 80px; }
     const left = total - ri; if (left === 1) return "Final"; if (left === 2) return "Semifinal"; if (left === 3) return "Cuartos"; if (left === 4) return "Octavos";
     return "Ronda " + (ri + 1);
   }
+
+  /* ============================================================
+     MODO EN VIVO — pantalla completa para usar MIENTRAS juegas.
+     Botón gigante para registrar, tabla grande y racha. 100% local.
+     Es una ruta normal: tras registrar, S.emit re-renderiza y todo se
+     actualiza en el sitio (sin salir del modo).
+     ============================================================ */
+  FC.views.live = function () {
+    const c = S.getActiveCareer();
+    const season = S.currentSeason(c);
+    const table = S.computeStandings(c, season.id);
+    const sum = S.seasonSummary(c, season);
+    const pos = S.userPosition(c, season.id);
+    const ms = S.userMatches(c, season.id).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    const last5 = ms.slice(0, 5).map(m => S.userResult(c, m)).reverse();
+    const n = table.length;
+    UI.mount(`
+      <div class="live-screen">
+        <div class="live-top">
+          <div class="live-club">
+            <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
+            <div class="live-club-meta"><b>${U.esc(c.clubName)}</b><small>${U.esc(season.leagueName || c.leagueName)} · ${U.esc(season.label)}</small></div>
+          </div>
+          <button class="btn btn-ghost" id="live-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
+        </div>
+
+        <button class="live-add" id="live-add"><span class="ni-icon" data-icon="plus"></span> Registrar resultado</button>
+
+        <div class="live-stats">
+          <div class="live-stat"><span class="ls-val">${pos ? pos.pos + "º" : "—"}</span><span class="ls-lbl">Posición</span></div>
+          <div class="live-stat"><span class="ls-val">${sum.points}</span><span class="ls-lbl">Puntos</span></div>
+          <div class="live-stat"><span class="ls-val">${sum.w}-${sum.d}-${sum.l}</span><span class="ls-lbl">V·E·D</span></div>
+          <div class="live-stat"><span class="ls-form">${last5.length ? CH.formBar(last5) : '<span class="faint">—</span>'}</span><span class="ls-lbl">Forma</span></div>
+        </div>
+
+        <div class="card tight live-table">
+          <div class="table-wrap"><table class="tbl"><thead><tr>
+            <th>#</th><th>Equipo</th><th class="num">PJ</th><th class="num">DG</th><th class="num">Pts</th>
+          </tr></thead><tbody>
+          ${table.length ? table.map((r, i) => {
+            const zone = i < 4 ? "zone-ucl" : i < 6 ? "zone-uel" : i >= n - 3 ? "zone-rel" : "";
+            return `<tr class="${r.team === c.clubName ? "is-user" : ""}">
+              <td><span class="pos-cell"><span class="zone-bar ${zone}"></span>${i + 1}</span></td>
+              <td>${U.esc(r.team)}</td><td class="num">${r.pj}</td>
+              <td class="num">${(r.gf - r.gc >= 0 ? "+" : "") + (r.gf - r.gc)}</td><td class="num"><b>${r.pts}</b></td></tr>`;
+          }).join("") : `<tr><td colspan="5"><div class="empty" style="padding:26px"><div class="emoji">📊</div><p>Registra partidos de Liga para ver la tabla en vivo.</p></div></td></tr>`}
+          </tbody></table></div>
+        </div>
+      </div>
+    `);
+    document.getElementById("live-exit").addEventListener("click", () => FC.router.go("dashboard"));
+    document.getElementById("live-add").addEventListener("click", () => UI.openMatchModal(c));
+  };
 
   /* ============================================================
      PLANTILLA
@@ -3765,8 +3871,8 @@ textarea { resize: vertical; min-height: 80px; }
 (function () {
   const { util: U, store: S, router: R, views: V, ui: UI } = FC;
   const App = {};
-  const ROUTES = ["dashboard","matches","standings","squad","development","youth","finance","challenges","story","history","hall","scouting","tools","cloud","settings"];
-  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes" };
+  const ROUTES = ["dashboard","matches","standings","squad","development","youth","finance","challenges","story","history","hall","scouting","tools","cloud","settings","live"];
+  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes", live:"Modo en vivo" };
 
   // register routes (guard: require active career)
   ROUTES.forEach(name => R.register(name, () => {
@@ -3795,6 +3901,8 @@ textarea { resize: vertical; min-height: 80px; }
     U.els("#mainNav .nav-item, .nav-bottom .nav-item").forEach(a => a.classList.toggle("active", a.dataset.route === cur));
     const tt = document.getElementById("topbarTitle"); if (tt) tt.textContent = TITLES[cur] || "Carrera FC";
     document.body.classList.remove("nav-open");
+    // Modo en vivo: pantalla a pantalla completa (oculta chrome y bloquea scroll de fondo).
+    document.body.classList.toggle("live-active", cur === "live");
   };
 
   function careerSwitcher() {
@@ -3913,8 +4021,13 @@ textarea { resize: vertical; min-height: 80px; }
     // re-render on store change
     let pending = false;
     S.onChange(() => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; if (S.getActiveCareer()) { R.render(); App.refreshChrome(); } }); });
-    // keyboard: Esc closes modal
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") UI.closeModal(); });
+    // keyboard: Esc cierra el modal; si no hay modal y estás en Modo en vivo, sale a Panel.
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const ov = document.getElementById("modalOverlay");
+      if (ov && !ov.hidden) { UI.closeModal(); return; }
+      if (R.current === "live") R.go("dashboard");
+    });
   }
 
   FC.app = App;

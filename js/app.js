@@ -4,8 +4,8 @@
 (function () {
   const { util: U, store: S, router: R, views: V, ui: UI } = FC;
   const App = {};
-  const ROUTES = ["dashboard","matches","standings","squad","development","youth","finance","challenges","story","history","hall","scouting","tools","cloud","settings"];
-  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes" };
+  const ROUTES = ["dashboard","matches","standings","squad","development","youth","finance","challenges","story","history","hall","scouting","tools","cloud","settings","live"];
+  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes", live:"Modo en vivo" };
 
   // register routes (guard: require active career)
   ROUTES.forEach(name => R.register(name, () => {
@@ -34,6 +34,8 @@
     U.els("#mainNav .nav-item, .nav-bottom .nav-item").forEach(a => a.classList.toggle("active", a.dataset.route === cur));
     const tt = document.getElementById("topbarTitle"); if (tt) tt.textContent = TITLES[cur] || "Carrera FC";
     document.body.classList.remove("nav-open");
+    // Modo en vivo: pantalla a pantalla completa (oculta chrome y bloquea scroll de fondo).
+    document.body.classList.toggle("live-active", cur === "live");
   };
 
   function careerSwitcher() {
@@ -152,8 +154,13 @@
     // re-render on store change
     let pending = false;
     S.onChange(() => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; if (S.getActiveCareer()) { R.render(); App.refreshChrome(); } }); });
-    // keyboard: Esc closes modal
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") UI.closeModal(); });
+    // keyboard: Esc cierra el modal; si no hay modal y estás en Modo en vivo, sale a Panel.
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const ov = document.getElementById("modalOverlay");
+      if (ov && !ov.hidden) { UI.closeModal(); return; }
+      if (R.current === "live") R.go("dashboard");
+    });
   }
 
   FC.app = App;

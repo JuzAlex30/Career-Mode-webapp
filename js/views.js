@@ -407,6 +407,7 @@
         </div>
         <div class="flex gap center wrap">
           ${seasonSelect(c)}
+          <button class="btn btn-ghost" id="dash-live"><span class="ni-icon" data-icon="play"></span> Modo en vivo</button>
           <button class="btn btn-primary" id="dash-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button>
         </div>
       </div>
@@ -458,6 +459,7 @@
     renderObjectives(c, season);
 
     document.getElementById("dash-add").addEventListener("click", () => UI.openMatchModal(c));
+    document.getElementById("dash-live").addEventListener("click", () => FC.router.go("live"));
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
     fx.querySelectorAll("[data-match]").forEach(r => r.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, r.dataset.match))));
   };
@@ -642,6 +644,59 @@
     const left = total - ri; if (left === 1) return "Final"; if (left === 2) return "Semifinal"; if (left === 3) return "Cuartos"; if (left === 4) return "Octavos";
     return "Ronda " + (ri + 1);
   }
+
+  /* ============================================================
+     MODO EN VIVO — pantalla completa para usar MIENTRAS juegas.
+     Botón gigante para registrar, tabla grande y racha. 100% local.
+     Es una ruta normal: tras registrar, S.emit re-renderiza y todo se
+     actualiza en el sitio (sin salir del modo).
+     ============================================================ */
+  FC.views.live = function () {
+    const c = S.getActiveCareer();
+    const season = S.currentSeason(c);
+    const table = S.computeStandings(c, season.id);
+    const sum = S.seasonSummary(c, season);
+    const pos = S.userPosition(c, season.id);
+    const ms = S.userMatches(c, season.id).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    const last5 = ms.slice(0, 5).map(m => S.userResult(c, m)).reverse();
+    const n = table.length;
+    UI.mount(`
+      <div class="live-screen">
+        <div class="live-top">
+          <div class="live-club">
+            <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
+            <div class="live-club-meta"><b>${U.esc(c.clubName)}</b><small>${U.esc(season.leagueName || c.leagueName)} · ${U.esc(season.label)}</small></div>
+          </div>
+          <button class="btn btn-ghost" id="live-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
+        </div>
+
+        <button class="live-add" id="live-add"><span class="ni-icon" data-icon="plus"></span> Registrar resultado</button>
+
+        <div class="live-stats">
+          <div class="live-stat"><span class="ls-val">${pos ? pos.pos + "º" : "—"}</span><span class="ls-lbl">Posición</span></div>
+          <div class="live-stat"><span class="ls-val">${sum.points}</span><span class="ls-lbl">Puntos</span></div>
+          <div class="live-stat"><span class="ls-val">${sum.w}-${sum.d}-${sum.l}</span><span class="ls-lbl">V·E·D</span></div>
+          <div class="live-stat"><span class="ls-form">${last5.length ? CH.formBar(last5) : '<span class="faint">—</span>'}</span><span class="ls-lbl">Forma</span></div>
+        </div>
+
+        <div class="card tight live-table">
+          <div class="table-wrap"><table class="tbl"><thead><tr>
+            <th>#</th><th>Equipo</th><th class="num">PJ</th><th class="num">DG</th><th class="num">Pts</th>
+          </tr></thead><tbody>
+          ${table.length ? table.map((r, i) => {
+            const zone = i < 4 ? "zone-ucl" : i < 6 ? "zone-uel" : i >= n - 3 ? "zone-rel" : "";
+            return `<tr class="${r.team === c.clubName ? "is-user" : ""}">
+              <td><span class="pos-cell"><span class="zone-bar ${zone}"></span>${i + 1}</span></td>
+              <td>${U.esc(r.team)}</td><td class="num">${r.pj}</td>
+              <td class="num">${(r.gf - r.gc >= 0 ? "+" : "") + (r.gf - r.gc)}</td><td class="num"><b>${r.pts}</b></td></tr>`;
+          }).join("") : `<tr><td colspan="5"><div class="empty" style="padding:26px"><div class="emoji">📊</div><p>Registra partidos de Liga para ver la tabla en vivo.</p></div></td></tr>`}
+          </tbody></table></div>
+        </div>
+      </div>
+    `);
+    document.getElementById("live-exit").addEventListener("click", () => FC.router.go("dashboard"));
+    document.getElementById("live-add").addEventListener("click", () => UI.openMatchModal(c));
+  };
 
   /* ============================================================
      PLANTILLA

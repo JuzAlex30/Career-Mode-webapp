@@ -374,3 +374,53 @@ textarea { resize: vertical; min-height: 80px; }
   .field-row, .field-row.three { grid-template-columns: 1fr; }
 }
 @media (min-width: 861px) { .topbar { display: none; } }
+
+/* ===================== Modo en vivo ===================== */
+/* Pantalla a pantalla completa (z-index entre sidebar=40 y modal=100, así el
+   modal de registrar resultado aparece por encima). Pensada para usar mientras
+   juegas: botón gigante, tabla grande y racha legibles de un vistazo. */
+body.live-active { overflow: hidden; }
+.live-screen {
+  position: fixed; inset: 0; z-index: 60;
+  background: var(--bg);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 22px clamp(16px, 5vw, 48px) 64px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.live-screen > * { width: 100%; max-width: 760px; margin-inline: auto; }
+.live-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.live-club { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.live-club .career-badge { width: 46px; height: 46px; border-radius: 12px; font-size: 16px; flex: none; }
+.live-club-meta { display: flex; flex-direction: column; min-width: 0; }
+.live-club-meta b { font-size: 18px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-club-meta small { color: var(--text-dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-add {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  width: 100%; max-width: 760px; margin-inline: auto;
+  padding: 26px; border: none; border-radius: var(--radius-lg); cursor: pointer;
+  font-family: var(--font); font-size: 22px; font-weight: 800; letter-spacing: .2px;
+  color: #03110c;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 62%, var(--accent-2)));
+  box-shadow: 0 14px 34px -14px color-mix(in srgb, var(--accent) 70%, transparent);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.live-add .ni-icon { width: 26px; height: 26px; }
+.live-add:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -14px color-mix(in srgb, var(--accent) 80%, transparent); }
+.live-add:active { transform: translateY(0); }
+.live-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+.live-stat {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 12px; display: flex; flex-direction: column; gap: 5px; align-items: center; text-align: center;
+}
+.ls-val { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+.ls-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); font-weight: 700; }
+.ls-form { display: flex; gap: 5px; align-items: center; min-height: 30px; }
+.live-screen .pill-w, .live-screen .pill-d, .live-screen .pill-l { width: 30px; height: 30px; font-size: 14px; border-radius: 8px; }
+.live-table table.tbl { font-size: 15px; min-width: 360px; }
+.live-table table.tbl th, .live-table table.tbl td { padding: 13px 14px; }
+/* En móvil dejamos que las 5 columnas quepan (Pts es la clave de un vistazo). */
+@media (max-width: 520px) {
+  .live-screen { padding-left: 12px; padding-right: 12px; }
+  .live-table table.tbl { min-width: 0; font-size: 14px; }
+  .live-table table.tbl th, .live-table table.tbl td { padding: 11px 9px; }
+}
