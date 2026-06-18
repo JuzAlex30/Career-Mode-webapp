@@ -1723,6 +1723,8 @@ textarea { resize: vertical; min-height: 80px; }
   };
   // Ranking global (lectura pública con apikey, sin sesión): carreras publicadas ordenadas por títulos.
   C.leaderboard = (limit) => api("/rest/v1/shared_careers?select=share_id,owner_id,club,league,manager,titles,best_points,summary&order=titles.desc,best_points.desc&limit=" + (parseInt(limit, 10) || 20));
+  // Feed de actividad (lectura pública): lo último publicado por la comunidad, ordenado por fecha.
+  C.activityFeed = (limit) => api("/rest/v1/shared_careers?select=share_id,owner_id,club,league,manager,titles,best_points,summary,created_at&order=created_at.desc&limit=" + (parseInt(limit, 10) || 30));
 
   /* ---------- perfil público del manager (todas sus carreras publicadas) ---------- */
   C.profileCareers = (ownerId, cfgOverride) => apiWith(cfgOverride || C.config(), "/rest/v1/shared_careers?select=*&owner_id=eq." + encodeURIComponent(String(ownerId || "").trim()) + "&order=titles.desc,best_points.desc", { method: "GET" });
@@ -1963,6 +1965,25 @@ textarea { resize: vertical; min-height: 80px; }
       <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.safeColor(null, U.colorFor(r.club || ""))}">${U.initials(r.club || "?")}</span><div class="lr-main"><b>${U.esc(r.club || "Club")}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} títulos</small></div></div>`).join("")}</div>`;
     U.hydrateIcons(box);
     box.querySelectorAll("[data-pf]").forEach(el => el.addEventListener("click", () => UI.openSharedModal(rows[+el.dataset.pf], cfg)));
+  };
+  // Tarjeta compacta del feed de actividad. row de C.activityFeed; datos remotos escapados con U.esc.
+  UI.activityCardHTML = (row, i) => {
+    const s = row.summary || {};
+    const titles = s.titlesList || [];
+    const chips = [];
+    titles.slice(0, 3).forEach(t => chips.push(`<span class="chip gold">🏆 ${U.esc(t.competition || "")}${t.season ? " " + U.esc(t.season) : ""}</span>`));
+    if (titles.length > 3) chips.push(`<span class="chip">+${titles.length - 3}</span>`);
+    if (Number(s.bestPoints) > 0) chips.push(`<span class="chip">📈 ${Number(s.bestPoints) || 0} pts</span>`);
+    if (s.topScorer && s.topScorer.name) chips.push(`<span class="chip">⚽ ${U.esc(s.topScorer.name)} · ${Number(s.topScorer.goals) || 0}</span>`);
+    const who = (s.manager && String(s.manager).trim()) ? U.esc(s.manager) : "Un mánager";
+    const club = U.esc(row.club || "su club");
+    const headline = (Number(row.titles) || 0) > 0 ? `${who} presume de <b>${club}</b>` : `${who} empieza su aventura con <b>${club}</b>`;
+    return `<div class="list-row" data-feed="${i}" style="cursor:pointer;align-items:flex-start">
+      <span class="career-badge" style="background:${U.safeColor(null, U.colorFor(row.club || ""))}">${U.initials(row.club || "?")}</span>
+      <div class="lr-main"><div>${headline}</div>
+        <small class="faint">${U.esc(row.league || "")}${row.created_at ? " · " + U.fmtDate(row.created_at) : ""}</small>
+        ${chips.length ? `<div class="cc-rules" style="margin-top:6px">${chips.join("")}</div>` : ""}
+      </div></div>`;
   };
   FC.ui = UI;
 
@@ -3402,6 +3423,7 @@ textarea { resize: vertical; min-height: 80px; }
      COMUNIDAD / NUBE (Fase 1: cuentas + sync)
      ============================================================ */
   let cloudCodeSent = false, cloudPendingEmail = "";
+  let cloudFeedRows = null, cloudFeedLoading = false; // caché del feed (módulo: sobrevive a los re-render de S.emit)
   FC.views.cloud = function () {
     const CL = FC.cloud, cfg = CL.config(), configured = CL.isConfigured(), logged = CL.isLoggedIn();
     const rerender = () => FC.views.cloud();
@@ -3481,6 +3503,12 @@ textarea { resize: vertical; min-height: 80px; }
       </div>`;
     }
     if (configured) body += `
+      <div class="section-title">Actividad reciente</div>
+      <div class="card">
+        <div class="flex between center" style="gap:8px"><p class="faint" style="font-size:12px;margin:0">Lo último que la comunidad ha publicado. Pulsa una tarjeta para ver la carrera.</p>
+          <button class="btn btn-ghost btn-sm" id="cl-feed-refresh"><span class="ni-icon" data-icon="news"></span> Actualizar</button></div>
+        <div id="cl-feed" style="margin-top:12px"><p class="faint">Cargando…</p></div>
+      </div>
       <div class="section-title">Ranking global · Hall of Fame</div>
       <div class="card">
         <p class="faint" style="font-size:12px;margin-top:0">Las carreras que la comunidad ha publicado, ordenadas por títulos. Pulsa una para ver su resumen.</p>
@@ -3563,6 +3591,27 @@ textarea { resize: vertical; min-height: 80px; }
           btn.disabled = false;
         } catch (e) { UI.toast(e.message || "Error al cargar", "err"); btn.disabled = false; }
       });
+    }
+    if (configured && $("cl-feed")) {
+      const renderFeed = () => {
+        const box = $("cl-feed"); if (!box) return;
+        const rows = cloudFeedRows || [];
+        box.innerHTML = rows.length
+          ? `<div class="list">${rows.map((r, i) => UI.activityCardHTML(r, i)).join("")}</div>`
+          : `<p class="faint">Aún no hay actividad. ¡Publica tu carrera y estrena el feed!</p>`;
+        U.hydrateIcons(box);
+        box.querySelectorAll("[data-feed]").forEach(el => el.addEventListener("click", () => { const r = cloudFeedRows && cloudFeedRows[+el.dataset.feed]; if (r) UI.openSharedModal(r, null); }));
+      };
+      const loadFeed = async () => {
+        if (cloudFeedLoading) return;
+        cloudFeedLoading = true;
+        const box = $("cl-feed"); if (box && !cloudFeedRows) box.innerHTML = `<p class="faint">Cargando…</p>`;
+        try { cloudFeedRows = (await CL.activityFeed(30)) || []; }
+        catch (e) { if (!cloudFeedRows) { const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar la actividad.</p>`; } }
+        finally { cloudFeedLoading = false; if (cloudFeedRows) renderFeed(); }
+      };
+      if (cloudFeedRows) renderFeed(); else loadFeed();
+      if ($("cl-feed-refresh")) $("cl-feed-refresh").addEventListener("click", () => { cloudFeedRows = null; loadFeed(); });
     }
   };
 

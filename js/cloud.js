@@ -163,6 +163,8 @@
   };
   // Ranking global (lectura pública con apikey, sin sesión): carreras publicadas ordenadas por títulos.
   C.leaderboard = (limit) => api("/rest/v1/shared_careers?select=share_id,owner_id,club,league,manager,titles,best_points,summary&order=titles.desc,best_points.desc&limit=" + (parseInt(limit, 10) || 20));
+  // Feed de actividad (lectura pública): lo último publicado por la comunidad, ordenado por fecha.
+  C.activityFeed = (limit) => api("/rest/v1/shared_careers?select=share_id,owner_id,club,league,manager,titles,best_points,summary,created_at&order=created_at.desc&limit=" + (parseInt(limit, 10) || 30));
 
   /* ---------- perfil público del manager (todas sus carreras publicadas) ---------- */
   C.profileCareers = (ownerId, cfgOverride) => apiWith(cfgOverride || C.config(), "/rest/v1/shared_careers?select=*&owner_id=eq." + encodeURIComponent(String(ownerId || "").trim()) + "&order=titles.desc,best_points.desc", { method: "GET" });
