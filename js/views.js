@@ -300,6 +300,10 @@
       <div id="m-scorers"></div>
       <button type="button" class="btn btn-ghost btn-sm" id="m-add-scorer"><span class="ni-icon" data-icon="plus"></span> Añadir gol</button>
       <div class="field" style="margin-top:16px"><label>Jugador del partido (MOTM)</label><input type="text" id="m-motm" list="${dlId}" value="${U.esc(ex.motm||"")}" placeholder="Nombre"/></div>
+      <div class="field" style="margin-top:12px"><label>Formación utilizada (opcional)</label>
+        <select id="m-formation"><option value="">— Sin especificar —</option>
+          ${Object.keys(FC.data.FORMATIONS||{}).map(f => `<option value="${U.esc(f)}"${ex.formation===f?' selected':''}>▶ ${U.esc(f)}</option>`).join("")}
+        </select></div>
       <details style="margin-top:16px">
         <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Valoraciones de jugadores (opcional)</summary>
         <div style="margin-top:8px">
@@ -400,7 +404,7 @@
       if (mode === "schedule") {
         // Partido futuro: sin marcador ni eventos. Si editamos uno ya jugado y lo
         // pasamos a "Próximo", se limpia su resultado (Object.assign copia undefined).
-        const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined, ratings: undefined });
+        const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined, ratings: undefined, formation: undefined });
         if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
         UI.closeModal();
         UI.toast(existing ? "Partido actualizado" : "Partido programado 📅", "ok");
@@ -421,6 +425,7 @@
       });
       const motm = document.getElementById("m-motm").value.trim();
       const motmP = (c.players||[]).find(x => x.name === motm);
+      const formation = document.getElementById("m-formation").value.trim() || undefined;
       // stats avanzadas (opcional, centradas en tu equipo). Vacío total → no se guarda.
       const num = (id) => { const el = document.getElementById(id); const val = el ? el.value.trim() : ""; if (val === "") return null; const n = Number(val); return (Number.isFinite(n) && n >= 0) ? n : null; };
       const pairOf = (key) => { const f = num("ms-" + key + "-f"), a = num("ms-" + key + "-a"); return (f == null && a == null) ? null : [f == null ? 0 : f, a == null ? 0 : a]; };
@@ -446,6 +451,7 @@
         events, motm: motm || "", motmId: motmP && motmP.id,
         stats: Object.keys(stats).length ? stats : undefined,
         ratings: ratings.length ? ratings : undefined,
+        formation,
       });
       if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
       UI.closeModal();
@@ -2194,6 +2200,18 @@
         <td class="num">${sm.gf}:${sm.ga}</td><td class="num">${sm.trophies}</td></tr>`).join("")}
       </tbody></table></div></div>
 
+      ${(function(){
+        const played = S.userMatches(c).filter(m => m.formation);
+        if (!played.length) return "";
+        const counts = {};
+        played.forEach(m => { counts[m.formation] = (counts[m.formation] || 0) + 1; });
+        const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+        const total = played.length;
+        return `<div class="section-title">Formaciones más usadas</div>
+          <div class="card tight"><div class="table-wrap"><table class="tbl"><thead><tr><th>Formación</th><th class="num">Partidos</th><th class="num">% uso</th></tr></thead><tbody>
+          ${sorted.map(([f, n]) => `<tr><td><b>${U.esc(f)}</b></td><td class="num">${n}</td><td class="num faint">${Math.round(n/total*100)}%</td></tr>`).join("")}
+          </tbody></table></div></div>`;
+      })()}
       <div class="section-title">Diario de la carrera</div>
       <div class="card"><button class="btn btn-ghost btn-sm mb" id="hs-note"><span class="ni-icon" data-icon="book"></span> Nueva entrada</button>
         <div id="hs-notes"></div></div>
@@ -2657,7 +2675,7 @@
     const g = S.userGoals(c, m); const r = S.userResult(c, m);
     const cls = r === "W" ? "win" : r === "L" ? "loss" : "";
     return `<div class="fixture" data-match="${m.id}" style="cursor:pointer">
-      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}</span>
+      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}${m.formation ? ` <span class="chip" style="font-size:10px;padding:1px 5px;opacity:.75">${U.esc(m.formation)}</span>` : ""}</span>
       <div class="fx-teams"><span class="t ${m.home===c.clubName?"":""}" style="${m.home===c.clubName?"font-weight:700":""}">${U.esc(m.home)}</span>
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
         <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${U.esc(m.away)}</span></div>
