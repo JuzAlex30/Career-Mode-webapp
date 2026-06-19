@@ -254,6 +254,13 @@
     const season = S.currentSeason(c);
     const teams = (season.teams || []).filter(t => t !== c.clubName);
     const ex = existing || {};
+    // Prefill de goles al editar: derivar del marcador real (perspectiva del usuario)
+    // si el caller no pasó _gf/_ga. NO se muta el partido (se usan variables locales).
+    let gfVal = ex._gf, gaVal = ex._ga;
+    if ((gfVal == null || gaVal == null) && existing && S.isPlayed(existing)) {
+      const g = S.userGoals(c, existing);
+      if (g) { if (gfVal == null) gfVal = g.for; if (gaVal == null) gaVal = g.against; }
+    }
     const isHome = ex.home ? ex.home === c.clubName : true;
     const oppName = ex.home ? (ex.home === c.clubName ? ex.away : ex.home) : "";
     // Modo: "result" (con marcador) o "schedule" (partido futuro sin jugar).
@@ -286,8 +293,8 @@
       </div>
       <div id="m-result-fields"${mode==="schedule"?" hidden":""}>
       <div class="field-row">
-        <div class="field"><label>Goles ${U.esc(c.clubName)}</label><input type="number" id="m-gf" min="0" value="${ex._gf!=null?ex._gf:""}"/></div>
-        <div class="field"><label>Goles rival</label><input type="number" id="m-ga" min="0" value="${ex._ga!=null?ex._ga:""}"/></div>
+        <div class="field"><label>Goles ${U.esc(c.clubName)}</label><input type="number" id="m-gf" min="0" value="${gfVal!=null?gfVal:""}"/></div>
+        <div class="field"><label>Goles rival</label><input type="number" id="m-ga" min="0" value="${gaVal!=null?gaVal:""}"/></div>
       </div>
       <div class="section-title" style="margin:8px 2px">Goleadores de tu equipo</div>
       <div id="m-scorers"></div>
@@ -758,6 +765,28 @@
          ${allAway.length < 5 ? '<div class="far-note faint">Muestra pequeña — el patrón se afinará con más desplazamientos.</div>' : ""}
          ${farInsight ? `<div class="far-insight">${farInsight}</div>` : ""}`;
 
+    // Diario de viaje: una postal coleccionable por desplazamiento JUGADO de la temporada,
+    // cronológica (playedAway ya viene ordenado asc). El badge V/E/D desambigua el marcador.
+    const RESLAB = { W: "V", D: "E", L: "D" };
+    const postcard = (m) => {
+      const cc = FC.trips.cityOf(m.home);
+      const km = Math.round(FC.trips.distance(home, cc));
+      const continental = (D.CONTINENTAL || []).some(x => (m.competition || "").includes(x));
+      const avion = continental || km >= 300;
+      const res = S.userResult(c, m);
+      const resWord = res === "W" ? "victoria" : res === "D" ? "empate" : res === "L" ? "derrota" : "";
+      return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="Viaje a ${U.esc(cc.city)}${resWord ? ", " + resWord : ""}">
+        <div class="pc-top"><span class="pc-stamp">${codeOf(cc.city)}</span>
+          <span class="pc-mode"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${km.toLocaleString("es-ES")} km</span></div>
+        <div class="pc-city">${U.esc(cc.city)}</div>
+        <div class="pc-rival">vs ${U.esc(m.home)}${m.competition ? " · " + U.esc(m.competition) : ""}</div>
+        <div class="pc-foot"><span class="pc-res">${RESLAB[res] || "·"}</span><span class="pc-score">${Number(m.homeScore)}-${Number(m.awayScore)}</span><span class="pc-date faint">${U.fmtDate(m.date) || "Sin fecha"}</span></div>
+      </div>`;
+    };
+    const diaryBody = playedAway.length
+      ? `<div class="postcards">${playedAway.map(postcard).join("")}</div>`
+      : '<span class="faint">Aún no has jugado desplazamientos esta temporada. Cuando juegues fuera, cada viaje dejará su postal aquí.</span>';
+
     UI.mount(`
       <div class="page-head"><div><h1>Viajes</h1><div class="sub">${U.esc(season.label)} · ${estVis}/${leagueTeams.length} estadios esta temporada${laps >= 1 ? " · " + laps.toFixed(1).replace(".", ",") + " vueltas al mundo" : ""}</div></div>
         <div class="flex gap center wrap">${seasonSelect(c)}</div>
@@ -783,12 +812,21 @@
         <div class="vstamps">${stamps || '<span class="faint">Esta temporada no tiene rivales registrados.</span>'}</div>
       </div>
       <div class="card" style="margin-top:16px">
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="book"></span> Diario de viaje <span class="faint" style="font-weight:400">· ${playedAway.length} viaje${playedAway.length === 1 ? "" : "s"} esta temporada</span></div>
+        ${diaryBody}
+      </div>
+      <div class="card" style="margin-top:16px">
         <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Rendimiento lejos de casa <span class="faint" style="font-weight:400">· toda tu carrera</span></div>
         ${farBody}
       </div>
     `);
     content().querySelectorAll(".vmap [data-trip]").forEach(g => g.addEventListener("click", () => UI.openTrip(c, findMatch(c, g.dataset.trip))));
     content().querySelectorAll(".vmap [data-match]").forEach(g => g.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, g.dataset.match))));
+    content().querySelectorAll(".postcards [data-match]").forEach(g => {
+      const open = () => { const m = findMatch(c, g.dataset.match); if (m) UI.openMatchModal(c, m); };
+      g.addEventListener("click", open);
+      g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    });
   };
 
   /* ============================================================
