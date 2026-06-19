@@ -932,13 +932,21 @@
     if (continental) stake = /final/i.test(m.round || "") ? "final_euro" : "continental";
     else if (/copa/i.test(m.competition || "")) stake = "copa";
     else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
+    // Rivalidad all-time (ambas sedes) con nivel de intensidad acumulado.
+    const allVs = played.filter(x => x.home === rival || x.away === rival);
+    let av = 0, ae = 0, al = 0; allVs.forEach(x => { const r = S.userResult(c, x); if (r === "W") av++; else if (r === "D") ae++; else al++; });
+    const total = allVs.length;
+    const level = total >= 6 ? ((av - al >= 3) ? "victima" : (al - av >= 3) ? "verdugo" : "clasico") : total >= 1 ? "conocido" : "nuevo";
     const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
     const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
     let miles = 0; S.userMatches(c).forEach(x => { if (x.away === club && x.home) miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; });
+    const hero = TRIPS.pickHero(c, m);
+    if (hero) hero.apps = (S.playerAggregates(c, null)[_norm(hero.name)] || {}).apps || 0;
     return {
       isAway: true, club, rival, origin, dest, dist, mode, continental, approx: origin.approx || dest.approx,
-      h2h: { v, e, d, nthVisit, last, type: h2hType }, streak: { unbeaten }, stake, tier, tierLabel: TIER_LABEL[tier],
-      hero: TRIPS.pickHero(c, m), atmos: TRIPS.atmosphere(m, dest), miles: Math.round(miles), m,
+      h2h: { v, e, d, nthVisit, last, type: h2hType }, all: { v: av, e: ae, l: al, total, level },
+      streak: { unbeaten }, stake, tier, tierLabel: TIER_LABEL[tier], seasons,
+      hero, atmos: TRIPS.atmosphere(m, dest), miles: Math.round(miles), m,
     };
   };
 
@@ -948,15 +956,33 @@
     if (!ctx || !ctx.isAway) return [];
     const m = ctx.m, T = ctx.club, rival = ctx.rival, P = FC.data.TRIP || {};
     const seed = (k) => "cab:" + k + ":" + m.id + ":" + ctx.h2h.nthVisit;
-    const fill = (pool, k, vars) => {
+    // Ventana anti-repetición: el ordinal cronológico del viaje entre los
+    // partidos fuera descorrelaciona viajes consecutivos; re-roll determinista
+    // si la plantilla coincide con la de los últimos viajes. Sin estado.
+    const awayList = (c.matches || []).filter(x => x.away === T && x.home).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    let ordinal = awayList.findIndex(x => x.id === m.id); if (ordinal < 0) ordinal = awayList.length;
+    const pickAR = (pool, k) => {
       if (!pool || !pool.length) return "";
-      return pool[hashCab(seed(k)) % pool.length].replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
+      const Lp = pool.length;
+      const ch = (i, s) => hashCab("car:" + k + ":" + Lp + ":" + i + (s ? ":" + s : "")) % Lp;
+      const recent = {}; let nr = 0;
+      for (let j = 1; j <= Math.min(5, ordinal); j++) { const x = ch(ordinal - j, 0); if (!recent[x]) { recent[x] = 1; nr++; } }
+      let idx = ch(ordinal, 0), s = 1;
+      while (recent[idx] && nr < Lp && s <= 8) { idx = ch(ordinal, s); s++; }
+      return pool[idx];
+    };
+    const fill = (pool, k, vars) => {
+      const tpl = pickAR(pool, k);
+      if (!tpl) return "";
+      return tpl.replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
     };
     const lastScore = ctx.h2h.last ? (Number(ctx.h2h.last.homeScore) + "-" + Number(ctx.h2h.last.awayScore)) : "";
+    const tierWord = { recien: "humilde expedición", consolidado: "expedición", potencia: "comitiva", gigante: "caravana de un gigante" }[ctx.tier] || "expedición";
     const vars = {
-      team: T, rival, city: ctx.dest.city, ocity: ctx.origin.city, comp: m.competition || "", round: m.round || "",
+      team: T, rival, city: ctx.dest.city, ocity: ctx.origin.city, comp: m.competition || "", round: m.round || "", tierWord,
       n: ctx.h2h.nthVisit, v: ctx.h2h.v, e: ctx.h2h.e, d: ctx.h2h.d, streak: ctx.streak.unbeaten,
-      player: ctx.hero ? ctx.hero.name : "", pos: ctx.hero ? ctx.hero.pos : "", goals: ctx.hero ? ctx.hero.goals : "", score: lastScore,
+      total: ctx.all.total, av: ctx.all.v, al: ctx.all.l,
+      player: ctx.hero ? ctx.hero.name : "", pos: ctx.hero ? ctx.hero.pos : "", goals: ctx.hero ? ctx.hero.goals : "", apps: ctx.hero ? ctx.hero.apps : "", score: lastScore,
     };
     const beats = [];
     const amb = (P.ambient && P.ambient[ctx.mode]) || {};
@@ -964,14 +990,25 @@
       title: fill(ctx.mode === "avion" ? amb.despegue : amb.salida, "dep", vars), sub: _esc(ctx.origin.city + " → " + ctx.dest.city) });
 
     const mem = [];
-    const t = ctx.h2h.type;
-    mem.push({ prio: t === "bestia" ? 5 : t === "fortin" ? 4 : t === "primera" ? 2 : 3, tone: t === "bestia" ? "bad" : "good",
-      icon: t === "bestia" ? "flame" : "flag", key: "h2h", vars,
-      sub: t === "primera" ? "Primera visita" : (ctx.h2h.nthVisit + "ª visita · " + ctx.h2h.v + "V " + ctx.h2h.e + "E " + ctx.h2h.d + "D aquí"),
-      pool: (P.h2h || {})[t] });
+    // Beat de rival: rivalidad all-time si es intensa; si no, head-to-head de la sede.
+    if (ctx.all.total >= 6) { // total>=6 garantiza level victima/verdugo/clasico
+      const lv = ctx.all.level;
+      mem.push({ prio: lv === "verdugo" ? 5 : 4, tone: lv === "verdugo" ? "bad" : "good", icon: lv === "verdugo" ? "flame" : "flag",
+        key: "riv:" + lv, vars, sub: ctx.all.total + " cruces · " + ctx.all.v + "V " + ctx.all.e + "E " + ctx.all.l + "D", pool: (P.rivalry || {})[lv] });
+    } else {
+      const t = ctx.h2h.type;
+      mem.push({ prio: t === "bestia" ? 5 : t === "fortin" ? 4 : t === "primera" ? 2 : 3, tone: t === "bestia" ? "bad" : "good",
+        icon: t === "bestia" ? "flame" : "flag", key: "h2h", vars,
+        sub: t === "primera" ? "Primera visita" : (ctx.h2h.nthVisit + "ª visita · " + ctx.h2h.v + "V " + ctx.h2h.e + "E " + ctx.h2h.d + "D aquí"),
+        pool: (P.h2h || {})[t] });
+    }
+    // Beat de protagonista: arco biográfico si hay hito de partidos; si no, foco normal.
     if (ctx.hero) {
-      const r = ctx.hero.role;
-      mem.push({ prio: (r === "canterano" || r === "goleador") ? 4 : 3, tone: "good", icon: "star", key: "hero", vars,
+      const r = ctx.hero.role, ap = ctx.hero.apps || 0;
+      const arc = ap >= 100 ? "leyenda" : ap >= 50 ? "veterano" : (r === "canterano" && ctx.seasons >= 3) ? "cantera" : null;
+      if (arc) mem.push({ prio: arc === "leyenda" ? 5 : 4, tone: "good", icon: "medal", key: "arc:" + arc, vars,
+        sub: ap ? (ap + " partidos con el club") : "Hecho en casa", pool: (P.arc || {})[arc] });
+      else mem.push({ prio: (r === "canterano" || r === "goleador") ? 4 : 3, tone: "good", icon: "star", key: "hero", vars,
         sub: (r === "goleador" && ctx.hero.goals) ? (ctx.hero.goals + " goles esta temporada") : _esc(ctx.hero.pos || ""),
         pool: (P.hero || {})[r] || (P.hero || {}).estrella });
     }

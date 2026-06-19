@@ -394,6 +394,7 @@
           "Despegamos de {ocity}. Próxima parada, {city}.",
           "El charter del {team} enfila la pista hacia {city}.",
           "Cinturones abrochados: {comp} espera en {city}.",
+          "La {tierWord} del {team} despega rumbo a {city}.",
         ],
       },
       bus: {
@@ -402,6 +403,7 @@
           "Salida de {ocity}: por carretera hasta {city}.",
           "El bus del equipo enfila la autovía hacia {city}.",
           "En marcha hacia {city}, con {comp} en el horizonte.",
+          "La {tierWord} del {team} arranca por carretera hacia {city}.",
         ],
       },
     },
@@ -505,6 +507,34 @@
       "Reencuentro: {player} espera enfrente, ahora en el {rival}.",
       "Viejo conocido en {city}: {player} viste hoy los colores del {rival}.",
     ],
+    rivalry: {
+      victima: [
+        "El {rival} es tu víctima favorita: {av} victorias en {total} cruces.",
+        "Otra cita con el {rival}, ese rival al que el {team} tiene tomada la medida ({av}V de {total}).",
+      ],
+      verdugo: [
+        "El {rival}, tu verdugo histórico: {al} derrotas en {total} duelos. Toca cambiarlo.",
+        "Cuentas pendientes con el {rival} ({al}D en {total}); el {team} viaja con sed de revancha.",
+      ],
+      clasico: [
+        "Clásico particular: {total} duelos con el {rival} y nunca sobra nada.",
+        "El {team} y el {rival}, viejos rivales de {total} batallas. Otra más en {city}.",
+      ],
+    },
+    arc: {
+      leyenda: [
+        "{player} viaja sumando: ya {apps} partidos defendiendo esta camiseta.",
+        "Una leyenda a bordo: {player} acumula {apps} encuentros con el {team}.",
+      ],
+      veterano: [
+        "{player} ya es fijo: {apps} partidos de oficio rumbo a {city}.",
+        "Veteranía en la expedición: {apps} duelos lleva {player} con el {team}.",
+      ],
+      cantera: [
+        "{player} subió del filial y hoy es bandera del proyecto.",
+        "De canterano a referente: {player} encabeza el viaje a {city}.",
+      ],
+    },
     rare: [
       "Turbulencias leves: el grupo aprieta los reposabrazos y sonríe nervioso.",
       "Retraso en pista; el míster aprovecha para una última charla táctica.",
