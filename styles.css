@@ -307,6 +307,10 @@ textarea { resize: vertical; min-height: 80px; }
 .fixture.upcoming .fx-vs { font-weight: 700; font-size: 12px; color: var(--text-dim); padding: 3px 9px; border-radius: 8px; background: var(--bg-2); border: 1px dashed var(--line); min-width: 48px; text-align: center; }
 .fixture .up-date { font-size: 11px; color: var(--text-dim); width: 74px; text-align: right; flex: none; }
 .fixture .up-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+/* Calendario de temporada */
+.cal-month { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); margin: 18px 2px 6px; }
+.cal-month:first-child { margin-top: 0; }
+.fixture.is-next { box-shadow: inset 3px 0 0 var(--accent); padding-left: 9px; }
 
 /* Banner "próximo partido" en el panel */
 .next-match { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 16px; border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }

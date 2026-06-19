@@ -43,7 +43,7 @@
   U.fmtDate = (d) => {
     if (!d) return "";
     const dt = new Date(d);
-    if (isNaN(dt)) return d;
+    if (isNaN(dt)) return U.esc(d); // fecha no parseable (p.ej. dato importado): escapar por seguridad
     return dt.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
   };
   // DOM helpers

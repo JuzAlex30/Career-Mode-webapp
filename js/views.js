@@ -577,6 +577,7 @@
   /* ============================================================
      PARTIDOS
      ============================================================ */
+  let matchesTab = "list"; // "list" | "calendar" — persiste entre re-renders
   FC.views.matches = function () {
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
@@ -596,17 +597,24 @@
         ${sa.red ? statCompareRow("Rojas (total)", sa.red.f, sa.red.a) : ""}
         ${sa.pens ? statCompareRow("Penaltis (total)", sa.pens.f, sa.pens.a) : ""}
       </div>` : "";
-    UI.mount(`
-      <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados${upcoming.length ? " · " + upcoming.length + " programado" + (upcoming.length>1?"s":"") : ""}</div></div>
-        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost" id="mt-sched"><span class="ni-icon" data-icon="calendar"></span> Programar</button><button class="btn btn-primary" id="mt-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button></div>
-      </div>
+    const listHtml = `
       ${upcoming.length ? `<div class="card">
         <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> Próximos partidos <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
         ${upcoming.map(m => upcomingRow(c, m)).join("")}
       </div>` : ""}
       ${statsCard}
-      <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>
+      <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>`;
+    UI.mount(`
+      <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados${upcoming.length ? " · " + upcoming.length + " programado" + (upcoming.length>1?"s":"") : ""}</div></div>
+        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost" id="mt-sched"><span class="ni-icon" data-icon="calendar"></span> Programar</button><button class="btn btn-primary" id="mt-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button></div>
+      </div>
+      <div class="seg" id="mt-tabs" style="margin-bottom:14px">
+        <button type="button" data-t="list" class="${matchesTab==="list"?"active":""}">Lista</button>
+        <button type="button" data-t="calendar" class="${matchesTab==="calendar"?"active":""}">Calendario</button>
+      </div>
+      ${matchesTab === "calendar" ? calendarHtml(c, season) : listHtml}
     `);
+    document.querySelectorAll("#mt-tabs button").forEach(b => b.addEventListener("click", () => { matchesTab = b.dataset.t; FC.views.matches(); }));
     document.getElementById("mt-add").addEventListener("click", () => UI.openMatchModal(c));
     document.getElementById("mt-sched").addEventListener("click", () => UI.openMatchModal(c, null, { mode: "schedule" }));
     content().querySelectorAll("[data-match]").forEach(r => r.addEventListener("click", (e) => {
@@ -2196,6 +2204,44 @@
         <button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>
       </div>
     </div>`;
+  }
+  // Fila del calendario: sirve para jugados (marcador) y programados (vs + Registrar).
+  function calRow(c, m, isNext) {
+    const played = S.isPlayed(m);
+    const home = m.home === c.clubName, away = m.away === c.clubName;
+    const r = played ? S.userResult(c, m) : null;
+    const rc = r === "W" ? "win" : r === "L" ? "loss" : "";
+    const score = played ? `<span class="fx-score ${rc}">${m.homeScore}-${m.awayScore}</span>` : `<span class="fx-vs">vs</span>`;
+    return `<div class="fixture${played ? "" : " upcoming"}${isNext ? " is-next" : ""}" ${played ? `data-match="${m.id}"` : `data-up="${m.id}"`} style="cursor:pointer">
+      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
+      <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${U.esc(m.home||"—")}</span>
+        ${score}
+        <span class="t away" style="${away?"font-weight:700":""}">${U.esc(m.away||"—")}</span></div>
+      ${!played ? `<button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>` : ""}
+      <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
+    </div>`;
+  }
+  // Calendario de temporada: todos los partidos (jugados + programados) en orden
+  // cronológico, agrupados por mes. El próximo partido se resalta.
+  function calendarHtml(c, season) {
+    const all = (c.matches || []).filter(m => m.seasonId === season.id && S.isUserMatch(c, m))
+      .sort((a, b) => (a.date ? new Date(a.date).getTime() : Infinity) - (b.date ? new Date(b.date).getTime() : Infinity));
+    if (!all.length) return `<div class="card"><div class="empty"><div class="emoji">📅</div><h3>Calendario vacío</h3><p>Registra o programa partidos para construir tu calendario de temporada.</p></div></div>`;
+    const monthOf = (d) => {
+      if (!d) return "Sin fecha";
+      const dt = new Date(d); if (isNaN(dt)) return "Sin fecha";
+      const s = dt.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    };
+    const nextId = (S.nextMatch(c, season.id) || {}).id;
+    const groups = [];
+    all.forEach(m => {
+      const label = monthOf(m.date);
+      let g = groups[groups.length - 1];
+      if (!g || g.label !== label) { g = { label, items: [] }; groups.push(g); }
+      g.items.push(m);
+    });
+    return groups.map(g => `<div class="cal-month">${g.label}</div><div class="card">${g.items.map(m => calRow(c, m, m.id === nextId)).join("")}</div>`).join("");
   }
   function findMatch(c, id) { return (c.matches || []).find(m => m.id === id); }
   function seasonSelect(c) {
