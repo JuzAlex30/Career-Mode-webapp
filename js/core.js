@@ -40,6 +40,21 @@
       || /^[a-z]{3,20}$/i.test(v);
     return ok ? v : (fallback || "var(--accent)");
   };
+  // Genera un escudo SVG con forma de escudo, colores oficiales del equipo e iniciales.
+  // Usa D.TEAM_COLORS si el equipo está catalogado; si no, cae al hash de color.
+  U.teamCrest = (clubName, size) => {
+    size = size || 36;
+    const tc = (FC.data && FC.data.TEAM_COLORS && FC.data.TEAM_COLORS[clubName]) || {};
+    const primary = U.safeColor(tc.primary, U.colorFor(clubName));
+    const secondary = U.safeColor(tc.secondary, "#ffffff");
+    const ini = U.initials(clubName);
+    const fs = ini.length > 2 ? 10 : 13;
+    return `<svg viewBox="0 0 40 46" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;flex-shrink:0">
+      <path d="M20 2 L37 7 L37 26 Q37 39 20 44 Q3 39 3 26 L3 7 Z" fill="${primary}" stroke="${secondary}" stroke-width="2"/>
+      <path d="M20 7 L32 11 L32 26 Q32 35 20 39 Q8 35 8 26 L8 11 Z" fill="none" stroke="${secondary}" stroke-width="0.8" opacity="0.4"/>
+      <text x="20" y="${ini.length > 2 ? 27 : 28}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${secondary}" font-family="system-ui,sans-serif" letter-spacing="-0.5">${ini}</text>
+    </svg>`;
+  };
   U.fmtDate = (d) => {
     if (!d) return "";
     const dt = new Date(d);

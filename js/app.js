@@ -22,8 +22,15 @@
     // career chip
     const cs = document.getElementById("careerSwitch");
     if (c) {
+      // Si el club tiene colores oficiales catalogados → escudo SVG.
+      // Si tiene un badgeColor personalizado explícito (distinto del hash auto) → badge de color.
+      // Para clubes custom sin catálogo → badge con hash de color.
+      const _crestOrBadge = (clubName, badgeColor) => {
+        if (FC.data && FC.data.TEAM_COLORS && FC.data.TEAM_COLORS[clubName]) return U.teamCrest(clubName, 32);
+        return `<span class="career-badge" style="background:${U.safeColor(badgeColor, U.colorFor(clubName))}">${U.initials(clubName)}</span>`;
+      };
       cs.innerHTML = `<button class="career-chip" id="careerChip">
-        <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
+        ${_crestOrBadge(c.clubName, c.badgeColor)}
         <span class="cc-meta"><b>${U.esc(c.clubName)}</b><small>${U.esc((S.currentSeason(c)||{}).label||"")}</small></span>
         <span class="ni-icon cc-caret" data-icon="caret"></span></button>`;
       U.hydrateIcons(cs);
@@ -43,7 +50,7 @@
     const list = S.careersList();
     UI.openModal("Cambiar de carrera", `
       <div class="list">${list.map(cc => `<button class="list-row" data-pick="${cc.id}" style="width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer">
-        <span class="career-badge" style="background:${U.safeColor(cc.badgeColor, U.colorFor(cc.clubName))}">${U.initials(cc.clubName)}</span>
+        ${cc.badgeColor ? `<span class="career-badge" style="background:${U.safeColor(cc.badgeColor, U.colorFor(cc.clubName))}">${U.initials(cc.clubName)}</span>` : U.teamCrest(cc.clubName, 32)}
         <span class="lr-main"><b>${U.esc(cc.clubName)}</b><small>${U.esc(cc.leagueName)} · ${(cc.seasons||[]).length} temp.</small></span>
         ${cc.id === c.id ? '<span class="chip accent">Activa</span>' : ''}</button>`).join("")}</div>`,
       `<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="cs-new"><span class="ni-icon" data-icon="plus"></span> Nueva carrera</button>`);

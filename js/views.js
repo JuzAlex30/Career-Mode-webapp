@@ -1318,6 +1318,7 @@
       <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
         <div class="flex gap center wrap">
           <button class="btn btn-ghost" id="sq-injury"><span class="ni-icon" data-icon="bandage"></span> Enfermería${injuries.length ? ` <span class="chip" style="background:var(--danger);color:#fff;padding:1px 7px">${injuries.length}</span>` : ""}</button>
+          ${(D.SQUADS||{})[c.clubName] ? `<button class="btn btn-ghost" id="sq-import"><span class="ni-icon" data-icon="download"></span> Importar EA FC</button>` : ""}
           <button class="btn btn-primary" id="sq-add"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
         </div>
       </div>
@@ -1363,6 +1364,8 @@
     }
     document.getElementById("sq-add").addEventListener("click", () => playerModal(c));
     document.getElementById("sq-injury").addEventListener("click", () => injuryModal(c));
+    const sqImport = document.getElementById("sq-import");
+    if (sqImport) sqImport.addEventListener("click", () => importSquadModal(c));
     const search = document.getElementById("sq-search");
     if (search) {
       search.addEventListener("input", () => { squadView.q = search.value; applyFilters(); });
@@ -1460,6 +1463,32 @@
     const editBtn = document.getElementById("pc-edit");
     if (editBtn) editBtn.addEventListener("click", () => { UI.closeModal(); playerModal(c, p); });
   };
+  function importSquadModal(c) {
+    const roster = (D.SQUADS || {})[c.clubName];
+    if (!roster || !roster.length) { UI.toast("No hay plantilla disponible para este club", "err"); return; }
+    const hasPlayers = (c.players || []).length > 0;
+    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> (EA FC 25).</p>
+      ${hasPlayers ? `<div class="field" style="margin-top:12px"><label>Plantilla actual (${c.players.length} jugadores)</label>
+        <select id="imp-mode">
+          <option value="merge">Fusionar (mantener existentes, añadir nuevos)</option>
+          <option value="replace">Reemplazar (eliminar todos y cargar de nuevo)</option>
+        </select></div>` : ""}`;
+    UI.openModal("Importar plantilla EA FC 25", body,
+      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="imp-confirm"><span class="ni-icon" data-icon="download"></span> Importar</button>`);
+    document.getElementById("imp-confirm").addEventListener("click", () => {
+      const mode = hasPlayers ? (document.getElementById("imp-mode").value) : "replace";
+      if (mode === "replace") c.players = [];
+      const existing = new Set((c.players||[]).map(p => (p.name||"").trim().toLowerCase()));
+      let added = 0;
+      roster.forEach(r => {
+        if (mode === "merge" && existing.has((r.name||"").trim().toLowerCase())) return;
+        S.addPlayer(c, { name: r.name, position: r.pos, age: r.age, ovr: r.ovr, potential: r.potential || 0, nationality: r.nat || "" });
+        added++;
+      });
+      S.save(); UI.closeModal();
+      UI.toast(`${added} jugadores importados`, "ok");
+    });
+  }
   function playerModal(c, ex) {
     ex = ex || {};
     const posOpts = D.POSITIONS.map(p => `<option ${p === ex.position ? "selected" : ""}>${p}</option>`).join("");
