@@ -300,6 +300,16 @@
       <div id="m-scorers"></div>
       <button type="button" class="btn btn-ghost btn-sm" id="m-add-scorer"><span class="ni-icon" data-icon="plus"></span> Añadir gol</button>
       <div class="field" style="margin-top:16px"><label>Jugador del partido (MOTM)</label><input type="text" id="m-motm" list="${dlId}" value="${U.esc(ex.motm||"")}" placeholder="Nombre"/></div>
+      <details style="margin-top:16px">
+        <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Valoraciones de jugadores (opcional)</summary>
+        <div style="margin-top:8px">
+          <div style="display:flex;gap:4px;font-size:11px;color:var(--text2);padding:0 2px 6px;font-weight:600">
+            <span style="flex:3">Jugador</span><span style="flex:2">Nota (1-10)</span><span style="flex:1.5">Minutos</span><span style="width:34px"></span>
+          </div>
+          <div id="m-ratings"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="m-add-rating"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
+        </div>
+      </details>
       ${(function(){
         const st = ex.stats || {};
         const v = (x) => (x == null ? "" : x);
@@ -348,6 +358,22 @@
     (ex._scorers || []).forEach(addScorerRow);
     document.getElementById("m-add-scorer").addEventListener("click", () => addScorerRow());
 
+    const ratingsBox = document.getElementById("m-ratings");
+    function addRatingRow(r) {
+      r = r || {};
+      const row = U.h("div", { style: "display:flex;gap:6px;margin-bottom:6px;align-items:center" }, []);
+      row.innerHTML = `
+        <input type="text" list="${dlId}" placeholder="Jugador" value="${U.esc(r.name||"")}" style="flex:3;min-width:0"/>
+        <input type="number" min="1" max="10" step="0.1" placeholder="—" value="${r.rating!=null?r.rating:""}" style="flex:2;min-width:0" title="Nota (1-10)"/>
+        <input type="number" min="0" max="120" step="1" placeholder="90" value="${r.minutes!=null?r.minutes:""}" style="flex:1.5;min-width:0" title="Minutos jugados"/>
+        <button type="button" class="btn btn-ghost btn-sm" style="flex:none;width:34px;padding:0" title="Quitar"><span class="ni-icon" data-icon="trash"></span></button>`;
+      row.querySelector("button").addEventListener("click", () => row.remove());
+      ratingsBox.appendChild(row);
+      U.hydrateIcons(row);
+    }
+    (ex.ratings || []).forEach(addRatingRow);
+    document.getElementById("m-add-rating").addEventListener("click", () => addRatingRow());
+
     let venue = isHome ? "home" : "away";
     document.querySelectorAll("#m-venue button").forEach(b => b.addEventListener("click", () => {
       venue = b.dataset.v;
@@ -374,7 +400,7 @@
       if (mode === "schedule") {
         // Partido futuro: sin marcador ni eventos. Si editamos uno ya jugado y lo
         // pasamos a "Próximo", se limpia su resultado (Object.assign copia undefined).
-        const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined });
+        const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined, ratings: undefined });
         if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
         UI.closeModal();
         UI.toast(existing ? "Partido actualizado" : "Partido programado 📅", "ok");
@@ -401,10 +427,25 @@
       const stats = {};
       const poss = num("ms-poss"); if (poss != null) stats.possession = poss;
       ["shots", "sot", "xg", "corners", "fouls", "yellow", "red", "pens"].forEach(k => { const p = pairOf(k); if (p) stats[k] = p; });
+      const ratings = [];
+      U.els("#m-ratings > div").forEach(row => {
+        const ins = row.querySelectorAll("input");
+        const name = ins[0].value.trim();
+        if (!name) return;
+        const rVal = ins[1].value.trim(), mVal = ins[2].value.trim();
+        if (!rVal && !mVal) return;
+        const entry = { name };
+        const pMatch = (c.players||[]).find(x => x.name === name);
+        if (pMatch) entry.playerId = pMatch.id;
+        if (rVal !== "") { const n = Number(rVal); if (Number.isFinite(n) && n >= 1 && n <= 10) entry.rating = n; }
+        if (mVal !== "") { const n = Number(mVal); if (Number.isFinite(n) && n >= 0) entry.minutes = n; }
+        ratings.push(entry);
+      });
       const data = Object.assign({}, base, {
         homeScore, awayScore,
         events, motm: motm || "", motmId: motmP && motmP.id,
         stats: Object.keys(stats).length ? stats : undefined,
+        ratings: ratings.length ? ratings : undefined,
       });
       if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
       UI.closeModal();
@@ -1354,7 +1395,8 @@
       const g = (m.events || []).filter(e => e.type === "goal" && isMe(e.player, e.playerId)).length;
       const a = (m.events || []).filter(e => e.type === "assist" && isMe(e.player, e.playerId)).length;
       const motm = isMe(m.motm, m.motmId);
-      if (g || a || motm) contribs.push({ m, g, a, motm });
+      const rt = (m.ratings || []).find(r => isMe(r.name, r.playerId));
+      if (g || a || motm || rt) contribs.push({ m, g, a, motm, rt });
     });
     contribs.sort((x, y) => new Date(y.m.date || 0) - new Date(x.m.date || 0));
     const body = `
@@ -1382,19 +1424,23 @@
         ${statTile("MOTM", sAgg.motm||0, (cAgg.motm||0) + " en carrera")}
         ${statTile("Partidos", sAgg.apps||0, (cAgg.apps||0) + " en carrera")}
       </div>
+      ${(sAgg.ratingN || cAgg.ratingN) ? `<div class="grid cols-2 keep-2" style="margin-top:8px">
+        ${statTile("Nota media", sAgg.ratingN ? sAgg.avg.toFixed(1) : "—", cAgg.ratingN ? cAgg.avg.toFixed(1) + " en carrera (" + cAgg.ratingN + " partidos)" : "")}
+        ${statTile("Minutos", sAgg.minutes ? sAgg.minutes.toLocaleString("es-ES") : "—", cAgg.minutes ? cAgg.minutes.toLocaleString("es-ES") + " en carrera" : "")}
+      </div>` : ""}
       ${ovrs.length >= 2 ? `<div class="section-title">Progresión de OVR</div>${CH.line(ovrs, { h: 110, color: improve >= 0 ? "var(--accent)" : "var(--danger)" })}
         <div class="table-wrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>Temporada</th><th class="num">OVR</th><th class="num">Edad</th></tr></thead><tbody>
         ${series.slice().reverse().map(s => `<tr><td>${U.esc(s.label)}${s.current ? ' <span class="chip accent" style="padding:1px 6px;font-size:10px">actual</span>' : ""}</td><td class="num"><span class="ovr ${U.ovrClass(s.ovr)}">${s.ovr}</span></td><td class="num faint">${s.age||"—"}</td></tr>`).join("")}
         </tbody></table></div>` : ""}
       ${contribs.length ? `<div class="section-title">Últimas actuaciones</div>
-        <div class="list">${contribs.slice(0, 8).map(({ m, g, a, motm }) => {
+        <div class="list">${contribs.slice(0, 8).map(({ m, g, a, motm, rt }) => {
           const opp = m.home === c.clubName ? m.away : m.home;
           const gg = S.userGoals(c, m); const r = S.userResult(c, m);
           const rc = r === "W" ? "win" : r === "L" ? "loss" : "";
           return `<div class="list-row">
             <span class="fx-score ${rc}" style="min-width:46px">${gg ? gg.for + "-" + gg.against : ""}</span>
             <div class="lr-main"><b>${U.esc(opp||"—")}</b><small class="faint">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.date ? " · " + U.fmtDate(m.date) : ""}</small></div>
-            <span class="pc-contrib">${g ? `<span>⚽ ${g}</span>` : ""}${a ? `<span>🅰️ ${a}</span>` : ""}${motm ? `<span>⭐</span>` : ""}</span>
+            <span class="pc-contrib">${g ? `<span>⚽ ${g}</span>` : ""}${a ? `<span>🅰️ ${a}</span>` : ""}${motm ? `<span>⭐</span>` : ""}${rt && rt.rating != null ? `<span class="chip" style="font-size:11px;padding:1px 6px">${Number(rt.rating).toFixed(1)}</span>` : ""}</span>
           </div>`;
         }).join("")}</div>` : ""}
       ${injuriesAll.length ? `<div class="section-title">Historial de lesiones</div>
