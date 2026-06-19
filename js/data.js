@@ -789,6 +789,120 @@
         ],
       },
     },
+    // MEMORIA DE CARRERA: hitos de rivalidad acumulada (all-time, ambas sedes).
+    // Se activan en el viaje de ida al alcanzar 5, 10, 15, 20 o 30 cruces históricos.
+    // Variables: {team}, {rival}, {n} (número de encuentro).
+    memoria: {
+      hito_rival: {
+        "5": [
+          "Quinta vez que se cruzan {team} y {rival}. Ya tienen historia.",
+          "Cinco cruces, y cada uno ha sido distinto. El duelo va tomando forma.",
+          "El {rival} ya no es un desconocido: cinco capítulos de una rivalidad naciente.",
+          "Quinta cita con el {rival}. El {team} empieza a conocer el terreno de memoria.",
+        ],
+        "10": [
+          "Diez duelos entre {team} y {rival}. Esto ya es una rivalidad de verdad.",
+          "Dos dígitos de enfrentamientos: {team} y {rival} escriben su décimo capítulo.",
+          "Diez cruces dan para hablar de historia; {team} y {rival} ya la tienen.",
+          "El décimo choque entre {team} y {rival}: diez capítulos y contando.",
+        ],
+        "15": [
+          "Quince veces frente a frente. El {rival} ya sabe cómo piensa el {team}, y viceversa.",
+          "Un capítulo más de un rival que ya forma parte del ADN del {team}.",
+          "Quince encuentros no se tienen con cualquiera: el {rival} ya es parte de la historia.",
+          "El {team} y el {rival} firman su capítulo número quince. El libro crece.",
+        ],
+        "20": [
+          "Veinte duelos. Este choque ya tiene nombre propio en los libros del club.",
+          "{team} vs {rival}: veinte capítulos de una rivalidad que no para de crecer.",
+          "Dos décadas de enfrentamientos en números: esto ya es un clásico de verdad.",
+          "El vigésimo cara a cara entre {team} y {rival}. Que siga.",
+        ],
+        "30": [
+          "Treinta duelos. Una generación entera de fútbol entre {team} y {rival}.",
+          "{team} y {rival}: treinta capítulos y una rivalidad que ya es historia viva.",
+          "Treinta veces. Nadie que conozca al {team} puede no conocer al {rival}.",
+          "Treinta enfrentamientos: la rivalidad con el {rival} ya forma parte del alma del {team}.",
+        ],
+      },
+    },
+  };
+
+  // Crónica del partido: textos para cada partido jugado (casa o fuera).
+  // Variables: {team}, {rival}, {score}, {gf}, {ga}, {player}, {comp}.
+  D.CRONICA = {
+    apertura: {
+      win_big: [
+        "{team} aplastó a {rival}. El {score} no deja lugar a interpretaciones.",
+        "Noche de gala en {comp}: {team} golea {score} y manda un mensaje a toda la liga.",
+        "Exhibición. El {team} se pasea por el campo del {rival} y firma un contundente {score}.",
+        "Cuatro letras: go-lea-da. El {team} destroza al {rival} con un {score} que asusta.",
+      ],
+      win: [
+        "El {team} suma tres puntos de oro ante el {rival}. {score} en el marcador.",
+        "Trabajo cumplido. El {team} despacha al {rival} con un {score} que vale mucho.",
+        "Victoria corta, mérito grande: el {team} supera al {rival} ({score}) en un partido exigente.",
+        "{team}: 1, obstáculos: 0. El {score} da tres puntos que saben a ración doble.",
+      ],
+      draw: [
+        "Tablas ante el {rival}. El {score} deja sensaciones encontradas en el vestuario del {team}.",
+        "Punto y nada más. El {team} no pasa del empate {score} ante un {rival} que cerró bien.",
+        "{score}: el marcador no miente, aunque el {team} mereció algo más.",
+        "Empate de los que hacen pensar. El {rival} igualó un partido que el {team} creía ganado.",
+      ],
+      loss: [
+        "Derrota para el {team}. El {rival} se impone por {score} en un mal día.",
+        "El {rival} gana, el {team} pierde y reflexiona. El {score} duele más de lo que parece.",
+        "Partido para olvidar: {score} y tres puntos que se quedaron del lado contrario.",
+        "El {team} cayó ({score}). Pasa, duele y se supera. La próxima jornada es una nueva oportunidad.",
+      ],
+      loss_big: [
+        "Noche negra. El {rival} barrió al {team} con un {score} que pide respuesta urgente.",
+        "Goleada en contra: {score}. El {team} sale tocado de un partido que se fue de las manos.",
+        "{score}. Hay que mirarlo a la cara y aceptarlo: el {team} fue superado en todos los registros.",
+        "Un resultado que deja marca: {score}. El {team} paga caro una noche de demasiados errores.",
+      ],
+    },
+    momento: {
+      con_goleador: [
+        "{player} firmó su tanto en el momento más justo. Ese es el gol de los tres puntos.",
+        "El gol de {player} fue el punto de inflexión del partido.",
+        "{player} apareció cuando el equipo más lo necesitaba. Una actuación para recordar.",
+        "La diana de {player} resumió lo mejor de este {team}: un jugador, un momento, una victoria.",
+      ],
+      sin_goleador: [
+        "El colectivo pesó más que cualquier individuo. Así gana este {team}.",
+        "Partido de equipo, victoria de equipo. Sin figuras individuales, pero con carácter de grupo.",
+        "Sin un goleador con nombre propio, el {team} encontró el camino igual: unidad.",
+        "Cuando el sistema funciona, el nombre del goleador importa menos. El {team} lo sabe.",
+      ],
+      porteria_cero: [
+        "Portería a cero: el {team} añadió una página limpia al libro de la temporada.",
+        "La defensa fue la mejor noticia: cero goles encajados y una solidez de fiar.",
+        "Cuando no encajas, das pasos de gigante. El {team} lo tiene muy claro.",
+        "Muro atrás y eficacia delante. La fórmula que más gusta al cuerpo técnico.",
+      ],
+    },
+    cierre: {
+      win: [
+        "La racha sigue. Próximo rival, ojo.",
+        "El camino continúa. El {team} suma y sigue.",
+        "Tres puntos en el bolsillo y el vestuario con ganas de más.",
+        "Así se construye algo grande: partido a partido, sin mirar atrás.",
+      ],
+      draw: [
+        "Toca pasar página y enfocar el siguiente partido.",
+        "El punto suma, pero el {team} sabe que puede dar más.",
+        "En fútbol, un empate puede ser un paso adelante o uno atrás. El tiempo dirá.",
+        "A por el próximo. No queda otra.",
+      ],
+      loss: [
+        "Duele ahora; mañana, a entrenar y a responder.",
+        "El fútbol siempre da revancha. El {team} la buscará.",
+        "Una derrota no hace una temporada. El {team} lo sabe.",
+        "Hay que levantarse. Siempre.",
+      ],
+    },
   };
 
   FC.data = D;

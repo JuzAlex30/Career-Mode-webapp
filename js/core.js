@@ -997,16 +997,20 @@
 
     const mem = [];
     // Beat de rival: rivalidad all-time si es intensa; si no, head-to-head de la sede.
+    // Memoria de carrera: anti-repetición por rival. Los pools h2h/rivalry usan
+    // un ordinal específico del rival para no repetir textos entre visitas distintas
+    // al mismo campo a lo largo de varias temporadas.
     if (ctx.all.total >= 6) { // total>=6 garantiza level victima/verdugo/clasico
       const lv = ctx.all.level;
       mem.push({ prio: lv === "verdugo" ? 5 : 4, tone: lv === "verdugo" ? "bad" : "good", icon: lv === "verdugo" ? "flame" : "flag",
-        key: "riv:" + lv, vars, sub: ctx.all.total + " cruces · " + ctx.all.v + "V " + ctx.all.e + "E " + ctx.all.l + "D", pool: (P.rivalry || {})[lv] });
+        key: "riv:" + lv, vars, sub: ctx.all.total + " cruces · " + ctx.all.v + "V " + ctx.all.e + "E " + ctx.all.l + "D",
+        pool: (P.rivalry || {})[lv], rivalOrd: ctx.all.total });
     } else {
       const t = ctx.h2h.type;
       mem.push({ prio: t === "bestia" ? 5 : t === "fortin" ? 4 : t === "primera" ? 2 : 3, tone: t === "bestia" ? "bad" : "good",
         icon: t === "bestia" ? "flame" : "flag", key: "h2h", vars,
         sub: t === "primera" ? "Primera visita" : (ctx.h2h.nthVisit + "ª visita · " + ctx.h2h.v + "V " + ctx.h2h.e + "E " + ctx.h2h.d + "D aquí"),
-        pool: (P.h2h || {})[t] });
+        pool: (P.h2h || {})[t], rivalOrd: ctx.h2h.nthVisit - 1 });
     }
     // Beat de protagonista: arco biográfico si hay hito de partidos; si no, foco normal.
     if (ctx.hero) {
@@ -1024,7 +1028,21 @@
 
     mem.sort((a, b) => b.prio - a.prio);
     mem.slice(0, 2).forEach((b, i) => beats.push({ phase: i === 0 ? "crucero" : "aproximacion", t: i === 0 ? 0.4 : 0.66,
-      tone: b.tone, icon: b.icon, title: fill(b.pool, b.key, b.vars), sub: b.sub }));
+      tone: b.tone, icon: b.icon,
+      title: _fillT(b.pool, b.key, b.vars, b.rivalOrd != null ? b.rivalOrd : ordinal),
+      sub: b.sub }));
+
+    // Memoria de carrera: beat de hito de rivalidad al cruzar 5, 10, 15, 20 o 30
+    // encuentros all-time con el mismo rival. Solo uno por viaje, nunca solapa stake.
+    const encN = ctx.all.total + 1; // este partido es el Nº encN vs este rival
+    const MEM = (P.memoria || {}).hito_rival;
+    const HITOS = [5, 10, 15, 20, 30];
+    if (MEM && HITOS.includes(encN)) {
+      const hPool = MEM[String(encN)];
+      if (hPool && hPool.length) beats.push({ phase: "crucero", t: 0.48, tone: "good", icon: "medal",
+        title: _fillT(hPool, "hm:" + encN, Object.assign({ n: encN }, vars), ordinal),
+        sub: encN + "º encuentro entre ambos clubes" });
+    }
 
     const sp = (P.stake || {})[ctx.stake];
     if (sp) beats.push({ phase: "crucero", t: 0.52, tone: ctx.stake === "descenso" ? "bad" : "neutral", icon: "target",
@@ -1094,6 +1112,29 @@
       title: _fillT(ci, "vci", vars, ord), sub: _esc("De vuelta en " + ctx.origin.city) });
     beats.sort((a, b) => a.t - b.t);
     return beats.filter(b => b.title);
+  };
+
+  // Crónica del partido: genera 3 frases narrativas para cualquier partido jugado
+  // (casa o fuera). Devuelve array de strings, o [] si faltan datos.
+  TRIPS.matchCronica = (c, m) => {
+    if (!c || !m || !S.isPlayed(m)) return [];
+    const res = S.userResult(c, m);
+    if (!res) return [];
+    const g = S.userGoals(c, m) || { for: 0, against: 0 };
+    const gf = Number(g.for) || 0, ga = Number(g.against) || 0, margin = gf - ga;
+    const bucket = res === "W" ? (margin >= 3 ? "win_big" : "win") : res === "D" ? "draw" : (margin <= -3 ? "loss_big" : "loss");
+    const team = c.clubName, rival = m.home === team ? m.away : m.home;
+    const vars = { team, rival, score: gf + "-" + ga, gf, ga, comp: m.competition || "" };
+    const allPlayed = S.userMatches(c).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    const ord = Math.max(0, allPlayed.findIndex(x => x.id === m.id));
+    const Cr = FC.data.CRONICA || {};
+    const ap = _fillT((Cr.apertura || {})[bucket], "cra:" + bucket, vars, ord);
+    const scorers = (m.events || []).filter(e => e.type === "goal");
+    vars.player = scorers.length ? _esc(scorers[0].player || "") : "";
+    const moKey = vars.player ? "con_goleador" : (ga === 0 && res === "W" ? "porteria_cero" : "sin_goleador");
+    const mo = _fillT((Cr.momento || {})[moKey], "crm:" + moKey, vars, ord);
+    const ci = _fillT((Cr.cierre || {})[res === "W" ? "win" : res === "D" ? "draw" : "loss"], "crc", vars, ord);
+    return [ap, mo, ci].filter(Boolean);
   };
 
   FC.trips = TRIPS;

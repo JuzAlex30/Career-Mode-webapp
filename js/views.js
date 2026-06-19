@@ -643,6 +643,9 @@
     content().querySelectorAll("[data-trip]").forEach(b => b.addEventListener("click", (e) => {
       e.stopPropagation(); UI.openTrip(c, findMatch(c, b.dataset.trip));
     }));
+    content().querySelectorAll("[data-cronica]").forEach(b => b.addEventListener("click", (e) => {
+      e.stopPropagation(); UI.openCronica(c, findMatch(c, b.dataset.cronica));
+    }));
     content().querySelectorAll("[data-del-match]").forEach(b => b.addEventListener("click", () => {
       UI.confirm("¿Eliminar este partido?", () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast("Partido eliminado"); }, true);
     }));
@@ -1008,6 +1011,28 @@
       pad + (latMax - c.lat) / ((latMax - latMin) || 1) * (H - 2 * pad),
     ];
   }
+
+  // Crónica del partido: modal ligero con las 3 frases generadas.
+  UI.openCronica = function (c, m) {
+    if (!c || !m || !FC.store.isPlayed(m)) return;
+    const lines = FC.trips.matchCronica(c, m);
+    if (!lines || !lines.length) { UI.toast("Sin datos suficientes para generar la crónica", "err"); return; }
+    const U = FC.util, S = FC.store;
+    const g = S.userGoals(c, m) || { for: 0, against: 0 };
+    const res = S.userResult(c, m);
+    const rc = res === "W" ? "win" : res === "L" ? "loss" : "";
+    const rival = m.home === c.clubName ? m.away : m.home;
+    const venue = m.home === c.clubName ? "Local" : "Visitante";
+    const scoreLine = `${Number(g.for)}-${Number(g.against)}`;
+    const header = `<div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${U.esc(m.competition || "")}${m.round ? " · " + U.esc(m.round) : ""} · ${venue}</div>
+      <div style="font-size:28px;font-weight:800;letter-spacing:-1px" class="${rc}">${U.esc(c.clubName)} <span style="color:var(--text2);font-size:20px">${scoreLine}</span> ${U.esc(rival)}</div>
+      ${m.date ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">${U.fmtDate(m.date)}</div>` : ""}
+    </div>`;
+    const body = header + lines.map((l, i) => `
+      <p style="margin:${i===0?"0":"12px"} 0 0;line-height:1.6;${i===0?"font-weight:600":"color:var(--text2);"}">${l}</p>`).join("");
+    UI.openModal("Crónica del partido", body, `<button class="btn btn-primary" data-close>Cerrar</button>`);
+  };
 
   UI.openTrip = function (c, m, opts) {
     if (document.querySelector(".trip-cabin")) return; // guarda anti doble-apertura
@@ -2590,6 +2615,7 @@
       <div class="fx-teams"><span class="t ${m.home===c.clubName?"":""}" style="${m.home===c.clubName?"font-weight:700":""}">${U.esc(m.home)}</span>
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
         <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${U.esc(m.away)}</span></div>
+      <button class="icon-btn sm" data-cronica="${m.id}" title="Crónica del partido" style="flex-shrink:0"><span class="ni-icon" data-icon="book"></span></button>
       ${withDelete ? `<button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>` : `<span class="faint" style="font-size:11px;width:60px;text-align:right">${U.fmtDate(m.date)}</span>`}</div>`;
   }
   function upcomingRow(c, m) {

@@ -1398,6 +1398,120 @@ body.trip-open { overflow: hidden; }
         ],
       },
     },
+    // MEMORIA DE CARRERA: hitos de rivalidad acumulada (all-time, ambas sedes).
+    // Se activan en el viaje de ida al alcanzar 5, 10, 15, 20 o 30 cruces históricos.
+    // Variables: {team}, {rival}, {n} (número de encuentro).
+    memoria: {
+      hito_rival: {
+        "5": [
+          "Quinta vez que se cruzan {team} y {rival}. Ya tienen historia.",
+          "Cinco cruces, y cada uno ha sido distinto. El duelo va tomando forma.",
+          "El {rival} ya no es un desconocido: cinco capítulos de una rivalidad naciente.",
+          "Quinta cita con el {rival}. El {team} empieza a conocer el terreno de memoria.",
+        ],
+        "10": [
+          "Diez duelos entre {team} y {rival}. Esto ya es una rivalidad de verdad.",
+          "Dos dígitos de enfrentamientos: {team} y {rival} escriben su décimo capítulo.",
+          "Diez cruces dan para hablar de historia; {team} y {rival} ya la tienen.",
+          "El décimo choque entre {team} y {rival}: diez capítulos y contando.",
+        ],
+        "15": [
+          "Quince veces frente a frente. El {rival} ya sabe cómo piensa el {team}, y viceversa.",
+          "Un capítulo más de un rival que ya forma parte del ADN del {team}.",
+          "Quince encuentros no se tienen con cualquiera: el {rival} ya es parte de la historia.",
+          "El {team} y el {rival} firman su capítulo número quince. El libro crece.",
+        ],
+        "20": [
+          "Veinte duelos. Este choque ya tiene nombre propio en los libros del club.",
+          "{team} vs {rival}: veinte capítulos de una rivalidad que no para de crecer.",
+          "Dos décadas de enfrentamientos en números: esto ya es un clásico de verdad.",
+          "El vigésimo cara a cara entre {team} y {rival}. Que siga.",
+        ],
+        "30": [
+          "Treinta duelos. Una generación entera de fútbol entre {team} y {rival}.",
+          "{team} y {rival}: treinta capítulos y una rivalidad que ya es historia viva.",
+          "Treinta veces. Nadie que conozca al {team} puede no conocer al {rival}.",
+          "Treinta enfrentamientos: la rivalidad con el {rival} ya forma parte del alma del {team}.",
+        ],
+      },
+    },
+  };
+
+  // Crónica del partido: textos para cada partido jugado (casa o fuera).
+  // Variables: {team}, {rival}, {score}, {gf}, {ga}, {player}, {comp}.
+  D.CRONICA = {
+    apertura: {
+      win_big: [
+        "{team} aplastó a {rival}. El {score} no deja lugar a interpretaciones.",
+        "Noche de gala en {comp}: {team} golea {score} y manda un mensaje a toda la liga.",
+        "Exhibición. El {team} se pasea por el campo del {rival} y firma un contundente {score}.",
+        "Cuatro letras: go-lea-da. El {team} destroza al {rival} con un {score} que asusta.",
+      ],
+      win: [
+        "El {team} suma tres puntos de oro ante el {rival}. {score} en el marcador.",
+        "Trabajo cumplido. El {team} despacha al {rival} con un {score} que vale mucho.",
+        "Victoria corta, mérito grande: el {team} supera al {rival} ({score}) en un partido exigente.",
+        "{team}: 1, obstáculos: 0. El {score} da tres puntos que saben a ración doble.",
+      ],
+      draw: [
+        "Tablas ante el {rival}. El {score} deja sensaciones encontradas en el vestuario del {team}.",
+        "Punto y nada más. El {team} no pasa del empate {score} ante un {rival} que cerró bien.",
+        "{score}: el marcador no miente, aunque el {team} mereció algo más.",
+        "Empate de los que hacen pensar. El {rival} igualó un partido que el {team} creía ganado.",
+      ],
+      loss: [
+        "Derrota para el {team}. El {rival} se impone por {score} en un mal día.",
+        "El {rival} gana, el {team} pierde y reflexiona. El {score} duele más de lo que parece.",
+        "Partido para olvidar: {score} y tres puntos que se quedaron del lado contrario.",
+        "El {team} cayó ({score}). Pasa, duele y se supera. La próxima jornada es una nueva oportunidad.",
+      ],
+      loss_big: [
+        "Noche negra. El {rival} barrió al {team} con un {score} que pide respuesta urgente.",
+        "Goleada en contra: {score}. El {team} sale tocado de un partido que se fue de las manos.",
+        "{score}. Hay que mirarlo a la cara y aceptarlo: el {team} fue superado en todos los registros.",
+        "Un resultado que deja marca: {score}. El {team} paga caro una noche de demasiados errores.",
+      ],
+    },
+    momento: {
+      con_goleador: [
+        "{player} firmó su tanto en el momento más justo. Ese es el gol de los tres puntos.",
+        "El gol de {player} fue el punto de inflexión del partido.",
+        "{player} apareció cuando el equipo más lo necesitaba. Una actuación para recordar.",
+        "La diana de {player} resumió lo mejor de este {team}: un jugador, un momento, una victoria.",
+      ],
+      sin_goleador: [
+        "El colectivo pesó más que cualquier individuo. Así gana este {team}.",
+        "Partido de equipo, victoria de equipo. Sin figuras individuales, pero con carácter de grupo.",
+        "Sin un goleador con nombre propio, el {team} encontró el camino igual: unidad.",
+        "Cuando el sistema funciona, el nombre del goleador importa menos. El {team} lo sabe.",
+      ],
+      porteria_cero: [
+        "Portería a cero: el {team} añadió una página limpia al libro de la temporada.",
+        "La defensa fue la mejor noticia: cero goles encajados y una solidez de fiar.",
+        "Cuando no encajas, das pasos de gigante. El {team} lo tiene muy claro.",
+        "Muro atrás y eficacia delante. La fórmula que más gusta al cuerpo técnico.",
+      ],
+    },
+    cierre: {
+      win: [
+        "La racha sigue. Próximo rival, ojo.",
+        "El camino continúa. El {team} suma y sigue.",
+        "Tres puntos en el bolsillo y el vestuario con ganas de más.",
+        "Así se construye algo grande: partido a partido, sin mirar atrás.",
+      ],
+      draw: [
+        "Toca pasar página y enfocar el siguiente partido.",
+        "El punto suma, pero el {team} sabe que puede dar más.",
+        "En fútbol, un empate puede ser un paso adelante o uno atrás. El tiempo dirá.",
+        "A por el próximo. No queda otra.",
+      ],
+      loss: [
+        "Duele ahora; mañana, a entrenar y a responder.",
+        "El fútbol siempre da revancha. El {team} la buscará.",
+        "Una derrota no hace una temporada. El {team} lo sabe.",
+        "Hay que levantarse. Siempre.",
+      ],
+    },
   };
 
   FC.data = D;
@@ -2405,16 +2519,20 @@ body.trip-open { overflow: hidden; }
 
     const mem = [];
     // Beat de rival: rivalidad all-time si es intensa; si no, head-to-head de la sede.
+    // Memoria de carrera: anti-repetición por rival. Los pools h2h/rivalry usan
+    // un ordinal específico del rival para no repetir textos entre visitas distintas
+    // al mismo campo a lo largo de varias temporadas.
     if (ctx.all.total >= 6) { // total>=6 garantiza level victima/verdugo/clasico
       const lv = ctx.all.level;
       mem.push({ prio: lv === "verdugo" ? 5 : 4, tone: lv === "verdugo" ? "bad" : "good", icon: lv === "verdugo" ? "flame" : "flag",
-        key: "riv:" + lv, vars, sub: ctx.all.total + " cruces · " + ctx.all.v + "V " + ctx.all.e + "E " + ctx.all.l + "D", pool: (P.rivalry || {})[lv] });
+        key: "riv:" + lv, vars, sub: ctx.all.total + " cruces · " + ctx.all.v + "V " + ctx.all.e + "E " + ctx.all.l + "D",
+        pool: (P.rivalry || {})[lv], rivalOrd: ctx.all.total });
     } else {
       const t = ctx.h2h.type;
       mem.push({ prio: t === "bestia" ? 5 : t === "fortin" ? 4 : t === "primera" ? 2 : 3, tone: t === "bestia" ? "bad" : "good",
         icon: t === "bestia" ? "flame" : "flag", key: "h2h", vars,
         sub: t === "primera" ? "Primera visita" : (ctx.h2h.nthVisit + "ª visita · " + ctx.h2h.v + "V " + ctx.h2h.e + "E " + ctx.h2h.d + "D aquí"),
-        pool: (P.h2h || {})[t] });
+        pool: (P.h2h || {})[t], rivalOrd: ctx.h2h.nthVisit - 1 });
     }
     // Beat de protagonista: arco biográfico si hay hito de partidos; si no, foco normal.
     if (ctx.hero) {
@@ -2432,7 +2550,21 @@ body.trip-open { overflow: hidden; }
 
     mem.sort((a, b) => b.prio - a.prio);
     mem.slice(0, 2).forEach((b, i) => beats.push({ phase: i === 0 ? "crucero" : "aproximacion", t: i === 0 ? 0.4 : 0.66,
-      tone: b.tone, icon: b.icon, title: fill(b.pool, b.key, b.vars), sub: b.sub }));
+      tone: b.tone, icon: b.icon,
+      title: _fillT(b.pool, b.key, b.vars, b.rivalOrd != null ? b.rivalOrd : ordinal),
+      sub: b.sub }));
+
+    // Memoria de carrera: beat de hito de rivalidad al cruzar 5, 10, 15, 20 o 30
+    // encuentros all-time con el mismo rival. Solo uno por viaje, nunca solapa stake.
+    const encN = ctx.all.total + 1; // este partido es el Nº encN vs este rival
+    const MEM = (P.memoria || {}).hito_rival;
+    const HITOS = [5, 10, 15, 20, 30];
+    if (MEM && HITOS.includes(encN)) {
+      const hPool = MEM[String(encN)];
+      if (hPool && hPool.length) beats.push({ phase: "crucero", t: 0.48, tone: "good", icon: "medal",
+        title: _fillT(hPool, "hm:" + encN, Object.assign({ n: encN }, vars), ordinal),
+        sub: encN + "º encuentro entre ambos clubes" });
+    }
 
     const sp = (P.stake || {})[ctx.stake];
     if (sp) beats.push({ phase: "crucero", t: 0.52, tone: ctx.stake === "descenso" ? "bad" : "neutral", icon: "target",
@@ -2502,6 +2634,29 @@ body.trip-open { overflow: hidden; }
       title: _fillT(ci, "vci", vars, ord), sub: _esc("De vuelta en " + ctx.origin.city) });
     beats.sort((a, b) => a.t - b.t);
     return beats.filter(b => b.title);
+  };
+
+  // Crónica del partido: genera 3 frases narrativas para cualquier partido jugado
+  // (casa o fuera). Devuelve array de strings, o [] si faltan datos.
+  TRIPS.matchCronica = (c, m) => {
+    if (!c || !m || !S.isPlayed(m)) return [];
+    const res = S.userResult(c, m);
+    if (!res) return [];
+    const g = S.userGoals(c, m) || { for: 0, against: 0 };
+    const gf = Number(g.for) || 0, ga = Number(g.against) || 0, margin = gf - ga;
+    const bucket = res === "W" ? (margin >= 3 ? "win_big" : "win") : res === "D" ? "draw" : (margin <= -3 ? "loss_big" : "loss");
+    const team = c.clubName, rival = m.home === team ? m.away : m.home;
+    const vars = { team, rival, score: gf + "-" + ga, gf, ga, comp: m.competition || "" };
+    const allPlayed = S.userMatches(c).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    const ord = Math.max(0, allPlayed.findIndex(x => x.id === m.id));
+    const Cr = FC.data.CRONICA || {};
+    const ap = _fillT((Cr.apertura || {})[bucket], "cra:" + bucket, vars, ord);
+    const scorers = (m.events || []).filter(e => e.type === "goal");
+    vars.player = scorers.length ? _esc(scorers[0].player || "") : "";
+    const moKey = vars.player ? "con_goleador" : (ga === 0 && res === "W" ? "porteria_cero" : "sin_goleador");
+    const mo = _fillT((Cr.momento || {})[moKey], "crm:" + moKey, vars, ord);
+    const ci = _fillT((Cr.cierre || {})[res === "W" ? "win" : res === "D" ? "draw" : "loss"], "crc", vars, ord);
+    return [ap, mo, ci].filter(Boolean);
   };
 
   FC.trips = TRIPS;
@@ -3413,6 +3568,9 @@ body.trip-open { overflow: hidden; }
     content().querySelectorAll("[data-trip]").forEach(b => b.addEventListener("click", (e) => {
       e.stopPropagation(); UI.openTrip(c, findMatch(c, b.dataset.trip));
     }));
+    content().querySelectorAll("[data-cronica]").forEach(b => b.addEventListener("click", (e) => {
+      e.stopPropagation(); UI.openCronica(c, findMatch(c, b.dataset.cronica));
+    }));
     content().querySelectorAll("[data-del-match]").forEach(b => b.addEventListener("click", () => {
       UI.confirm("¿Eliminar este partido?", () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast("Partido eliminado"); }, true);
     }));
@@ -3778,6 +3936,28 @@ body.trip-open { overflow: hidden; }
       pad + (latMax - c.lat) / ((latMax - latMin) || 1) * (H - 2 * pad),
     ];
   }
+
+  // Crónica del partido: modal ligero con las 3 frases generadas.
+  UI.openCronica = function (c, m) {
+    if (!c || !m || !FC.store.isPlayed(m)) return;
+    const lines = FC.trips.matchCronica(c, m);
+    if (!lines || !lines.length) { UI.toast("Sin datos suficientes para generar la crónica", "err"); return; }
+    const U = FC.util, S = FC.store;
+    const g = S.userGoals(c, m) || { for: 0, against: 0 };
+    const res = S.userResult(c, m);
+    const rc = res === "W" ? "win" : res === "L" ? "loss" : "";
+    const rival = m.home === c.clubName ? m.away : m.home;
+    const venue = m.home === c.clubName ? "Local" : "Visitante";
+    const scoreLine = `${Number(g.for)}-${Number(g.against)}`;
+    const header = `<div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${U.esc(m.competition || "")}${m.round ? " · " + U.esc(m.round) : ""} · ${venue}</div>
+      <div style="font-size:28px;font-weight:800;letter-spacing:-1px" class="${rc}">${U.esc(c.clubName)} <span style="color:var(--text2);font-size:20px">${scoreLine}</span> ${U.esc(rival)}</div>
+      ${m.date ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">${U.fmtDate(m.date)}</div>` : ""}
+    </div>`;
+    const body = header + lines.map((l, i) => `
+      <p style="margin:${i===0?"0":"12px"} 0 0;line-height:1.6;${i===0?"font-weight:600":"color:var(--text2);"}">${l}</p>`).join("");
+    UI.openModal("Crónica del partido", body, `<button class="btn btn-primary" data-close>Cerrar</button>`);
+  };
 
   UI.openTrip = function (c, m, opts) {
     if (document.querySelector(".trip-cabin")) return; // guarda anti doble-apertura
@@ -5360,6 +5540,7 @@ body.trip-open { overflow: hidden; }
       <div class="fx-teams"><span class="t ${m.home===c.clubName?"":""}" style="${m.home===c.clubName?"font-weight:700":""}">${U.esc(m.home)}</span>
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
         <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${U.esc(m.away)}</span></div>
+      <button class="icon-btn sm" data-cronica="${m.id}" title="Crónica del partido" style="flex-shrink:0"><span class="ni-icon" data-icon="book"></span></button>
       ${withDelete ? `<button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>` : `<span class="faint" style="font-size:11px;width:60px;text-align:right">${U.fmtDate(m.date)}</span>`}</div>`;
   }
   function upcomingRow(c, m) {
