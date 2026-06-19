@@ -335,5 +335,190 @@
     { name:"Hielo", color:"#22d3ee" },
   ];
 
+  /* ============================================================
+     VIAJES — coordenadas de ciudades por equipo (sedes de las ligas
+     seed) y pools narrativos de la "Cabina en directo".
+     CITIES: "Equipo": [lat, lon, "Ciudad"]. Clave = nombre EXACTO de
+     LEAGUES. Equipos personalizados caen a un fallback determinista.
+     ============================================================ */
+  D.CITIES = {
+    // Premier League
+    "Arsenal":[51.555,-0.108,"Londres"], "Aston Villa":[52.509,-1.885,"Birmingham"], "Bournemouth":[50.735,-1.838,"Bournemouth"],
+    "Brentford":[51.491,-0.289,"Londres"], "Brighton":[50.862,-0.084,"Brighton"], "Burnley":[53.789,-2.230,"Burnley"],
+    "Chelsea":[51.482,-0.191,"Londres"], "Crystal Palace":[51.398,-0.086,"Londres"], "Everton":[53.439,-2.966,"Liverpool"],
+    "Fulham":[51.475,-0.222,"Londres"], "Leeds United":[53.778,-1.572,"Leeds"], "Liverpool":[53.431,-2.961,"Liverpool"],
+    "Manchester City":[53.483,-2.200,"Mánchester"], "Manchester United":[53.463,-2.291,"Mánchester"], "Newcastle United":[54.976,-1.622,"Newcastle"],
+    "Nottingham Forest":[52.940,-1.133,"Nottingham"], "Sunderland":[54.914,-1.388,"Sunderland"], "Tottenham Hotspur":[51.604,-0.066,"Londres"],
+    "West Ham United":[51.539,-0.017,"Londres"], "Wolverhampton Wanderers":[52.590,-2.130,"Wolverhampton"],
+    // LaLiga
+    "Alavés":[42.846,-2.672,"Vitoria"], "Athletic Club":[43.264,-2.949,"Bilbao"], "Atlético de Madrid":[40.436,-3.599,"Madrid"],
+    "Barcelona":[41.381,2.123,"Barcelona"], "Celta de Vigo":[42.212,-8.740,"Vigo"], "Elche":[38.267,-0.696,"Elche"],
+    "Espanyol":[41.348,2.076,"Barcelona"], "Getafe":[40.326,-3.715,"Getafe"], "Girona":[41.961,2.828,"Girona"],
+    "Levante":[39.495,-0.364,"Valencia"], "Mallorca":[39.590,2.630,"Palma"], "Osasuna":[42.797,-1.637,"Pamplona"],
+    "Rayo Vallecano":[40.392,-3.659,"Madrid"], "Real Betis":[37.356,-5.982,"Sevilla"], "Real Madrid":[40.453,-3.688,"Madrid"],
+    "Real Oviedo":[43.360,-5.845,"Oviedo"], "Real Sociedad":[43.301,-1.974,"San Sebastián"], "Sevilla":[37.384,-5.971,"Sevilla"],
+    "Valencia":[39.475,-0.358,"Valencia"], "Villarreal":[39.944,-0.103,"Villarreal"],
+    // Serie A
+    "Atalanta":[45.699,9.677,"Bérgamo"], "Bologna":[44.495,11.343,"Bolonia"], "Cagliari":[39.200,9.137,"Cagliari"],
+    "Como":[45.808,9.085,"Como"], "Cremonese":[45.147,10.023,"Cremona"], "Fiorentina":[43.781,11.282,"Florencia"],
+    "Genoa":[44.416,8.953,"Génova"], "Inter":[45.478,9.124,"Milán"], "Juventus":[45.110,7.641,"Turín"],
+    "Lazio":[41.934,12.455,"Roma"], "Lecce":[40.365,18.210,"Lecce"], "Milan":[45.478,9.124,"Milán"],
+    "Napoli":[40.828,14.193,"Nápoles"], "Parma":[44.795,10.338,"Parma"], "Pisa":[43.723,10.402,"Pisa"],
+    "Roma":[41.934,12.455,"Roma"], "Sassuolo":[44.714,10.636,"Sassuolo"], "Torino":[45.042,7.650,"Turín"],
+    "Udinese":[46.082,13.200,"Udine"], "Hellas Verona":[45.435,10.969,"Verona"],
+    // Bundesliga
+    "Bayern Múnich":[48.219,11.625,"Múnich"], "Borussia Dortmund":[51.493,7.452,"Dortmund"], "RB Leipzig":[51.346,12.348,"Leipzig"],
+    "Bayer Leverkusen":[51.038,7.002,"Leverkusen"], "Eintracht Frankfurt":[50.069,8.646,"Fráncfort"], "VfB Stuttgart":[48.792,9.232,"Stuttgart"],
+    "SC Freiburg":[48.022,7.830,"Friburgo"], "Werder Bremen":[53.066,8.838,"Bremen"], "FC Augsburg":[48.323,10.886,"Augsburgo"],
+    "VfL Wolfsburg":[52.432,10.804,"Wolfsburgo"], "Borussia Mönchengladbach":[51.175,6.385,"Mönchengladbach"], "Mainz 05":[49.984,8.225,"Maguncia"],
+    "Union Berlin":[52.457,13.568,"Berlín"], "TSG Hoffenheim":[49.239,8.888,"Sinsheim"], "FC St. Pauli":[53.555,9.968,"Hamburgo"],
+    "1. FC Heidenheim":[48.677,10.139,"Heidenheim"], "1. FC Köln":[50.934,6.875,"Colonia"], "Hamburgo SV":[53.587,9.898,"Hamburgo"],
+    // Ligue 1
+    "Paris Saint-Germain":[48.841,2.253,"París"], "Marsella":[43.270,5.396,"Marsella"], "Mónaco":[43.728,7.416,"Mónaco"],
+    "Niza":[43.705,7.193,"Niza"], "Lille":[50.612,3.130,"Lille"], "Lyon":[45.765,4.982,"Lyon"],
+    "Lens":[50.433,2.815,"Lens"], "Rennes":[48.107,-1.713,"Rennes"], "Estrasburgo":[48.560,7.755,"Estrasburgo"],
+    "Nantes":[47.256,-1.525,"Nantes"], "Brest":[48.403,-4.462,"Brest"], "Toulouse":[43.583,1.434,"Toulouse"],
+    "Auxerre":[47.787,3.589,"Auxerre"], "Le Havre":[49.499,0.170,"Le Havre"], "Angers":[47.460,-0.530,"Angers"],
+    "Lorient":[47.749,-3.370,"Lorient"], "Paris FC":[48.826,2.352,"París"], "Metz":[49.110,6.160,"Metz"],
+  };
+
+  /* Pools narrativos de la cabina. Plantillas con {slots} que el motor
+     (FC.trips) rellena con datos vivos y escapa con U.esc. Slots:
+     {team} {rival} {city} {ocity} {comp} {round} {n} {v} {e} {d}
+     {streak} {player} {pos} {goals} {score}. */
+  D.TRIP = {
+    ambient: {
+      avion: {
+        despegue: [
+          "Ruedas arriba: el {team} pone rumbo a {city}.",
+          "Despegamos de {ocity}. Próxima parada, {city}.",
+          "El charter del {team} enfila la pista hacia {city}.",
+          "Cinturones abrochados: {comp} espera en {city}.",
+        ],
+      },
+      bus: {
+        salida: [
+          "El autocar del {team} arranca rumbo a {city}.",
+          "Salida de {ocity}: por carretera hasta {city}.",
+          "El bus del equipo enfila la autovía hacia {city}.",
+          "En marcha hacia {city}, con {comp} en el horizonte.",
+        ],
+      },
+    },
+    h2h: {
+      bestia: [
+        "{n}ª vez en {city} y el {team} aún no sabe lo que es ganar aquí.",
+        "Feudo maldito: {d} derrotas del {team} en {city}. Hoy, a romper la racha.",
+        "El {team} regresa a {city}, su asignatura pendiente ({v}V {d}D).",
+      ],
+      fortin: [
+        "{city} se le da bien al {team}: {v} triunfos en este campo.",
+        "Terreno amigo: el {team} suele salir con los tres puntos de {city}.",
+        "El {team} vuelve a {city}, donde casi siempre manda ({v}V).",
+      ],
+      equilibrado: [
+        "Visita {n} a {city}: historial parejo ({v}V {e}E {d}D).",
+        "El {team} ya conoce {city}: ni fortín ni feudo, pura pelea.",
+        "Otra cita en {city}; la última acabó {score}.",
+      ],
+      primera: [
+        "Primera visita del {team} a {city}. Sin precedentes que pesen.",
+        "Estreno en {city}: el {team} pisa este campo por primera vez.",
+        "Terreno desconocido: el {team} debuta como visitante en {city}.",
+      ],
+    },
+    hero: {
+      goleador: [
+        "En la fila 7 viaja {player}: {goals} goles ya esta temporada.",
+        "El {team} confía en {player} ({goals} dianas) para desnivelar en {city}.",
+        "{player} llega a {city} en racha: {goals} goles y contando.",
+      ],
+      canterano: [
+        "{player}, de la cantera, mira por la ventanilla rumbo a {city}.",
+        "Día grande para {player}: el canterano viaja entre los elegidos.",
+        "La casa manda: {player} ({pos}) afronta otra cita lejos del Bernabéu particular.",
+      ],
+      veterano: [
+        "{player}, veterano del vestuario, pone calma rumbo a {city}.",
+        "El capitán {player} reparte consejos durante el viaje a {city}.",
+        "{player} ya lo ha visto todo; hoy guía al grupo en {city}.",
+      ],
+      estrella: [
+        "{player} ({pos}), la estrella del {team}, encabeza la expedición a {city}.",
+        "Todas las miradas en {player} para el duelo de {city}.",
+        "El {team} viaja con su mejor arma: {player}.",
+      ],
+    },
+    stake: {
+      liderato: [
+        "El {team} viaja como líder: ganar en {city} sería un paso de gigante.",
+        "Liderato en juego: cada punto en {city} pesa oro.",
+      ],
+      europa_zona: [
+        "Pelea por Europa: el {team} no puede dejarse puntos en {city}.",
+        "Zona noble en disputa; el {team} se la juega en {city}.",
+      ],
+      descenso: [
+        "Partido de seis puntos: el {team} se juega la permanencia en {city}.",
+        "Sin red: el {team} necesita arañar algo en {city} para respirar.",
+      ],
+      media: [
+        "Sin presión en la tabla, el {team} viaja a {city} a competir y crecer.",
+        "Jornada de media tabla en {city}: orgullo y oficio.",
+      ],
+      copa: [
+        "Noche de copa en {city}: o pasas, o a casa.",
+        "Eliminatoria en {city}: no hay mañana si se falla.",
+      ],
+      continental: [
+        "Noche europea en {city}: {comp} no perdona.",
+        "Luces de {comp} en {city}; el {team} sale a por una gesta.",
+      ],
+      final_euro: [
+        "Final continental en {city}. El {team} ante la historia.",
+        "{comp}: el {team} viaja a {city} a por la gloria eterna.",
+      ],
+    },
+    atmosfera: {
+      nieve: [
+        "Nieve sobre el norte: frío de verdad esperando en {city}.",
+        "Cielo plomizo y copos; en {city} se jugará con guantes.",
+      ],
+      frio: [
+        "Frío invernal en {city}: el aliento se ve sobre el césped.",
+        "Tarde gélida en {city}; a entrar en calor pronto.",
+      ],
+      calor: [
+        "Calor de verano en {city}: tarde pesada, hidratación al máximo.",
+        "Bochorno en {city}; el ritmo lo marcará el termómetro.",
+      ],
+      lluvia: [
+        "Llueve en {city}: el balón correrá rápido sobre el verde.",
+        "Césped mojado en {city}; cuidado con los resbalones.",
+      ],
+      normal: [
+        "Tarde tranquila de fútbol en {city}.",
+        "Buen tiempo en {city} para rodar el balón.",
+      ],
+    },
+    reunion: [
+      "Reencuentro: {player} espera enfrente, ahora en el {rival}.",
+      "Viejo conocido en {city}: {player} viste hoy los colores del {rival}.",
+    ],
+    rare: [
+      "Turbulencias leves: el grupo aprieta los reposabrazos y sonríe nervioso.",
+      "Retraso en pista; el míster aprovecha para una última charla táctica.",
+      "Un jugador no pega ojo en todo el trayecto: nervios de partido grande.",
+      "El piloto saluda por megafonía a la afición del {team} que viaja con el equipo.",
+      "Cánticos al fondo del pasillo: el viaje se hace corto.",
+      "Niebla en la aproximación; el comandante pide calma, todo bajo control.",
+    ],
+    arrival: [
+      "Llegada a {city}. El {team} ya pisa el feudo del {rival}.",
+      "Fin del trayecto: {city}. A por los tres puntos.",
+      "El {team} ya está en {city}. Toca competir.",
+    ],
+  };
+
   FC.data = D;
 })();

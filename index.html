@@ -465,6 +465,46 @@ body.live-active { overflow: hidden; }
   .live-table table.tbl th, .live-table table.tbl td { padding: 11px 9px; }
 }
 
+/* ===================== Cabina en directo (Viajes) ===================== */
+body.trip-open { overflow: hidden; }
+.trip-cabin { z-index: 90; gap: 14px; }
+.trip-live { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 800; letter-spacing: .05em; color: var(--accent); padding: 6px 11px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+.trip-live .trip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: tripPulse 1.4s ease-in-out infinite; }
+.trip-live.arrived { color: var(--text-dim); background: var(--chip); border-color: var(--line); }
+.trip-live .trip-dot.off { animation: none; background: var(--text-dim); }
+@keyframes tripPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.trip-map { padding: 0; overflow: hidden; flex: none; }
+.trip-plane-i { width: 26px; height: 26px; transform-origin: center; transition: transform .2s linear; }
+.trip-plane-i svg { width: 100%; height: 100%; display: block; }
+.trip-steps { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em; }
+.trip-steps i { flex: 1; height: 1px; background: var(--line); }
+.trip-steps span { white-space: nowrap; transition: color .2s; }
+.trip-steps span.on { color: var(--accent); font-weight: 700; }
+.trip-hud { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.trip-tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; }
+.trip-tile .tt-lbl { font-size: 11px; color: var(--text-dim); }
+.trip-tile .tt-val { display: block; font-size: 18px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.trip-beats { display: flex; flex-direction: column; }
+.trip-beat { display: flex; gap: 11px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--line); opacity: 0; transform: translateY(8px); transition: opacity .35s ease, transform .35s ease; }
+.trip-beat:last-child { border-bottom: none; }
+.trip-beat.show { opacity: 1; transform: none; }
+.trip-bi { width: 30px; height: 30px; border-radius: 9px; flex: none; display: grid; place-items: center; background: var(--panel-2); color: var(--text-dim); }
+.trip-bi .ni-icon { width: 16px; height: 16px; }
+.trip-bi.tone-good { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.trip-bi.tone-bad { background: color-mix(in srgb, var(--danger) 14%, transparent); color: #ffb3c1; }
+.trip-beat .tb-title { font-size: 14px; font-weight: 600; line-height: 1.35; }
+.trip-beat .tb-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.trip-prog .bar { height: 10px; }
+.trip-note { font-size: 11px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.trip-note .ni-icon { width: 13px; height: 13px; }
+.trip-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; bottom: 0; padding: 12px 0 4px; background: linear-gradient(180deg, transparent, var(--bg) 45%); }
+.trip-controls .live-add { margin: 0; padding: 16px; font-size: 18px; }
+@media (max-width: 520px) {
+  .trip-hud { grid-template-columns: 1fr; }
+  .trip-steps { flex-wrap: wrap; gap: 4px 10px; }
+  .trip-steps i { display: none; }
+}
+
   </style>
 </head>
 <body data-theme="dark">
@@ -852,6 +892,191 @@ body.live-active { overflow: hidden; }
     { name:"Hielo", color:"#22d3ee" },
   ];
 
+  /* ============================================================
+     VIAJES — coordenadas de ciudades por equipo (sedes de las ligas
+     seed) y pools narrativos de la "Cabina en directo".
+     CITIES: "Equipo": [lat, lon, "Ciudad"]. Clave = nombre EXACTO de
+     LEAGUES. Equipos personalizados caen a un fallback determinista.
+     ============================================================ */
+  D.CITIES = {
+    // Premier League
+    "Arsenal":[51.555,-0.108,"Londres"], "Aston Villa":[52.509,-1.885,"Birmingham"], "Bournemouth":[50.735,-1.838,"Bournemouth"],
+    "Brentford":[51.491,-0.289,"Londres"], "Brighton":[50.862,-0.084,"Brighton"], "Burnley":[53.789,-2.230,"Burnley"],
+    "Chelsea":[51.482,-0.191,"Londres"], "Crystal Palace":[51.398,-0.086,"Londres"], "Everton":[53.439,-2.966,"Liverpool"],
+    "Fulham":[51.475,-0.222,"Londres"], "Leeds United":[53.778,-1.572,"Leeds"], "Liverpool":[53.431,-2.961,"Liverpool"],
+    "Manchester City":[53.483,-2.200,"Mánchester"], "Manchester United":[53.463,-2.291,"Mánchester"], "Newcastle United":[54.976,-1.622,"Newcastle"],
+    "Nottingham Forest":[52.940,-1.133,"Nottingham"], "Sunderland":[54.914,-1.388,"Sunderland"], "Tottenham Hotspur":[51.604,-0.066,"Londres"],
+    "West Ham United":[51.539,-0.017,"Londres"], "Wolverhampton Wanderers":[52.590,-2.130,"Wolverhampton"],
+    // LaLiga
+    "Alavés":[42.846,-2.672,"Vitoria"], "Athletic Club":[43.264,-2.949,"Bilbao"], "Atlético de Madrid":[40.436,-3.599,"Madrid"],
+    "Barcelona":[41.381,2.123,"Barcelona"], "Celta de Vigo":[42.212,-8.740,"Vigo"], "Elche":[38.267,-0.696,"Elche"],
+    "Espanyol":[41.348,2.076,"Barcelona"], "Getafe":[40.326,-3.715,"Getafe"], "Girona":[41.961,2.828,"Girona"],
+    "Levante":[39.495,-0.364,"Valencia"], "Mallorca":[39.590,2.630,"Palma"], "Osasuna":[42.797,-1.637,"Pamplona"],
+    "Rayo Vallecano":[40.392,-3.659,"Madrid"], "Real Betis":[37.356,-5.982,"Sevilla"], "Real Madrid":[40.453,-3.688,"Madrid"],
+    "Real Oviedo":[43.360,-5.845,"Oviedo"], "Real Sociedad":[43.301,-1.974,"San Sebastián"], "Sevilla":[37.384,-5.971,"Sevilla"],
+    "Valencia":[39.475,-0.358,"Valencia"], "Villarreal":[39.944,-0.103,"Villarreal"],
+    // Serie A
+    "Atalanta":[45.699,9.677,"Bérgamo"], "Bologna":[44.495,11.343,"Bolonia"], "Cagliari":[39.200,9.137,"Cagliari"],
+    "Como":[45.808,9.085,"Como"], "Cremonese":[45.147,10.023,"Cremona"], "Fiorentina":[43.781,11.282,"Florencia"],
+    "Genoa":[44.416,8.953,"Génova"], "Inter":[45.478,9.124,"Milán"], "Juventus":[45.110,7.641,"Turín"],
+    "Lazio":[41.934,12.455,"Roma"], "Lecce":[40.365,18.210,"Lecce"], "Milan":[45.478,9.124,"Milán"],
+    "Napoli":[40.828,14.193,"Nápoles"], "Parma":[44.795,10.338,"Parma"], "Pisa":[43.723,10.402,"Pisa"],
+    "Roma":[41.934,12.455,"Roma"], "Sassuolo":[44.714,10.636,"Sassuolo"], "Torino":[45.042,7.650,"Turín"],
+    "Udinese":[46.082,13.200,"Udine"], "Hellas Verona":[45.435,10.969,"Verona"],
+    // Bundesliga
+    "Bayern Múnich":[48.219,11.625,"Múnich"], "Borussia Dortmund":[51.493,7.452,"Dortmund"], "RB Leipzig":[51.346,12.348,"Leipzig"],
+    "Bayer Leverkusen":[51.038,7.002,"Leverkusen"], "Eintracht Frankfurt":[50.069,8.646,"Fráncfort"], "VfB Stuttgart":[48.792,9.232,"Stuttgart"],
+    "SC Freiburg":[48.022,7.830,"Friburgo"], "Werder Bremen":[53.066,8.838,"Bremen"], "FC Augsburg":[48.323,10.886,"Augsburgo"],
+    "VfL Wolfsburg":[52.432,10.804,"Wolfsburgo"], "Borussia Mönchengladbach":[51.175,6.385,"Mönchengladbach"], "Mainz 05":[49.984,8.225,"Maguncia"],
+    "Union Berlin":[52.457,13.568,"Berlín"], "TSG Hoffenheim":[49.239,8.888,"Sinsheim"], "FC St. Pauli":[53.555,9.968,"Hamburgo"],
+    "1. FC Heidenheim":[48.677,10.139,"Heidenheim"], "1. FC Köln":[50.934,6.875,"Colonia"], "Hamburgo SV":[53.587,9.898,"Hamburgo"],
+    // Ligue 1
+    "Paris Saint-Germain":[48.841,2.253,"París"], "Marsella":[43.270,5.396,"Marsella"], "Mónaco":[43.728,7.416,"Mónaco"],
+    "Niza":[43.705,7.193,"Niza"], "Lille":[50.612,3.130,"Lille"], "Lyon":[45.765,4.982,"Lyon"],
+    "Lens":[50.433,2.815,"Lens"], "Rennes":[48.107,-1.713,"Rennes"], "Estrasburgo":[48.560,7.755,"Estrasburgo"],
+    "Nantes":[47.256,-1.525,"Nantes"], "Brest":[48.403,-4.462,"Brest"], "Toulouse":[43.583,1.434,"Toulouse"],
+    "Auxerre":[47.787,3.589,"Auxerre"], "Le Havre":[49.499,0.170,"Le Havre"], "Angers":[47.460,-0.530,"Angers"],
+    "Lorient":[47.749,-3.370,"Lorient"], "Paris FC":[48.826,2.352,"París"], "Metz":[49.110,6.160,"Metz"],
+  };
+
+  /* Pools narrativos de la cabina. Plantillas con {slots} que el motor
+     (FC.trips) rellena con datos vivos y escapa con U.esc. Slots:
+     {team} {rival} {city} {ocity} {comp} {round} {n} {v} {e} {d}
+     {streak} {player} {pos} {goals} {score}. */
+  D.TRIP = {
+    ambient: {
+      avion: {
+        despegue: [
+          "Ruedas arriba: el {team} pone rumbo a {city}.",
+          "Despegamos de {ocity}. Próxima parada, {city}.",
+          "El charter del {team} enfila la pista hacia {city}.",
+          "Cinturones abrochados: {comp} espera en {city}.",
+        ],
+      },
+      bus: {
+        salida: [
+          "El autocar del {team} arranca rumbo a {city}.",
+          "Salida de {ocity}: por carretera hasta {city}.",
+          "El bus del equipo enfila la autovía hacia {city}.",
+          "En marcha hacia {city}, con {comp} en el horizonte.",
+        ],
+      },
+    },
+    h2h: {
+      bestia: [
+        "{n}ª vez en {city} y el {team} aún no sabe lo que es ganar aquí.",
+        "Feudo maldito: {d} derrotas del {team} en {city}. Hoy, a romper la racha.",
+        "El {team} regresa a {city}, su asignatura pendiente ({v}V {d}D).",
+      ],
+      fortin: [
+        "{city} se le da bien al {team}: {v} triunfos en este campo.",
+        "Terreno amigo: el {team} suele salir con los tres puntos de {city}.",
+        "El {team} vuelve a {city}, donde casi siempre manda ({v}V).",
+      ],
+      equilibrado: [
+        "Visita {n} a {city}: historial parejo ({v}V {e}E {d}D).",
+        "El {team} ya conoce {city}: ni fortín ni feudo, pura pelea.",
+        "Otra cita en {city}; la última acabó {score}.",
+      ],
+      primera: [
+        "Primera visita del {team} a {city}. Sin precedentes que pesen.",
+        "Estreno en {city}: el {team} pisa este campo por primera vez.",
+        "Terreno desconocido: el {team} debuta como visitante en {city}.",
+      ],
+    },
+    hero: {
+      goleador: [
+        "En la fila 7 viaja {player}: {goals} goles ya esta temporada.",
+        "El {team} confía en {player} ({goals} dianas) para desnivelar en {city}.",
+        "{player} llega a {city} en racha: {goals} goles y contando.",
+      ],
+      canterano: [
+        "{player}, de la cantera, mira por la ventanilla rumbo a {city}.",
+        "Día grande para {player}: el canterano viaja entre los elegidos.",
+        "La casa manda: {player} ({pos}) afronta otra cita lejos del Bernabéu particular.",
+      ],
+      veterano: [
+        "{player}, veterano del vestuario, pone calma rumbo a {city}.",
+        "El capitán {player} reparte consejos durante el viaje a {city}.",
+        "{player} ya lo ha visto todo; hoy guía al grupo en {city}.",
+      ],
+      estrella: [
+        "{player} ({pos}), la estrella del {team}, encabeza la expedición a {city}.",
+        "Todas las miradas en {player} para el duelo de {city}.",
+        "El {team} viaja con su mejor arma: {player}.",
+      ],
+    },
+    stake: {
+      liderato: [
+        "El {team} viaja como líder: ganar en {city} sería un paso de gigante.",
+        "Liderato en juego: cada punto en {city} pesa oro.",
+      ],
+      europa_zona: [
+        "Pelea por Europa: el {team} no puede dejarse puntos en {city}.",
+        "Zona noble en disputa; el {team} se la juega en {city}.",
+      ],
+      descenso: [
+        "Partido de seis puntos: el {team} se juega la permanencia en {city}.",
+        "Sin red: el {team} necesita arañar algo en {city} para respirar.",
+      ],
+      media: [
+        "Sin presión en la tabla, el {team} viaja a {city} a competir y crecer.",
+        "Jornada de media tabla en {city}: orgullo y oficio.",
+      ],
+      copa: [
+        "Noche de copa en {city}: o pasas, o a casa.",
+        "Eliminatoria en {city}: no hay mañana si se falla.",
+      ],
+      continental: [
+        "Noche europea en {city}: {comp} no perdona.",
+        "Luces de {comp} en {city}; el {team} sale a por una gesta.",
+      ],
+      final_euro: [
+        "Final continental en {city}. El {team} ante la historia.",
+        "{comp}: el {team} viaja a {city} a por la gloria eterna.",
+      ],
+    },
+    atmosfera: {
+      nieve: [
+        "Nieve sobre el norte: frío de verdad esperando en {city}.",
+        "Cielo plomizo y copos; en {city} se jugará con guantes.",
+      ],
+      frio: [
+        "Frío invernal en {city}: el aliento se ve sobre el césped.",
+        "Tarde gélida en {city}; a entrar en calor pronto.",
+      ],
+      calor: [
+        "Calor de verano en {city}: tarde pesada, hidratación al máximo.",
+        "Bochorno en {city}; el ritmo lo marcará el termómetro.",
+      ],
+      lluvia: [
+        "Llueve en {city}: el balón correrá rápido sobre el verde.",
+        "Césped mojado en {city}; cuidado con los resbalones.",
+      ],
+      normal: [
+        "Tarde tranquila de fútbol en {city}.",
+        "Buen tiempo en {city} para rodar el balón.",
+      ],
+    },
+    reunion: [
+      "Reencuentro: {player} espera enfrente, ahora en el {rival}.",
+      "Viejo conocido en {city}: {player} viste hoy los colores del {rival}.",
+    ],
+    rare: [
+      "Turbulencias leves: el grupo aprieta los reposabrazos y sonríe nervioso.",
+      "Retraso en pista; el míster aprovecha para una última charla táctica.",
+      "Un jugador no pega ojo en todo el trayecto: nervios de partido grande.",
+      "El piloto saluda por megafonía a la afición del {team} que viaja con el equipo.",
+      "Cánticos al fondo del pasillo: el viaje se hace corto.",
+      "Niebla en la aproximación; el comandante pide calma, todo bajo control.",
+    ],
+    arrival: [
+      "Llegada a {city}. El {team} ya pisa el feudo del {rival}.",
+      "Fin del trayecto: {city}. A por los tres puntos.",
+      "El {team} ya está en {city}. Toca competir.",
+    ],
+  };
+
   FC.data = D;
 })();
 
@@ -965,6 +1190,10 @@ body.live-active { overflow: hidden; }
     play: P('<path d="M7 5v14l11-7L7 5Z"/>'),
     bandage: P('<path d="m9.5 9.5 5 5M10 14l-1.5 1.5a3.5 3.5 0 0 1-5-5L5 9M14 10l1.5-1.5a3.5 3.5 0 0 1 5 5L19 15"/><rect x="7.5" y="7.5" width="9" height="9" rx="2" transform="rotate(45 12 12)"/>'),
     calendar: P('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/>'),
+    plane: P('<path d="M21 15.5v-2l-8-5V3.7a1.4 1.4 0 0 0-2.8 0V8.5l-8 5v2l8-2.4V18l-2 1.4V21l3.4-1 3.4 1v-1.6L13 18v-4.9l8 2.4Z"/>'),
+    bus: P('<rect x="4" y="4.5" width="16" height="12" rx="2"/><path d="M4 11h16M8 4.5v6.5M16 4.5v6.5"/><path d="M7 16.5v2M17 16.5v2"/>'),
+    pin: P('<path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10Z"/><circle cx="12" cy="11" r="2.2"/>'),
+    snow: P('<path d="M12 3v18M4.5 7.5 19.5 16.5M19.5 7.5 4.5 16.5M3.5 12h17"/>'),
   };
   FC.icons = ICONS;
   U.icon = (name) => ICONS[name] || "";
@@ -1695,6 +1924,171 @@ body.live-active { overflow: hidden; }
   FC.store = S;
 
   /* ============================================================
+     VIAJES — motor de la "Cabina en directo".
+     Deriva el contexto de un partido FUERA (rival, distancia, modo de
+     transporte, historial en esa sede, racha, stake, tier del club,
+     héroe vivo, atmósfera estacional) y compone una bitácora narrativa
+     determinista por un hash PROPIO (distinto del de storyline, para no
+     "rimar" con el feed). Todo derivado; no persiste nada. Escapa con
+     U.esc al interpolar nombres (datos de jugador/rival/ciudad).
+     ============================================================ */
+  const TRIPS = {};
+  const _esc = U.esc;
+  const _norm = (s) => String(s == null ? "" : s).trim().toLowerCase();
+  const hashCab = (s) => { let h = 7; s = String(s || ""); for (let i = 0; i < s.length; i++) h = (h * 37 + s.charCodeAt(i)) % 1000003; return h; };
+  const TIER_LABEL = { recien: "Recién llegado", consolidado: "Club consolidado", potencia: "Potencia", gigante: "Gigante europeo" };
+
+  TRIPS.cityOf = (teamName) => {
+    const row = (FC.data.CITIES || {})[teamName];
+    if (row) return { lat: row[0], lon: row[1], city: row[2], approx: false };
+    // Fallback determinista para equipos personalizados: pseudo-coordenadas
+    // estables dentro de Europa por hash del nombre (ruta plausible, no real).
+    const h = hashCab(teamName || "?");
+    return { lat: 36 + (h % 1000) / 1000 * 18, lon: -9 + (Math.floor(h / 7) % 1000) / 1000 * 25, city: teamName || "—", approx: true };
+  };
+  TRIPS.distance = (a, b) => {
+    const rad = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(s)));
+  };
+  TRIPS.travelerRank = (km) => km >= 350000 ? "Platino" : km >= 150000 ? "Oro" : km >= 50000 ? "Plata" : "Bronce";
+
+  TRIPS.pickHero = (c, m) => {
+    const players = (c.players || []).filter(p => p && p.name);
+    if (!players.length) return null;
+    const injured = {}; S.activeInjuries(c).forEach(i => injured[_norm(i.player)] = 1);
+    const sold = {}; (c.transfers || []).filter(t => t.direction === "out").forEach(t => sold[_norm(t.player)] = 1);
+    const avail = players.filter(p => !injured[_norm(p.name)] && !sold[_norm(p.name)]);
+    const pool = avail.length ? avail : players;
+    const agg = S.playerAggregates(c, m.seasonId);
+    const num = (x) => Number(x) || 0;
+    const cands = [];
+    const scorer = pool.map(p => ({ p, g: (agg[_norm(p.name)] || {}).goals || num(p.goals) })).sort((a, b) => b.g - a.g)[0];
+    if (scorer && scorer.g > 0) cands.push({ role: "goleador", p: scorer.p, goals: scorer.g });
+    const youth = pool.filter(p => p.fromYouth).sort((a, b) => num(b.ovr) - num(a.ovr))[0];
+    if (youth) cands.push({ role: "canterano", p: youth });
+    const vet = pool.slice().sort((a, b) => num(b.age) - num(a.age))[0];
+    if (vet && num(vet.age) >= 32) cands.push({ role: "veterano", p: vet });
+    const star = pool.slice().sort((a, b) => num(b.ovr) - num(a.ovr))[0];
+    if (star) cands.push({ role: "estrella", p: star });
+    if (!cands.length) cands.push({ role: "estrella", p: pool[0] });
+    const pick = cands[hashCab("hero:" + m.id) % cands.length];
+    return { name: pick.p.name, pos: pick.p.position || "", role: pick.role, goals: pick.goals || num(pick.p.goals), ovr: pick.p.ovr, age: pick.p.age };
+  };
+
+  TRIPS.atmosphere = (m, dest) => {
+    const dt = m.date ? new Date(m.date) : null;
+    const month = (dt && !isNaN(dt)) ? dt.getMonth() + 1 : null;
+    const night = (hashCab("night:" + m.id) % 100) < 55;
+    let kind = "normal";
+    if (month != null) {
+      const winter = (month === 12 || month <= 2), summer = (month >= 6 && month <= 8);
+      if (winter && dest.lat >= 43) kind = "nieve";
+      else if (winter) kind = "frio";
+      else if (summer && dest.lat <= 40) kind = "calor";
+      else if ((hashCab("rain:" + m.id) % 100) < 22) kind = "lluvia";
+    }
+    return { kind, night, month };
+  };
+
+  // Contexto del viaje: null si el partido no es del usuario; {isAway:false}
+  // si es en casa (no hay viaje); objeto completo si es fuera.
+  TRIPS.context = (c, m) => {
+    if (!c || !m) return null;
+    const club = c.clubName;
+    if (m.home !== club && m.away !== club) return null;
+    if (m.away !== club) return { isAway: false };
+    const rival = m.home;
+    const origin = TRIPS.cityOf(club), dest = TRIPS.cityOf(rival);
+    const dist = Math.round(TRIPS.distance(origin, dest));
+    const continental = (FC.data.CONTINENTAL || []).some(x => (m.competition || "").includes(x));
+    const mode = (continental || dist >= 300) ? "avion" : "bus";
+    const played = S.userMatches(c).filter(x => x.id !== m.id);
+    const atVenue = played.filter(x => x.home === rival && x.away === club).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    let v = 0, e = 0, d = 0, last = null;
+    atVenue.forEach(x => { const r = S.userResult(c, x); if (r === "W") v++; else if (r === "D") e++; else d++; last = x; });
+    const nthVisit = atVenue.length + 1;
+    let h2hType = "primera";
+    if (atVenue.length) h2hType = (v === 0 && d >= 2) ? "bestia" : (v >= 2 && d === 0) ? "fortin" : "equilibrado";
+    const before = played.filter(x => !m.date || new Date(x.date || 0) <= new Date(m.date)).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    let unbeaten = 0; for (let i = 0; i < before.length; i++) { if (S.userResult(c, before[i]) === "L") break; unbeaten++; }
+    let stake = "media";
+    if (continental) stake = /final/i.test(m.round || "") ? "final_euro" : "continental";
+    else if (/copa/i.test(m.competition || "")) stake = "copa";
+    else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
+    const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
+    const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
+    let miles = 0; S.userMatches(c).forEach(x => { if (x.away === club && x.home) miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; });
+    return {
+      isAway: true, club, rival, origin, dest, dist, mode, continental, approx: origin.approx || dest.approx,
+      h2h: { v, e, d, nthVisit, last, type: h2hType }, streak: { unbeaten }, stake, tier, tierLabel: TIER_LABEL[tier],
+      hero: TRIPS.pickHero(c, m), atmos: TRIPS.atmosphere(m, dest), miles: Math.round(miles), m,
+    };
+  };
+
+  // Bitácora: lista ordenada de beats {phase, t (0..1), tone, icon, title, sub}.
+  // Tono cinematográfico: hasta 2 beats memorables + stake + atmósfera + ~25% raro.
+  TRIPS.beats = (ctx, c) => {
+    if (!ctx || !ctx.isAway) return [];
+    const m = ctx.m, T = ctx.club, rival = ctx.rival, P = FC.data.TRIP || {};
+    const seed = (k) => "cab:" + k + ":" + m.id + ":" + ctx.h2h.nthVisit;
+    const fill = (pool, k, vars) => {
+      if (!pool || !pool.length) return "";
+      return pool[hashCab(seed(k)) % pool.length].replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
+    };
+    const lastScore = ctx.h2h.last ? (Number(ctx.h2h.last.homeScore) + "-" + Number(ctx.h2h.last.awayScore)) : "";
+    const vars = {
+      team: T, rival, city: ctx.dest.city, ocity: ctx.origin.city, comp: m.competition || "", round: m.round || "",
+      n: ctx.h2h.nthVisit, v: ctx.h2h.v, e: ctx.h2h.e, d: ctx.h2h.d, streak: ctx.streak.unbeaten,
+      player: ctx.hero ? ctx.hero.name : "", pos: ctx.hero ? ctx.hero.pos : "", goals: ctx.hero ? ctx.hero.goals : "", score: lastScore,
+    };
+    const beats = [];
+    const amb = (P.ambient && P.ambient[ctx.mode]) || {};
+    beats.push({ phase: "salida", t: 0.07, tone: "neutral", icon: ctx.mode === "avion" ? "plane" : "bus",
+      title: fill(ctx.mode === "avion" ? amb.despegue : amb.salida, "dep", vars), sub: _esc(ctx.origin.city + " → " + ctx.dest.city) });
+
+    const mem = [];
+    const t = ctx.h2h.type;
+    mem.push({ prio: t === "bestia" ? 5 : t === "fortin" ? 4 : t === "primera" ? 2 : 3, tone: t === "bestia" ? "bad" : "good",
+      icon: t === "bestia" ? "flame" : "flag", key: "h2h", vars,
+      sub: t === "primera" ? "Primera visita" : (ctx.h2h.nthVisit + "ª visita · " + ctx.h2h.v + "V " + ctx.h2h.e + "E " + ctx.h2h.d + "D aquí"),
+      pool: (P.h2h || {})[t] });
+    if (ctx.hero) {
+      const r = ctx.hero.role;
+      mem.push({ prio: (r === "canterano" || r === "goleador") ? 4 : 3, tone: "good", icon: "star", key: "hero", vars,
+        sub: (r === "goleador" && ctx.hero.goals) ? (ctx.hero.goals + " goles esta temporada") : _esc(ctx.hero.pos || ""),
+        pool: (P.hero || {})[r] || (P.hero || {}).estrella });
+    }
+    const exOut = (c.transfers || []).filter(x => x.direction === "out" && _norm(x.club) === _norm(rival));
+    if (exOut.length) mem.push({ prio: 4, tone: "neutral", icon: "swap", key: "reu",
+      vars: Object.assign({}, vars, { player: exOut[0].player }), sub: "Viejo conocido", pool: P.reunion });
+
+    mem.sort((a, b) => b.prio - a.prio);
+    mem.slice(0, 2).forEach((b, i) => beats.push({ phase: i === 0 ? "crucero" : "aproximacion", t: i === 0 ? 0.4 : 0.66,
+      tone: b.tone, icon: b.icon, title: fill(b.pool, b.key, b.vars), sub: b.sub }));
+
+    const sp = (P.stake || {})[ctx.stake];
+    if (sp) beats.push({ phase: "crucero", t: 0.52, tone: ctx.stake === "descenso" ? "bad" : "neutral", icon: "target",
+      title: fill(sp, "stake", vars), sub: ctx.tier !== "recien" ? ctx.tierLabel : "" });
+
+    const ap = (P.atmosfera || {})[ctx.atmos.kind] || (P.atmosfera || {}).normal;
+    if (ap) beats.push({ phase: "aproximacion", t: 0.78, tone: "neutral", icon: ctx.atmos.kind === "nieve" ? "snow" : "cloud",
+      title: fill(ap, "atm", vars), sub: ctx.atmos.night ? "Partido nocturno" : "" });
+
+    if ((hashCab(seed("rare")) % 100) < 25 && P.rare && P.rare.length) {
+      const ev = P.rare[hashCab(seed("rid")) % P.rare.length];
+      beats.push({ phase: "crucero", t: 0.6, tone: "neutral", icon: "flame", title: fill([ev], "rfill", vars), sub: "Imprevisto del viaje" });
+    }
+
+    beats.push({ phase: "aterrizaje", t: 0.99, tone: "good", icon: "flag", title: fill(P.arrival, "arr", vars), sub: _esc("vs " + rival) });
+    beats.sort((a, b) => a.t - b.t);
+    return beats;
+  };
+
+  FC.trips = TRIPS;
+
+  /* ============================================================
      ROUTER (hash)
      ============================================================ */
   const R = { routes: {}, current: null };
@@ -2410,7 +2804,10 @@ body.live-active { overflow: hidden; }
           <div><div class="nm-label">Próximo partido${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
           <div class="nm-teams">${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${U.esc(nextM.away||"—")}</div></div>
         </div>
-        <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
+        <div class="flex gap center">
+          ${nextM.away === c.clubName ? `<button class="btn btn-ghost btn-sm" id="dash-next-trip"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
+          <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
+        </div>
       </div>` : ""}
 
       <div class="grid cols-4 keep-2">
@@ -2487,6 +2884,8 @@ body.live-active { overflow: hidden; }
     const nextEl = document.getElementById("dash-next");
     if (nextEl) {
       document.getElementById("dash-next-play").addEventListener("click", (e) => { e.stopPropagation(); UI.openMatchModal(c, nextM, { mode: "result" }); });
+      const dnt = document.getElementById("dash-next-trip");
+      if (dnt) dnt.addEventListener("click", (e) => { e.stopPropagation(); UI.openTrip(c, nextM); });
       nextEl.addEventListener("click", () => UI.openMatchModal(c, nextM, { mode: "schedule" }));
     }
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
@@ -2580,11 +2979,14 @@ body.live-active { overflow: hidden; }
       UI.openMatchModal(c, findMatch(c, r.dataset.match));
     }));
     content().querySelectorAll("[data-up]").forEach(r => r.addEventListener("click", (e) => {
-      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]")) return;
+      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]") || e.target.closest("[data-trip]")) return;
       UI.openMatchModal(c, findMatch(c, r.dataset.up), { mode: "schedule" });
     }));
     content().querySelectorAll("[data-play-match]").forEach(b => b.addEventListener("click", () => {
       UI.openMatchModal(c, findMatch(c, b.dataset.playMatch), { mode: "result" });
+    }));
+    content().querySelectorAll("[data-trip]").forEach(b => b.addEventListener("click", (e) => {
+      e.stopPropagation(); UI.openTrip(c, findMatch(c, b.dataset.trip));
     }));
     content().querySelectorAll("[data-del-match]").forEach(b => b.addEventListener("click", () => {
       UI.confirm("¿Eliminar este partido?", () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast("Partido eliminado"); }, true);
@@ -2750,6 +3152,184 @@ body.live-active { overflow: hidden; }
     `);
     document.getElementById("live-exit").addEventListener("click", () => FC.router.go("dashboard"));
     document.getElementById("live-add").addEventListener("click", () => UI.openMatchModal(c, nextM || undefined, nextM ? { mode: "result" } : undefined));
+  };
+
+  /* ============================================================
+     CABINA EN DIRECTO — transmisión del viaje al partido fuera.
+     Overlay a pantalla completa (no es una ruta): se lanza desde la
+     tarjeta de un partido visitante. Anima el vehículo por la ruta y
+     revela la bitácora; al llegar, abre el modal de registrar resultado.
+     ============================================================ */
+  // Proyección equirectangular sobre el bbox de los dos puntos (norte arriba),
+  // para que origen y destino caigan en su dirección geográfica relativa.
+  function projRoute(o, dst, W, H, pad) {
+    let latMin = Math.min(o.lat, dst.lat), latMax = Math.max(o.lat, dst.lat);
+    let lonMin = Math.min(o.lon, dst.lon), lonMax = Math.max(o.lon, dst.lon);
+    const lp = (latMax - latMin) * 0.6 + 1.5, gp = (lonMax - lonMin) * 0.6 + 1.5;
+    latMin -= lp; latMax += lp; lonMin -= gp; lonMax += gp;
+    return (c) => [
+      pad + (c.lon - lonMin) / ((lonMax - lonMin) || 1) * (W - 2 * pad),
+      pad + (latMax - c.lat) / ((latMax - latMin) || 1) * (H - 2 * pad),
+    ];
+  }
+
+  UI.openTrip = function (c, m) {
+    const ctx = FC.trips.context(c, m);
+    if (!ctx || !ctx.isAway) { UI.toast("Este partido es en casa: no hay viaje", "err"); return; }
+    const beats = FC.trips.beats(ctx, c);
+    const avion = ctx.mode === "avion";
+    // SVG no resuelve var() en atributos de presentación: resolvemos el acento a hex.
+    const _cs = getComputedStyle(document.body);
+    const accHex = ((avion ? _cs.getPropertyValue("--accent") : _cs.getPropertyValue("--accent-3")) || "").trim() || (avion ? "#00e1a0" : "#ffd02e");
+    const W = 720, H = 220, pad = 48;
+    const proj = projRoute(ctx.origin, ctx.dest, W, H, pad);
+    const o = proj(ctx.origin), dp = proj(ctx.dest);
+    const ctrl = [(o[0] + dp[0]) / 2, Math.min(o[1], dp[1]) - 44];
+    const arcD = `M${o[0].toFixed(1)},${o[1].toFixed(1)} Q${ctrl[0].toFixed(1)},${ctrl[1].toFixed(1)} ${dp[0].toFixed(1)},${dp[1].toFixed(1)}`;
+    const etaTotal = avion ? Math.round(40 + ctx.dist / 12) : Math.round(10 + ctx.dist / 1.3);
+    const steps = avion ? ["Embarque", "Despegue", "Crucero", "Aproximación", "Aterrizaje"] : ["Salida", "Carretera", "Crucero", "Aproximación", "Llegada"];
+    const THRESH = [0, 0.12, 0.3, 0.75, 0.97];
+    const rank = FC.trips.travelerRank(ctx.miles);
+
+    // chips de contexto
+    const stakeLabel = { liderato: "Liderato en juego", europa_zona: "Pelea por Europa", descenso: "Lucha por no bajar", media: "Media tabla", copa: "Noche de copa", continental: "Noche europea", final_euro: "¡Final!" }[ctx.stake] || "";
+    const stakeCls = (ctx.stake === "descenso") ? "danger" : (ctx.stake === "liderato" || ctx.stake === "continental" || ctx.stake === "final_euro") ? "gold" : "accent";
+    const chips = [];
+    chips.push(`<span class="chip"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${avion ? "Avión" : "Autobús"} · ${ctx.dist.toLocaleString("es-ES")} km</span>`);
+    if (stakeLabel) chips.push(`<span class="chip ${stakeCls}"><span class="ni-icon" data-icon="target"></span> ${stakeLabel}</span>`);
+    if (ctx.streak.unbeaten >= 3) chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="flame"></span> ${ctx.streak.unbeaten} sin perder</span>`);
+    if (ctx.h2h.type === "bestia") chips.push(`<span class="chip danger"><span class="ni-icon" data-icon="flame"></span> Bestia negra</span>`);
+    else if (ctx.h2h.type === "fortin") chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="flag"></span> Fortín</span>`);
+    if (ctx.atmos.night) chips.push(`<span class="chip"><span class="ni-icon" data-icon="moon"></span> Nocturno</span>`);
+    chips.push(`<span class="chip gold"><span class="ni-icon" data-icon="plane"></span> Viajero ${rank} · ${ctx.miles.toLocaleString("es-ES")} km</span>`);
+    if (ctx.approx) chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> Ruta aproximada</span>`);
+
+    const beatHtml = beats.map(b => `
+      <div class="trip-beat" data-bt="${b.t}">
+        <span class="trip-bi tone-${b.tone}"><span class="ni-icon" data-icon="${b.icon}"></span></span>
+        <div class="tb-main"><div class="tb-title">${b.title}</div>${b.sub ? `<div class="tb-sub">${b.sub}</div>` : ""}</div>
+      </div>`).join("");
+
+    const ov = document.createElement("div");
+    ov.className = "live-screen trip-cabin";
+    ov.innerHTML = `
+      <div class="live-top">
+        <div class="live-club">
+          <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
+          <div class="live-club-meta"><b>${U.esc(ctx.origin.city)} → ${U.esc(ctx.dest.city)}</b><small>vs ${U.esc(ctx.rival)}${m.competition ? " · " + U.esc(m.competition) : ""}${m.round ? " " + U.esc(m.round) : ""}</small></div>
+        </div>
+        <div class="flex gap center">
+          <span class="trip-live" id="trip-status"><i class="trip-dot"></i> EN VIVO</span>
+          <button class="btn btn-ghost" id="trip-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
+        </div>
+      </div>
+
+      <div class="flex gap wrap" style="gap:7px">${chips.join("")}</div>
+
+      <div class="card tight trip-map">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" aria-hidden="true">
+          <rect x="0" y="0" width="${W}" height="${H}" fill="${avion ? "#0a121d" : "#0c1118"}"/>
+          <g stroke="#16202e" stroke-width="1"><line x1="0" y1="${H*0.3}" x2="${W}" y2="${H*0.3}"/><line x1="0" y1="${H*0.6}" x2="${W}" y2="${H*0.6}"/></g>
+          <path id="trip-remain" d="${arcD}" fill="none" stroke="#2a3a52" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 7"/>
+          <path id="trip-travel" d="${arcD}" fill="none" stroke="${accHex}" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="7" fill="#93a6bd" fill-opacity="0.2"/><circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="4" fill="#93a6bd"/>
+          <text x="${(o[0]+9).toFixed(1)}" y="${(o[1]+4).toFixed(1)}" fill="#cdd9e6" font-size="12" font-weight="600">${U.esc(ctx.origin.city)}</text>
+          <circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="9" fill="${accHex}" fill-opacity="0.2"/><circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="4.5" fill="${accHex}"/>
+          <text x="${(dp[0]+10).toFixed(1)}" y="${(dp[1]-7).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(ctx.dest.city)}</text>
+          <foreignObject id="trip-plane" x="0" y="0" width="26" height="26"><div xmlns="http://www.w3.org/1999/xhtml" class="trip-plane-i" style="color:${accHex}">${U.icon(avion ? "plane" : "bus")}</div></foreignObject>
+        </svg>
+      </div>
+
+      <div class="trip-steps" id="trip-steps">${steps.map((s, i) => `${i ? '<i></i>' : ''}<span data-si="${i}">${s}</span>`).join("")}</div>
+
+      <div class="trip-hud">
+        <div class="trip-tile"><span class="tt-lbl">${avion ? "Fase" : "Trayecto"}</span><span class="tt-val" id="trip-phase">${avion ? "Crucero" : "En ruta"}</span></div>
+        <div class="trip-tile"><span class="tt-lbl">Velocidad</span><span class="tt-val">${avion ? "812 km/h" : "92 km/h"}</span></div>
+        <div class="trip-tile"><span class="tt-lbl">Restante</span><span class="tt-val" id="trip-dist">${ctx.dist.toLocaleString("es-ES")} km</span></div>
+      </div>
+
+      <div class="trip-prog">
+        <div class="flex between center" style="font-size:13px;margin-bottom:6px"><span id="trip-eta"><span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ${etaTotal} min para el pitido inicial</span><span class="faint" id="trip-pct">0%</span></div>
+        <div class="bar${avion ? "" : " gold"}"><i id="trip-fill" style="width:0%"></i></div>
+      </div>
+
+      <div class="card tight">
+        <div class="section-title" style="margin:2px 2px 8px"><span class="ni-icon" data-icon="book"></span> Bitácora de cabina</div>
+        <div class="trip-beats">${beatHtml}</div>
+      </div>
+
+      <div class="trip-note faint"><span class="ni-icon" data-icon="bell"></span> Todo derivado de tu carrera. Es ambientación: no afecta a tu partida ni al resultado.</div>
+
+      <div class="trip-controls" id="trip-controls">
+        <div class="seg" id="trip-speed"><button type="button" data-s="1">1x</button><button type="button" data-s="2" class="active">2x</button><button type="button" data-s="8">8x</button></div>
+        <button class="btn btn-ghost" id="trip-skip"><span class="ni-icon" data-icon="play"></span> Saltar al destino</button>
+      </div>
+    `;
+    document.body.appendChild(ov);
+    document.body.classList.add("trip-open");
+    U.hydrateIcons(ov);
+
+    const travel = ov.querySelector("#trip-travel"), plane = ov.querySelector("#trip-plane"), planeI = plane.firstElementChild;
+    const fillEl = ov.querySelector("#trip-fill"), pctEl = ov.querySelector("#trip-pct"), distEl = ov.querySelector("#trip-dist"), etaEl = ov.querySelector("#trip-eta"), phaseEl = ov.querySelector("#trip-phase");
+    const stepEls = Array.prototype.slice.call(ov.querySelectorAll("#trip-steps [data-si]"));
+    const beatEls = Array.prototype.slice.call(ov.querySelectorAll(".trip-beat"));
+    const L = travel.getTotalLength();
+    travel.style.strokeDasharray = L;
+
+    function setT(t) {
+      travel.style.strokeDashoffset = L * (1 - t);
+      const pt = travel.getPointAtLength(L * t), p2 = travel.getPointAtLength(Math.min(L, L * t + 1));
+      const ang = Math.atan2(p2.y - pt.y, p2.x - pt.x) * 180 / Math.PI;
+      plane.setAttribute("x", (pt.x - 13).toFixed(1)); plane.setAttribute("y", (pt.y - 13).toFixed(1));
+      planeI.style.transform = "rotate(" + ang.toFixed(1) + "deg)";
+      const pct = Math.round(t * 100);
+      fillEl.style.width = pct + "%"; pctEl.textContent = pct + "%";
+      distEl.textContent = Math.round(ctx.dist * (1 - t)).toLocaleString("es-ES") + " km";
+      etaEl.innerHTML = t >= 1 ? '<span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> Sonó el pitido inicial'
+        : '<span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ' + Math.max(1, Math.round(etaTotal * (1 - t))) + ' min para el pitido inicial';
+      U.hydrateIcons(etaEl);
+      let idx = 0; for (let i = 0; i < THRESH.length; i++) if (t >= THRESH[i]) idx = i;
+      stepEls.forEach((el, i) => el.classList.toggle("on", i <= idx));
+      phaseEl.textContent = steps[idx];
+      beatEls.forEach(el => { if (Number(el.dataset.bt) <= t + 0.001) el.classList.add("show"); });
+    }
+
+    let prog = 0, last = null, raf = null, speed = 2, arrived = false;
+    function arrive() {
+      if (arrived) return; arrived = true;
+      if (raf) cancelAnimationFrame(raf);
+      prog = 1; setT(1);
+      const st = ov.querySelector("#trip-status"); if (st) { st.innerHTML = '<i class="trip-dot off"></i> LLEGADA'; st.classList.add("arrived"); }
+      ov.querySelector("#trip-controls").innerHTML = `<button class="live-add" id="trip-cta"><span class="ni-icon" data-icon="ball"></span> Listo para el partido</button>`;
+      U.hydrateIcons(ov.querySelector("#trip-controls"));
+      ov.querySelector("#trip-cta").addEventListener("click", () => { close(); UI.openMatchModal(c, m, { mode: "result" }); });
+    }
+    function loop(ts) {
+      if (last == null) last = ts;
+      prog = Math.min(1, prog + (ts - last) * speed / baseDur); last = ts;
+      setT(prog);
+      if (prog >= 1) { arrive(); return; }
+      raf = requestAnimationFrame(loop);
+    }
+    const baseDur = Math.min(20000, 8000 + ctx.dist * 6);
+
+    function close() {
+      if (raf) cancelAnimationFrame(raf);
+      document.removeEventListener("keydown", onKey);
+      ov.remove(); document.body.classList.remove("trip-open");
+    }
+    function onKey(e) { if (e.key === "Escape") close(); }
+    document.addEventListener("keydown", onKey);
+    ov.querySelector("#trip-exit").addEventListener("click", close);
+    ov.querySelector("#trip-skip").addEventListener("click", () => { prog = 1; setT(1); arrive(); });
+    ov.querySelectorAll("#trip-speed button").forEach(b => b.addEventListener("click", () => {
+      speed = Number(b.dataset.s) || 1;
+      ov.querySelectorAll("#trip-speed button").forEach(x => x.classList.toggle("active", x === b));
+    }));
+
+    setT(0);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { arrive(); }
+    else raf = requestAnimationFrame(loop);
   };
 
   /* ============================================================
@@ -4158,6 +4738,7 @@ body.live-active { overflow: hidden; }
         <span class="t away" style="${away?"font-weight:700":""}">${U.esc(m.away||"—")}</span></div>
       <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
       <div class="up-actions">
+        ${away ? `<button class="btn btn-ghost btn-sm" data-trip="${m.id}"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
         <button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>
         <button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>
       </div>

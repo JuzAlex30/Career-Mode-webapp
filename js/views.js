@@ -452,7 +452,10 @@
           <div><div class="nm-label">Próximo partido${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
           <div class="nm-teams">${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${U.esc(nextM.away||"—")}</div></div>
         </div>
-        <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
+        <div class="flex gap center">
+          ${nextM.away === c.clubName ? `<button class="btn btn-ghost btn-sm" id="dash-next-trip"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
+          <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
+        </div>
       </div>` : ""}
 
       <div class="grid cols-4 keep-2">
@@ -529,6 +532,8 @@
     const nextEl = document.getElementById("dash-next");
     if (nextEl) {
       document.getElementById("dash-next-play").addEventListener("click", (e) => { e.stopPropagation(); UI.openMatchModal(c, nextM, { mode: "result" }); });
+      const dnt = document.getElementById("dash-next-trip");
+      if (dnt) dnt.addEventListener("click", (e) => { e.stopPropagation(); UI.openTrip(c, nextM); });
       nextEl.addEventListener("click", () => UI.openMatchModal(c, nextM, { mode: "schedule" }));
     }
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
@@ -622,11 +627,14 @@
       UI.openMatchModal(c, findMatch(c, r.dataset.match));
     }));
     content().querySelectorAll("[data-up]").forEach(r => r.addEventListener("click", (e) => {
-      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]")) return;
+      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]") || e.target.closest("[data-trip]")) return;
       UI.openMatchModal(c, findMatch(c, r.dataset.up), { mode: "schedule" });
     }));
     content().querySelectorAll("[data-play-match]").forEach(b => b.addEventListener("click", () => {
       UI.openMatchModal(c, findMatch(c, b.dataset.playMatch), { mode: "result" });
+    }));
+    content().querySelectorAll("[data-trip]").forEach(b => b.addEventListener("click", (e) => {
+      e.stopPropagation(); UI.openTrip(c, findMatch(c, b.dataset.trip));
     }));
     content().querySelectorAll("[data-del-match]").forEach(b => b.addEventListener("click", () => {
       UI.confirm("¿Eliminar este partido?", () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast("Partido eliminado"); }, true);
@@ -792,6 +800,184 @@
     `);
     document.getElementById("live-exit").addEventListener("click", () => FC.router.go("dashboard"));
     document.getElementById("live-add").addEventListener("click", () => UI.openMatchModal(c, nextM || undefined, nextM ? { mode: "result" } : undefined));
+  };
+
+  /* ============================================================
+     CABINA EN DIRECTO — transmisión del viaje al partido fuera.
+     Overlay a pantalla completa (no es una ruta): se lanza desde la
+     tarjeta de un partido visitante. Anima el vehículo por la ruta y
+     revela la bitácora; al llegar, abre el modal de registrar resultado.
+     ============================================================ */
+  // Proyección equirectangular sobre el bbox de los dos puntos (norte arriba),
+  // para que origen y destino caigan en su dirección geográfica relativa.
+  function projRoute(o, dst, W, H, pad) {
+    let latMin = Math.min(o.lat, dst.lat), latMax = Math.max(o.lat, dst.lat);
+    let lonMin = Math.min(o.lon, dst.lon), lonMax = Math.max(o.lon, dst.lon);
+    const lp = (latMax - latMin) * 0.6 + 1.5, gp = (lonMax - lonMin) * 0.6 + 1.5;
+    latMin -= lp; latMax += lp; lonMin -= gp; lonMax += gp;
+    return (c) => [
+      pad + (c.lon - lonMin) / ((lonMax - lonMin) || 1) * (W - 2 * pad),
+      pad + (latMax - c.lat) / ((latMax - latMin) || 1) * (H - 2 * pad),
+    ];
+  }
+
+  UI.openTrip = function (c, m) {
+    const ctx = FC.trips.context(c, m);
+    if (!ctx || !ctx.isAway) { UI.toast("Este partido es en casa: no hay viaje", "err"); return; }
+    const beats = FC.trips.beats(ctx, c);
+    const avion = ctx.mode === "avion";
+    // SVG no resuelve var() en atributos de presentación: resolvemos el acento a hex.
+    const _cs = getComputedStyle(document.body);
+    const accHex = ((avion ? _cs.getPropertyValue("--accent") : _cs.getPropertyValue("--accent-3")) || "").trim() || (avion ? "#00e1a0" : "#ffd02e");
+    const W = 720, H = 220, pad = 48;
+    const proj = projRoute(ctx.origin, ctx.dest, W, H, pad);
+    const o = proj(ctx.origin), dp = proj(ctx.dest);
+    const ctrl = [(o[0] + dp[0]) / 2, Math.min(o[1], dp[1]) - 44];
+    const arcD = `M${o[0].toFixed(1)},${o[1].toFixed(1)} Q${ctrl[0].toFixed(1)},${ctrl[1].toFixed(1)} ${dp[0].toFixed(1)},${dp[1].toFixed(1)}`;
+    const etaTotal = avion ? Math.round(40 + ctx.dist / 12) : Math.round(10 + ctx.dist / 1.3);
+    const steps = avion ? ["Embarque", "Despegue", "Crucero", "Aproximación", "Aterrizaje"] : ["Salida", "Carretera", "Crucero", "Aproximación", "Llegada"];
+    const THRESH = [0, 0.12, 0.3, 0.75, 0.97];
+    const rank = FC.trips.travelerRank(ctx.miles);
+
+    // chips de contexto
+    const stakeLabel = { liderato: "Liderato en juego", europa_zona: "Pelea por Europa", descenso: "Lucha por no bajar", media: "Media tabla", copa: "Noche de copa", continental: "Noche europea", final_euro: "¡Final!" }[ctx.stake] || "";
+    const stakeCls = (ctx.stake === "descenso") ? "danger" : (ctx.stake === "liderato" || ctx.stake === "continental" || ctx.stake === "final_euro") ? "gold" : "accent";
+    const chips = [];
+    chips.push(`<span class="chip"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${avion ? "Avión" : "Autobús"} · ${ctx.dist.toLocaleString("es-ES")} km</span>`);
+    if (stakeLabel) chips.push(`<span class="chip ${stakeCls}"><span class="ni-icon" data-icon="target"></span> ${stakeLabel}</span>`);
+    if (ctx.streak.unbeaten >= 3) chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="flame"></span> ${ctx.streak.unbeaten} sin perder</span>`);
+    if (ctx.h2h.type === "bestia") chips.push(`<span class="chip danger"><span class="ni-icon" data-icon="flame"></span> Bestia negra</span>`);
+    else if (ctx.h2h.type === "fortin") chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="flag"></span> Fortín</span>`);
+    if (ctx.atmos.night) chips.push(`<span class="chip"><span class="ni-icon" data-icon="moon"></span> Nocturno</span>`);
+    chips.push(`<span class="chip gold"><span class="ni-icon" data-icon="plane"></span> Viajero ${rank} · ${ctx.miles.toLocaleString("es-ES")} km</span>`);
+    if (ctx.approx) chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> Ruta aproximada</span>`);
+
+    const beatHtml = beats.map(b => `
+      <div class="trip-beat" data-bt="${b.t}">
+        <span class="trip-bi tone-${b.tone}"><span class="ni-icon" data-icon="${b.icon}"></span></span>
+        <div class="tb-main"><div class="tb-title">${b.title}</div>${b.sub ? `<div class="tb-sub">${b.sub}</div>` : ""}</div>
+      </div>`).join("");
+
+    const ov = document.createElement("div");
+    ov.className = "live-screen trip-cabin";
+    ov.innerHTML = `
+      <div class="live-top">
+        <div class="live-club">
+          <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
+          <div class="live-club-meta"><b>${U.esc(ctx.origin.city)} → ${U.esc(ctx.dest.city)}</b><small>vs ${U.esc(ctx.rival)}${m.competition ? " · " + U.esc(m.competition) : ""}${m.round ? " " + U.esc(m.round) : ""}</small></div>
+        </div>
+        <div class="flex gap center">
+          <span class="trip-live" id="trip-status"><i class="trip-dot"></i> EN VIVO</span>
+          <button class="btn btn-ghost" id="trip-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
+        </div>
+      </div>
+
+      <div class="flex gap wrap" style="gap:7px">${chips.join("")}</div>
+
+      <div class="card tight trip-map">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" aria-hidden="true">
+          <rect x="0" y="0" width="${W}" height="${H}" fill="${avion ? "#0a121d" : "#0c1118"}"/>
+          <g stroke="#16202e" stroke-width="1"><line x1="0" y1="${H*0.3}" x2="${W}" y2="${H*0.3}"/><line x1="0" y1="${H*0.6}" x2="${W}" y2="${H*0.6}"/></g>
+          <path id="trip-remain" d="${arcD}" fill="none" stroke="#2a3a52" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 7"/>
+          <path id="trip-travel" d="${arcD}" fill="none" stroke="${accHex}" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="7" fill="#93a6bd" fill-opacity="0.2"/><circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="4" fill="#93a6bd"/>
+          <text x="${(o[0]+9).toFixed(1)}" y="${(o[1]+4).toFixed(1)}" fill="#cdd9e6" font-size="12" font-weight="600">${U.esc(ctx.origin.city)}</text>
+          <circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="9" fill="${accHex}" fill-opacity="0.2"/><circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="4.5" fill="${accHex}"/>
+          <text x="${(dp[0]+10).toFixed(1)}" y="${(dp[1]-7).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(ctx.dest.city)}</text>
+          <foreignObject id="trip-plane" x="0" y="0" width="26" height="26"><div xmlns="http://www.w3.org/1999/xhtml" class="trip-plane-i" style="color:${accHex}">${U.icon(avion ? "plane" : "bus")}</div></foreignObject>
+        </svg>
+      </div>
+
+      <div class="trip-steps" id="trip-steps">${steps.map((s, i) => `${i ? '<i></i>' : ''}<span data-si="${i}">${s}</span>`).join("")}</div>
+
+      <div class="trip-hud">
+        <div class="trip-tile"><span class="tt-lbl">${avion ? "Fase" : "Trayecto"}</span><span class="tt-val" id="trip-phase">${avion ? "Crucero" : "En ruta"}</span></div>
+        <div class="trip-tile"><span class="tt-lbl">Velocidad</span><span class="tt-val">${avion ? "812 km/h" : "92 km/h"}</span></div>
+        <div class="trip-tile"><span class="tt-lbl">Restante</span><span class="tt-val" id="trip-dist">${ctx.dist.toLocaleString("es-ES")} km</span></div>
+      </div>
+
+      <div class="trip-prog">
+        <div class="flex between center" style="font-size:13px;margin-bottom:6px"><span id="trip-eta"><span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ${etaTotal} min para el pitido inicial</span><span class="faint" id="trip-pct">0%</span></div>
+        <div class="bar${avion ? "" : " gold"}"><i id="trip-fill" style="width:0%"></i></div>
+      </div>
+
+      <div class="card tight">
+        <div class="section-title" style="margin:2px 2px 8px"><span class="ni-icon" data-icon="book"></span> Bitácora de cabina</div>
+        <div class="trip-beats">${beatHtml}</div>
+      </div>
+
+      <div class="trip-note faint"><span class="ni-icon" data-icon="bell"></span> Todo derivado de tu carrera. Es ambientación: no afecta a tu partida ni al resultado.</div>
+
+      <div class="trip-controls" id="trip-controls">
+        <div class="seg" id="trip-speed"><button type="button" data-s="1">1x</button><button type="button" data-s="2" class="active">2x</button><button type="button" data-s="8">8x</button></div>
+        <button class="btn btn-ghost" id="trip-skip"><span class="ni-icon" data-icon="play"></span> Saltar al destino</button>
+      </div>
+    `;
+    document.body.appendChild(ov);
+    document.body.classList.add("trip-open");
+    U.hydrateIcons(ov);
+
+    const travel = ov.querySelector("#trip-travel"), plane = ov.querySelector("#trip-plane"), planeI = plane.firstElementChild;
+    const fillEl = ov.querySelector("#trip-fill"), pctEl = ov.querySelector("#trip-pct"), distEl = ov.querySelector("#trip-dist"), etaEl = ov.querySelector("#trip-eta"), phaseEl = ov.querySelector("#trip-phase");
+    const stepEls = Array.prototype.slice.call(ov.querySelectorAll("#trip-steps [data-si]"));
+    const beatEls = Array.prototype.slice.call(ov.querySelectorAll(".trip-beat"));
+    const L = travel.getTotalLength();
+    travel.style.strokeDasharray = L;
+
+    function setT(t) {
+      travel.style.strokeDashoffset = L * (1 - t);
+      const pt = travel.getPointAtLength(L * t), p2 = travel.getPointAtLength(Math.min(L, L * t + 1));
+      const ang = Math.atan2(p2.y - pt.y, p2.x - pt.x) * 180 / Math.PI;
+      plane.setAttribute("x", (pt.x - 13).toFixed(1)); plane.setAttribute("y", (pt.y - 13).toFixed(1));
+      planeI.style.transform = "rotate(" + ang.toFixed(1) + "deg)";
+      const pct = Math.round(t * 100);
+      fillEl.style.width = pct + "%"; pctEl.textContent = pct + "%";
+      distEl.textContent = Math.round(ctx.dist * (1 - t)).toLocaleString("es-ES") + " km";
+      etaEl.innerHTML = t >= 1 ? '<span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> Sonó el pitido inicial'
+        : '<span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ' + Math.max(1, Math.round(etaTotal * (1 - t))) + ' min para el pitido inicial';
+      U.hydrateIcons(etaEl);
+      let idx = 0; for (let i = 0; i < THRESH.length; i++) if (t >= THRESH[i]) idx = i;
+      stepEls.forEach((el, i) => el.classList.toggle("on", i <= idx));
+      phaseEl.textContent = steps[idx];
+      beatEls.forEach(el => { if (Number(el.dataset.bt) <= t + 0.001) el.classList.add("show"); });
+    }
+
+    let prog = 0, last = null, raf = null, speed = 2, arrived = false;
+    function arrive() {
+      if (arrived) return; arrived = true;
+      if (raf) cancelAnimationFrame(raf);
+      prog = 1; setT(1);
+      const st = ov.querySelector("#trip-status"); if (st) { st.innerHTML = '<i class="trip-dot off"></i> LLEGADA'; st.classList.add("arrived"); }
+      ov.querySelector("#trip-controls").innerHTML = `<button class="live-add" id="trip-cta"><span class="ni-icon" data-icon="ball"></span> Listo para el partido</button>`;
+      U.hydrateIcons(ov.querySelector("#trip-controls"));
+      ov.querySelector("#trip-cta").addEventListener("click", () => { close(); UI.openMatchModal(c, m, { mode: "result" }); });
+    }
+    function loop(ts) {
+      if (last == null) last = ts;
+      prog = Math.min(1, prog + (ts - last) * speed / baseDur); last = ts;
+      setT(prog);
+      if (prog >= 1) { arrive(); return; }
+      raf = requestAnimationFrame(loop);
+    }
+    const baseDur = Math.min(20000, 8000 + ctx.dist * 6);
+
+    function close() {
+      if (raf) cancelAnimationFrame(raf);
+      document.removeEventListener("keydown", onKey);
+      ov.remove(); document.body.classList.remove("trip-open");
+    }
+    function onKey(e) { if (e.key === "Escape") close(); }
+    document.addEventListener("keydown", onKey);
+    ov.querySelector("#trip-exit").addEventListener("click", close);
+    ov.querySelector("#trip-skip").addEventListener("click", () => { prog = 1; setT(1); arrive(); });
+    ov.querySelectorAll("#trip-speed button").forEach(b => b.addEventListener("click", () => {
+      speed = Number(b.dataset.s) || 1;
+      ov.querySelectorAll("#trip-speed button").forEach(x => x.classList.toggle("active", x === b));
+    }));
+
+    setT(0);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { arrive(); }
+    else raf = requestAnimationFrame(loop);
   };
 
   /* ============================================================
@@ -2200,6 +2386,7 @@
         <span class="t away" style="${away?"font-weight:700":""}">${U.esc(m.away||"—")}</span></div>
       <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
       <div class="up-actions">
+        ${away ? `<button class="btn btn-ghost btn-sm" data-trip="${m.id}"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
         <button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>
         <button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>
       </div>

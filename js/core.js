@@ -105,6 +105,10 @@
     play: P('<path d="M7 5v14l11-7L7 5Z"/>'),
     bandage: P('<path d="m9.5 9.5 5 5M10 14l-1.5 1.5a3.5 3.5 0 0 1-5-5L5 9M14 10l1.5-1.5a3.5 3.5 0 0 1 5 5L19 15"/><rect x="7.5" y="7.5" width="9" height="9" rx="2" transform="rotate(45 12 12)"/>'),
     calendar: P('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/>'),
+    plane: P('<path d="M21 15.5v-2l-8-5V3.7a1.4 1.4 0 0 0-2.8 0V8.5l-8 5v2l8-2.4V18l-2 1.4V21l3.4-1 3.4 1v-1.6L13 18v-4.9l8 2.4Z"/>'),
+    bus: P('<rect x="4" y="4.5" width="16" height="12" rx="2"/><path d="M4 11h16M8 4.5v6.5M16 4.5v6.5"/><path d="M7 16.5v2M17 16.5v2"/>'),
+    pin: P('<path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10Z"/><circle cx="12" cy="11" r="2.2"/>'),
+    snow: P('<path d="M12 3v18M4.5 7.5 19.5 16.5M19.5 7.5 4.5 16.5M3.5 12h17"/>'),
   };
   FC.icons = ICONS;
   U.icon = (name) => ICONS[name] || "";
@@ -833,6 +837,171 @@
   };
 
   FC.store = S;
+
+  /* ============================================================
+     VIAJES — motor de la "Cabina en directo".
+     Deriva el contexto de un partido FUERA (rival, distancia, modo de
+     transporte, historial en esa sede, racha, stake, tier del club,
+     héroe vivo, atmósfera estacional) y compone una bitácora narrativa
+     determinista por un hash PROPIO (distinto del de storyline, para no
+     "rimar" con el feed). Todo derivado; no persiste nada. Escapa con
+     U.esc al interpolar nombres (datos de jugador/rival/ciudad).
+     ============================================================ */
+  const TRIPS = {};
+  const _esc = U.esc;
+  const _norm = (s) => String(s == null ? "" : s).trim().toLowerCase();
+  const hashCab = (s) => { let h = 7; s = String(s || ""); for (let i = 0; i < s.length; i++) h = (h * 37 + s.charCodeAt(i)) % 1000003; return h; };
+  const TIER_LABEL = { recien: "Recién llegado", consolidado: "Club consolidado", potencia: "Potencia", gigante: "Gigante europeo" };
+
+  TRIPS.cityOf = (teamName) => {
+    const row = (FC.data.CITIES || {})[teamName];
+    if (row) return { lat: row[0], lon: row[1], city: row[2], approx: false };
+    // Fallback determinista para equipos personalizados: pseudo-coordenadas
+    // estables dentro de Europa por hash del nombre (ruta plausible, no real).
+    const h = hashCab(teamName || "?");
+    return { lat: 36 + (h % 1000) / 1000 * 18, lon: -9 + (Math.floor(h / 7) % 1000) / 1000 * 25, city: teamName || "—", approx: true };
+  };
+  TRIPS.distance = (a, b) => {
+    const rad = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(s)));
+  };
+  TRIPS.travelerRank = (km) => km >= 350000 ? "Platino" : km >= 150000 ? "Oro" : km >= 50000 ? "Plata" : "Bronce";
+
+  TRIPS.pickHero = (c, m) => {
+    const players = (c.players || []).filter(p => p && p.name);
+    if (!players.length) return null;
+    const injured = {}; S.activeInjuries(c).forEach(i => injured[_norm(i.player)] = 1);
+    const sold = {}; (c.transfers || []).filter(t => t.direction === "out").forEach(t => sold[_norm(t.player)] = 1);
+    const avail = players.filter(p => !injured[_norm(p.name)] && !sold[_norm(p.name)]);
+    const pool = avail.length ? avail : players;
+    const agg = S.playerAggregates(c, m.seasonId);
+    const num = (x) => Number(x) || 0;
+    const cands = [];
+    const scorer = pool.map(p => ({ p, g: (agg[_norm(p.name)] || {}).goals || num(p.goals) })).sort((a, b) => b.g - a.g)[0];
+    if (scorer && scorer.g > 0) cands.push({ role: "goleador", p: scorer.p, goals: scorer.g });
+    const youth = pool.filter(p => p.fromYouth).sort((a, b) => num(b.ovr) - num(a.ovr))[0];
+    if (youth) cands.push({ role: "canterano", p: youth });
+    const vet = pool.slice().sort((a, b) => num(b.age) - num(a.age))[0];
+    if (vet && num(vet.age) >= 32) cands.push({ role: "veterano", p: vet });
+    const star = pool.slice().sort((a, b) => num(b.ovr) - num(a.ovr))[0];
+    if (star) cands.push({ role: "estrella", p: star });
+    if (!cands.length) cands.push({ role: "estrella", p: pool[0] });
+    const pick = cands[hashCab("hero:" + m.id) % cands.length];
+    return { name: pick.p.name, pos: pick.p.position || "", role: pick.role, goals: pick.goals || num(pick.p.goals), ovr: pick.p.ovr, age: pick.p.age };
+  };
+
+  TRIPS.atmosphere = (m, dest) => {
+    const dt = m.date ? new Date(m.date) : null;
+    const month = (dt && !isNaN(dt)) ? dt.getMonth() + 1 : null;
+    const night = (hashCab("night:" + m.id) % 100) < 55;
+    let kind = "normal";
+    if (month != null) {
+      const winter = (month === 12 || month <= 2), summer = (month >= 6 && month <= 8);
+      if (winter && dest.lat >= 43) kind = "nieve";
+      else if (winter) kind = "frio";
+      else if (summer && dest.lat <= 40) kind = "calor";
+      else if ((hashCab("rain:" + m.id) % 100) < 22) kind = "lluvia";
+    }
+    return { kind, night, month };
+  };
+
+  // Contexto del viaje: null si el partido no es del usuario; {isAway:false}
+  // si es en casa (no hay viaje); objeto completo si es fuera.
+  TRIPS.context = (c, m) => {
+    if (!c || !m) return null;
+    const club = c.clubName;
+    if (m.home !== club && m.away !== club) return null;
+    if (m.away !== club) return { isAway: false };
+    const rival = m.home;
+    const origin = TRIPS.cityOf(club), dest = TRIPS.cityOf(rival);
+    const dist = Math.round(TRIPS.distance(origin, dest));
+    const continental = (FC.data.CONTINENTAL || []).some(x => (m.competition || "").includes(x));
+    const mode = (continental || dist >= 300) ? "avion" : "bus";
+    const played = S.userMatches(c).filter(x => x.id !== m.id);
+    const atVenue = played.filter(x => x.home === rival && x.away === club).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    let v = 0, e = 0, d = 0, last = null;
+    atVenue.forEach(x => { const r = S.userResult(c, x); if (r === "W") v++; else if (r === "D") e++; else d++; last = x; });
+    const nthVisit = atVenue.length + 1;
+    let h2hType = "primera";
+    if (atVenue.length) h2hType = (v === 0 && d >= 2) ? "bestia" : (v >= 2 && d === 0) ? "fortin" : "equilibrado";
+    const before = played.filter(x => !m.date || new Date(x.date || 0) <= new Date(m.date)).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    let unbeaten = 0; for (let i = 0; i < before.length; i++) { if (S.userResult(c, before[i]) === "L") break; unbeaten++; }
+    let stake = "media";
+    if (continental) stake = /final/i.test(m.round || "") ? "final_euro" : "continental";
+    else if (/copa/i.test(m.competition || "")) stake = "copa";
+    else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
+    const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
+    const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
+    let miles = 0; S.userMatches(c).forEach(x => { if (x.away === club && x.home) miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; });
+    return {
+      isAway: true, club, rival, origin, dest, dist, mode, continental, approx: origin.approx || dest.approx,
+      h2h: { v, e, d, nthVisit, last, type: h2hType }, streak: { unbeaten }, stake, tier, tierLabel: TIER_LABEL[tier],
+      hero: TRIPS.pickHero(c, m), atmos: TRIPS.atmosphere(m, dest), miles: Math.round(miles), m,
+    };
+  };
+
+  // Bitácora: lista ordenada de beats {phase, t (0..1), tone, icon, title, sub}.
+  // Tono cinematográfico: hasta 2 beats memorables + stake + atmósfera + ~25% raro.
+  TRIPS.beats = (ctx, c) => {
+    if (!ctx || !ctx.isAway) return [];
+    const m = ctx.m, T = ctx.club, rival = ctx.rival, P = FC.data.TRIP || {};
+    const seed = (k) => "cab:" + k + ":" + m.id + ":" + ctx.h2h.nthVisit;
+    const fill = (pool, k, vars) => {
+      if (!pool || !pool.length) return "";
+      return pool[hashCab(seed(k)) % pool.length].replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
+    };
+    const lastScore = ctx.h2h.last ? (Number(ctx.h2h.last.homeScore) + "-" + Number(ctx.h2h.last.awayScore)) : "";
+    const vars = {
+      team: T, rival, city: ctx.dest.city, ocity: ctx.origin.city, comp: m.competition || "", round: m.round || "",
+      n: ctx.h2h.nthVisit, v: ctx.h2h.v, e: ctx.h2h.e, d: ctx.h2h.d, streak: ctx.streak.unbeaten,
+      player: ctx.hero ? ctx.hero.name : "", pos: ctx.hero ? ctx.hero.pos : "", goals: ctx.hero ? ctx.hero.goals : "", score: lastScore,
+    };
+    const beats = [];
+    const amb = (P.ambient && P.ambient[ctx.mode]) || {};
+    beats.push({ phase: "salida", t: 0.07, tone: "neutral", icon: ctx.mode === "avion" ? "plane" : "bus",
+      title: fill(ctx.mode === "avion" ? amb.despegue : amb.salida, "dep", vars), sub: _esc(ctx.origin.city + " → " + ctx.dest.city) });
+
+    const mem = [];
+    const t = ctx.h2h.type;
+    mem.push({ prio: t === "bestia" ? 5 : t === "fortin" ? 4 : t === "primera" ? 2 : 3, tone: t === "bestia" ? "bad" : "good",
+      icon: t === "bestia" ? "flame" : "flag", key: "h2h", vars,
+      sub: t === "primera" ? "Primera visita" : (ctx.h2h.nthVisit + "ª visita · " + ctx.h2h.v + "V " + ctx.h2h.e + "E " + ctx.h2h.d + "D aquí"),
+      pool: (P.h2h || {})[t] });
+    if (ctx.hero) {
+      const r = ctx.hero.role;
+      mem.push({ prio: (r === "canterano" || r === "goleador") ? 4 : 3, tone: "good", icon: "star", key: "hero", vars,
+        sub: (r === "goleador" && ctx.hero.goals) ? (ctx.hero.goals + " goles esta temporada") : _esc(ctx.hero.pos || ""),
+        pool: (P.hero || {})[r] || (P.hero || {}).estrella });
+    }
+    const exOut = (c.transfers || []).filter(x => x.direction === "out" && _norm(x.club) === _norm(rival));
+    if (exOut.length) mem.push({ prio: 4, tone: "neutral", icon: "swap", key: "reu",
+      vars: Object.assign({}, vars, { player: exOut[0].player }), sub: "Viejo conocido", pool: P.reunion });
+
+    mem.sort((a, b) => b.prio - a.prio);
+    mem.slice(0, 2).forEach((b, i) => beats.push({ phase: i === 0 ? "crucero" : "aproximacion", t: i === 0 ? 0.4 : 0.66,
+      tone: b.tone, icon: b.icon, title: fill(b.pool, b.key, b.vars), sub: b.sub }));
+
+    const sp = (P.stake || {})[ctx.stake];
+    if (sp) beats.push({ phase: "crucero", t: 0.52, tone: ctx.stake === "descenso" ? "bad" : "neutral", icon: "target",
+      title: fill(sp, "stake", vars), sub: ctx.tier !== "recien" ? ctx.tierLabel : "" });
+
+    const ap = (P.atmosfera || {})[ctx.atmos.kind] || (P.atmosfera || {}).normal;
+    if (ap) beats.push({ phase: "aproximacion", t: 0.78, tone: "neutral", icon: ctx.atmos.kind === "nieve" ? "snow" : "cloud",
+      title: fill(ap, "atm", vars), sub: ctx.atmos.night ? "Partido nocturno" : "" });
+
+    if ((hashCab(seed("rare")) % 100) < 25 && P.rare && P.rare.length) {
+      const ev = P.rare[hashCab(seed("rid")) % P.rare.length];
+      beats.push({ phase: "crucero", t: 0.6, tone: "neutral", icon: "flame", title: fill([ev], "rfill", vars), sub: "Imprevisto del viaje" });
+    }
+
+    beats.push({ phase: "aterrizaje", t: 0.99, tone: "good", icon: "flag", title: fill(P.arrival, "arr", vars), sub: _esc("vs " + rival) });
+    beats.sort((a, b) => a.t - b.t);
+    return beats;
+  };
+
+  FC.trips = TRIPS;
 
   /* ============================================================
      ROUTER (hash)
