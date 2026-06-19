@@ -2083,7 +2083,7 @@ body.trip-open { overflow: hidden; }
 
     beats.push({ phase: "aterrizaje", t: 0.99, tone: "good", icon: "flag", title: fill(P.arrival, "arr", vars), sub: _esc("vs " + rival) });
     beats.sort((a, b) => a.t - b.t);
-    return beats;
+    return beats.filter(b => b.title); // descarta beats sin texto (pool ausente)
   };
 
   FC.trips = TRIPS;
@@ -3174,6 +3174,7 @@ body.trip-open { overflow: hidden; }
   }
 
   UI.openTrip = function (c, m) {
+    if (document.querySelector(".trip-cabin")) return; // guarda anti doble-apertura
     const ctx = FC.trips.context(c, m);
     if (!ctx || !ctx.isAway) { UI.toast("Este partido es en casa: no hay viaje", "err"); return; }
     const beats = FC.trips.beats(ctx, c);

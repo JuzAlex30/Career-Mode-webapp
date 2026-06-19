@@ -822,6 +822,7 @@
   }
 
   UI.openTrip = function (c, m) {
+    if (document.querySelector(".trip-cabin")) return; // guarda anti doble-apertura
     const ctx = FC.trips.context(c, m);
     if (!ctx || !ctx.isAway) { UI.toast("Este partido es en casa: no hay viaje", "err"); return; }
     const beats = FC.trips.beats(ctx, c);

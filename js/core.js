@@ -998,7 +998,7 @@
 
     beats.push({ phase: "aterrizaje", t: 0.99, tone: "good", icon: "flag", title: fill(P.arrival, "arr", vars), sub: _esc("vs " + rival) });
     beats.sort((a, b) => a.t - b.t);
-    return beats;
+    return beats.filter(b => b.title); // descarta beats sin texto (pool ausente)
   };
 
   FC.trips = TRIPS;
