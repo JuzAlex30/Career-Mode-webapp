@@ -2025,12 +2025,44 @@
           <div class="lr-main"><b style="white-space:normal">${b.title}</b><small>${b.sub}</small></div></div>`).join("")}</div>`
           : `<div class="empty"><div class="emoji">📰</div><h3>Sin titulares todavía</h3><p>Registra partidos, fichajes y títulos para que tu historia cobre vida.</p></div>`}
       </div>
+
+      <div class="section-title">Vida de vestuario</div>
+      <div class="card">
+        <div class="flex between center wrap" style="gap:8px;margin-bottom:4px">
+          <p class="faint" style="font-size:13px;margin:0;flex:1;min-width:180px">Sucesos del día a día del club: peleas, liderazgo, rumores de mercado, malestar... usando tu plantilla real.</p>
+          <button class="btn btn-primary btn-sm" id="story-incident"><span class="ni-icon" data-icon="dice"></span> Generar suceso</button>
+        </div>
+        <div id="story-incidents" style="margin-top:10px"></div>
+      </div>
     `);
+    renderIncidents(c);
+    document.getElementById("story-incident").addEventListener("click", () => {
+      const inc = FC.incidents.generate(c);
+      if (!inc) { UI.toast("Añade jugadores a tu plantilla para que ocurran cosas en el vestuario", "err"); return; }
+      S.addIncident(c, inc, true);
+      renderIncidents(c);
+      UI.toast("Nuevo suceso en el vestuario", "ok");
+    });
     document.getElementById("story-img").addEventListener("click", () => UI.downloadCard({
       brand: "Carrera FC · Temporada", title: c.clubName, subtitle: season.label,
       lines: [recap], footer: "Mi Modo Carrera", filename: "temporada-" + c.clubName + "-" + season.label,
     }));
   };
+  function renderIncidents(c) {
+    const box = document.getElementById("story-incidents");
+    if (!box) return;
+    const tone = { good: "var(--accent)", bad: "var(--danger)", neutral: "var(--text-dim)" };
+    const incs = (c.incidents || []).slice().reverse();
+    // title ya viene escapado por _fillT (HTML-safe): se pinta sin re-escapar.
+    box.innerHTML = incs.length
+      ? `<div class="list">${incs.map(i => `<div class="list-row" style="align-items:flex-start">
+          <span class="ni-icon" data-icon="${i.icon || "news"}" style="color:${tone[i.tone] || "var(--text-dim)"};flex:none;margin-top:2px"></span>
+          <div class="lr-main"><b style="white-space:normal">${i.title}</b><small>${U.esc(i.label || "")}${i.date ? " · " + U.fmtDate(i.date) : ""}</small></div>
+          <button class="icon-btn sm" data-del-inc="${i.id}"><span class="ni-icon" data-icon="trash"></span></button></div>`).join("")}</div>`
+      : `<div class="empty" style="padding:18px 0"><div class="emoji">🎭</div><h3>El vestuario está tranquilo</h3><p>Pulsa "Generar suceso" para ver qué se cuece entre tus jugadores.</p></div>`;
+    U.hydrateIcons(box);
+    box.querySelectorAll("[data-del-inc]").forEach(b => b.addEventListener("click", () => { S.deleteIncident(c, b.dataset.delInc, true); renderIncidents(c); }));
+  }
 
   /* ============================================================
      SALÓN DE LA FAMA (Hall of Fame local, entre carreras)

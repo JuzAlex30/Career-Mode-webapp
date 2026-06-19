@@ -421,6 +421,113 @@
   };
 
   /* ============================================================
+     VESTUARIO — sucesos de la vida del club (FC.incidents).
+     Plantillas con {slots} que el motor rellena con jugadores REALES de
+     la plantilla y escapa con U.esc. Slots: {p1} {p2} (jugadores),
+     {club} (club externo, rumores), {team} (tu club), {pos} (demarcación).
+     El motor elige el jugador adecuado por categoría (veterano, joven,
+     estrella, suplente) y evita repetir el tipo del último suceso.
+     ============================================================ */
+  D.VESTUARIO = {
+    conflicto: [
+      "{p1} y {p2} protagonizaron un rifirrafe en el vestuario tras el entrenamiento.",
+      "Tensión en la ciudad deportiva: {p1} y {p2} tuvieron que ser separados.",
+      "{p1} y {p2} se enzarzaron en una discusión que encendió al vestuario.",
+      "Saltaron chispas entre {p1} y {p2} en el entrenamiento de hoy.",
+      "El cuerpo técnico tuvo que mediar entre {p1} y {p2} tras un cruce de palabras.",
+      "{p1} y {p2} acabaron a gritos en un ejercicio subido de tono.",
+      "Roce entre {p1} y {p2}: en las redes ya hablan de divisiones en el grupo.",
+      "Un entrenamiento se calentó de más y {p1} y {p2} casi llegan a las manos.",
+    ],
+    bajon_minutos: [
+      "{p1} no esconde su malestar por la falta de minutos.",
+      "{p1} ha pedido explicaciones por su papel de suplente.",
+      "El entorno de {p1} desliza que no está cómodo con su rol.",
+      "{p1} se plantea su futuro si la situación no cambia.",
+      "Cara larga de {p1}: quiere más protagonismo en el once.",
+      "{p1} habría comunicado al técnico su deseo de jugar más.",
+      "Murmullos sobre {p1}, harto de calentar el banquillo.",
+    ],
+    liderazgo: [
+      "{p1} reunió al grupo para una charla en un momento delicado.",
+      "{p1} ejerce de capitán y mete en cintura al vestuario.",
+      "Gesto de líder: {p1} dio la cara por sus compañeros ante el técnico.",
+      "{p1} tira del carro y mantiene la unidad del equipo.",
+      "El vestuario respira el liderazgo silencioso de {p1}.",
+      "{p1} se echó al equipo a la espalda en la charla previa.",
+      "Cuando las cosas se tuercen, {p1} es el primero en levantar la voz.",
+    ],
+    promesa: [
+      "{p1} está dejando con la boca abierta al cuerpo técnico en los entrenamientos.",
+      "La perla {p1} se gana a pulso un sitio en el primer equipo.",
+      "{p1} apunta maneras: el filial se le queda pequeño.",
+      "Todos hablan de {p1} en la ciudad deportiva.",
+      "{p1} entrena con la madurez de un veterano pese a su juventud.",
+      "El técnico no le quita ojo a {p1} en cada sesión.",
+      "{p1} sorprende a propios y extraños en los entrenamientos.",
+    ],
+    interes: [
+      "El {club} habría preguntado por la situación de {p1}.",
+      "{p1} gusta, y mucho, en las oficinas del {club}.",
+      "Rumores de mercado: el {club} sigue de cerca a {p1}.",
+      "El {club} tantea el terreno por {p1}.",
+      "{p1} aparece en la agenda del {club} de cara al mercado.",
+      "Sondeo del {club}: quieren saber el precio de {p1}.",
+      "Ojeadores del {club} han seguido los últimos partidos de {p1}.",
+    ],
+    vinculo: [
+      "{p1} y {p2} se han vuelto inseparables dentro y fuera del campo.",
+      "La sociedad entre {p1} y {p2} también funciona en el vestuario.",
+      "{p1} y {p2} comparten hasta el café: el grupo lo agradece.",
+      "Buena química entre {p1} y {p2}, y se nota en los entrenos.",
+      "{p1} ha tomado a {p2} bajo su ala.",
+      "{p1} y {p2} forman la pareja de moda en la ciudad deportiva.",
+    ],
+    disciplina: [
+      "{p1} llegó tarde al entrenamiento y el técnico no se lo perdonó.",
+      "Tirón de orejas a {p1} por saltarse el protocolo del club.",
+      "{p1} fue apartado un día por un asunto disciplinario.",
+      "El club multó a {p1} por llegar tarde a la concentración.",
+      "{p1} se ganó una reprimenda por su actitud en el entrenamiento.",
+      "Toque de atención interno a {p1}: la disciplina es innegociable.",
+    ],
+    prensa: [
+      "{p1} levantó polvareda con unas declaraciones a la prensa.",
+      "Las palabras de {p1} en rueda de prensa dan que hablar.",
+      "{p1} encendió a la afición con una entrevista polémica.",
+      "Revuelo mediático por unas frases de {p1}.",
+      "{p1} tuvo que matizar sus declaraciones del día anterior.",
+      "El club pidió calma tras la entrevista de {p1}.",
+    ],
+    ambiente: [
+      "El vestuario del {team} vive un momento de máxima unión.",
+      "Ambiente inmejorable en la ciudad deportiva esta semana.",
+      "La plantilla organizó una comida para reforzar la piña.",
+      "Se respira optimismo en el vestuario del {team}.",
+      "El grupo hace piña y el técnico lo agradece.",
+      "Buen rollo en los entrenamientos: el {team} está enchufado.",
+    ],
+    racha_forma: [
+      "{p1} atraviesa un estado de forma espectacular.",
+      "{p1} no falla una en los entrenamientos: está intratable.",
+      "{p1} se ha echado el equipo a la espalda con su nivel.",
+      "Momento dulce de {p1}, imparable estos días.",
+      "{p1} llega en un momento de forma soberbio.",
+    ],
+    renovacion: [
+      "{p1} transmite su deseo de renovar y seguir muchos años.",
+      "{p1} se declara feliz en el club y abre la puerta a ampliar contrato.",
+      "Buenas noticias: {p1} quiere quedarse.",
+      "{p1} y el club empiezan a negociar una renovación con buen tono.",
+      "{p1} repite que este es su sitio: la renovación va por buen camino.",
+    ],
+  };
+  // Clubes "grandes" para rumores de mercado creíbles (slot {club} de interes).
+  D.RUMOR_CLUBS = ["Real Madrid", "Barcelona", "Manchester City", "Bayern Múnich", "Paris Saint-Germain",
+    "Liverpool", "Manchester United", "Arsenal", "Chelsea", "Juventus", "Inter", "Milan", "Atlético de Madrid",
+    "Borussia Dortmund", "Napoli", "Tottenham Hotspur", "Newcastle United", "Marsella", "Atalanta"];
+
+  /* ============================================================
      GENERADOR VIRAL — objetivos y "twists" de reto/rebuild
      ============================================================ */
   D.GEN_OBJECTIVES = [

@@ -412,6 +412,11 @@
   S.addNote = (c, n) => { n.id = n.id || U.uid(); pushTo(c, "notes", n); emit(); };
   S.deleteNote = (c, id) => { c.notes = c.notes.filter(x => x.id !== id); emit(); };
 
+  // silent: persiste sin emit() para que la vista refresque solo su sección
+  // (evita el scrollTo(0,0) del re-render global al generar/borrar un suceso).
+  S.addIncident = (c, inc, silent) => { inc.id = inc.id || U.uid(); pushTo(c, "incidents", inc); if (silent) save(); else emit(); };
+  S.deleteIncident = (c, id, silent) => { c.incidents = (c.incidents || []).filter(x => x.id !== id); if (silent) save(); else emit(); };
+
   S.addChallenge = (c, ch) => { ch.id = ch.id || U.uid(); pushTo(c, "challenges", ch); emit(); };
   S.updateChallenge = (c, id, patch) => { const ch = c.challenges.find(x => x.id === id); if (ch) Object.assign(ch, patch); emit(); };
   S.deleteChallenge = (c, id) => { c.challenges = c.challenges.filter(x => x.id !== id); emit(); };
@@ -1153,6 +1158,89 @@
   };
 
   FC.trips = TRIPS;
+
+  /* ============================================================
+     VESTUARIO — generador de sucesos del club (vida de plantilla).
+     A diferencia de las crónicas (derivadas y efímeras), un suceso se
+     PERSISTE en c.incidents para construir un timeline "a lo largo del
+     tiempo". El motor elige categoría (sin repetir la última), escoge
+     jugadores REALES según el tipo y rellena la plantilla con _fillT
+     (anti-repetición por ordinal, escapa con U.esc). Reutiliza hashCab.
+     ============================================================ */
+  FC.incidents = (function () {
+    // need: nº de jugadores que requiere · pick: criterio de selección ·
+    // club: usa un club externo (rumor de mercado) · tone/icon/label: UI.
+    const CATS = [
+      { key: "conflicto",     need: 2, tone: "bad",     icon: "flame",  label: "Tensión en el vestuario" },
+      { key: "bajon_minutos", need: 1, tone: "bad",     icon: "cloud",  label: "Malestar", pick: "suplente" },
+      { key: "liderazgo",     need: 1, tone: "good",    icon: "medal",  label: "Liderazgo", pick: "veterano" },
+      { key: "promesa",       need: 1, tone: "good",    icon: "sprout", label: "Cantera", pick: "joven" },
+      { key: "interes",       need: 1, tone: "neutral", icon: "swap",   label: "Mercado", pick: "estrella", club: true },
+      { key: "vinculo",       need: 2, tone: "good",    icon: "star",   label: "Vestuario" },
+      { key: "disciplina",    need: 1, tone: "bad",     icon: "flag",   label: "Disciplina" },
+      { key: "prensa",        need: 1, tone: "neutral", icon: "news",   label: "Prensa" },
+      { key: "ambiente",      need: 0, tone: "good",    icon: "target", label: "Ambiente" },
+      { key: "racha_forma",   need: 1, tone: "good",    icon: "flame",  label: "Estado de forma", pick: "estrella" },
+      { key: "renovacion",    need: 1, tone: "good",    icon: "check",  label: "Renovación" },
+    ];
+    const num = (x) => Number(x) || 0;
+    const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    // Subconjunto candidato según criterio (tercio superior/inferior por edad
+    // u OVR) para que la selección sea plausible; el jugador final se sortea al
+    // azar dentro de ese subconjunto (un suceso es una acción puntual, no una
+    // derivación: el sorteo real da variedad como en la vida del vestuario).
+    function pickPlayer(players, criterion, exclude) {
+      const avail = players.filter(p => p && p.name && !exclude.has(p.id));
+      if (!avail.length) return null;
+      const third = (arr) => arr.slice(0, Math.max(1, Math.ceil(arr.length / 3)));
+      let pool = avail;
+      if (criterion === "veterano") { const v = avail.filter(p => num(p.age) >= 30); pool = v.length ? v : third(avail.slice().sort((a, b) => num(b.age) - num(a.age))); }
+      else if (criterion === "joven") { const v = avail.filter(p => p.fromYouth || (num(p.age) > 0 && num(p.age) <= 21)); pool = v.length ? v : third(avail.slice().sort((a, b) => num(a.age) - num(b.age))); }
+      else if (criterion === "estrella") pool = third(avail.slice().sort((a, b) => num(b.ovr) - num(a.ovr)));
+      else if (criterion === "suplente") pool = third(avail.slice().sort((a, b) => num(a.ovr) - num(b.ovr)));
+      return rnd(pool);
+    }
+    // Genera UN suceso plausible (sin persistir). null si no hay datos mínimos.
+    function generate(c) {
+      if (!c) return null;
+      const players = (c.players || []).filter(p => p && p.name);
+      const ordinal = (c.incidents || []).length;
+      const lastType = ordinal ? c.incidents[ordinal - 1].type : "";
+      let cands = CATS.filter(cat => players.length >= cat.need);
+      if (!cands.length) return null;
+      const noRepeat = cands.filter(cat => cat.key !== lastType);
+      if (noRepeat.length) cands = noRepeat;
+      const cat = rnd(cands);
+      const exclude = new Set();
+      const chosen = [];
+      for (let i = 0; i < cat.need; i++) {
+        const p = pickPlayer(players, cat.pick, exclude);
+        if (!p) break;
+        exclude.add(p.id); chosen.push(p);
+      }
+      if (chosen.length < cat.need) return null;
+      const vars = { team: c.clubName, pos: chosen[0] ? (chosen[0].position || "") : "" };
+      if (chosen[0]) vars.p1 = chosen[0].name;
+      if (chosen[1]) vars.p2 = chosen[1].name;
+      if (cat.club) {
+        const clubs = (FC.data.RUMOR_CLUBS || []).filter(x => _norm(x) !== _norm(c.clubName));
+        vars.club = clubs.length ? rnd(clubs) : "otro club";
+      }
+      const title = _fillT((FC.data.VESTUARIO || {})[cat.key], "ves:" + cat.key, vars, ordinal);
+      if (!title) return null;
+      // Fecha narrativa: la del último partido jugado de la temporada (fecha
+      // ficticia coherente con la carrera); "" si aún no se ha jugado.
+      const season = S.currentSeason(c);
+      const played = S.userMatches(c, season ? season.id : undefined).filter(m => S.isPlayed(m))
+        .slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+      return {
+        type: cat.key, tone: cat.tone, icon: cat.icon, label: cat.label, title,
+        players: chosen.map(p => ({ id: p.id, name: p.name })),
+        seasonId: season ? season.id : null, date: (played[0] && played[0].date) || "", createdAt: Date.now(),
+      };
+    }
+    return { generate, CATS };
+  })();
 
   /* ============================================================
      ROUTER (hash)
