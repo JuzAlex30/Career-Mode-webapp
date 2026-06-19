@@ -535,6 +535,21 @@
         "De canterano a referente: {player} encabeza el viaje a {city}.",
       ],
     },
+    milestone: [
+      "Viaje nº {trip} del {team} lejos de casa. Cuántos kilómetros de historia.",
+      "{trip} desplazamientos ya en esta carrera; hoy, otro más rumbo a {city}.",
+      "Efeméride viajera: el {team} alcanza su viaje nº {trip} a domicilio.",
+    ],
+    emergent: {
+      norte: [
+        "Noche cerrada en el norte y un cielo extraño sobre las nubes; nadie pega ojo.",
+        "Luces raras asoman al norte durante el vuelo nocturno; el grupo lo recordará.",
+      ],
+      veterano: [
+        "Puede que sea uno de los últimos viajes de {player} a este rincón. Se le nota.",
+        "{player}, con la veteranía a cuestas, mira por la ventanilla como quien se despide.",
+      ],
+    },
     rare: [
       "Turbulencias leves: el grupo aprieta los reposabrazos y sonríe nervioso.",
       "Retraso en pista; el míster aprovecha para una última charla táctica.",

@@ -939,13 +939,16 @@
     const level = total >= 6 ? ((av - al >= 3) ? "victima" : (al - av >= 3) ? "verdugo" : "clasico") : total >= 1 ? "conocido" : "nuevo";
     const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
     const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
-    let miles = 0; S.userMatches(c).forEach(x => { if (x.away === club && x.home) miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; });
+    let miles = 0; const seenCity = {}; let passport = 0;
+    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { const cy = TRIPS.cityOf(x.home); miles += TRIPS.distance(origin, cy) * 2; if (!seenCity[cy.city]) { seenCity[cy.city] = 1; passport++; } } });
+    const awayAll = (c.matches || []).filter(x => x.away === club && x.home).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    const tripNo = Math.max(1, awayAll.findIndex(x => x.id === m.id) + 1);
     const hero = TRIPS.pickHero(c, m);
     if (hero) hero.apps = (S.playerAggregates(c, null)[_norm(hero.name)] || {}).apps || 0;
     return {
       isAway: true, club, rival, origin, dest, dist, mode, continental, approx: origin.approx || dest.approx,
       h2h: { v, e, d, nthVisit, last, type: h2hType }, all: { v: av, e: ae, l: al, total, level },
-      streak: { unbeaten }, stake, tier, tierLabel: TIER_LABEL[tier], seasons,
+      streak: { unbeaten }, stake, tier, tierLabel: TIER_LABEL[tier], seasons, passport, tripNo,
       hero, atmos: TRIPS.atmosphere(m, dest), miles: Math.round(miles), m,
     };
   };
@@ -955,12 +958,10 @@
   TRIPS.beats = (ctx, c) => {
     if (!ctx || !ctx.isAway) return [];
     const m = ctx.m, T = ctx.club, rival = ctx.rival, P = FC.data.TRIP || {};
-    const seed = (k) => "cab:" + k + ":" + m.id + ":" + ctx.h2h.nthVisit;
     // Ventana anti-repetición: el ordinal cronológico del viaje entre los
     // partidos fuera descorrelaciona viajes consecutivos; re-roll determinista
     // si la plantilla coincide con la de los últimos viajes. Sin estado.
-    const awayList = (c.matches || []).filter(x => x.away === T && x.home).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-    let ordinal = awayList.findIndex(x => x.id === m.id); if (ordinal < 0) ordinal = awayList.length;
+    const ordinal = (ctx.tripNo || 1) - 1; // tripNo (1-based, calculado en context) = ordinal cronológico + 1
     const pickAR = (pool, k) => {
       if (!pool || !pool.length) return "";
       const Lp = pool.length;
@@ -981,7 +982,7 @@
     const vars = {
       team: T, rival, city: ctx.dest.city, ocity: ctx.origin.city, comp: m.competition || "", round: m.round || "", tierWord,
       n: ctx.h2h.nthVisit, v: ctx.h2h.v, e: ctx.h2h.e, d: ctx.h2h.d, streak: ctx.streak.unbeaten,
-      total: ctx.all.total, av: ctx.all.v, al: ctx.all.l,
+      total: ctx.all.total, av: ctx.all.v, al: ctx.all.l, trip: ctx.tripNo,
       player: ctx.hero ? ctx.hero.name : "", pos: ctx.hero ? ctx.hero.pos : "", goals: ctx.hero ? ctx.hero.goals : "", apps: ctx.hero ? ctx.hero.apps : "", score: lastScore,
     };
     const beats = [];
@@ -1028,9 +1029,21 @@
     if (ap) beats.push({ phase: "aproximacion", t: 0.78, tone: "neutral", icon: ctx.atmos.kind === "nieve" ? "snow" : "cloud",
       title: fill(ap, "atm", vars), sub: ctx.atmos.night ? "Partido nocturno" : "" });
 
-    if ((hashCab(seed("rare")) % 100) < 25 && P.rare && P.rare.length) {
-      const ev = P.rare[hashCab(seed("rid")) % P.rare.length];
-      beats.push({ phase: "crucero", t: 0.6, tone: "neutral", icon: "flame", title: fill([ev], "rfill", vars), sub: "Imprevisto del viaje" });
+    // Hito de carrera racionado: viaje nº 25 y cada 50 (≈0-3 en una carrera larga).
+    const milestoneHere = (ctx.tripNo === 25 || (ctx.tripNo >= 50 && ctx.tripNo % 50 === 0));
+    if (milestoneHere && P.milestone) beats.push({ phase: "crucero", t: 0.46, tone: "good", icon: "medal",
+      title: fill(P.milestone, "mile", vars), sub: "Hito de carrera" });
+
+    // Dosificación adaptativa: un evento cada ~5 viajes, nunca dos seguidos ni
+    // sequías largas (derivado del ordinal). Emergentes condicionados: noche
+    // polar al norte / posible último viaje del veterano.
+    const baseOffset = hashCab("rb:" + T) % 5;
+    if (!milestoneHere && ((ordinal + baseOffset) % 5 === 0)) {
+      const mo = ctx.atmos.month, winter = mo && (mo === 12 || mo <= 2);
+      let pool = P.rare, tone = "neutral";
+      if (winter && ctx.atmos.night && ctx.dest.lat >= 52 && P.emergent && P.emergent.norte) pool = P.emergent.norte;
+      else if (ctx.hero && Number(ctx.hero.age) >= 35 && P.emergent && P.emergent.veterano) { pool = P.emergent.veterano; tone = "good"; }
+      if (pool && pool.length) beats.push({ phase: "crucero", t: 0.6, tone: tone, icon: "flame", title: fill(pool, "rfill", vars), sub: "Imprevisto del viaje" });
     }
 
     beats.push({ phase: "aterrizaje", t: 0.99, tone: "good", icon: "flag", title: fill(P.arrival, "arr", vars), sub: _esc("vs " + rival) });

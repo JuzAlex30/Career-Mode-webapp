@@ -850,7 +850,10 @@
     if (ctx.h2h.type === "bestia") chips.push(`<span class="chip danger"><span class="ni-icon" data-icon="flame"></span> Bestia negra</span>`);
     else if (ctx.h2h.type === "fortin") chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="flag"></span> Fortín</span>`);
     if (ctx.atmos.night) chips.push(`<span class="chip"><span class="ni-icon" data-icon="moon"></span> Nocturno</span>`);
-    chips.push(`<span class="chip gold"><span class="ni-icon" data-icon="plane"></span> Viajero ${rank} · ${ctx.miles.toLocaleString("es-ES")} km</span>`);
+    const laps = ctx.miles / 40075;
+    chips.push(`<span class="chip gold"><span class="ni-icon" data-icon="plane"></span> Viajero ${rank} · ${ctx.miles.toLocaleString("es-ES")} km${laps >= 1 ? " · " + laps.toFixed(1).replace(".", ",") + " vueltas al mundo" : ""}</span>`);
+    chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> ${ctx.passport} estadio${ctx.passport === 1 ? "" : "s"} en el pasaporte</span>`);
+    if (ctx.h2h.nthVisit === 1 && !ctx.approx) chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="pin"></span> Nuevo sello</span>`);
     if (ctx.approx) chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> Ruta aproximada</span>`);
 
     const beatHtml = beats.map(b => `
