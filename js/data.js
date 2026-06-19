@@ -415,7 +415,7 @@
   /* Pools narrativos de la cabina. Plantillas con {slots} que el motor
      (FC.trips) rellena con datos vivos y escapa con U.esc. Slots:
      {team} {rival} {city} {ocity} {comp} {round} {n} {v} {e} {d}
-     {streak} {player} {pos} {goals} {score}. */
+     {streak} {player} {pos} {goals} {score} {home}. */
   D.TRIP = {
     ambient: {
       avion: {
@@ -675,6 +675,120 @@
       "Hotel, última reunión táctica, a descansar: el ritual de siempre en {city}.",
       "Primer vistazo a {city}: el {team} ya huele la competición.",
     ],
+    // VIAJE DE VUELTA: reacciona al resultado ya jugado. {city}=ciudad rival,
+    // {home}=ciudad propia, {score}=marcador en perspectiva del usuario (gf-ga).
+    vuelta: {
+      apertura: {
+        win_big: [
+          "La expedición del {team} sale de {city} con una goleada en el bolsillo.",
+          "Fiesta en la salida de {city}: el {team} se va con un {score} de escándalo.",
+          "Pocas veces se vuelve así de {city}; el {team} firmó un partido para enmarcar.",
+          "El {team} abandona {city} con la sensación del deber sobradamente cumplido.",
+        ],
+        win: [
+          "El {team} deja {city} con los tres puntos bien atados.",
+          "Salida tranquila de {city}: victoria trabajada para el {team}.",
+          "Misión cumplida en {city}; el {team} emprende la vuelta con una sonrisa.",
+          "El {team} se va de {city} con un {score} de oro.",
+        ],
+        draw: [
+          "El {team} sale de {city} con un punto y sensaciones encontradas.",
+          "Reparto de puntos en {city}; el {team} vuelve sin saber muy bien a qué sabe.",
+          "Empate en {city}: el {team} se va sin perder, pero con la sensación de que pudo ser más.",
+          "Un punto en la maleta; el {team} abandona {city} en tablas.",
+        ],
+        loss: [
+          "Salida silenciosa de {city}: el {team} cae por la mínima.",
+          "El {team} deja {city} con las manos vacías y mala cara.",
+          "Derrota ajustada en {city}; el {team} emprende la vuelta masticando el enfado.",
+          "Poco que celebrar: el {team} se va de {city} con un {score} en contra.",
+        ],
+        loss_big: [
+          "Noche para olvidar en {city}: el {team} sale escaldado tras el {score}.",
+          "Silencio absoluto en la salida de {city}; al {team} le pasaron por encima.",
+          "El {team} abandona {city} con una goleada a sus espaldas y mucho de que hablar.",
+          "Vuelta cuesta arriba desde {city}: el {score} pesa como una losa.",
+        ],
+      },
+      nucleo: {
+        win_big: [
+          "Dentro del grupo se respira euforia: días así son los que enganchan a esto.",
+          "El míster pide calma, pero ni él disimula la sonrisa tras el {score}.",
+          "Risas, música y móviles encendidos: el {team} disfruta de una tarde grande.",
+          "Una exhibición como la de {city} se recuerda durante semanas en el vestuario.",
+        ],
+        win: [
+          "Sabe a poco en el marcador, pero ganar fuera siempre tiene premio.",
+          "El {team} conoce el valor de estos tres puntos lejos de casa.",
+          "No fue brillante, pero fue eficaz; el grupo vuelve satisfecho de {city}.",
+          "Tres puntos de visitante valen doble, y el vestuario lo sabe.",
+        ],
+        draw: [
+          "En el grupo se debate si el punto sabe a poco o a rescate.",
+          "El empate deja un regusto raro: ni alegría ni drama, pura igualdad.",
+          "El míster rumia las ocasiones falladas durante todo el trayecto.",
+          "Un punto fuera nunca sobra, aunque hoy el {team} esperaba más.",
+        ],
+        loss: [
+          "El silencio lo dice todo: el {team} sabe que esta se escapó por poco.",
+          "Caras largas y pocas palabras; la derrota de {city} duele por lo cerca que estuvo.",
+          "El míster repasa una y otra vez la jugada que lo cambió todo.",
+          "Enfado contenido en el grupo: perder por detalles es lo que más escuece.",
+        ],
+        loss_big: [
+          "Nadie habla. La goleada de {city} obliga a mirarse al espejo.",
+          "El {team} encaja el golpe en silencio; hay mucho que corregir.",
+          "Viaje largo y amargo: el {score} deja heridas que tardarán en cerrar.",
+          "El míster ya piensa en la semana de trabajo que viene; hoy no hay excusas.",
+        ],
+      },
+      especial: {
+        gesta_grande: [
+          "Noche europea para enmarcar; el {team} vuelve a casa con una gesta bajo el brazo.",
+          "De {city} a la historia: el {team} firma una victoria que se contará durante años.",
+        ],
+        bestia_caida: [
+          "Por fin. El {team} rompe la maldición de {city} tras años sin ganar aquí.",
+          "Cae el feudo maldito: el {team} se quita una espina clavada en {city}.",
+        ],
+        verdugo_caido: [
+          "Revancha servida: el {team} por fin doblega a su verdugo, el {rival}.",
+          "El {rival} dejó de ser un fantasma; el {team} se cobra viejas deudas.",
+        ],
+        salvacion: [
+          "Oxígeno puro: ganar en la pelea por seguir vivos sabe a gloria.",
+          "El {team} respira; tres puntos de oro en la lucha por la permanencia.",
+        ],
+        liderato_tocado: [
+          "El liderato tiembla tras caer en {city}; la persecución aprieta.",
+          "Pinchazo del líder en {city}; el {team} sabe que no puede repetirlo.",
+        ],
+        porteria_cero: [
+          "Portería a cero y tres puntos: el {team} vuelve con el viaje redondo.",
+          "Sin encajar y ganando; así da gusto viajar, piensa el {team}.",
+        ],
+      },
+      cierre: {
+        win: [
+          "De vuelta en {home} con la satisfacción del trabajo bien hecho.",
+          "El {team} llega a casa; a disfrutar de la victoria, que mañana se piensa en lo siguiente.",
+          "Fin del viaje en {home}; noches como esta recargan las pilas.",
+          "El {team} ya está en {home}, un poco más cerca de sus sueños.",
+        ],
+        draw: [
+          "De vuelta en {home} con un punto y una lista de cosas por mejorar.",
+          "El {team} llega a casa; ni tan mal ni tan bien, a seguir.",
+          "Fin del trayecto en {home}: el empate ya es pasado, toca pensar en lo que viene.",
+          "El {team} pisa {home} recordando que la temporada es muy larga.",
+        ],
+        loss: [
+          "De vuelta en {home}. Toca levantarse: la temporada no espera.",
+          "El {team} llega a casa con la derrota a cuestas, pero la cabeza ya en el próximo.",
+          "Fin del viaje en {home}; de las noches duras también se aprende.",
+          "El {team} pisa {home} con ganas de revancha cuanto antes.",
+        ],
+      },
+    },
   };
 
   FC.data = D;

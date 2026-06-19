@@ -852,6 +852,24 @@
   const _norm = (s) => String(s == null ? "" : s).trim().toLowerCase();
   const hashCab = (s) => { let h = 7; s = String(s || ""); for (let i = 0; i < s.length; i++) h = (h * 37 + s.charCodeAt(i)) % 1000003; return h; };
   const TIER_LABEL = { recien: "Recién llegado", consolidado: "Club consolidado", potencia: "Potencia", gigante: "Gigante europeo" };
+  // Selección determinista con ventana anti-repetición (5 viajes), compartida
+  // por la bitácora de IDA y la crónica de VUELTA. Sin estado: deriva del
+  // ordinal cronológico del viaje. _fillT interpola {slots} y escapa con U.esc.
+  const _pickAR = (pool, k, ordinal) => {
+    if (!pool || !pool.length) return "";
+    const Lp = pool.length;
+    const ch = (i, s) => hashCab("car:" + k + ":" + Lp + ":" + i + (s ? ":" + s : "")) % Lp;
+    const recent = {}; let nr = 0;
+    for (let j = 1; j <= Math.min(5, ordinal); j++) { const x = ch(ordinal - j, 0); if (!recent[x]) { recent[x] = 1; nr++; } }
+    let idx = ch(ordinal, 0), s = 1;
+    while (recent[idx] && nr < Lp && s <= 8) { idx = ch(ordinal, s); s++; }
+    return pool[idx];
+  };
+  const _fillT = (pool, k, vars, ordinal) => {
+    const tpl = _pickAR(pool, k, ordinal);
+    if (!tpl) return "";
+    return tpl.replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
+  };
 
   TRIPS.cityOf = (teamName) => {
     const row = (FC.data.CITIES || {})[teamName];
@@ -962,21 +980,8 @@
     // partidos fuera descorrelaciona viajes consecutivos; re-roll determinista
     // si la plantilla coincide con la de los últimos viajes. Sin estado.
     const ordinal = (ctx.tripNo || 1) - 1; // tripNo (1-based, calculado en context) = ordinal cronológico + 1
-    const pickAR = (pool, k) => {
-      if (!pool || !pool.length) return "";
-      const Lp = pool.length;
-      const ch = (i, s) => hashCab("car:" + k + ":" + Lp + ":" + i + (s ? ":" + s : "")) % Lp;
-      const recent = {}; let nr = 0;
-      for (let j = 1; j <= Math.min(5, ordinal); j++) { const x = ch(ordinal - j, 0); if (!recent[x]) { recent[x] = 1; nr++; } }
-      let idx = ch(ordinal, 0), s = 1;
-      while (recent[idx] && nr < Lp && s <= 8) { idx = ch(ordinal, s); s++; }
-      return pool[idx];
-    };
-    const fill = (pool, k, vars) => {
-      const tpl = pickAR(pool, k);
-      if (!tpl) return "";
-      return tpl.replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
-    };
+    const pickAR = (pool, k) => _pickAR(pool, k, ordinal);
+    const fill = (pool, k, vars) => _fillT(pool, k, vars, ordinal);
     const lastScore = ctx.h2h.last ? (Number(ctx.h2h.last.homeScore) + "-" + Number(ctx.h2h.last.awayScore)) : "";
     const tierWord = { recien: "humilde expedición", consolidado: "expedición", potencia: "comitiva", gigante: "caravana de un gigante" }[ctx.tier] || "expedición";
     const vars = {
@@ -1049,6 +1054,46 @@
     beats.push({ phase: "aterrizaje", t: 0.99, tone: "good", icon: "flag", title: fill(P.arrival, "arr", vars), sub: _esc("vs " + rival) });
     beats.sort((a, b) => a.t - b.t);
     return beats.filter(b => b.title); // descarta beats sin texto (pool ausente)
+  };
+
+  // Crónica del VIAJE DE VUELTA: cierra el arco (ida → partido → vuelta)
+  // reaccionando al resultado YA jugado. [] si el partido aún no tiene marcador.
+  // Buckets por resultado y margen: win_big/win/draw/loss/loss_big.
+  TRIPS.returnBeats = (ctx, c) => {
+    if (!ctx || !ctx.isAway) return [];
+    const m = ctx.m, T = ctx.club, rival = ctx.rival, V = (FC.data.TRIP || {}).vuelta || {};
+    const res = S.userResult(c, m);
+    if (!res) return [];
+    const g = S.userGoals(c, m) || { for: 0, against: 0 };
+    const gf = Number(g.for) || 0, ga = Number(g.against) || 0, margin = gf - ga;
+    const bucket = res === "W" ? (margin >= 3 ? "win_big" : "win") : res === "D" ? "draw" : (margin <= -3 ? "loss_big" : "loss");
+    const ord = (ctx.tripNo || 1) - 1;
+    const tone = res === "W" ? "good" : res === "D" ? "neutral" : "bad";
+    const vars = { team: T, rival, city: ctx.dest.city, home: ctx.origin.city, score: gf + "-" + ga, gf, ga };
+    const beats = [];
+    const ap = (V.apertura || {})[bucket];
+    if (ap) beats.push({ phase: "salida", t: 0.08, tone, icon: ctx.mode === "avion" ? "plane" : "bus",
+      title: _fillT(ap, "vap", vars, ord), sub: _esc(ctx.dest.city + " → " + ctx.origin.city) });
+    const nu = (V.nucleo || {})[bucket];
+    if (nu) beats.push({ phase: "crucero", t: 0.42, tone, icon: res === "W" ? "flame" : res === "D" ? "target" : "cloud",
+      title: _fillT(nu, "vnu", vars, ord), sub: "" });
+    // Beat situacional: una sola "lectura del partido", elegida por prioridad
+    // narrativa. Usa el historial PREVIO (ctx) y el resultado de hoy.
+    let espKey = "";
+    if (res === "W" && (ctx.stake === "continental" || ctx.stake === "final_euro")) espKey = "gesta_grande";
+    else if (res === "W" && ctx.h2h.type === "bestia") espKey = "bestia_caida";
+    else if (res === "W" && ctx.all.level === "verdugo") espKey = "verdugo_caido";
+    else if (res === "W" && ctx.stake === "descenso") espKey = "salvacion";
+    else if (res === "L" && ctx.stake === "liderato") espKey = "liderato_tocado";
+    else if (res === "W" && ga === 0) espKey = "porteria_cero";
+    const esp = espKey ? (V.especial || {})[espKey] : null;
+    if (esp) beats.push({ phase: "crucero", t: 0.62, tone: res === "W" ? "good" : "bad", icon: res === "W" ? "medal" : "flame",
+      title: _fillT(esp, "vesp:" + espKey, vars, ord), sub: "Lectura del partido" });
+    const ci = (V.cierre || {})[res === "W" ? "win" : res === "D" ? "draw" : "loss"];
+    if (ci) beats.push({ phase: "aterrizaje", t: 0.96, tone, icon: "home",
+      title: _fillT(ci, "vci", vars, ord), sub: _esc("De vuelta en " + ctx.origin.city) });
+    beats.sort((a, b) => a.t - b.t);
+    return beats.filter(b => b.title);
   };
 
   FC.trips = TRIPS;

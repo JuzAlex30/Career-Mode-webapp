@@ -1024,7 +1024,7 @@ body.trip-open { overflow: hidden; }
   /* Pools narrativos de la cabina. Plantillas con {slots} que el motor
      (FC.trips) rellena con datos vivos y escapa con U.esc. Slots:
      {team} {rival} {city} {ocity} {comp} {round} {n} {v} {e} {d}
-     {streak} {player} {pos} {goals} {score}. */
+     {streak} {player} {pos} {goals} {score} {home}. */
   D.TRIP = {
     ambient: {
       avion: {
@@ -1284,6 +1284,120 @@ body.trip-open { overflow: hidden; }
       "Hotel, última reunión táctica, a descansar: el ritual de siempre en {city}.",
       "Primer vistazo a {city}: el {team} ya huele la competición.",
     ],
+    // VIAJE DE VUELTA: reacciona al resultado ya jugado. {city}=ciudad rival,
+    // {home}=ciudad propia, {score}=marcador en perspectiva del usuario (gf-ga).
+    vuelta: {
+      apertura: {
+        win_big: [
+          "La expedición del {team} sale de {city} con una goleada en el bolsillo.",
+          "Fiesta en la salida de {city}: el {team} se va con un {score} de escándalo.",
+          "Pocas veces se vuelve así de {city}; el {team} firmó un partido para enmarcar.",
+          "El {team} abandona {city} con la sensación del deber sobradamente cumplido.",
+        ],
+        win: [
+          "El {team} deja {city} con los tres puntos bien atados.",
+          "Salida tranquila de {city}: victoria trabajada para el {team}.",
+          "Misión cumplida en {city}; el {team} emprende la vuelta con una sonrisa.",
+          "El {team} se va de {city} con un {score} de oro.",
+        ],
+        draw: [
+          "El {team} sale de {city} con un punto y sensaciones encontradas.",
+          "Reparto de puntos en {city}; el {team} vuelve sin saber muy bien a qué sabe.",
+          "Empate en {city}: el {team} se va sin perder, pero con la sensación de que pudo ser más.",
+          "Un punto en la maleta; el {team} abandona {city} en tablas.",
+        ],
+        loss: [
+          "Salida silenciosa de {city}: el {team} cae por la mínima.",
+          "El {team} deja {city} con las manos vacías y mala cara.",
+          "Derrota ajustada en {city}; el {team} emprende la vuelta masticando el enfado.",
+          "Poco que celebrar: el {team} se va de {city} con un {score} en contra.",
+        ],
+        loss_big: [
+          "Noche para olvidar en {city}: el {team} sale escaldado tras el {score}.",
+          "Silencio absoluto en la salida de {city}; al {team} le pasaron por encima.",
+          "El {team} abandona {city} con una goleada a sus espaldas y mucho de que hablar.",
+          "Vuelta cuesta arriba desde {city}: el {score} pesa como una losa.",
+        ],
+      },
+      nucleo: {
+        win_big: [
+          "Dentro del grupo se respira euforia: días así son los que enganchan a esto.",
+          "El míster pide calma, pero ni él disimula la sonrisa tras el {score}.",
+          "Risas, música y móviles encendidos: el {team} disfruta de una tarde grande.",
+          "Una exhibición como la de {city} se recuerda durante semanas en el vestuario.",
+        ],
+        win: [
+          "Sabe a poco en el marcador, pero ganar fuera siempre tiene premio.",
+          "El {team} conoce el valor de estos tres puntos lejos de casa.",
+          "No fue brillante, pero fue eficaz; el grupo vuelve satisfecho de {city}.",
+          "Tres puntos de visitante valen doble, y el vestuario lo sabe.",
+        ],
+        draw: [
+          "En el grupo se debate si el punto sabe a poco o a rescate.",
+          "El empate deja un regusto raro: ni alegría ni drama, pura igualdad.",
+          "El míster rumia las ocasiones falladas durante todo el trayecto.",
+          "Un punto fuera nunca sobra, aunque hoy el {team} esperaba más.",
+        ],
+        loss: [
+          "El silencio lo dice todo: el {team} sabe que esta se escapó por poco.",
+          "Caras largas y pocas palabras; la derrota de {city} duele por lo cerca que estuvo.",
+          "El míster repasa una y otra vez la jugada que lo cambió todo.",
+          "Enfado contenido en el grupo: perder por detalles es lo que más escuece.",
+        ],
+        loss_big: [
+          "Nadie habla. La goleada de {city} obliga a mirarse al espejo.",
+          "El {team} encaja el golpe en silencio; hay mucho que corregir.",
+          "Viaje largo y amargo: el {score} deja heridas que tardarán en cerrar.",
+          "El míster ya piensa en la semana de trabajo que viene; hoy no hay excusas.",
+        ],
+      },
+      especial: {
+        gesta_grande: [
+          "Noche europea para enmarcar; el {team} vuelve a casa con una gesta bajo el brazo.",
+          "De {city} a la historia: el {team} firma una victoria que se contará durante años.",
+        ],
+        bestia_caida: [
+          "Por fin. El {team} rompe la maldición de {city} tras años sin ganar aquí.",
+          "Cae el feudo maldito: el {team} se quita una espina clavada en {city}.",
+        ],
+        verdugo_caido: [
+          "Revancha servida: el {team} por fin doblega a su verdugo, el {rival}.",
+          "El {rival} dejó de ser un fantasma; el {team} se cobra viejas deudas.",
+        ],
+        salvacion: [
+          "Oxígeno puro: ganar en la pelea por seguir vivos sabe a gloria.",
+          "El {team} respira; tres puntos de oro en la lucha por la permanencia.",
+        ],
+        liderato_tocado: [
+          "El liderato tiembla tras caer en {city}; la persecución aprieta.",
+          "Pinchazo del líder en {city}; el {team} sabe que no puede repetirlo.",
+        ],
+        porteria_cero: [
+          "Portería a cero y tres puntos: el {team} vuelve con el viaje redondo.",
+          "Sin encajar y ganando; así da gusto viajar, piensa el {team}.",
+        ],
+      },
+      cierre: {
+        win: [
+          "De vuelta en {home} con la satisfacción del trabajo bien hecho.",
+          "El {team} llega a casa; a disfrutar de la victoria, que mañana se piensa en lo siguiente.",
+          "Fin del viaje en {home}; noches como esta recargan las pilas.",
+          "El {team} ya está en {home}, un poco más cerca de sus sueños.",
+        ],
+        draw: [
+          "De vuelta en {home} con un punto y una lista de cosas por mejorar.",
+          "El {team} llega a casa; ni tan mal ni tan bien, a seguir.",
+          "Fin del trayecto en {home}: el empate ya es pasado, toca pensar en lo que viene.",
+          "El {team} pisa {home} recordando que la temporada es muy larga.",
+        ],
+        loss: [
+          "De vuelta en {home}. Toca levantarse: la temporada no espera.",
+          "El {team} llega a casa con la derrota a cuestas, pero la cabeza ya en el próximo.",
+          "Fin del viaje en {home}; de las noches duras también se aprende.",
+          "El {team} pisa {home} con ganas de revancha cuanto antes.",
+        ],
+      },
+    },
   };
 
   FC.data = D;
@@ -2146,6 +2260,24 @@ body.trip-open { overflow: hidden; }
   const _norm = (s) => String(s == null ? "" : s).trim().toLowerCase();
   const hashCab = (s) => { let h = 7; s = String(s || ""); for (let i = 0; i < s.length; i++) h = (h * 37 + s.charCodeAt(i)) % 1000003; return h; };
   const TIER_LABEL = { recien: "Recién llegado", consolidado: "Club consolidado", potencia: "Potencia", gigante: "Gigante europeo" };
+  // Selección determinista con ventana anti-repetición (5 viajes), compartida
+  // por la bitácora de IDA y la crónica de VUELTA. Sin estado: deriva del
+  // ordinal cronológico del viaje. _fillT interpola {slots} y escapa con U.esc.
+  const _pickAR = (pool, k, ordinal) => {
+    if (!pool || !pool.length) return "";
+    const Lp = pool.length;
+    const ch = (i, s) => hashCab("car:" + k + ":" + Lp + ":" + i + (s ? ":" + s : "")) % Lp;
+    const recent = {}; let nr = 0;
+    for (let j = 1; j <= Math.min(5, ordinal); j++) { const x = ch(ordinal - j, 0); if (!recent[x]) { recent[x] = 1; nr++; } }
+    let idx = ch(ordinal, 0), s = 1;
+    while (recent[idx] && nr < Lp && s <= 8) { idx = ch(ordinal, s); s++; }
+    return pool[idx];
+  };
+  const _fillT = (pool, k, vars, ordinal) => {
+    const tpl = _pickAR(pool, k, ordinal);
+    if (!tpl) return "";
+    return tpl.replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
+  };
 
   TRIPS.cityOf = (teamName) => {
     const row = (FC.data.CITIES || {})[teamName];
@@ -2256,21 +2388,8 @@ body.trip-open { overflow: hidden; }
     // partidos fuera descorrelaciona viajes consecutivos; re-roll determinista
     // si la plantilla coincide con la de los últimos viajes. Sin estado.
     const ordinal = (ctx.tripNo || 1) - 1; // tripNo (1-based, calculado en context) = ordinal cronológico + 1
-    const pickAR = (pool, k) => {
-      if (!pool || !pool.length) return "";
-      const Lp = pool.length;
-      const ch = (i, s) => hashCab("car:" + k + ":" + Lp + ":" + i + (s ? ":" + s : "")) % Lp;
-      const recent = {}; let nr = 0;
-      for (let j = 1; j <= Math.min(5, ordinal); j++) { const x = ch(ordinal - j, 0); if (!recent[x]) { recent[x] = 1; nr++; } }
-      let idx = ch(ordinal, 0), s = 1;
-      while (recent[idx] && nr < Lp && s <= 8) { idx = ch(ordinal, s); s++; }
-      return pool[idx];
-    };
-    const fill = (pool, k, vars) => {
-      const tpl = pickAR(pool, k);
-      if (!tpl) return "";
-      return tpl.replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
-    };
+    const pickAR = (pool, k) => _pickAR(pool, k, ordinal);
+    const fill = (pool, k, vars) => _fillT(pool, k, vars, ordinal);
     const lastScore = ctx.h2h.last ? (Number(ctx.h2h.last.homeScore) + "-" + Number(ctx.h2h.last.awayScore)) : "";
     const tierWord = { recien: "humilde expedición", consolidado: "expedición", potencia: "comitiva", gigante: "caravana de un gigante" }[ctx.tier] || "expedición";
     const vars = {
@@ -2343,6 +2462,46 @@ body.trip-open { overflow: hidden; }
     beats.push({ phase: "aterrizaje", t: 0.99, tone: "good", icon: "flag", title: fill(P.arrival, "arr", vars), sub: _esc("vs " + rival) });
     beats.sort((a, b) => a.t - b.t);
     return beats.filter(b => b.title); // descarta beats sin texto (pool ausente)
+  };
+
+  // Crónica del VIAJE DE VUELTA: cierra el arco (ida → partido → vuelta)
+  // reaccionando al resultado YA jugado. [] si el partido aún no tiene marcador.
+  // Buckets por resultado y margen: win_big/win/draw/loss/loss_big.
+  TRIPS.returnBeats = (ctx, c) => {
+    if (!ctx || !ctx.isAway) return [];
+    const m = ctx.m, T = ctx.club, rival = ctx.rival, V = (FC.data.TRIP || {}).vuelta || {};
+    const res = S.userResult(c, m);
+    if (!res) return [];
+    const g = S.userGoals(c, m) || { for: 0, against: 0 };
+    const gf = Number(g.for) || 0, ga = Number(g.against) || 0, margin = gf - ga;
+    const bucket = res === "W" ? (margin >= 3 ? "win_big" : "win") : res === "D" ? "draw" : (margin <= -3 ? "loss_big" : "loss");
+    const ord = (ctx.tripNo || 1) - 1;
+    const tone = res === "W" ? "good" : res === "D" ? "neutral" : "bad";
+    const vars = { team: T, rival, city: ctx.dest.city, home: ctx.origin.city, score: gf + "-" + ga, gf, ga };
+    const beats = [];
+    const ap = (V.apertura || {})[bucket];
+    if (ap) beats.push({ phase: "salida", t: 0.08, tone, icon: ctx.mode === "avion" ? "plane" : "bus",
+      title: _fillT(ap, "vap", vars, ord), sub: _esc(ctx.dest.city + " → " + ctx.origin.city) });
+    const nu = (V.nucleo || {})[bucket];
+    if (nu) beats.push({ phase: "crucero", t: 0.42, tone, icon: res === "W" ? "flame" : res === "D" ? "target" : "cloud",
+      title: _fillT(nu, "vnu", vars, ord), sub: "" });
+    // Beat situacional: una sola "lectura del partido", elegida por prioridad
+    // narrativa. Usa el historial PREVIO (ctx) y el resultado de hoy.
+    let espKey = "";
+    if (res === "W" && (ctx.stake === "continental" || ctx.stake === "final_euro")) espKey = "gesta_grande";
+    else if (res === "W" && ctx.h2h.type === "bestia") espKey = "bestia_caida";
+    else if (res === "W" && ctx.all.level === "verdugo") espKey = "verdugo_caido";
+    else if (res === "W" && ctx.stake === "descenso") espKey = "salvacion";
+    else if (res === "L" && ctx.stake === "liderato") espKey = "liderato_tocado";
+    else if (res === "W" && ga === 0) espKey = "porteria_cero";
+    const esp = espKey ? (V.especial || {})[espKey] : null;
+    if (esp) beats.push({ phase: "crucero", t: 0.62, tone: res === "W" ? "good" : "bad", icon: res === "W" ? "medal" : "flame",
+      title: _fillT(esp, "vesp:" + espKey, vars, ord), sub: "Lectura del partido" });
+    const ci = (V.cierre || {})[res === "W" ? "win" : res === "D" ? "draw" : "loss"];
+    if (ci) beats.push({ phase: "aterrizaje", t: 0.96, tone, icon: "home",
+      title: _fillT(ci, "vci", vars, ord), sub: _esc("De vuelta en " + ctx.origin.city) });
+    beats.sort((a, b) => a.t - b.t);
+    return beats.filter(b => b.title);
   };
 
   FC.trips = TRIPS;
@@ -3386,7 +3545,7 @@ body.trip-open { overflow: hidden; }
       const avion = continental || km >= 300;
       const res = S.userResult(c, m);
       const resWord = res === "W" ? "victoria" : res === "D" ? "empate" : res === "L" ? "derrota" : "";
-      return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="Viaje a ${U.esc(cc.city)}${resWord ? ", " + resWord : ""}">
+      return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="Revivir el viaje de vuelta de ${U.esc(cc.city)}${resWord ? ", " + resWord : ""}">
         <div class="pc-top"><span class="pc-stamp">${codeOf(cc.city)}</span>
           <span class="pc-mode"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${km.toLocaleString("es-ES")} km</span></div>
         <div class="pc-city">${U.esc(cc.city)}</div>
@@ -3434,7 +3593,7 @@ body.trip-open { overflow: hidden; }
     content().querySelectorAll(".vmap [data-trip]").forEach(g => g.addEventListener("click", () => UI.openTrip(c, findMatch(c, g.dataset.trip))));
     content().querySelectorAll(".vmap [data-match]").forEach(g => g.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, g.dataset.match))));
     content().querySelectorAll(".postcards [data-match]").forEach(g => {
-      const open = () => { const m = findMatch(c, g.dataset.match); if (m) UI.openMatchModal(c, m); };
+      const open = () => { const m = findMatch(c, g.dataset.match); if (m) UI.openTrip(c, m, { dir: "return" }); }; // revivir el viaje de vuelta
       g.addEventListener("click", open);
       g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
     });
@@ -3620,24 +3779,33 @@ body.trip-open { overflow: hidden; }
     ];
   }
 
-  UI.openTrip = function (c, m) {
+  UI.openTrip = function (c, m, opts) {
     if (document.querySelector(".trip-cabin")) return; // guarda anti doble-apertura
     const ctx = FC.trips.context(c, m);
     if (!ctx || !ctx.isAway) { UI.toast("Este partido es en casa: no hay viaje", "err"); return; }
-    const beats = FC.trips.beats(ctx, c);
+    const played = S.isPlayed(m);
+    const isReturn = !!(opts && opts.dir === "return") && played; // la vuelta solo existe con resultado
+    const beats = isReturn ? FC.trips.returnBeats(ctx, c) : FC.trips.beats(ctx, c);
     const avion = ctx.mode === "avion";
+    const startCity = isReturn ? ctx.dest : ctx.origin; // ida: casa→rival · vuelta: rival→casa
+    const endCity = isReturn ? ctx.origin : ctx.dest;
     // SVG no resuelve var() en atributos de presentación: resolvemos el acento a hex.
     const _cs = getComputedStyle(document.body);
     const accHex = ((avion ? _cs.getPropertyValue("--accent") : _cs.getPropertyValue("--accent-3")) || "").trim() || (avion ? "#00e1a0" : "#ffd02e");
     const W = 720, H = 220, pad = 48;
-    const proj = projRoute(ctx.origin, ctx.dest, W, H, pad);
-    const o = proj(ctx.origin), dp = proj(ctx.dest);
+    const proj = projRoute(startCity, endCity, W, H, pad);
+    const o = proj(startCity), dp = proj(endCity);
     const ctrl = [(o[0] + dp[0]) / 2, Math.min(o[1], dp[1]) - 44];
     const arcD = `M${o[0].toFixed(1)},${o[1].toFixed(1)} Q${ctrl[0].toFixed(1)},${ctrl[1].toFixed(1)} ${dp[0].toFixed(1)},${dp[1].toFixed(1)}`;
     const etaTotal = avion ? Math.round(40 + ctx.dist / 12) : Math.round(10 + ctx.dist / 1.3);
-    const steps = avion ? ["Embarque", "Despegue", "Crucero", "Aproximación", "Aterrizaje"] : ["Salida", "Carretera", "Crucero", "Aproximación", "Llegada"];
+    const steps = isReturn
+      ? (avion ? ["Vestuario", "Despegue", "Crucero", "Aproximación", "En casa"] : ["Vestuario", "Carretera", "Crucero", "Aproximación", "En casa"])
+      : (avion ? ["Embarque", "Despegue", "Crucero", "Aproximación", "Aterrizaje"] : ["Salida", "Carretera", "Crucero", "Aproximación", "Llegada"]);
     const THRESH = [0, 0.12, 0.3, 0.75, 0.97];
     const rank = FC.trips.travelerRank(ctx.miles);
+    // Textos de cuenta atrás: la ida cuenta hacia el pitido; la vuelta, hacia casa.
+    const etaPending = (mins) => isReturn ? ("Faltan " + mins + " min para llegar a casa") : ("Faltan " + mins + " min para el pitido inicial");
+    const etaDone = isReturn ? ("En casa, en " + U.esc(endCity.city)) : "Sonó el pitido inicial";
 
     // chips de contexto
     const stakeLabel = { liderato: "Liderato en juego", europa_zona: "Pelea por Europa", descenso: "Lucha por no bajar", media: "Media tabla", copa: "Noche de copa", continental: "Noche europea", final_euro: "¡Final!" }[ctx.stake] || "";
@@ -3654,6 +3822,13 @@ body.trip-open { overflow: hidden; }
     chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> ${ctx.passport} estadio${ctx.passport === 1 ? "" : "s"} en el pasaporte</span>`);
     if (ctx.h2h.nthVisit === 1 && !ctx.approx) chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="pin"></span> Nuevo sello</span>`);
     if (ctx.approx) chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> Ruta aproximada</span>`);
+    if (isReturn) { // el marcador, en perspectiva del usuario, encabeza la vuelta
+      const rr = S.userResult(c, m), gg = S.userGoals(c, m) || { for: 0, against: 0 };
+      const rcls = rr === "W" ? "gold" : rr === "L" ? "danger" : "";
+      const rword = rr === "W" ? "Victoria" : rr === "L" ? "Derrota" : "Empate";
+      const ricon = rr === "W" ? "medal" : rr === "L" ? "flame" : "target";
+      chips.unshift(`<span class="chip ${rcls}"><span class="ni-icon" data-icon="${ricon}"></span> ${rword} ${Number(gg.for)}-${Number(gg.against)}</span>`);
+    }
 
     const beatHtml = beats.map(b => `
       <div class="trip-beat" data-bt="${b.t}">
@@ -3667,10 +3842,11 @@ body.trip-open { overflow: hidden; }
       <div class="live-top">
         <div class="live-club">
           <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
-          <div class="live-club-meta"><b>${U.esc(ctx.origin.city)} → ${U.esc(ctx.dest.city)}</b><small>vs ${U.esc(ctx.rival)}${m.competition ? " · " + U.esc(m.competition) : ""}${m.round ? " " + U.esc(m.round) : ""}</small></div>
+          <div class="live-club-meta"><b>${U.esc(startCity.city)} → ${U.esc(endCity.city)}</b><small>${isReturn ? "Viaje de vuelta · " : ""}vs ${U.esc(ctx.rival)}${m.competition ? " · " + U.esc(m.competition) : ""}${m.round ? " " + U.esc(m.round) : ""}</small></div>
         </div>
         <div class="flex gap center">
-          <span class="trip-live" id="trip-status"><i class="trip-dot"></i> EN VIVO</span>
+          ${played ? `<div class="seg trip-dir" id="trip-dir"><button type="button" data-d="out" class="${!isReturn ? "active" : ""}">Ida</button><button type="button" data-d="return" class="${isReturn ? "active" : ""}">Vuelta</button></div>` : ""}
+          <span class="trip-live" id="trip-status"><i class="trip-dot"></i> ${isReturn ? "DE VUELTA" : "EN VIVO"}</span>
           <button class="btn btn-ghost" id="trip-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
         </div>
       </div>
@@ -3684,9 +3860,9 @@ body.trip-open { overflow: hidden; }
           <path id="trip-remain" d="${arcD}" fill="none" stroke="#2a3a52" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 7"/>
           <path id="trip-travel" d="${arcD}" fill="none" stroke="${accHex}" stroke-width="3" stroke-linecap="round"/>
           <circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="7" fill="#93a6bd" fill-opacity="0.2"/><circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="4" fill="#93a6bd"/>
-          <text x="${(o[0]+9).toFixed(1)}" y="${(o[1]+4).toFixed(1)}" fill="#cdd9e6" font-size="12" font-weight="600">${U.esc(ctx.origin.city)}</text>
+          <text x="${(o[0]+9).toFixed(1)}" y="${(o[1]+4).toFixed(1)}" fill="#cdd9e6" font-size="12" font-weight="600">${U.esc(startCity.city)}</text>
           <circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="9" fill="${accHex}" fill-opacity="0.2"/><circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="4.5" fill="${accHex}"/>
-          <text x="${(dp[0]+10).toFixed(1)}" y="${(dp[1]-7).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(ctx.dest.city)}</text>
+          <text x="${(dp[0]+10).toFixed(1)}" y="${(dp[1]-7).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(endCity.city)}</text>
           <foreignObject id="trip-plane" x="0" y="0" width="26" height="26"><div xmlns="http://www.w3.org/1999/xhtml" class="trip-plane-i" style="color:${accHex}">${U.icon(avion ? "plane" : "bus")}</div></foreignObject>
         </svg>
       </div>
@@ -3700,12 +3876,12 @@ body.trip-open { overflow: hidden; }
       </div>
 
       <div class="trip-prog">
-        <div class="flex between center" style="font-size:13px;margin-bottom:6px"><span id="trip-eta"><span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ${etaTotal} min para el pitido inicial</span><span class="faint" id="trip-pct">0%</span></div>
+        <div class="flex between center" style="font-size:13px;margin-bottom:6px"><span id="trip-eta"><span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> ${etaPending(etaTotal)}</span><span class="faint" id="trip-pct">0%</span></div>
         <div class="bar${avion ? "" : " gold"}"><i id="trip-fill" style="width:0%"></i></div>
       </div>
 
       <div class="card tight">
-        <div class="section-title" style="margin:2px 2px 8px"><span class="ni-icon" data-icon="book"></span> Bitácora de cabina</div>
+        <div class="section-title" style="margin:2px 2px 8px"><span class="ni-icon" data-icon="book"></span> ${isReturn ? "Crónica de la vuelta" : "Bitácora de cabina"}</div>
         <div class="trip-beats">${beatHtml}</div>
       </div>
 
@@ -3736,8 +3912,8 @@ body.trip-open { overflow: hidden; }
       const pct = Math.round(t * 100);
       fillEl.style.width = pct + "%"; pctEl.textContent = pct + "%";
       distEl.textContent = Math.round(ctx.dist * (1 - t)).toLocaleString("es-ES") + " km";
-      etaEl.innerHTML = t >= 1 ? '<span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> Sonó el pitido inicial'
-        : '<span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ' + Math.max(1, Math.round(etaTotal * (1 - t))) + ' min para el pitido inicial';
+      etaEl.innerHTML = t >= 1 ? '<span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> ' + etaDone
+        : '<span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> ' + etaPending(Math.max(1, Math.round(etaTotal * (1 - t))));
       U.hydrateIcons(etaEl);
       let idx = 0; for (let i = 0; i < THRESH.length; i++) if (t >= THRESH[i]) idx = i;
       stepEls.forEach((el, i) => el.classList.toggle("on", i <= idx));
@@ -3750,8 +3926,8 @@ body.trip-open { overflow: hidden; }
       if (arrived) return; arrived = true;
       if (raf) cancelAnimationFrame(raf);
       prog = 1; setT(1);
-      const st = ov.querySelector("#trip-status"); if (st) { st.innerHTML = '<i class="trip-dot off"></i> LLEGADA'; st.classList.add("arrived"); }
-      ov.querySelector("#trip-controls").innerHTML = `<button class="live-add" id="trip-cta"><span class="ni-icon" data-icon="ball"></span> Listo para el partido</button>`;
+      const st = ov.querySelector("#trip-status"); if (st) { st.innerHTML = '<i class="trip-dot off"></i> ' + (isReturn ? "EN CASA" : "LLEGADA"); st.classList.add("arrived"); }
+      ov.querySelector("#trip-controls").innerHTML = `<button class="live-add" id="trip-cta"><span class="ni-icon" data-icon="${isReturn ? "check" : "ball"}"></span> ${isReturn ? "Ver resultado del partido" : "Listo para el partido"}</button>`;
       U.hydrateIcons(ov.querySelector("#trip-controls"));
       ov.querySelector("#trip-cta").addEventListener("click", () => { close(); UI.openMatchModal(c, m, { mode: "result" }); });
     }
@@ -3776,6 +3952,12 @@ body.trip-open { overflow: hidden; }
     ov.querySelectorAll("#trip-speed button").forEach(b => b.addEventListener("click", () => {
       speed = Number(b.dataset.s) || 1;
       ov.querySelectorAll("#trip-speed button").forEach(x => x.classList.toggle("active", x === b));
+    }));
+    const dirSeg = ov.querySelector("#trip-dir"); // alternar ida/vuelta: cierra y reabre en la otra dirección
+    if (dirSeg) dirSeg.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      const nd = b.dataset.d === "return" ? "return" : "out";
+      if ((nd === "return") === isReturn) return;
+      close(); UI.openTrip(c, m, { dir: nd });
     }));
 
     setT(0);

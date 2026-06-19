@@ -775,7 +775,7 @@
       const avion = continental || km >= 300;
       const res = S.userResult(c, m);
       const resWord = res === "W" ? "victoria" : res === "D" ? "empate" : res === "L" ? "derrota" : "";
-      return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="Viaje a ${U.esc(cc.city)}${resWord ? ", " + resWord : ""}">
+      return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="Revivir el viaje de vuelta de ${U.esc(cc.city)}${resWord ? ", " + resWord : ""}">
         <div class="pc-top"><span class="pc-stamp">${codeOf(cc.city)}</span>
           <span class="pc-mode"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${km.toLocaleString("es-ES")} km</span></div>
         <div class="pc-city">${U.esc(cc.city)}</div>
@@ -823,7 +823,7 @@
     content().querySelectorAll(".vmap [data-trip]").forEach(g => g.addEventListener("click", () => UI.openTrip(c, findMatch(c, g.dataset.trip))));
     content().querySelectorAll(".vmap [data-match]").forEach(g => g.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, g.dataset.match))));
     content().querySelectorAll(".postcards [data-match]").forEach(g => {
-      const open = () => { const m = findMatch(c, g.dataset.match); if (m) UI.openMatchModal(c, m); };
+      const open = () => { const m = findMatch(c, g.dataset.match); if (m) UI.openTrip(c, m, { dir: "return" }); }; // revivir el viaje de vuelta
       g.addEventListener("click", open);
       g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
     });
@@ -1009,24 +1009,33 @@
     ];
   }
 
-  UI.openTrip = function (c, m) {
+  UI.openTrip = function (c, m, opts) {
     if (document.querySelector(".trip-cabin")) return; // guarda anti doble-apertura
     const ctx = FC.trips.context(c, m);
     if (!ctx || !ctx.isAway) { UI.toast("Este partido es en casa: no hay viaje", "err"); return; }
-    const beats = FC.trips.beats(ctx, c);
+    const played = S.isPlayed(m);
+    const isReturn = !!(opts && opts.dir === "return") && played; // la vuelta solo existe con resultado
+    const beats = isReturn ? FC.trips.returnBeats(ctx, c) : FC.trips.beats(ctx, c);
     const avion = ctx.mode === "avion";
+    const startCity = isReturn ? ctx.dest : ctx.origin; // ida: casa→rival · vuelta: rival→casa
+    const endCity = isReturn ? ctx.origin : ctx.dest;
     // SVG no resuelve var() en atributos de presentación: resolvemos el acento a hex.
     const _cs = getComputedStyle(document.body);
     const accHex = ((avion ? _cs.getPropertyValue("--accent") : _cs.getPropertyValue("--accent-3")) || "").trim() || (avion ? "#00e1a0" : "#ffd02e");
     const W = 720, H = 220, pad = 48;
-    const proj = projRoute(ctx.origin, ctx.dest, W, H, pad);
-    const o = proj(ctx.origin), dp = proj(ctx.dest);
+    const proj = projRoute(startCity, endCity, W, H, pad);
+    const o = proj(startCity), dp = proj(endCity);
     const ctrl = [(o[0] + dp[0]) / 2, Math.min(o[1], dp[1]) - 44];
     const arcD = `M${o[0].toFixed(1)},${o[1].toFixed(1)} Q${ctrl[0].toFixed(1)},${ctrl[1].toFixed(1)} ${dp[0].toFixed(1)},${dp[1].toFixed(1)}`;
     const etaTotal = avion ? Math.round(40 + ctx.dist / 12) : Math.round(10 + ctx.dist / 1.3);
-    const steps = avion ? ["Embarque", "Despegue", "Crucero", "Aproximación", "Aterrizaje"] : ["Salida", "Carretera", "Crucero", "Aproximación", "Llegada"];
+    const steps = isReturn
+      ? (avion ? ["Vestuario", "Despegue", "Crucero", "Aproximación", "En casa"] : ["Vestuario", "Carretera", "Crucero", "Aproximación", "En casa"])
+      : (avion ? ["Embarque", "Despegue", "Crucero", "Aproximación", "Aterrizaje"] : ["Salida", "Carretera", "Crucero", "Aproximación", "Llegada"]);
     const THRESH = [0, 0.12, 0.3, 0.75, 0.97];
     const rank = FC.trips.travelerRank(ctx.miles);
+    // Textos de cuenta atrás: la ida cuenta hacia el pitido; la vuelta, hacia casa.
+    const etaPending = (mins) => isReturn ? ("Faltan " + mins + " min para llegar a casa") : ("Faltan " + mins + " min para el pitido inicial");
+    const etaDone = isReturn ? ("En casa, en " + U.esc(endCity.city)) : "Sonó el pitido inicial";
 
     // chips de contexto
     const stakeLabel = { liderato: "Liderato en juego", europa_zona: "Pelea por Europa", descenso: "Lucha por no bajar", media: "Media tabla", copa: "Noche de copa", continental: "Noche europea", final_euro: "¡Final!" }[ctx.stake] || "";
@@ -1043,6 +1052,13 @@
     chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> ${ctx.passport} estadio${ctx.passport === 1 ? "" : "s"} en el pasaporte</span>`);
     if (ctx.h2h.nthVisit === 1 && !ctx.approx) chips.push(`<span class="chip accent"><span class="ni-icon" data-icon="pin"></span> Nuevo sello</span>`);
     if (ctx.approx) chips.push(`<span class="chip"><span class="ni-icon" data-icon="pin"></span> Ruta aproximada</span>`);
+    if (isReturn) { // el marcador, en perspectiva del usuario, encabeza la vuelta
+      const rr = S.userResult(c, m), gg = S.userGoals(c, m) || { for: 0, against: 0 };
+      const rcls = rr === "W" ? "gold" : rr === "L" ? "danger" : "";
+      const rword = rr === "W" ? "Victoria" : rr === "L" ? "Derrota" : "Empate";
+      const ricon = rr === "W" ? "medal" : rr === "L" ? "flame" : "target";
+      chips.unshift(`<span class="chip ${rcls}"><span class="ni-icon" data-icon="${ricon}"></span> ${rword} ${Number(gg.for)}-${Number(gg.against)}</span>`);
+    }
 
     const beatHtml = beats.map(b => `
       <div class="trip-beat" data-bt="${b.t}">
@@ -1056,10 +1072,11 @@
       <div class="live-top">
         <div class="live-club">
           <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
-          <div class="live-club-meta"><b>${U.esc(ctx.origin.city)} → ${U.esc(ctx.dest.city)}</b><small>vs ${U.esc(ctx.rival)}${m.competition ? " · " + U.esc(m.competition) : ""}${m.round ? " " + U.esc(m.round) : ""}</small></div>
+          <div class="live-club-meta"><b>${U.esc(startCity.city)} → ${U.esc(endCity.city)}</b><small>${isReturn ? "Viaje de vuelta · " : ""}vs ${U.esc(ctx.rival)}${m.competition ? " · " + U.esc(m.competition) : ""}${m.round ? " " + U.esc(m.round) : ""}</small></div>
         </div>
         <div class="flex gap center">
-          <span class="trip-live" id="trip-status"><i class="trip-dot"></i> EN VIVO</span>
+          ${played ? `<div class="seg trip-dir" id="trip-dir"><button type="button" data-d="out" class="${!isReturn ? "active" : ""}">Ida</button><button type="button" data-d="return" class="${isReturn ? "active" : ""}">Vuelta</button></div>` : ""}
+          <span class="trip-live" id="trip-status"><i class="trip-dot"></i> ${isReturn ? "DE VUELTA" : "EN VIVO"}</span>
           <button class="btn btn-ghost" id="trip-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
         </div>
       </div>
@@ -1073,9 +1090,9 @@
           <path id="trip-remain" d="${arcD}" fill="none" stroke="#2a3a52" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 7"/>
           <path id="trip-travel" d="${arcD}" fill="none" stroke="${accHex}" stroke-width="3" stroke-linecap="round"/>
           <circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="7" fill="#93a6bd" fill-opacity="0.2"/><circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="4" fill="#93a6bd"/>
-          <text x="${(o[0]+9).toFixed(1)}" y="${(o[1]+4).toFixed(1)}" fill="#cdd9e6" font-size="12" font-weight="600">${U.esc(ctx.origin.city)}</text>
+          <text x="${(o[0]+9).toFixed(1)}" y="${(o[1]+4).toFixed(1)}" fill="#cdd9e6" font-size="12" font-weight="600">${U.esc(startCity.city)}</text>
           <circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="9" fill="${accHex}" fill-opacity="0.2"/><circle cx="${dp[0].toFixed(1)}" cy="${dp[1].toFixed(1)}" r="4.5" fill="${accHex}"/>
-          <text x="${(dp[0]+10).toFixed(1)}" y="${(dp[1]-7).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(ctx.dest.city)}</text>
+          <text x="${(dp[0]+10).toFixed(1)}" y="${(dp[1]-7).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(endCity.city)}</text>
           <foreignObject id="trip-plane" x="0" y="0" width="26" height="26"><div xmlns="http://www.w3.org/1999/xhtml" class="trip-plane-i" style="color:${accHex}">${U.icon(avion ? "plane" : "bus")}</div></foreignObject>
         </svg>
       </div>
@@ -1089,12 +1106,12 @@
       </div>
 
       <div class="trip-prog">
-        <div class="flex between center" style="font-size:13px;margin-bottom:6px"><span id="trip-eta"><span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ${etaTotal} min para el pitido inicial</span><span class="faint" id="trip-pct">0%</span></div>
+        <div class="flex between center" style="font-size:13px;margin-bottom:6px"><span id="trip-eta"><span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> ${etaPending(etaTotal)}</span><span class="faint" id="trip-pct">0%</span></div>
         <div class="bar${avion ? "" : " gold"}"><i id="trip-fill" style="width:0%"></i></div>
       </div>
 
       <div class="card tight">
-        <div class="section-title" style="margin:2px 2px 8px"><span class="ni-icon" data-icon="book"></span> Bitácora de cabina</div>
+        <div class="section-title" style="margin:2px 2px 8px"><span class="ni-icon" data-icon="book"></span> ${isReturn ? "Crónica de la vuelta" : "Bitácora de cabina"}</div>
         <div class="trip-beats">${beatHtml}</div>
       </div>
 
@@ -1125,8 +1142,8 @@
       const pct = Math.round(t * 100);
       fillEl.style.width = pct + "%"; pctEl.textContent = pct + "%";
       distEl.textContent = Math.round(ctx.dist * (1 - t)).toLocaleString("es-ES") + " km";
-      etaEl.innerHTML = t >= 1 ? '<span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> Sonó el pitido inicial'
-        : '<span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> Faltan ' + Math.max(1, Math.round(etaTotal * (1 - t))) + ' min para el pitido inicial';
+      etaEl.innerHTML = t >= 1 ? '<span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> ' + etaDone
+        : '<span class="ni-icon" data-icon="calendar" style="width:14px;height:14px;vertical-align:-2px"></span> ' + etaPending(Math.max(1, Math.round(etaTotal * (1 - t))));
       U.hydrateIcons(etaEl);
       let idx = 0; for (let i = 0; i < THRESH.length; i++) if (t >= THRESH[i]) idx = i;
       stepEls.forEach((el, i) => el.classList.toggle("on", i <= idx));
@@ -1139,8 +1156,8 @@
       if (arrived) return; arrived = true;
       if (raf) cancelAnimationFrame(raf);
       prog = 1; setT(1);
-      const st = ov.querySelector("#trip-status"); if (st) { st.innerHTML = '<i class="trip-dot off"></i> LLEGADA'; st.classList.add("arrived"); }
-      ov.querySelector("#trip-controls").innerHTML = `<button class="live-add" id="trip-cta"><span class="ni-icon" data-icon="ball"></span> Listo para el partido</button>`;
+      const st = ov.querySelector("#trip-status"); if (st) { st.innerHTML = '<i class="trip-dot off"></i> ' + (isReturn ? "EN CASA" : "LLEGADA"); st.classList.add("arrived"); }
+      ov.querySelector("#trip-controls").innerHTML = `<button class="live-add" id="trip-cta"><span class="ni-icon" data-icon="${isReturn ? "check" : "ball"}"></span> ${isReturn ? "Ver resultado del partido" : "Listo para el partido"}</button>`;
       U.hydrateIcons(ov.querySelector("#trip-controls"));
       ov.querySelector("#trip-cta").addEventListener("click", () => { close(); UI.openMatchModal(c, m, { mode: "result" }); });
     }
@@ -1165,6 +1182,12 @@
     ov.querySelectorAll("#trip-speed button").forEach(b => b.addEventListener("click", () => {
       speed = Number(b.dataset.s) || 1;
       ov.querySelectorAll("#trip-speed button").forEach(x => x.classList.toggle("active", x === b));
+    }));
+    const dirSeg = ov.querySelector("#trip-dir"); // alternar ida/vuelta: cierra y reabre en la otra dirección
+    if (dirSeg) dirSeg.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      const nd = b.dataset.d === "return" ? "return" : "out";
+      if ((nd === "return") === isReturn) return;
+      close(); UI.openTrip(c, m, { dir: nd });
     }));
 
     setT(0);
