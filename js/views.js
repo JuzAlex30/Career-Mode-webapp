@@ -1586,10 +1586,98 @@
         </div>`).join("")}</div>` : ""}
     `;
     UI.openModal(p.name, body,
-      `<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="pc-edit"><span class="ni-icon" data-icon="edit"></span> Editar</button>`, { lg: true });
+      `<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-ghost" id="pc-cmp"><span class="ni-icon" data-icon="table"></span> Comparar</button><button class="btn btn-primary" id="pc-edit"><span class="ni-icon" data-icon="edit"></span> Editar</button>`, { lg: true });
     const editBtn = document.getElementById("pc-edit");
     if (editBtn) editBtn.addEventListener("click", () => { UI.closeModal(); playerModal(c, p); });
+    const cmpBtn = document.getElementById("pc-cmp");
+    if (cmpBtn) cmpBtn.addEventListener("click", () => { UI.closeModal(); UI.openCompare(c, p); });
   };
+
+  UI.openCompare = function (c, p1) {
+    if (!p1) return;
+    const season = S.currentSeason(c);
+    const norm = (s) => String(s == null ? "" : s).trim().toLowerCase();
+
+    function getStats(p) {
+      const nameKey = norm(p.name);
+      const key = nameKey || ("id:" + p.id);
+      const sAgg = (S.playerAggregates(c, season.id))[key] || {};
+      const cAgg = (S.playerAggregates(c, null))[key] || {};
+      const series = S.playerSeries(c, p);
+      const ovrs = series.map(sv => sv.ovr);
+      const cur = ovrs.length ? ovrs[ovrs.length - 1] : (Number(p.ovr) || null);
+      const peak = ovrs.length ? Math.max(...ovrs) : cur;
+      return { sAgg, cAgg, cur, peak };
+    }
+
+    function renderCompare(p2) {
+      const st1 = getStats(p1);
+      const st2 = p2 ? getStats(p2) : null;
+
+      const pHead = (p, st) => `<div style="flex:1;text-align:center">
+        <div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))};margin:0 auto 6px">${U.initials(p.name)}</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:2px">${U.esc(p.name)}</div>
+        <div class="faint" style="font-size:12px">${U.esc(p.position||"—")}${p.age ? " · " + p.age + " a" : ""}</div>
+        <span class="ovr ${U.ovrClass(st.cur)}" style="font-size:20px;font-weight:800;display:block;margin-top:6px">${st.cur||"—"}</span>
+      </div>`;
+
+      const header = `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:14px">
+        ${pHead(p1, st1)}
+        <div style="align-self:center;font-weight:700;color:var(--text2);font-size:15px;padding:0 4px">vs</div>
+        ${p2 ? pHead(p2, st2) : `<div style="flex:1;text-align:center;color:var(--text2);font-size:13px;padding-top:24px">—</div>`}
+      </div>`;
+
+      // dir: 1 = higher is better, -1 = lower is better, 0 = no comparison
+      const rows = [
+        { label: "Potencial",      v1: Number(p1.potential)||0, v2: p2 ? Number(p2.potential)||0 : null, fmt: v => v||"—" },
+        { label: "Valor",          v1: p1.value||0, v2: p2 ? p2.value||0 : null, fmt: v => v ? U.money(v) : "—" },
+        null,
+        { label: "Goles (temp.)",  v1: st1.sAgg.goals||0, v2: st2 ? st2.sAgg.goals||0 : null, fmt: v => v },
+        { label: "Asistencias",    v1: st1.sAgg.assists||0, v2: st2 ? st2.sAgg.assists||0 : null, fmt: v => v },
+        { label: "MOTM",           v1: st1.sAgg.motm||0, v2: st2 ? st2.sAgg.motm||0 : null, fmt: v => v },
+        { label: "Partidos",       v1: st1.sAgg.apps||0, v2: st2 ? st2.sAgg.apps||0 : null, fmt: v => v },
+        { label: "Nota media",     v1: st1.sAgg.ratingN ? st1.sAgg.avg : null, v2: st2 && st2.sAgg.ratingN ? st2.sAgg.avg : null, fmt: v => v != null ? Number(v).toFixed(1) : "—" },
+        { label: "Minutos",        v1: st1.sAgg.minutes||0, v2: st2 ? st2.sAgg.minutes||0 : null, fmt: v => v ? v.toLocaleString("es-ES") : "—" },
+        null,
+        { label: "Goles (carrera)", v1: st1.cAgg.goals||0, v2: st2 ? st2.cAgg.goals||0 : null, fmt: v => v },
+        { label: "Asist. (carrera)", v1: st1.cAgg.assists||0, v2: st2 ? st2.cAgg.assists||0 : null, fmt: v => v },
+        { label: "Partidos (carrera)", v1: st1.cAgg.apps||0, v2: st2 ? st2.cAgg.apps||0 : null, fmt: v => v },
+      ];
+
+      const tableRows = rows.map(row => {
+        if (!row) return `<tr><td colspan="3" style="padding:4px 0"><hr style="border:none;border-top:1px solid var(--line);margin:0"/></td></tr>`;
+        const { label, v1, v2, fmt } = row;
+        const hasP2 = p2 != null && v2 != null;
+        const win1 = hasP2 && v1 > v2;
+        const win2 = hasP2 && v2 > v1;
+        const s1 = win1 ? "color:var(--accent);font-weight:700" : win2 ? "color:var(--text2)" : "font-weight:600";
+        const s2 = win2 ? "color:var(--accent);font-weight:700" : win1 ? "color:var(--text2)" : "font-weight:600";
+        return `<tr>
+          <td style="${s1};text-align:right;padding:5px 10px;font-size:13px">${fmt(v1)}</td>
+          <td style="text-align:center;padding:5px 4px;font-size:11px;color:var(--text2);white-space:nowrap">${U.esc(label)}</td>
+          <td style="${s2};text-align:left;padding:5px 10px;font-size:13px">${p2 ? fmt(v2) : "<span style='color:var(--text2)'>—</span>"}</td>
+        </tr>`;
+      }).join("");
+
+      return header + `<table style="width:100%;border-collapse:collapse">${tableRows}</table>`;
+    }
+
+    const dlHtml = `<datalist id="cmp-dl">${(c.players||[]).filter(q => q.id !== p1.id).map(q => `<option value="${U.esc(q.name)}">`).join("")}</datalist>`;
+
+    UI.openModal("Comparar jugadores",
+      `${dlHtml}<div class="field" style="margin-bottom:16px"><label>Comparar ${U.esc(p1.name)} con…</label>
+        <input type="text" id="cmp-pick" list="cmp-dl" placeholder="Escribe el nombre del jugador" style="font-size:14px"/>
+      </div><div id="cmp-body">${renderCompare(null)}</div>`,
+      `<button class="btn btn-ghost" id="cmp-back">← Volver a la ficha</button><button class="btn btn-primary" data-close>Cerrar</button>`, { lg: true });
+
+    document.getElementById("cmp-pick").addEventListener("input", function () {
+      const name = this.value.trim().toLowerCase();
+      const p2 = (c.players||[]).find(q => q.id !== p1.id && norm(q.name) === name);
+      document.getElementById("cmp-body").innerHTML = renderCompare(p2 || null);
+    });
+    document.getElementById("cmp-back").addEventListener("click", () => { UI.closeModal(); UI.openPlayerCard(c, p1); });
+  };
+
   function importSquadModal(c) {
     const roster = (D.SQUADS || {})[c.clubName];
     if (!roster || !roster.length) { UI.toast("No hay plantilla disponible para este club", "err"); return; }
