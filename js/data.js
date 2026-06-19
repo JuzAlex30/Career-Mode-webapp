@@ -383,7 +383,11 @@
     // Equipos españoles frecuentes (ascensos / Segunda) para reducir el fallback
     "Las Palmas":[28.100,-15.456,"Las Palmas"], "UD Las Palmas":[28.100,-15.456,"Las Palmas"], "Cádiz":[36.502,-6.273,"Cádiz"],
     "Granada":[37.153,-3.596,"Granada"], "Almería":[36.840,-2.435,"Almería"], "UD Almería":[36.840,-2.435,"Almería"],
-    "Leganés":[40.340,-3.760,"Leganés"], "CD Leganés":[40.340,-3.760,"Leganés"], "Sporting Gijón":[43.536,-5.637,"Gijón"],
+    "Leganés":[40.340,-3.760,"Leganés"], "CD Leganés":[40.340,-3.760,"Leganés"], "Leganes":[40.340,-3.760,"Leganés"],
+    "Celta Vigo":[42.212,-8.740,"Vigo"], "RC Celta":[42.212,-8.740,"Vigo"],
+    "Atletico de Madrid":[40.436,-3.599,"Madrid"], "Atletico Madrid":[40.436,-3.599,"Madrid"],
+    "Deportivo Alaves":[42.846,-2.672,"Vitoria"], "Alaves":[42.846,-2.672,"Vitoria"],
+    "Sporting Gijón":[43.536,-5.637,"Gijón"],
     "Sporting de Gijón":[43.536,-5.637,"Gijón"], "Real Zaragoza":[41.634,-0.902,"Zaragoza"], "Tenerife":[28.469,-16.255,"Tenerife"],
     "Eibar":[43.184,-2.474,"Eibar"], "Real Valladolid":[41.644,-4.761,"Valladolid"], "Valladolid":[41.644,-4.761,"Valladolid"],
     "Málaga":[36.720,-4.420,"Málaga"], "Racing de Santander":[43.427,-3.829,"Santander"], "Deportivo":[43.348,-8.412,"A Coruña"],

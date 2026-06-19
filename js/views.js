@@ -666,18 +666,31 @@
     const laps = lifeKm / 40075;
     const estVis = leagueTeams.filter(t => visited[t]).length; // rivales de liga visitados esta temporada
 
-    // Proyección equirectangular sobre ventana Europa (lon -19..16, lat 27..56).
-    const W = 820, H = 500, px = 26, py = 22, LON0 = -19, LON1 = 16, LAT0 = 27, LAT1 = 56;
+    // Proyección equirectangular auto-ajustada a los equipos de la liga.
+    const W = 820, H = 500, px = 30, py = 26;
     const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    const allCCs = [home, ...leagueTeams.map(t => FC.trips.cityOf(t))];
+    // Excluir outliers geográficos (ej. islas remotas) del bbox para que la zona continental llene el mapa.
+    // Se usan los equipos dentro de 2.2× el percentil 75 de distancia al club home.
+    const rivalDists = allCCs.slice(1).map(cc => FC.trips.distance(home, cc)).sort((a, b) => a - b);
+    const p75 = rivalDists.length ? rivalDists[Math.max(0, Math.floor(rivalDists.length * 0.75))] : Infinity;
+    const bboxCCs = rivalDists.length ? allCCs.filter((cc, i) => i === 0 || FC.trips.distance(home, cc) <= p75 * 2.2) : [home];
+    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+    bboxCCs.forEach(cc => { minLat = Math.min(minLat, cc.lat); maxLat = Math.max(maxLat, cc.lat); minLon = Math.min(minLon, cc.lon); maxLon = Math.max(maxLon, cc.lon); });
+    const latPad = Math.max((maxLat - minLat) * 0.15, 1.0), lonPad = Math.max((maxLon - minLon) * 0.15, 1.0);
+    const LAT0 = minLat - latPad, LAT1 = maxLat + latPad, LON0 = minLon - lonPad, LON1 = maxLon + lonPad;
     const proj = (lat, lon) => [cl(px + (lon - LON0) / (LON1 - LON0) * (W - 2 * px), 4, W - 4), cl(py + (LAT1 - lat) / (LAT1 - LAT0) * (H - 2 * py), 4, H - 4)];
     const acc = (getComputedStyle(document.body).getPropertyValue("--accent") || "").trim() || "#00e1a0";
     const COL = { W: acc, D: "#ffd02e", L: "#ff5470", up: "#1f8fff", faint: "#46586e" };
     const arc = (p1, p2) => { const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, dd = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]); return `M${p1[0].toFixed(1)},${p1[1].toFixed(1)} Q${mx.toFixed(1)},${(my - Math.max(14, dd * 0.16)).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; };
     const hp = proj(home.lat, home.lon);
 
+    const lonRange = LON1 - LON0, latRange = LAT1 - LAT0;
+    const lonStep = lonRange > 25 ? 10 : lonRange > 12 ? 5 : 2;
+    const latStep = latRange > 20 ? 10 : latRange > 10 ? 5 : 2;
     let grat = "";
-    for (let lon = -15; lon <= 15; lon += 5) { const a = proj(LAT0, lon), b = proj(LAT1, lon); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
-    for (let lat = 30; lat <= 55; lat += 5) { const a = proj(lat, LON0), b = proj(lat, LON1); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
+    for (let lon = Math.ceil(LON0 / lonStep) * lonStep; lon <= LON1; lon += lonStep) { const a = proj(LAT0, lon), b = proj(LAT1, lon); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
+    for (let lat = Math.ceil(LAT0 / latStep) * latStep; lat <= LAT1; lat += latStep) { const a = proj(lat, LON0), b = proj(lat, LON1); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
 
     let faint = "", arcs = "", dots = "", labels = "";
     leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t), p = proj(cc.lat, cc.lon); faint += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${COL.faint}"/>`; });
