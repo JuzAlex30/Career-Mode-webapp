@@ -516,6 +516,24 @@ body.trip-open { overflow: hidden; }
 .vstamp.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .vstamp .ni-icon { width: 11px; height: 11px; }
 
+/* Rendimiento lejos de casa */
+.far-ref { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+.far-grid { display: flex; flex-direction: column; gap: 14px; }
+.far-row { display: flex; flex-direction: column; gap: 7px; }
+.far-head { display: flex; align-items: center; gap: 10px; }
+.far-head .ni-icon { width: 17px; height: 17px; color: var(--text-dim); flex: none; }
+.far-name { display: flex; flex-direction: column; line-height: 1.2; }
+.far-name strong { font-size: 14px; }
+.far-sub { font-size: 11.5px; color: var(--text-faint); }
+.far-n { margin-left: auto; font-size: 12px; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+.far-bar { height: 9px; border-radius: 6px; background: var(--panel-2); overflow: hidden; }
+.far-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
+.far-meta { display: flex; align-items: center; gap: 14px; font-size: 12.5px; flex-wrap: wrap; }
+.far-ppm { font-weight: 800; }
+.far-wdl b { font-weight: 800; }
+.far-note { font-size: 12px; margin-top: 12px; }
+.far-insight { margin-top: 14px; padding: 11px 13px; border-radius: 11px; background: color-mix(in srgb, var(--accent) 7%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); font-size: 13px; line-height: 1.5; color: var(--text); }
+
   </style>
 </head>
 <body data-theme="dark">
@@ -3182,6 +3200,54 @@ body.trip-open { overflow: hidden; }
     const dot = (col) => `<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${col}"></i>`;
     function tile(label, val, sub) { return `<div class="card stat-tile"><div class="st-glow"></div><div class="st-label">${label}</div><div class="st-value">${val}</div><div class="st-sub">${U.esc(sub)}</div></div>`; }
 
+    // Rendimiento lejos de casa: correlación distancia↔resultado. VITALICIO (sobre
+    // allAway = todos los desplazamientos jugados de la carrera); NO depende del seasonSelect.
+    const RANGES = [
+      { label: "Cercanía", sub: "menos de 300 km", icon: "bus", lo: 0, hi: 300 },
+      { label: "Distancia media", sub: "entre 300 y 1.000 km", icon: "plane", lo: 300, hi: 1000 },
+      { label: "Lejanía", sub: "más de 1.000 km", icon: "plane", lo: 1000, hi: Infinity },
+    ];
+    const buckets = RANGES.map(r => ({ ...r, n: 0, w: 0, d: 0, l: 0 }));
+    allAway.forEach(m => {
+      const dk = Math.round(FC.trips.distance(home, FC.trips.cityOf(m.home))); // redondeo: casa con la regla de la cabina
+      const b = buckets.find(x => dk >= x.lo && dk < x.hi); if (!b) return;
+      b.n++; const res = S.userResult(c, m);
+      if (res === "W") b.w++; else if (res === "D") b.d++; else if (res === "L") b.l++;
+    });
+    const ppm = (b) => b.n ? (b.w * 3 + b.d) / b.n : 0;
+    const homePlayed = S.userMatches(c).filter(m => m.home === T);
+    let hw = 0, hd = 0; homePlayed.forEach(m => { const r = S.userResult(c, m); if (r === "W") hw++; else if (r === "D") hd++; });
+    const homePPM = homePlayed.length ? (hw * 3 + hd) / homePlayed.length : 0;
+    const fmt2 = (n) => n.toFixed(2).replace(".", ",");
+    const ppmCol = (p) => p >= 2 ? acc : p >= 1 ? "#ffd02e" : "#ff5470";
+    const farRow = (b) => {
+      const p = ppm(b), col = ppmCol(p), wp = Math.round(b.w / b.n * 100);
+      return `<div class="far-row">
+        <div class="far-head"><span class="ni-icon" data-icon="${b.icon}"></span>
+          <div class="far-name"><strong>${b.label}</strong><span class="far-sub">${b.sub}</span></div>
+          <span class="far-n">${b.n} viaje${b.n === 1 ? "" : "s"}</span></div>
+        <div class="far-bar"><div class="far-fill" style="width:${(p / 3 * 100).toFixed(1)}%;background:${col}"></div></div>
+        <div class="far-meta"><span class="far-ppm" style="color:${col}">${fmt2(p)} pts/partido</span>
+          <span class="far-wdl"><b style="color:${acc}">${b.w}V</b> <b style="color:#ffd02e">${b.d}E</b> <b style="color:#ff5470">${b.l}D</b></span>
+          <span class="faint">${wp}% victorias</span></div>
+      </div>`;
+    };
+    const activeBuckets = buckets.filter(b => b.n > 0);
+    let farInsight = "";
+    const near = buckets[0], far = buckets[2];
+    if (near.n >= 2 && far.n >= 2) {
+      const pn = ppm(near), pf = ppm(far), diff = pn - pf;
+      if (diff >= 0.5) farInsight = `Rindes mejor cerca de casa: <b>${fmt2(pn)}</b> pts/partido en viajes cortos frente a <b>${fmt2(pf)}</b> en los largos. La distancia te pesa.`;
+      else if (diff <= -0.5) farInsight = `Curiosamente viajas bien: <b>${fmt2(pf)}</b> pts/partido en los desplazamientos largos frente a <b>${fmt2(pn)}</b> en los cortos.`;
+      else farInsight = `Tu rendimiento aguanta la distancia: <b>${fmt2(pn)}</b> pts cerca y <b>${fmt2(pf)}</b> lejos.`;
+    }
+    const farBody = allAway.length === 0
+      ? '<span class="faint">Aún no tienes desplazamientos jugados. Registra partidos como visitante para ver tu rendimiento según la distancia.</span>'
+      : `${homePlayed.length ? `<div class="far-ref">En casa promedias <b style="color:${acc}">${fmt2(homePPM)}</b> pts/partido <span class="faint">· referencia</span></div>` : ""}
+         <div class="far-grid">${activeBuckets.map(farRow).join("")}</div>
+         ${allAway.length < 5 ? '<div class="far-note faint">Muestra pequeña — el patrón se afinará con más desplazamientos.</div>' : ""}
+         ${farInsight ? `<div class="far-insight">${farInsight}</div>` : ""}`;
+
     UI.mount(`
       <div class="page-head"><div><h1>Viajes</h1><div class="sub">${U.esc(season.label)} · ${estVis}/${leagueTeams.length} estadios esta temporada${laps >= 1 ? " · " + laps.toFixed(1).replace(".", ",") + " vueltas al mundo" : ""}</div></div>
         <div class="flex gap center wrap">${seasonSelect(c)}</div>
@@ -3205,6 +3271,10 @@ body.trip-open { overflow: hidden; }
       <div class="card" style="margin-top:16px">
         <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="pin"></span> Pasaporte de estadios <span class="faint" style="font-weight:400">· ${estVis}/${leagueTeams.length} esta temporada</span></div>
         <div class="vstamps">${stamps || '<span class="faint">Esta temporada no tiene rivales registrados.</span>'}</div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Rendimiento lejos de casa <span class="faint" style="font-weight:400">· toda tu carrera</span></div>
+        ${farBody}
       </div>
     `);
     content().querySelectorAll(".vmap [data-trip]").forEach(g => g.addEventListener("click", () => UI.openTrip(c, findMatch(c, g.dataset.trip))));

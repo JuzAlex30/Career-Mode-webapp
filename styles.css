@@ -507,3 +507,21 @@ body.trip-open { overflow: hidden; }
 .vstamp { width: 46px; height: 46px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 11px; font-weight: 800; flex: none; border: 2px dashed var(--line-strong); color: var(--text-faint); }
 .vstamp.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .vstamp .ni-icon { width: 11px; height: 11px; }
+
+/* Rendimiento lejos de casa */
+.far-ref { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+.far-grid { display: flex; flex-direction: column; gap: 14px; }
+.far-row { display: flex; flex-direction: column; gap: 7px; }
+.far-head { display: flex; align-items: center; gap: 10px; }
+.far-head .ni-icon { width: 17px; height: 17px; color: var(--text-dim); flex: none; }
+.far-name { display: flex; flex-direction: column; line-height: 1.2; }
+.far-name strong { font-size: 14px; }
+.far-sub { font-size: 11.5px; color: var(--text-faint); }
+.far-n { margin-left: auto; font-size: 12px; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+.far-bar { height: 9px; border-radius: 6px; background: var(--panel-2); overflow: hidden; }
+.far-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
+.far-meta { display: flex; align-items: center; gap: 14px; font-size: 12.5px; flex-wrap: wrap; }
+.far-ppm { font-weight: 800; }
+.far-wdl b { font-weight: 800; }
+.far-note { font-size: 12px; margin-top: 12px; }
+.far-insight { margin-top: 14px; padding: 11px 13px; border-radius: 11px; background: color-mix(in srgb, var(--accent) 7%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); font-size: 13px; line-height: 1.5; color: var(--text); }
