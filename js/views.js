@@ -249,6 +249,91 @@
   function playersDatalist(c, id) {
     return `<datalist id="${id}">${(c.players || []).map(p => `<option value="${U.esc(p.name)}">`).join("")}</datalist>`;
   }
+  // ---- Alineación visual: helpers ----
+  function _pitchLayout(formationName, slots) {
+    const nums = formationName.split("-").map(Number).filter(n => n > 0);
+    const lines = [[{ pos: slots[0] || "GK", i: 0 }]];
+    let idx = 1;
+    nums.forEach(n => {
+      const line = [];
+      for (let j = 0; j < n && idx < slots.length; j++, idx++) line.push({ pos: slots[idx], i: idx });
+      if (line.length) lines.push(line);
+    });
+    const totalLines = lines.length;
+    const result = [];
+    lines.forEach((line, li) => {
+      const y = totalLines < 2 ? 140 : Math.round(248 - (li / (totalLines - 1)) * 216);
+      line.forEach(({ pos, i }, xi) => {
+        result.push({ pos, i, x: Math.round((xi + 1) / (line.length + 1) * 200), y });
+      });
+    });
+    return result;
+  }
+
+  function _pitchSvgEl(formationName, slots, lineupArr) {
+    const positions = _pitchLayout(formationName, slots);
+    const circles = positions.map(({ pos, i, x, y }) => {
+      const name = ((lineupArr || [])[i] || {}).name || "";
+      const has = !!name;
+      const label = name ? name.split(/\s+/).pop().slice(0, 8) : "";
+      return `<g class="pitch-slot" data-slot="${i}">
+        <circle cx="${x}" cy="${y}" r="14" fill="${has ? "rgba(0,212,170,0.88)" : "rgba(255,255,255,0.12)"}" stroke="${has ? "#00d4aa" : "rgba(255,255,255,0.28)"}" stroke-width="1.5"/>
+        <text x="${x}" y="${y - 2}" text-anchor="middle" font-size="6.5" fill="${has ? "#001a15" : "rgba(255,255,255,0.5)"}" font-weight="700" font-family="system-ui">${U.esc(pos)}</text>
+        <text x="${x}" y="${y + 9}" text-anchor="middle" font-size="${label.length > 6 ? "6" : "7.5"}" fill="${has ? "#001a15" : "rgba(255,255,255,0.28)"}" font-weight="${has ? "700" : "400"}" font-family="system-ui">${U.esc(label)}</text>
+      </g>`;
+    }).join("");
+    return `<svg id="m-pitch-svg" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:200px;display:block;margin:0 auto;border-radius:4px;flex-shrink:0">
+      <rect width="200" height="280" fill="#1a4a12"/>
+      <rect x="6" y="6" width="188" height="268" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+      <line x1="6" y1="140" x2="194" y2="140" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+      <circle cx="100" cy="140" r="27" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+      <circle cx="100" cy="140" r="2" fill="rgba(255,255,255,0.2)"/>
+      <rect x="54" y="6" width="92" height="48" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+      <rect x="54" y="226" width="92" height="48" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+      <rect x="78" y="6" width="44" height="18" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1"/>
+      <rect x="78" y="256" width="44" height="18" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1"/>
+      <circle cx="100" cy="60" r="2.5" fill="rgba(255,255,255,0.14)"/>
+      <circle cx="100" cy="220" r="2.5" fill="rgba(255,255,255,0.14)"/>
+      ${circles}
+    </svg>`;
+  }
+
+  function _pitchUI(formationName, slots, lineupArr, dlId) {
+    const inputs = slots.map((pos, i) => {
+      const lu = (lineupArr || [])[i] || {};
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <span class="chip" style="min-width:36px;text-align:center;font-size:10px;flex-shrink:0">${U.esc(pos)}</span>
+        <input type="text" class="lu-inp" data-slot="${i}" ${dlId ? `list="${dlId}"` : ""} value="${U.esc(lu.name || "")}" placeholder="Jugador" style="flex:1;padding:3px 8px;font-size:13px"/>
+      </div>`;
+    }).join("");
+    return `<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+      ${_pitchSvgEl(formationName, slots, lineupArr)}
+      <div style="flex:1;min-width:150px;padding-top:2px">${inputs}</div>
+    </div>`;
+  }
+
+  function _syncPitchSlot(slotIdx, name) {
+    const svg = document.getElementById("m-pitch-svg");
+    if (!svg) return;
+    const g = svg.querySelector(`.pitch-slot[data-slot="${slotIdx}"]`);
+    if (!g) return;
+    const circle = g.querySelector("circle");
+    const texts = [...g.querySelectorAll("text")];
+    const has = !!name;
+    const label = name ? name.split(/\s+/).pop().slice(0, 8) : "";
+    if (circle) {
+      circle.setAttribute("fill", has ? "rgba(0,212,170,0.88)" : "rgba(255,255,255,0.12)");
+      circle.setAttribute("stroke", has ? "#00d4aa" : "rgba(255,255,255,0.28)");
+    }
+    if (texts[0]) texts[0].setAttribute("fill", has ? "#001a15" : "rgba(255,255,255,0.5)");
+    if (texts[1]) {
+      texts[1].textContent = label;
+      texts[1].setAttribute("fill", has ? "#001a15" : "rgba(255,255,255,0.28)");
+      texts[1].setAttribute("font-weight", has ? "700" : "400");
+      texts[1].setAttribute("font-size", label.length > 6 ? "6" : "7.5");
+    }
+  }
+
   UI.openMatchModal = function (c, existing, opts) {
     opts = opts || {};
     const season = S.currentSeason(c);
@@ -304,6 +389,12 @@
         <select id="m-formation"><option value="">— Sin especificar —</option>
           ${Object.keys(FC.data.FORMATIONS||{}).map(f => `<option value="${U.esc(f)}"${ex.formation===f?' selected':''}>▶ ${U.esc(f)}</option>`).join("")}
         </select></div>
+      <details id="m-lineup-det" style="margin-top:16px"${(ex.lineup&&ex.lineup.length&&ex.formation)?' open':''}>
+        <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Alineación (opcional)</summary>
+        <div id="m-lineup-body" style="margin-top:10px">
+          <p class="faint" style="font-size:13px">Selecciona primero una formación.</p>
+        </div>
+      </details>
       <details style="margin-top:16px">
         <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Valoraciones de jugadores (opcional)</summary>
         <div style="margin-top:8px">
@@ -391,6 +482,21 @@
       if (resultFields) resultFields.hidden = (mode === "schedule");
     }));
 
+    const lineupBody = document.getElementById("m-lineup-body");
+    const formEl = document.getElementById("m-formation");
+    function renderLineupPitch() {
+      const f = formEl.value;
+      const slots = f ? ((FC.data.FORMATIONS || {})[f] || []) : [];
+      if (!slots.length) { lineupBody.innerHTML = '<p class="faint" style="font-size:13px">Selecciona primero una formación.</p>'; return; }
+      const current = slots.map((_, i) => (ex.lineup || [])[i] || {});
+      lineupBody.innerHTML = _pitchUI(f, slots, current, dlId);
+      lineupBody.querySelectorAll(".lu-inp").forEach(inp => {
+        inp.addEventListener("input", () => _syncPitchSlot(Number(inp.dataset.slot), inp.value.trim()));
+      });
+    }
+    formEl.addEventListener("change", renderLineupPitch);
+    if (formEl.value) renderLineupPitch();
+
     document.getElementById("m-save").addEventListener("click", () => {
       const opp = document.getElementById("m-opp").value.trim();
       if (!opp) { UI.toast("Indica el rival", "err"); return; }
@@ -404,7 +510,7 @@
       if (mode === "schedule") {
         // Partido futuro: sin marcador ni eventos. Si editamos uno ya jugado y lo
         // pasamos a "Próximo", se limpia su resultado (Object.assign copia undefined).
-        const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined, ratings: undefined, formation: undefined });
+        const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined, ratings: undefined, formation: undefined, lineup: undefined });
         if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
         UI.closeModal();
         UI.toast(existing ? "Partido actualizado" : "Partido programado 📅", "ok");
@@ -446,12 +552,25 @@
         if (mVal !== "") { const n = Number(mVal); if (Number.isFinite(n) && n >= 0) entry.minutes = n; }
         ratings.push(entry);
       });
+      const luInps = document.querySelectorAll(".lu-inp");
+      const lineup = luInps.length ? (() => {
+        const slots = formation ? ((FC.data.FORMATIONS || {})[formation] || []) : [];
+        const arr = [...luInps].map((inp, i) => {
+          const name = inp.value.trim();
+          if (!name) return null;
+          const pos = slots[i] || "";
+          const pMatch = (c.players||[]).find(x => x.name === name);
+          return Object.assign({ pos, name }, pMatch ? { playerId: pMatch.id } : {});
+        });
+        return arr.some(Boolean) ? arr : undefined;
+      })() : undefined;
       const data = Object.assign({}, base, {
         homeScore, awayScore,
         events, motm: motm || "", motmId: motmP && motmP.id,
         stats: Object.keys(stats).length ? stats : undefined,
         ratings: ratings.length ? ratings : undefined,
         formation,
+        lineup,
       });
       if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
       UI.closeModal();
@@ -1076,8 +1195,16 @@
       <div style="font-size:28px;font-weight:800;letter-spacing:-1px" class="${rc}">${U.esc(c.clubName)} <span style="color:var(--text2);font-size:20px">${scoreLine}</span> ${U.esc(rival)}</div>
       ${m.date ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">${U.fmtDate(m.date)}</div>` : ""}
     </div>`;
+    const lineupSection = (m.lineup && m.lineup.length && m.formation) ? (() => {
+      const slots = (FC.data.FORMATIONS || {})[m.formation] || [];
+      if (!slots.length) return "";
+      return `<div style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
+        <div style="font-weight:700;font-size:11px;letter-spacing:.05em;color:var(--text2);margin-bottom:10px">ALINEACIÓN · ${U.esc(m.formation)}</div>
+        ${_pitchSvgEl(m.formation, slots, m.lineup)}
+      </div>`;
+    })() : "";
     const body = header + lines.map((l, i) => `
-      <p style="margin:${i===0?"0":"12px"} 0 0;line-height:1.6;${i===0?"font-weight:600":"color:var(--text2);"}">${l}</p>`).join("");
+      <p style="margin:${i===0?"0":"12px"} 0 0;line-height:1.6;${i===0?"font-weight:600":"color:var(--text2);"}">${l}</p>`).join("") + lineupSection;
     UI.openModal("Crónica del partido", body, `<button class="btn btn-primary" data-close>Cerrar</button>`);
   };
 
