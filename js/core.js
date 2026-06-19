@@ -939,8 +939,8 @@
     const level = total >= 6 ? ((av - al >= 3) ? "victima" : (al - av >= 3) ? "verdugo" : "clasico") : total >= 1 ? "conocido" : "nuevo";
     const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
     const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
-    let miles = 0; const seenCity = {}; let passport = 0;
-    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { const cy = TRIPS.cityOf(x.home); miles += TRIPS.distance(origin, cy) * 2; if (!seenCity[cy.city]) { seenCity[cy.city] = 1; passport++; } } });
+    let miles = 0; const seenRiv = {}; let passport = 0;
+    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; if (!seenRiv[x.home]) { seenRiv[x.home] = 1; passport++; } } });
     const awayAll = (c.matches || []).filter(x => x.away === club && x.home).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
     const tripNo = Math.max(1, awayAll.findIndex(x => x.id === m.id) + 1);
     const hero = TRIPS.pickHero(c, m);

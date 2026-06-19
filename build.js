@@ -38,6 +38,7 @@ const BODY = `
         <div class="nav-label">Carrera</div>
         <a class="nav-item" data-route="challenges"><span class="ni-icon" data-icon="target"></span><span>Retos</span></a>
         <a class="nav-item" data-route="story"><span class="ni-icon" data-icon="news"></span><span>Narrativa</span></a>
+        <a class="nav-item" data-route="viajes"><span class="ni-icon" data-icon="plane"></span><span>Viajes</span></a>
         <a class="nav-item" data-route="history"><span class="ni-icon" data-icon="trophy"></span><span>Historia</span></a>
         <a class="nav-item" data-route="hall"><span class="ni-icon" data-icon="medal"></span><span>Salón de la fama</span></a>
         <div class="nav-label">Herramientas</div>

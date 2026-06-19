@@ -380,6 +380,15 @@
     "Nantes":[47.256,-1.525,"Nantes"], "Brest":[48.403,-4.462,"Brest"], "Toulouse":[43.583,1.434,"Toulouse"],
     "Auxerre":[47.787,3.589,"Auxerre"], "Le Havre":[49.499,0.170,"Le Havre"], "Angers":[47.460,-0.530,"Angers"],
     "Lorient":[47.749,-3.370,"Lorient"], "Paris FC":[48.826,2.352,"París"], "Metz":[49.110,6.160,"Metz"],
+    // Equipos españoles frecuentes (ascensos / Segunda) para reducir el fallback
+    "Las Palmas":[28.100,-15.456,"Las Palmas"], "UD Las Palmas":[28.100,-15.456,"Las Palmas"], "Cádiz":[36.502,-6.273,"Cádiz"],
+    "Granada":[37.153,-3.596,"Granada"], "Almería":[36.840,-2.435,"Almería"], "UD Almería":[36.840,-2.435,"Almería"],
+    "Leganés":[40.340,-3.760,"Leganés"], "CD Leganés":[40.340,-3.760,"Leganés"], "Sporting Gijón":[43.536,-5.637,"Gijón"],
+    "Sporting de Gijón":[43.536,-5.637,"Gijón"], "Real Zaragoza":[41.634,-0.902,"Zaragoza"], "Tenerife":[28.469,-16.255,"Tenerife"],
+    "Eibar":[43.184,-2.474,"Eibar"], "Real Valladolid":[41.644,-4.761,"Valladolid"], "Valladolid":[41.644,-4.761,"Valladolid"],
+    "Málaga":[36.720,-4.420,"Málaga"], "Racing de Santander":[43.427,-3.829,"Santander"], "Deportivo":[43.348,-8.412,"A Coruña"],
+    "Deportivo de La Coruña":[43.348,-8.412,"A Coruña"], "Burgos":[42.341,-3.700,"Burgos"], "Huesca":[42.137,-0.409,"Huesca"],
+    "Castellón":[39.986,-0.037,"Castellón"], "Mirandés":[42.687,-2.945,"Miranda de Ebro"], "Córdoba":[37.879,-4.779,"Córdoba"],
   };
 
   /* Pools narrativos de la cabina. Plantillas con {slots} que el motor

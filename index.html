@@ -505,6 +505,17 @@ body.trip-open { overflow: hidden; }
   .trip-steps i { display: none; }
 }
 
+/* ===================== Sección Viajes (mapa) ===================== */
+.vmap { position: relative; padding: 0; overflow: hidden; }
+.vmap svg { display: block; width: 100%; height: auto; }
+.vmap-legend { position: absolute; right: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 10px; background: rgba(11,16,21,.78); border: 1px solid var(--line); border-radius: 9px; padding: 7px 11px; font-size: 11px; color: var(--text-dim); }
+.vmap-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.vmap-legend .ni-icon { width: 12px; height: 12px; }
+.vstamps { display: flex; flex-wrap: wrap; gap: 9px; }
+.vstamp { width: 46px; height: 46px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 11px; font-weight: 800; flex: none; border: 2px dashed var(--line-strong); color: var(--text-faint); }
+.vstamp.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.vstamp .ni-icon { width: 11px; height: 11px; }
+
   </style>
 </head>
 <body data-theme="dark">
@@ -531,6 +542,7 @@ body.trip-open { overflow: hidden; }
         <div class="nav-label">Carrera</div>
         <a class="nav-item" data-route="challenges"><span class="ni-icon" data-icon="target"></span><span>Retos</span></a>
         <a class="nav-item" data-route="story"><span class="ni-icon" data-icon="news"></span><span>Narrativa</span></a>
+        <a class="nav-item" data-route="viajes"><span class="ni-icon" data-icon="plane"></span><span>Viajes</span></a>
         <a class="nav-item" data-route="history"><span class="ni-icon" data-icon="trophy"></span><span>Historia</span></a>
         <a class="nav-item" data-route="hall"><span class="ni-icon" data-icon="medal"></span><span>Salón de la fama</span></a>
         <div class="nav-label">Herramientas</div>
@@ -937,6 +949,15 @@ body.trip-open { overflow: hidden; }
     "Nantes":[47.256,-1.525,"Nantes"], "Brest":[48.403,-4.462,"Brest"], "Toulouse":[43.583,1.434,"Toulouse"],
     "Auxerre":[47.787,3.589,"Auxerre"], "Le Havre":[49.499,0.170,"Le Havre"], "Angers":[47.460,-0.530,"Angers"],
     "Lorient":[47.749,-3.370,"Lorient"], "Paris FC":[48.826,2.352,"París"], "Metz":[49.110,6.160,"Metz"],
+    // Equipos españoles frecuentes (ascensos / Segunda) para reducir el fallback
+    "Las Palmas":[28.100,-15.456,"Las Palmas"], "UD Las Palmas":[28.100,-15.456,"Las Palmas"], "Cádiz":[36.502,-6.273,"Cádiz"],
+    "Granada":[37.153,-3.596,"Granada"], "Almería":[36.840,-2.435,"Almería"], "UD Almería":[36.840,-2.435,"Almería"],
+    "Leganés":[40.340,-3.760,"Leganés"], "CD Leganés":[40.340,-3.760,"Leganés"], "Sporting Gijón":[43.536,-5.637,"Gijón"],
+    "Sporting de Gijón":[43.536,-5.637,"Gijón"], "Real Zaragoza":[41.634,-0.902,"Zaragoza"], "Tenerife":[28.469,-16.255,"Tenerife"],
+    "Eibar":[43.184,-2.474,"Eibar"], "Real Valladolid":[41.644,-4.761,"Valladolid"], "Valladolid":[41.644,-4.761,"Valladolid"],
+    "Málaga":[36.720,-4.420,"Málaga"], "Racing de Santander":[43.427,-3.829,"Santander"], "Deportivo":[43.348,-8.412,"A Coruña"],
+    "Deportivo de La Coruña":[43.348,-8.412,"A Coruña"], "Burgos":[42.341,-3.700,"Burgos"], "Huesca":[42.137,-0.409,"Huesca"],
+    "Castellón":[39.986,-0.037,"Castellón"], "Mirandés":[42.687,-2.945,"Miranda de Ebro"], "Córdoba":[37.879,-4.779,"Córdoba"],
   };
 
   /* Pools narrativos de la cabina. Plantillas con {slots} que el motor
@@ -2069,8 +2090,8 @@ body.trip-open { overflow: hidden; }
     const level = total >= 6 ? ((av - al >= 3) ? "victima" : (al - av >= 3) ? "verdugo" : "clasico") : total >= 1 ? "conocido" : "nuevo";
     const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
     const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
-    let miles = 0; const seenCity = {}; let passport = 0;
-    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { const cy = TRIPS.cityOf(x.home); miles += TRIPS.distance(origin, cy) * 2; if (!seenCity[cy.city]) { seenCity[cy.city] = 1; passport++; } } });
+    let miles = 0; const seenRiv = {}; let passport = 0;
+    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; if (!seenRiv[x.home]) { seenRiv[x.home] = 1; passport++; } } });
     const awayAll = (c.matches || []).filter(x => x.away === club && x.home).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
     const tripNo = Math.max(1, awayAll.findIndex(x => x.id === m.id) + 1);
     const hero = TRIPS.pickHero(c, m);
@@ -3086,6 +3107,91 @@ body.trip-open { overflow: hidden; }
     content().querySelectorAll("[data-del-match]").forEach(b => b.addEventListener("click", () => {
       UI.confirm("¿Eliminar este partido?", () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast("Partido eliminado"); }, true);
     }));
+  };
+
+  /* ============================================================
+     VIAJES — mapa real (proyección equirectangular inline, sin
+     dependencias) con cada ciudad en su lat/lon, rutas de la
+     temporada por resultado, métricas y pasaporte de estadios.
+     ============================================================ */
+  FC.views.viajes = function () {
+    const c = S.getActiveCareer();
+    const season = S.currentSeason(c);
+    const T = c.clubName;
+    const home = FC.trips.cityOf(T);
+    const leagueTeams = (season.teams || []).filter(t => t !== T);
+    const seasonAway = (c.matches || []).filter(m => m.seasonId === season.id && m.away === T && m.home);
+    const playedAway = seasonAway.filter(m => S.isPlayed(m)).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    const upAway = seasonAway.filter(m => !S.isPlayed(m));
+    const visited = {}; playedAway.forEach(m => { visited[m.home] = { r: S.userResult(c, m), id: m.id }; });
+    const upcoming = {}; upAway.forEach(m => { if (!upcoming[m.home]) upcoming[m.home] = m.id; });
+
+    // Métricas (temporada + vitalicio)
+    const allAway = S.userMatches(c).filter(m => m.away === T && m.home);
+    let lifeKm = 0, longest = 0, longestCity = "", awayRivals = {}, passport = 0;
+    allAway.forEach(m => { const cc = FC.trips.cityOf(m.home), dk = FC.trips.distance(home, cc); lifeKm += dk * 2; if (dk > longest) { longest = dk; longestCity = cc.city; } if (!awayRivals[m.home]) { awayRivals[m.home] = 1; passport++; } });
+    let seasonKm = 0; playedAway.forEach(m => seasonKm += FC.trips.distance(home, FC.trips.cityOf(m.home)) * 2);
+    const laps = lifeKm / 40075;
+    const estVis = leagueTeams.filter(t => visited[t]).length; // rivales de liga visitados esta temporada
+
+    // Proyección equirectangular sobre ventana Europa (lon -19..16, lat 27..56).
+    const W = 820, H = 500, px = 26, py = 22, LON0 = -19, LON1 = 16, LAT0 = 27, LAT1 = 56;
+    const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    const proj = (lat, lon) => [cl(px + (lon - LON0) / (LON1 - LON0) * (W - 2 * px), 4, W - 4), cl(py + (LAT1 - lat) / (LAT1 - LAT0) * (H - 2 * py), 4, H - 4)];
+    const acc = (getComputedStyle(document.body).getPropertyValue("--accent") || "").trim() || "#00e1a0";
+    const COL = { W: acc, D: "#ffd02e", L: "#ff5470", up: "#1f8fff", faint: "#46586e" };
+    const arc = (p1, p2) => { const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, dd = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]); return `M${p1[0].toFixed(1)},${p1[1].toFixed(1)} Q${mx.toFixed(1)},${(my - Math.max(14, dd * 0.16)).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; };
+    const hp = proj(home.lat, home.lon);
+
+    let grat = "";
+    for (let lon = -15; lon <= 15; lon += 5) { const a = proj(LAT0, lon), b = proj(LAT1, lon); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
+    for (let lat = 30; lat <= 55; lat += 5) { const a = proj(lat, LON0), b = proj(lat, LON1); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
+
+    let faint = "", arcs = "", dots = "", labels = "";
+    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t), p = proj(cc.lat, cc.lon); faint += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${COL.faint}"/>`; });
+    Object.keys(visited).forEach(riv => { const cc = FC.trips.cityOf(riv), p = proj(cc.lat, cc.lon), col = COL[visited[riv].r] || COL.faint;
+      arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${col}" stroke-width="1.8" stroke-opacity=".55" stroke-linecap="round"/>`;
+      dots += `<g data-match="${visited[riv].id}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="6" fill="${col}" fill-opacity=".18"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="${col}"/></g>`;
+      labels += `<text x="${(p[0] + 6).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="#cdd9e6" font-size="10.5">${U.esc(cc.city)}</text>`; });
+    Object.keys(upcoming).forEach(riv => { const cc = FC.trips.cityOf(riv), p = proj(cc.lat, cc.lon);
+      arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${COL.up}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>`;
+      dots += `<g data-trip="${upcoming[riv]}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="7" fill="${COL.up}" fill-opacity=".2"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${COL.up}"/></g>`;
+      labels += `<text x="${(p[0] + 7).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="${COL.up}" font-size="10.5">${U.esc(cc.city)}</text>`; });
+    const homeNode = `<circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="9" fill="${acc}" fill-opacity=".16"/><circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text x="${(hp[0] + 9).toFixed(1)}" y="${(hp[1] + 4).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(home.city)}</text>`;
+
+    const codeOf = (s) => (s || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "···";
+    const stamps = leagueTeams.map(t => { const cc = FC.trips.cityOf(t), on = visited[t]; return `<div class="vstamp${on ? " on" : ""}" title="${U.esc(t)}">${on ? '<span class="ni-icon" data-icon="check"></span>' : ""}${codeOf(cc.city)}</div>`; }).join("");
+
+    const dot = (col) => `<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${col}"></i>`;
+    function tile(label, val, sub) { return `<div class="card stat-tile"><div class="st-glow"></div><div class="st-label">${label}</div><div class="st-value">${val}</div><div class="st-sub">${U.esc(sub)}</div></div>`; }
+
+    UI.mount(`
+      <div class="page-head"><div><h1>Viajes</h1><div class="sub">${U.esc(season.label)} · ${estVis}/${leagueTeams.length} estadios esta temporada${laps >= 1 ? " · " + laps.toFixed(1).replace(".", ",") + " vueltas al mundo" : ""}</div></div>
+        <div class="flex gap center wrap">${seasonSelect(c)}</div>
+      </div>
+      <div class="grid cols-4 keep-2" style="margin-bottom:16px">
+        ${tile("Km esta temporada", seasonKm.toLocaleString("es-ES"), playedAway.length + " desplazamiento" + (playedAway.length === 1 ? "" : "s"))}
+        ${tile("Vueltas al mundo", laps.toFixed(2).replace(".", ","), Math.round(lifeKm).toLocaleString("es-ES") + " km en tu carrera")}
+        ${tile("Estadios", passport, "visitados en tu carrera")}
+        ${tile("Viaje más largo", Math.round(longest).toLocaleString("es-ES") + " km", longestCity || "—")}
+      </div>
+      <div class="card vmap">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Mapa de Europa con las ciudades de tus rivales en su posición geográfica real y tus rutas de la temporada coloreadas por resultado.">
+          <rect x="0" y="0" width="${W}" height="${H}" fill="#0b141f"/>
+          <g stroke="#1b2738" stroke-width="1">${grat}</g>
+          ${faint}${arcs}${dots}${labels}${homeNode}
+        </svg>
+        <div class="vmap-legend">
+          <span>${dot(acc)} Tu club</span><span>${dot(COL.W)} Victoria</span><span>${dot(COL.D)} Empate</span><span>${dot(COL.L)} Derrota</span><span>${dot(COL.up)} Próximo</span><span>${dot(COL.faint)} Sin visitar</span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="pin"></span> Pasaporte de estadios <span class="faint" style="font-weight:400">· ${estVis}/${leagueTeams.length} esta temporada</span></div>
+        <div class="vstamps">${stamps || '<span class="faint">Esta temporada no tiene rivales registrados.</span>'}</div>
+      </div>
+    `);
+    content().querySelectorAll(".vmap [data-trip]").forEach(g => g.addEventListener("click", () => UI.openTrip(c, findMatch(c, g.dataset.trip))));
+    content().querySelectorAll(".vmap [data-match]").forEach(g => g.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, g.dataset.match))));
   };
 
   /* ============================================================
@@ -4907,8 +5013,8 @@ body.trip-open { overflow: hidden; }
 (function () {
   const { util: U, store: S, router: R, views: V, ui: UI } = FC;
   const App = {};
-  const ROUTES = ["dashboard","matches","standings","squad","development","youth","finance","challenges","story","history","hall","scouting","tools","cloud","settings","live"];
-  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes", live:"Modo en vivo" };
+  const ROUTES = ["dashboard","matches","standings","squad","development","youth","finance","challenges","story","viajes","history","hall","scouting","tools","cloud","settings","live"];
+  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", viajes:"Viajes", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes", live:"Modo en vivo" };
 
   // register routes (guard: require active career)
   ROUTES.forEach(name => R.register(name, () => {
