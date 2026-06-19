@@ -789,13 +789,50 @@
   /* ============================================================
      PLANTILLA
      ============================================================ */
+  // Estado de filtros de la Plantilla (módulo: persiste entre re-renders por S.emit).
+  let squadView = { q: "", group: "", sort: "pos" };
+  const SQUAD_GROUPS = ["Portería", "Defensa", "Medio", "Banda", "Ataque"];
+  const SQUAD_SORTS = [["pos","Posición"],["ovr","OVR"],["pot","Potencial"],["age-asc","Edad ↑"],["age-desc","Edad ↓"],["goals","Goles"],["assists","Asistencias"],["motm","MOTM"]];
   FC.views.squad = function () {
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const agg = S.playerAggregates(c, season.id);
-    const players = (c.players || []).slice().sort((a,b) => (D.POS_ORDER[a.position]||99) - (D.POS_ORDER[b.position]||99) || (b.ovr||0) - (a.ovr||0));
+    const players = (c.players || []).slice();
     const injuries = S.activeInjuries(c);
     const injuredNames = new Set(injuries.map(i => (i.player||"").trim().toLowerCase()));
+    const aggOf = (p) => agg[(p.name||"").trim().toLowerCase()] || {};
+    const posIdx = (p) => { const o = D.POS_ORDER[p.position]; return o == null ? 99 : o; }; // GK=0: usar ?? no ||
+    const posCmp = (a,b) => posIdx(a) - posIdx(b) || (b.ovr||0) - (a.ovr||0);
+    function sortCmp(a, b) {
+      const aa = aggOf(a), ab = aggOf(b);
+      switch (squadView.sort) {
+        case "ovr": return (b.ovr||0)-(a.ovr||0) || posCmp(a,b);
+        case "pot": return (b.potential||0)-(a.potential||0) || posCmp(a,b);
+        case "age-asc": return (a.age||999)-(b.age||999) || posCmp(a,b);
+        case "age-desc": return (b.age||0)-(a.age||0) || posCmp(a,b);
+        case "goals": return (ab.goals||0)-(aa.goals||0) || posCmp(a,b);
+        case "assists": return (ab.assists||0)-(aa.assists||0) || posCmp(a,b);
+        case "motm": return (ab.motm||0)-(aa.motm||0) || posCmp(a,b);
+        default: return posCmp(a,b);
+      }
+    }
+    function matches(p) {
+      const q = squadView.q.trim().toLowerCase();
+      if (q && !((p.name||"").toLowerCase().includes(q) || (p.nationality||"").toLowerCase().includes(q))) return false;
+      if (squadView.group && (D.POS_GROUP[p.position] || "") !== squadView.group) return false;
+      return true;
+    }
+    function rowHtml(p) {
+      const a = aggOf(p); const injured = injuredNames.has((p.name||"").trim().toLowerCase());
+      return `<tr data-player="${p.id}" style="cursor:pointer${injured ? ";background:color-mix(in srgb,var(--danger) 8%,transparent)" : ""}">
+        <td><div class="flex gap center"><div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
+          <div><b>${U.esc(p.name)}</b>${injured ? ' <span class="chip" style="background:var(--danger);color:#fff;padding:1px 6px;font-size:10px">lesión</span>' : ""}${p.fromYouth?' <span class="chip accent" style="padding:1px 6px;font-size:10px">cantera</span>':""}<br><small class="faint">${U.esc(p.nationality||"")}</small></div></div></td>
+        <td><span class="chip">${U.esc(p.position||"—")}</span></td>
+        <td class="num"><span class="ovr ${U.ovrClass(p.ovr)}">${p.ovr||"—"}</span></td>
+        <td class="num faint">${p.potential||"—"}</td><td class="num">${p.age||"—"}</td>
+        <td class="num">${a.goals||0}</td><td class="num">${a.assists||0}</td><td class="num">${a.motm||0}</td>
+        <td><button class="icon-btn sm" data-del-player="${p.id}"><span class="ni-icon" data-icon="trash"></span></button></td></tr>`;
+    }
     UI.mount(`
       <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
         <div class="flex gap center wrap">
@@ -812,28 +849,46 @@
         </div>`).join("")}</div>
       </div>` : ""}
       <div class="card tight">
-        ${players.length ? `<div class="table-wrap"><table class="tbl"><thead><tr>
+        ${players.length ? `<div class="squad-toolbar">
+          <input type="search" id="sq-search" placeholder="Buscar jugador o país..." value="${U.esc(squadView.q)}"/>
+          <select id="sq-group"><option value="">Todas las zonas</option>${SQUAD_GROUPS.map(g=>`<option value="${g}" ${squadView.group===g?"selected":""}>${g}</option>`).join("")}</select>
+          <select id="sq-sort">${SQUAD_SORTS.map(([v,l])=>`<option value="${v}" ${squadView.sort===v?"selected":""}>Orden: ${l}</option>`).join("")}</select>
+          <span class="faint" id="sq-count" style="margin-left:auto"></span>
+        </div>
+        <div class="table-wrap"><table class="tbl"><thead><tr>
           <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th></th>
-        </tr></thead><tbody>
-        ${players.map(p => { const a = agg[(p.name||"").trim().toLowerCase()] || {}; const injured = injuredNames.has((p.name||"").trim().toLowerCase()); return `<tr data-player="${p.id}" style="cursor:pointer${injured ? ";background:color-mix(in srgb,var(--danger) 8%,transparent)" : ""}">
-          <td><div class="flex gap center"><div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
-            <div><b>${U.esc(p.name)}</b>${injured ? ' <span class="chip" style="background:var(--danger);color:#fff;padding:1px 6px;font-size:10px">lesión</span>' : ""}${p.fromYouth?' <span class="chip accent" style="padding:1px 6px;font-size:10px">cantera</span>':""}<br><small class="faint">${U.esc(p.nationality||"")}</small></div></div></td>
-          <td><span class="chip">${U.esc(p.position||"—")}</span></td>
-          <td class="num"><span class="ovr ${U.ovrClass(p.ovr)}">${p.ovr||"—"}</span></td>
-          <td class="num faint">${p.potential||"—"}</td><td class="num">${p.age||"—"}</td>
-          <td class="num">${a.goals||0}</td><td class="num">${a.assists||0}</td><td class="num">${a.motm||0}</td>
-          <td><button class="icon-btn sm" data-del-player="${p.id}"><span class="ni-icon" data-icon="trash"></span></button></td></tr>`; }).join("")}
-        </tbody></table></div>` : `<div class="empty"><div class="emoji">👕</div><h3>Plantilla vacía</h3><p>Añade tus jugadores para seguir sus estadísticas y planificar.</p></div>`}
+        </tr></thead><tbody id="sq-body"></tbody></table></div>` : `<div class="empty"><div class="emoji">👕</div><h3>Plantilla vacía</h3><p>Añade tus jugadores para seguir sus estadísticas y planificar.</p></div>`}
       </div>
     `);
+    function wireRows() {
+      const body = document.getElementById("sq-body");
+      if (!body) return;
+      body.querySelectorAll("[data-player]").forEach(r => r.addEventListener("click", (e) => {
+        if (e.target.closest("[data-del-player]")) return;
+        playerModal(c, c.players.find(p => p.id === r.dataset.player));
+      }));
+      body.querySelectorAll("[data-del-player]").forEach(b => b.addEventListener("click", () =>
+        UI.confirm("¿Eliminar a este jugador?", () => { S.deletePlayer(c, b.dataset.delPlayer); UI.toast("Jugador eliminado"); }, true)));
+    }
+    function applyFilters() {
+      const body = document.getElementById("sq-body");
+      if (!body) return;
+      const list = players.filter(matches).sort(sortCmp);
+      body.innerHTML = list.length ? list.map(rowHtml).join("") : `<tr><td colspan="9"><div class="empty" style="padding:30px"><div class="emoji">🔍</div><p>Ningún jugador coincide con el filtro.</p></div></td></tr>`;
+      U.hydrateIcons(body);
+      wireRows();
+      const cnt = document.getElementById("sq-count");
+      if (cnt) cnt.textContent = (list.length === players.length) ? "" : `${list.length} de ${players.length}`;
+    }
     document.getElementById("sq-add").addEventListener("click", () => playerModal(c));
     document.getElementById("sq-injury").addEventListener("click", () => injuryModal(c));
-    content().querySelectorAll("[data-player]").forEach(r => r.addEventListener("click", (e) => {
-      if (e.target.closest("[data-del-player]")) return;
-      playerModal(c, c.players.find(p => p.id === r.dataset.player));
-    }));
-    content().querySelectorAll("[data-del-player]").forEach(b => b.addEventListener("click", () =>
-      UI.confirm("¿Eliminar a este jugador?", () => { S.deletePlayer(c, b.dataset.delPlayer); UI.toast("Jugador eliminado"); }, true)));
+    const search = document.getElementById("sq-search");
+    if (search) {
+      search.addEventListener("input", () => { squadView.q = search.value; applyFilters(); });
+      document.getElementById("sq-group").addEventListener("change", (e) => { squadView.group = e.target.value; applyFilters(); });
+      document.getElementById("sq-sort").addEventListener("change", (e) => { squadView.sort = e.target.value; applyFilters(); });
+      applyFilters();
+    }
     content().querySelectorAll("[data-recover]").forEach(b => b.addEventListener("click", () => { S.recoverInjury(c, b.dataset.recover); UI.toast("Jugador recuperado"); }));
     content().querySelectorAll("[data-del-injury]").forEach(b => b.addEventListener("click", () => { S.deleteInjury(c, b.dataset.delInjury); UI.toast("Lesión eliminada"); }));
   };

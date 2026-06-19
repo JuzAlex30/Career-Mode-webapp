@@ -227,6 +227,10 @@ button { font-family: inherit; }
 .ovr.low { background: linear-gradient(135deg,#d7b08a,#c69a6f); }
 
 /* ===================== Tables ===================== */
+.squad-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.squad-toolbar input[type="search"] { flex: 1; min-width: 160px; }
+.squad-toolbar select { width: auto; }
+.squad-toolbar #sq-count { font-size: 12px; }
 .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); }
 table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 480px; }
 table.tbl th, table.tbl td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
