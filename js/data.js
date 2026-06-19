@@ -258,6 +258,23 @@
       check:(c)=> FC.store.anyPlayerCareer(c, p => p.apps >= 100) },
     { id:"legend-maker", name:"Hacedor de leyendas", emoji:"📈", tier:"gold", desc:"Un canterano llega a 85+ de media.",
       check:(c)=> (c.players||[]).some(p => p.fromYouth && Number(p.ovr) >= 85) },
+    // Logros de viajero (sección Viajes). Distancias por FC.trips (Haversine); equipos
+    // sin coordenadas usan el fallback determinista, así que son logros de inmersión.
+    { id:"trip-long-haul", name:"Sin escalas", emoji:"🛫", tier:"bronze", desc:"Juega un desplazamiento de 1.000+ km.",
+      check:(c)=> { const home = FC.trips.cityOf(c.clubName);
+        return FC.store.userMatches(c).some(m => m.away === c.clubName && m.home && FC.trips.distance(home, FC.trips.cityOf(m.home)) >= 1000); } },
+    { id:"trip-marathon", name:"Maratoniano", emoji:"🧳", tier:"silver", desc:"Recorre 10.000+ km de viajes en una sola temporada.",
+      check:(c)=> { const home = FC.trips.cityOf(c.clubName); const km = {};
+        FC.store.userMatches(c).forEach(m => { if (m.away === c.clubName && m.home) km[m.seasonId] = (km[m.seasonId]||0) + FC.trips.distance(home, FC.trips.cityOf(m.home))*2; });
+        return Object.values(km).some(v => v >= 10000); } },
+    { id:"trip-globetrotter", name:"Trotamundos", emoji:"🌍", tier:"gold", desc:"Visita el estadio de todos los rivales de tu liga en una temporada.",
+      check:(c)=> (c.seasons||[]).some(s => { const rivals = (s.teams||[]).filter(t => t !== c.clubName); if (!rivals.length) return false;
+        const visited = new Set(); FC.store.userMatches(c, s.id).forEach(m => { if (m.away === c.clubName && m.home) visited.add(m.home); });
+        return rivals.every(t => visited.has(t)); }) },
+    { id:"trip-world-lap", name:"La vuelta al mundo", emoji:"🌐", tier:"legend", desc:"Acumula 40.075 km de viajes en tu carrera (una vuelta al mundo).",
+      check:(c)=> { const home = FC.trips.cityOf(c.clubName); let km = 0;
+        FC.store.userMatches(c).forEach(m => { if (m.away === c.clubName && m.home) km += FC.trips.distance(home, FC.trips.cityOf(m.home))*2; });
+        return km >= 40075; } },
   ];
 
   D.TIER_LABEL = { bronze:"Bronce", silver:"Plata", gold:"Oro", legend:"Leyenda" };
