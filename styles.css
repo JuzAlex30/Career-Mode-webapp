@@ -287,6 +287,13 @@ textarea { resize: vertical; min-height: 80px; }
 .list-row .lr-main b { font-size: 14px; display:block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-row .lr-main small { color: var(--text-dim); font-size: 12px; }
 .avatar { width: 34px; height: 34px; border-radius: 9px; flex:none; display:grid; place-items:center; font-weight:700; font-size:13px; color:#fff; background: var(--panel-2); }
+.avatar.lg { width: 58px; height: 58px; border-radius: 14px; font-size: 22px; }
+/* Ficha de jugador */
+.pc-head { display: flex; align-items: center; gap: 14px; }
+.pc-id { min-width: 0; }
+.pc-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 19px; }
+.pc-name .chip { font-size: 11px; }
+.pc-contrib { display: flex; gap: 10px; align-items: center; flex: none; font-variant-numeric: tabular-nums; font-size: 13px; }
 
 .fixture { display:flex; align-items:center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .fixture:last-child { border-bottom: none; }

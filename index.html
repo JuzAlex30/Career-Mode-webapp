@@ -295,6 +295,13 @@ textarea { resize: vertical; min-height: 80px; }
 .list-row .lr-main b { font-size: 14px; display:block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-row .lr-main small { color: var(--text-dim); font-size: 12px; }
 .avatar { width: 34px; height: 34px; border-radius: 9px; flex:none; display:grid; place-items:center; font-weight:700; font-size:13px; color:#fff; background: var(--panel-2); }
+.avatar.lg { width: 58px; height: 58px; border-radius: 14px; font-size: 22px; }
+/* Ficha de jugador */
+.pc-head { display: flex; align-items: center; gap: 14px; }
+.pc-id { min-width: 0; }
+.pc-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 19px; }
+.pc-name .chip { font-size: 11px; }
+.pc-contrib { display: flex; gap: 10px; align-items: center; flex: none; font-variant-numeric: tabular-nums; font-size: 13px; }
 
 .fixture { display:flex; align-items:center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .fixture:last-child { border-bottom: none; }
@@ -2812,7 +2819,7 @@ body.live-active { overflow: hidden; }
       if (!body) return;
       body.querySelectorAll("[data-player]").forEach(r => r.addEventListener("click", (e) => {
         if (e.target.closest("[data-del-player]")) return;
-        playerModal(c, c.players.find(p => p.id === r.dataset.player));
+        UI.openPlayerCard(c, c.players.find(p => p.id === r.dataset.player));
       }));
       body.querySelectorAll("[data-del-player]").forEach(b => b.addEventListener("click", () =>
         UI.confirm("¿Eliminar a este jugador?", () => { S.deletePlayer(c, b.dataset.delPlayer); UI.toast("Jugador eliminado"); }, true)));
@@ -2838,6 +2845,88 @@ body.live-active { overflow: hidden; }
     }
     content().querySelectorAll("[data-recover]").forEach(b => b.addEventListener("click", () => { S.recoverInjury(c, b.dataset.recover); UI.toast("Jugador recuperado"); }));
     content().querySelectorAll("[data-del-injury]").forEach(b => b.addEventListener("click", () => { S.deleteInjury(c, b.dataset.delInjury); UI.toast("Lesión eliminada"); }));
+  };
+  // Ficha completa de un jugador: atributos, contribución (temporada y carrera),
+  // progresión de OVR e historial de lesiones. Botón "Editar" → playerModal.
+  UI.openPlayerCard = function (c, p) {
+    if (!p) return;
+    const season = S.currentSeason(c);
+    const norm = (s) => String(s == null ? "" : s).trim().toLowerCase();
+    const nameKey = norm(p.name);
+    // Clave canónica espejo de keyOf en playerAggregates: nombre, o "id:" como
+    // fallback si no hay nombre. Así la ficha casa con los agregados.
+    const key = nameKey || ("id:" + p.id);
+    const sAgg = (S.playerAggregates(c, season.id))[key] || { goals:0, assists:0, motm:0, apps:0 };
+    const cAgg = (S.playerAggregates(c, null))[key] || { goals:0, assists:0, motm:0, apps:0 };
+    // Coincidencia de eventos: por nombre normalizado o por playerId (cubre el
+    // caso de un jugador renombrado tras registrar partidos).
+    const isMe = (name, id) => (nameKey && norm(name) === nameKey) || (id != null && id === p.id);
+    const series = S.playerSeries(c, p);
+    const ovrs = series.map(s => s.ovr);
+    const cur = ovrs.length ? ovrs[ovrs.length - 1] : (Number(p.ovr) || null);
+    const peak = ovrs.length ? Math.max(...ovrs) : cur;
+    const first = ovrs.length ? ovrs[0] : cur;
+    const improve = (cur != null && first != null) ? cur - first : 0;
+    const injuriesAll = (c.injuries || []).filter(i => nameKey && norm(i.player) === nameKey);
+    const activeInj = injuriesAll.filter(i => i.active !== false);
+    const contribs = [];
+    S.userMatches(c).forEach(m => {
+      const g = (m.events || []).filter(e => e.type === "goal" && isMe(e.player, e.playerId)).length;
+      const a = (m.events || []).filter(e => e.type === "assist" && isMe(e.player, e.playerId)).length;
+      const motm = isMe(m.motm, m.motmId);
+      if (g || a || motm) contribs.push({ m, g, a, motm });
+    });
+    contribs.sort((x, y) => new Date(y.m.date || 0) - new Date(x.m.date || 0));
+    const body = `
+      <div class="pc-head">
+        <div class="avatar lg" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
+        <div class="pc-id">
+          <div class="pc-name"><b>${U.esc(p.name)}</b>
+            <span class="chip">${U.esc(p.position||"—")}</span>
+            ${p.fromYouth ? '<span class="chip accent">cantera</span>' : ""}
+            ${activeInj.length ? '<span class="chip" style="background:var(--danger);color:#fff">lesión</span>' : ""}
+          </div>
+          <div class="faint">${U.esc(p.nationality||"—")}${p.age ? " · " + p.age + " años" : ""}${p.squadRole ? " · " + U.esc(p.squadRole) : ""}</div>
+        </div>
+      </div>
+      <div class="grid cols-4 keep-2" style="margin:14px 0">
+        ${statTile("OVR", `<span class="ovr ${U.ovrClass(cur)}">${cur||"—"}</span>`, (peak && peak !== cur) ? ("pico " + peak) : "")}
+        ${statTile("Potencial", p.potential||"—", improve ? ((improve > 0 ? "+" : "") + improve + " desde inicio") : "")}
+        ${statTile("Valor", p.value ? U.money(p.value) : "—", "")}
+        ${statTile("Contrato", p.contractEnd ? ("hasta " + U.esc(p.contractEnd)) : "—", "")}
+      </div>
+      <div class="section-title">Contribución <span class="faint" style="font-weight:400">· ${U.esc(season.label)} · (carrera)</span></div>
+      <div class="grid cols-4 keep-2">
+        ${statTile("Goles", sAgg.goals||0, (cAgg.goals||0) + " en carrera")}
+        ${statTile("Asistencias", sAgg.assists||0, (cAgg.assists||0) + " en carrera")}
+        ${statTile("MOTM", sAgg.motm||0, (cAgg.motm||0) + " en carrera")}
+        ${statTile("Partidos", sAgg.apps||0, (cAgg.apps||0) + " en carrera")}
+      </div>
+      ${ovrs.length >= 2 ? `<div class="section-title">Progresión de OVR</div>${CH.line(ovrs, { h: 110, color: improve >= 0 ? "var(--accent)" : "var(--danger)" })}
+        <div class="table-wrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>Temporada</th><th class="num">OVR</th><th class="num">Edad</th></tr></thead><tbody>
+        ${series.slice().reverse().map(s => `<tr><td>${U.esc(s.label)}${s.current ? ' <span class="chip accent" style="padding:1px 6px;font-size:10px">actual</span>' : ""}</td><td class="num"><span class="ovr ${U.ovrClass(s.ovr)}">${s.ovr}</span></td><td class="num faint">${s.age||"—"}</td></tr>`).join("")}
+        </tbody></table></div>` : ""}
+      ${contribs.length ? `<div class="section-title">Últimas actuaciones</div>
+        <div class="list">${contribs.slice(0, 8).map(({ m, g, a, motm }) => {
+          const opp = m.home === c.clubName ? m.away : m.home;
+          const gg = S.userGoals(c, m); const r = S.userResult(c, m);
+          const rc = r === "W" ? "win" : r === "L" ? "loss" : "";
+          return `<div class="list-row">
+            <span class="fx-score ${rc}" style="min-width:46px">${gg ? gg.for + "-" + gg.against : ""}</span>
+            <div class="lr-main"><b>${U.esc(opp||"—")}</b><small class="faint">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.date ? " · " + U.fmtDate(m.date) : ""}</small></div>
+            <span class="pc-contrib">${g ? `<span>⚽ ${g}</span>` : ""}${a ? `<span>🅰️ ${a}</span>` : ""}${motm ? `<span>⭐</span>` : ""}</span>
+          </div>`;
+        }).join("")}</div>` : ""}
+      ${injuriesAll.length ? `<div class="section-title">Historial de lesiones</div>
+        <div class="list">${injuriesAll.slice().reverse().map(i => `<div class="list-row">
+          <span class="ni-icon" data-icon="bandage" style="color:var(--danger)"></span>
+          <div class="lr-main"><b>${U.esc(i.type||"Lesión")}</b><small class="faint">${i.matchesOut ? i.matchesOut + " partido" + (i.matchesOut > 1 ? "s" : "") : "sin estimación"}${i.active === false ? " · recuperado" : " · activa"}</small></div>
+        </div>`).join("")}</div>` : ""}
+    `;
+    UI.openModal(p.name, body,
+      `<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="pc-edit"><span class="ni-icon" data-icon="edit"></span> Editar</button>`, { lg: true });
+    const editBtn = document.getElementById("pc-edit");
+    if (editBtn) editBtn.addEventListener("click", () => { UI.closeModal(); playerModal(c, p); });
   };
   function playerModal(c, ex) {
     ex = ex || {};
@@ -2979,35 +3068,8 @@ body.live-active { overflow: hidden; }
         </tbody></table></div>` : `<div class="empty"><div class="emoji">📈</div><h3>Sin jugadores</h3><p>Añade jugadores en Plantilla para seguir su progresión.</p></div>`}
       </div>
     `);
-    content().querySelectorAll("[data-dev]").forEach(r => r.addEventListener("click", () => developmentModal(c, (c.players||[]).find(p => p.id === r.dataset.dev))));
+    content().querySelectorAll("[data-dev]").forEach(r => r.addEventListener("click", () => UI.openPlayerCard(c, (c.players||[]).find(p => p.id === r.dataset.dev))));
   };
-
-  function developmentModal(c, p) {
-    if (!p) return;
-    const series = S.playerSeries(c, p);
-    const ovrs = series.map(s => s.ovr);
-    const cur = ovrs.length ? ovrs[ovrs.length - 1] : (Number(p.ovr) || 0);
-    const peak = ovrs.length ? Math.max(...ovrs) : cur;
-    const first = ovrs.length ? ovrs[0] : cur;
-    const improve = cur - first;
-    const body = `
-      <div class="flex gap center mb"><div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
-        <div><b style="font-size:16px">${U.esc(p.name)}</b><br><small class="faint">${U.esc(p.position||"")} · ${U.esc(p.age||"—")} años${p.fromYouth?" · cantera":""}</small></div></div>
-      <div class="grid cols-4 keep-2" style="margin-bottom:16px">
-        ${statTile("OVR actual", cur||"—", "")}
-        ${statTile("Pico", peak||"—", "")}
-        ${statTile("Potencial", p.potential||"—", "")}
-        ${statTile("Mejora", (improve>=0?"+":"")+improve, "desde el inicio")}
-      </div>
-      ${ovrs.length >= 2
-        ? CH.line(ovrs, { h: 120, color: improve >= 0 ? "var(--accent)" : "var(--danger)" })
-        : `<p class="faint">Aún no hay suficiente histórico. Avanza de temporada para registrar su progresión.</p>`}
-      ${series.length ? `<div class="table-wrap" style="margin-top:14px"><table class="tbl"><thead><tr><th>Temporada</th><th class="num">OVR</th><th class="num">Edad</th></tr></thead><tbody>
-        ${series.slice().reverse().map(s => `<tr><td>${U.esc(s.label)}${s.current?' <span class="chip accent" style="padding:1px 6px;font-size:10px">actual</span>':""}</td><td class="num"><span class="ovr ${U.ovrClass(s.ovr)}">${s.ovr}</span></td><td class="num faint">${s.age||"—"}</td></tr>`).join("")}
-      </tbody></table></div>` : ""}
-    `;
-    UI.openModal("Progresión · " + p.name, body, `<button class="btn btn-ghost" data-close>Cerrar</button>`, { lg: true });
-  }
 
   /* ============================================================
      ACADEMIA JUVENIL
