@@ -61,7 +61,7 @@
   }
 
   App.onAchievements = (newly) => {
-    newly.forEach((a, i) => setTimeout(() => UI.toast(`🏅 ¡Logro desbloqueado: ${a.name}!`, "ok"), i * 400));
+    newly.forEach((a, i) => setTimeout(() => UI.achievementToast(a), i * 300));
   };
 
   function applyTheme(t) {

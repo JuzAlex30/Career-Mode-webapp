@@ -358,6 +358,21 @@ textarea { resize: vertical; min-height: 80px; }
 .toast .ni-icon { color: var(--accent); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity:1; transform: none; } }
 
+/* ===================== Achievement notifications ===================== */
+.ach-toast-wrap { position: fixed; right: 18px; bottom: 80px; z-index: 250; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.ach-toast { display: flex; align-items: flex-start; gap: 14px; padding: 14px 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--ach-color, var(--accent)); box-shadow: 0 4px 24px rgba(0,0,0,.35), 0 0 0 1px var(--ach-color, var(--accent)); font-size: 13px; animation: achIn .35s cubic-bezier(.175,.885,.32,1.275); max-width: 300px; min-width: 220px; pointer-events: all; cursor: pointer; position: relative; overflow: hidden; transition: opacity .25s, transform .25s; }
+.ach-toast.legend-tier { animation: achIn .35s cubic-bezier(.175,.885,.32,1.275), legendGlow 2s ease-in-out infinite alternate; }
+.ach-emoji { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+.ach-body { flex: 1; min-width: 0; }
+.ach-tier-chip { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px; background: color-mix(in srgb, var(--ach-color, var(--accent)) 20%, transparent); color: var(--ach-color, var(--accent)); }
+.ach-header { font-size: 10px; color: var(--text-dim); margin-bottom: 2px; font-weight: 600; letter-spacing: .03em; }
+.ach-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.ach-desc { font-size: 11px; color: var(--text-dim); margin-top: 3px; line-height: 1.4; }
+.ach-bar { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--ach-color, var(--accent)); animation: achBar 4.8s linear forwards; width: 100%; }
+@keyframes achIn { from { opacity: 0; transform: translateX(50px) scale(.92); } to { opacity: 1; transform: none; } }
+@keyframes achBar { from { width: 100%; } to { width: 0%; } }
+@keyframes legendGlow { from { box-shadow: 0 4px 24px rgba(168,85,247,.35), 0 0 0 1px #a855f7; } to { box-shadow: 0 4px 44px rgba(168,85,247,.6), 0 0 0 2px #a855f7; } }
+
 /* ===================== Achievements / challenges ===================== */
 .ach-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 12px; }
 .ach { text-align:center; padding: 16px 12px; border-radius: var(--radius); border:1px solid var(--line); background: var(--panel-2); position: relative; }
@@ -5181,6 +5196,21 @@ body.trip-open { overflow: hidden; }
     stack.appendChild(t);
     setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateY(8px)"; setTimeout(() => t.remove(), 250); }, 2600);
   };
+  UI.achievementToast = function(a) {
+    const TIER_COLOR = { bronze: "#cd7f32", silver: "#a0aec0", gold: "#ffd02e", legend: "#a855f7" };
+    const color = TIER_COLOR[a.tier] || "var(--accent)";
+    const tierLabel = (FC.data && FC.data.TIER_LABEL || {})[a.tier] || (a.tier || "");
+    let wrap = document.getElementById("achToastWrap");
+    if (!wrap) { wrap = document.createElement("div"); wrap.id = "achToastWrap"; wrap.className = "ach-toast-wrap"; document.body.appendChild(wrap); }
+    const t = document.createElement("div");
+    t.className = "ach-toast" + (a.tier === "legend" ? " legend-tier" : "");
+    t.style.setProperty("--ach-color", color);
+    t.innerHTML = `<span class="ach-emoji">${a.emoji || "🏅"}</span><div class="ach-body"><div class="ach-tier-chip">${U.esc(tierLabel)}</div><div class="ach-header">¡Logro desbloqueado!</div><div class="ach-name">${U.esc(a.name)}</div><div class="ach-desc">${U.esc(a.desc || "")}</div></div><div class="ach-bar"></div>`;
+    wrap.appendChild(t);
+    const dismiss = () => { t.style.opacity = "0"; t.style.transform = "translateX(50px)"; setTimeout(() => t.remove(), 260); };
+    t.addEventListener("click", dismiss);
+    setTimeout(dismiss, 4800);
+  };
   UI.closeModal = () => {
     const ov = document.getElementById("modalOverlay");
     ov.hidden = true; document.getElementById("modal").innerHTML = "";
@@ -8356,7 +8386,7 @@ body.trip-open { overflow: hidden; }
   }
 
   App.onAchievements = (newly) => {
-    newly.forEach((a, i) => setTimeout(() => UI.toast(`🏅 ¡Logro desbloqueado: ${a.name}!`, "ok"), i * 400));
+    newly.forEach((a, i) => setTimeout(() => UI.achievementToast(a), i * 300));
   };
 
   function applyTheme(t) {

@@ -23,6 +23,21 @@
     stack.appendChild(t);
     setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateY(8px)"; setTimeout(() => t.remove(), 250); }, 2600);
   };
+  UI.achievementToast = function(a) {
+    const TIER_COLOR = { bronze: "#cd7f32", silver: "#a0aec0", gold: "#ffd02e", legend: "#a855f7" };
+    const color = TIER_COLOR[a.tier] || "var(--accent)";
+    const tierLabel = (FC.data && FC.data.TIER_LABEL || {})[a.tier] || (a.tier || "");
+    let wrap = document.getElementById("achToastWrap");
+    if (!wrap) { wrap = document.createElement("div"); wrap.id = "achToastWrap"; wrap.className = "ach-toast-wrap"; document.body.appendChild(wrap); }
+    const t = document.createElement("div");
+    t.className = "ach-toast" + (a.tier === "legend" ? " legend-tier" : "");
+    t.style.setProperty("--ach-color", color);
+    t.innerHTML = `<span class="ach-emoji">${a.emoji || "🏅"}</span><div class="ach-body"><div class="ach-tier-chip">${U.esc(tierLabel)}</div><div class="ach-header">¡Logro desbloqueado!</div><div class="ach-name">${U.esc(a.name)}</div><div class="ach-desc">${U.esc(a.desc || "")}</div></div><div class="ach-bar"></div>`;
+    wrap.appendChild(t);
+    const dismiss = () => { t.style.opacity = "0"; t.style.transform = "translateX(50px)"; setTimeout(() => t.remove(), 260); };
+    t.addEventListener("click", dismiss);
+    setTimeout(dismiss, 4800);
+  };
   UI.closeModal = () => {
     const ov = document.getElementById("modalOverlay");
     ov.hidden = true; document.getElementById("modal").innerHTML = "";
