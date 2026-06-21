@@ -464,6 +464,126 @@
     return { count: players.length, avg, xiAvg, hist, phases, byGroup, insights, proj2 };
   };
 
+  /* ---------- JERARQUÍA DEL VESTUARIO (líderes/núcleo/periferia) ----------
+     Influencia derivada (estilo FM): ovr + rol + apps(antigüedad proxy) +
+     veteranía + nota media + arraigo de cantera. Todo normalizado a la plantilla. */
+  S.squadHierarchy = (c) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    if (players.length < 2) return null;
+    const agg = S.playerAggregates(c, null);
+    const aggOf = (p) => agg[(p.name || "").trim().toLowerCase()] || {};
+    const maxApps = Math.max(1, ...players.map(p => Number(aggOf(p).apps) || 0));
+    const maxOvr = Math.max(1, ...players.map(p => Number(p.ovr) || 0));
+    const roleW = { "Estrella": 1, "Titular": 0.7, "Rotación": 0.4, "Promesa": 0.2 };
+    const ageRamp = (a) => { a = Number(a); if (!a) return 0; if (a < 21) return 0.1; if (a < 25) return 0.4; if (a < 30) return 0.8; if (a < 34) return 1; return 0.9; };
+    const scored = players.map(p => {
+      const a = aggOf(p);
+      const apps = Number(a.apps) || 0;
+      const ovrN = (Number(p.ovr) || 0) / maxOvr;
+      const roleN = roleW[p.squadRole] != null ? roleW[p.squadRole] : 0.4;
+      const appsN = apps / maxApps;
+      const ageN = ageRamp(p.age);
+      const ratingN = (a.ratingN > 0) ? Math.max(0, Math.min(1, (a.avg - 5) / 5)) : null;
+      let score = ovrN * 0.30 + roleN * 0.22 + appsN * 0.18 + ageN * 0.15, wsum = 0.85;
+      if (ratingN != null) { score += ratingN * 0.10; wsum += 0.10; }
+      score = score / wsum;
+      if (p.fromYouth) score = Math.min(1, score + 0.05);
+      return { id: p.id, name: p.name || "?", position: p.position || "", age: Number(p.age) || null, ovr: Number(p.ovr) || null, squadRole: p.squadRole || "", fromYouth: !!p.fromYouth, badge: p.badge, apps, avg: a.ratingN > 0 ? a.avg : null, score };
+    }).sort((x, y) => y.score - x.score || (y.ovr || 0) - (x.ovr || 0) || y.apps - x.apps || String(x.name).localeCompare(String(y.name)));
+    const n = scored.length;
+    scored.forEach((p, i) => {
+      p.tier = i === 0 ? "Capitán"
+        : i < Math.max(2, Math.round(n * 0.15)) ? "Líder"
+        : i < Math.max(3, Math.round(n * 0.45)) ? "Referente"
+        : i < Math.round(n * 0.8) ? "Rotación" : "Periferia";
+    });
+    const captain = scored[0];
+    const leaders = scored.filter(p => p.tier === "Capitán" || p.tier === "Líder");
+    const youngLeader = leaders.some(p => p.age && p.age <= 23);
+    const insights = [];
+    if (captain) insights.push({ tone: "ok", text: captain.name + " es tu jugador más influyente: el líder natural del vestuario." });
+    if (captain && captain.squadRole && captain.squadRole !== "Estrella") insights.push({ tone: "neutral", text: "Plantéate darle galones de capitán a " + captain.name + " (rol actual: " + captain.squadRole + ")." });
+    if (!youngLeader) insights.push({ tone: "warn", text: "No hay liderazgo joven (≤23 años): el vestuario se apoya solo en veteranos." });
+    return { count: n, captain, leaders, youngLeader, players: scored, insights };
+  };
+
+  /* ---------- CARGA Y ROTACIONES (gestión de minutos/fatiga) ----------
+     Derivado de m.ratings[].minutes (opt-in) + m.date. Mide reparto de
+     minutos, sobre-dependencia, carga reciente y congestión de calendario.
+     El denominador es la suma REAL de minutos registrados (honesto con datos
+     parciales); expone la cobertura. null/empty-state si no hay minutos. */
+  S.loadReport = (c, seasonId) => {
+    const ms = S.userMatches(c, seasonId).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    const matchesWithMin = ms.filter(m => (m.ratings || []).some(r => Number(r.minutes) > 0));
+    if (!matchesWithMin.length) return { hasMinutes: false, totalMatches: ms.length };
+    const agg = S.playerAggregates(c, seasonId);
+    const squadNames = new Set((c.players || []).map(p => (p.name || "").trim().toLowerCase()));
+    const totalMin = Object.values(agg).reduce((s, a) => s + (Number(a.minutes) || 0), 0);
+    const recentMs = matchesWithMin.slice(-3);
+    const recentMin = {};
+    recentMs.forEach(m => (m.ratings || []).forEach(r => { const k = (r.name || "").trim().toLowerCase(); const mn = Number(r.minutes) || 0; if (mn > 0) recentMin[k] = (recentMin[k] || 0) + mn; }));
+    const players = Object.values(agg).filter(a => (Number(a.minutes) || 0) > 0).map(a => ({
+      name: a.name, minutes: Number(a.minutes) || 0, apps: a.apps,
+      share: totalMin ? Math.round((Number(a.minutes) || 0) / totalMin * 100) : 0,
+      recent: recentMin[(a.name || "").trim().toLowerCase()] || 0,
+      inSquad: squadNames.has((a.name || "").trim().toLowerCase()),
+    })).sort((x, y) => y.minutes - x.minutes);
+    // Congestión pasada: parejas consecutivas con <4 días (solo fechas válidas).
+    const dated = ms.filter(m => isFinite(new Date(m.date).getTime())).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const congestion = [];
+    for (let i = 1; i < dated.length; i++) { const days = Math.round((new Date(dated[i].date) - new Date(dated[i - 1].date)) / 86400000); if (days >= 0 && days < 4) congestion.push({ a: dated[i - 1], b: dated[i], days }); }
+    // Congestión futura (accionable): próximos partidos con poco descanso.
+    const up = S.upcomingMatches(c, seasonId).filter(m => isFinite(new Date(m.date).getTime()));
+    const upcomingTight = [];
+    let prev = dated[dated.length - 1];
+    up.forEach(m => { if (prev) { const days = Math.round((new Date(m.date) - new Date(prev.date)) / 86400000); if (days >= 0 && days < 4) upcomingTight.push({ a: prev, b: m, days }); } prev = m; });
+    const insights = [];
+    const top = players.find(p => p.inSquad) || players[0];
+    if (top && top.inSquad && top.share >= 92 && players.length > 1) insights.push({ tone: "warn", text: top.name + " ha jugado el " + top.share + "% de los minutos registrados: riesgo de sobrecarga, plantéate rotarlo." });
+    players.filter(p => p.recent >= 260 && p.inSquad).slice(0, 2).forEach(p => insights.push({ tone: "warn", text: p.name + " acumula " + p.recent + " min en los últimos 3 partidos: vigila su fatiga." }));
+    if (upcomingTight.length) insights.push({ tone: "warn", text: "Calendario apretado a la vista: " + upcomingTight.length + " partido(s) con menos de 4 días de descanso — prepara rotaciones." });
+    else if (congestion.length) insights.push({ tone: "neutral", text: congestion.length + " tramo(s) de calendario apretado esta temporada (<4 días entre partidos)." });
+    if (!insights.length) insights.push({ tone: "ok", text: "Reparto de minutos saludable, sin sobrecargas evidentes." });
+    return { hasMinutes: true, totalMatches: ms.length, matchesWithMin: matchesWithMin.length, totalMin, players, congestion, upcomingTight, insights };
+  };
+
+  /* ---------- CONTRATOS Y MASA SALARIAL (planificación) ----------
+     Vencimientos por año (olas/Bosman) + masa salarial (sueldo opcional por
+     jugador). Sin ratio sobre ingresos (no hay dato de facturación del club). */
+  S.contractReport = (c) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    const startYear = (S.currentSeason(c) || {}).startYear || new Date().getFullYear();
+    const yearOf = (p) => { const y = parseInt(p.contractEnd, 10); return (Number.isFinite(y) && y >= 1990 && y <= 2100) ? y : null; };
+    const wageOf = (p) => Number(p.wage) || 0;
+    const withContract = players.filter(p => yearOf(p) != null);
+    const byYear = {};
+    withContract.forEach(p => { const y = yearOf(p); (byYear[y] || (byYear[y] = [])).push(p); });
+    const timeline = Object.keys(byYear).map(Number).sort((a, b) => a - b)
+      .map(y => ({ year: y, count: byYear[y].length, players: byYear[y].map(p => p.name) }));
+    const expiringSoon = withContract.filter(p => yearOf(p) <= startYear + 1)
+      .sort((a, b) => yearOf(a) - yearOf(b))
+      .map(p => ({ name: p.name, year: yearOf(p), position: p.position, ovr: p.ovr, wage: wageOf(p) }));
+    const withWage = players.filter(p => wageOf(p) > 0);
+    const wageBill = withWage.reduce((s, p) => s + wageOf(p), 0);
+    const topEarners = withWage.slice().sort((a, b) => wageOf(b) - wageOf(a)).slice(0, 8)
+      .map(p => ({ name: p.name, wage: wageOf(p), position: p.position, ovr: p.ovr }));
+    const topConcentration = (wageBill && topEarners.length) ? Math.round(topEarners.slice(0, 3).reduce((s, p) => s + p.wage, 0) / wageBill * 100) : 0;
+    const insights = [];
+    const nextYear = startYear + 1;
+    const expThis = withContract.filter(p => yearOf(p) === startYear).length;
+    const expNext = withContract.filter(p => yearOf(p) === nextYear).length;
+    if (expThis) insights.push({ tone: "danger", text: expThis + " jugador(es) acaban contrato este año: renueva o traspasa antes de perderlos gratis." });
+    if (expNext >= 3) insights.push({ tone: "warn", text: "Ola de vencimientos: " + expNext + " contratos expiran en " + nextYear + " (riesgo Bosman)." });
+    if (withWage.length && topConcentration >= 50) insights.push({ tone: "warn", text: "El " + topConcentration + "% de tu masa salarial se concentra en solo 3 jugadores." });
+    if (players.length - withContract.length) insights.push({ tone: "neutral", text: (players.length - withContract.length) + " jugador(es) sin fin de contrato registrado." });
+    return {
+      hasContracts: withContract.length > 0, hasWages: withWage.length > 0,
+      startYear, timeline, expiringSoon,
+      wageBill, avgWage: withWage.length ? wageBill / withWage.length : 0,
+      topEarners, topConcentration, noWage: players.length - withWage.length, insights,
+    };
+  };
+
   // Parser CSV minimal: soporta campos entrecomillados ("" escapa comilla), comas
   // internas, y saltos \n/\r\n. Devuelve filas (arrays de celdas), sin filas vacías.
   function parseCSV(text) {

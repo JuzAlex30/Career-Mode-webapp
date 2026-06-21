@@ -4001,6 +4001,126 @@ body.trip-open { overflow: hidden; }
     return { count: players.length, avg, xiAvg, hist, phases, byGroup, insights, proj2 };
   };
 
+  /* ---------- JERARQUÍA DEL VESTUARIO (líderes/núcleo/periferia) ----------
+     Influencia derivada (estilo FM): ovr + rol + apps(antigüedad proxy) +
+     veteranía + nota media + arraigo de cantera. Todo normalizado a la plantilla. */
+  S.squadHierarchy = (c) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    if (players.length < 2) return null;
+    const agg = S.playerAggregates(c, null);
+    const aggOf = (p) => agg[(p.name || "").trim().toLowerCase()] || {};
+    const maxApps = Math.max(1, ...players.map(p => Number(aggOf(p).apps) || 0));
+    const maxOvr = Math.max(1, ...players.map(p => Number(p.ovr) || 0));
+    const roleW = { "Estrella": 1, "Titular": 0.7, "Rotación": 0.4, "Promesa": 0.2 };
+    const ageRamp = (a) => { a = Number(a); if (!a) return 0; if (a < 21) return 0.1; if (a < 25) return 0.4; if (a < 30) return 0.8; if (a < 34) return 1; return 0.9; };
+    const scored = players.map(p => {
+      const a = aggOf(p);
+      const apps = Number(a.apps) || 0;
+      const ovrN = (Number(p.ovr) || 0) / maxOvr;
+      const roleN = roleW[p.squadRole] != null ? roleW[p.squadRole] : 0.4;
+      const appsN = apps / maxApps;
+      const ageN = ageRamp(p.age);
+      const ratingN = (a.ratingN > 0) ? Math.max(0, Math.min(1, (a.avg - 5) / 5)) : null;
+      let score = ovrN * 0.30 + roleN * 0.22 + appsN * 0.18 + ageN * 0.15, wsum = 0.85;
+      if (ratingN != null) { score += ratingN * 0.10; wsum += 0.10; }
+      score = score / wsum;
+      if (p.fromYouth) score = Math.min(1, score + 0.05);
+      return { id: p.id, name: p.name || "?", position: p.position || "", age: Number(p.age) || null, ovr: Number(p.ovr) || null, squadRole: p.squadRole || "", fromYouth: !!p.fromYouth, badge: p.badge, apps, avg: a.ratingN > 0 ? a.avg : null, score };
+    }).sort((x, y) => y.score - x.score || (y.ovr || 0) - (x.ovr || 0) || y.apps - x.apps || String(x.name).localeCompare(String(y.name)));
+    const n = scored.length;
+    scored.forEach((p, i) => {
+      p.tier = i === 0 ? "Capitán"
+        : i < Math.max(2, Math.round(n * 0.15)) ? "Líder"
+        : i < Math.max(3, Math.round(n * 0.45)) ? "Referente"
+        : i < Math.round(n * 0.8) ? "Rotación" : "Periferia";
+    });
+    const captain = scored[0];
+    const leaders = scored.filter(p => p.tier === "Capitán" || p.tier === "Líder");
+    const youngLeader = leaders.some(p => p.age && p.age <= 23);
+    const insights = [];
+    if (captain) insights.push({ tone: "ok", text: captain.name + " es tu jugador más influyente: el líder natural del vestuario." });
+    if (captain && captain.squadRole && captain.squadRole !== "Estrella") insights.push({ tone: "neutral", text: "Plantéate darle galones de capitán a " + captain.name + " (rol actual: " + captain.squadRole + ")." });
+    if (!youngLeader) insights.push({ tone: "warn", text: "No hay liderazgo joven (≤23 años): el vestuario se apoya solo en veteranos." });
+    return { count: n, captain, leaders, youngLeader, players: scored, insights };
+  };
+
+  /* ---------- CARGA Y ROTACIONES (gestión de minutos/fatiga) ----------
+     Derivado de m.ratings[].minutes (opt-in) + m.date. Mide reparto de
+     minutos, sobre-dependencia, carga reciente y congestión de calendario.
+     El denominador es la suma REAL de minutos registrados (honesto con datos
+     parciales); expone la cobertura. null/empty-state si no hay minutos. */
+  S.loadReport = (c, seasonId) => {
+    const ms = S.userMatches(c, seasonId).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    const matchesWithMin = ms.filter(m => (m.ratings || []).some(r => Number(r.minutes) > 0));
+    if (!matchesWithMin.length) return { hasMinutes: false, totalMatches: ms.length };
+    const agg = S.playerAggregates(c, seasonId);
+    const squadNames = new Set((c.players || []).map(p => (p.name || "").trim().toLowerCase()));
+    const totalMin = Object.values(agg).reduce((s, a) => s + (Number(a.minutes) || 0), 0);
+    const recentMs = matchesWithMin.slice(-3);
+    const recentMin = {};
+    recentMs.forEach(m => (m.ratings || []).forEach(r => { const k = (r.name || "").trim().toLowerCase(); const mn = Number(r.minutes) || 0; if (mn > 0) recentMin[k] = (recentMin[k] || 0) + mn; }));
+    const players = Object.values(agg).filter(a => (Number(a.minutes) || 0) > 0).map(a => ({
+      name: a.name, minutes: Number(a.minutes) || 0, apps: a.apps,
+      share: totalMin ? Math.round((Number(a.minutes) || 0) / totalMin * 100) : 0,
+      recent: recentMin[(a.name || "").trim().toLowerCase()] || 0,
+      inSquad: squadNames.has((a.name || "").trim().toLowerCase()),
+    })).sort((x, y) => y.minutes - x.minutes);
+    // Congestión pasada: parejas consecutivas con <4 días (solo fechas válidas).
+    const dated = ms.filter(m => isFinite(new Date(m.date).getTime())).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const congestion = [];
+    for (let i = 1; i < dated.length; i++) { const days = Math.round((new Date(dated[i].date) - new Date(dated[i - 1].date)) / 86400000); if (days >= 0 && days < 4) congestion.push({ a: dated[i - 1], b: dated[i], days }); }
+    // Congestión futura (accionable): próximos partidos con poco descanso.
+    const up = S.upcomingMatches(c, seasonId).filter(m => isFinite(new Date(m.date).getTime()));
+    const upcomingTight = [];
+    let prev = dated[dated.length - 1];
+    up.forEach(m => { if (prev) { const days = Math.round((new Date(m.date) - new Date(prev.date)) / 86400000); if (days >= 0 && days < 4) upcomingTight.push({ a: prev, b: m, days }); } prev = m; });
+    const insights = [];
+    const top = players.find(p => p.inSquad) || players[0];
+    if (top && top.inSquad && top.share >= 92 && players.length > 1) insights.push({ tone: "warn", text: top.name + " ha jugado el " + top.share + "% de los minutos registrados: riesgo de sobrecarga, plantéate rotarlo." });
+    players.filter(p => p.recent >= 260 && p.inSquad).slice(0, 2).forEach(p => insights.push({ tone: "warn", text: p.name + " acumula " + p.recent + " min en los últimos 3 partidos: vigila su fatiga." }));
+    if (upcomingTight.length) insights.push({ tone: "warn", text: "Calendario apretado a la vista: " + upcomingTight.length + " partido(s) con menos de 4 días de descanso — prepara rotaciones." });
+    else if (congestion.length) insights.push({ tone: "neutral", text: congestion.length + " tramo(s) de calendario apretado esta temporada (<4 días entre partidos)." });
+    if (!insights.length) insights.push({ tone: "ok", text: "Reparto de minutos saludable, sin sobrecargas evidentes." });
+    return { hasMinutes: true, totalMatches: ms.length, matchesWithMin: matchesWithMin.length, totalMin, players, congestion, upcomingTight, insights };
+  };
+
+  /* ---------- CONTRATOS Y MASA SALARIAL (planificación) ----------
+     Vencimientos por año (olas/Bosman) + masa salarial (sueldo opcional por
+     jugador). Sin ratio sobre ingresos (no hay dato de facturación del club). */
+  S.contractReport = (c) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    const startYear = (S.currentSeason(c) || {}).startYear || new Date().getFullYear();
+    const yearOf = (p) => { const y = parseInt(p.contractEnd, 10); return (Number.isFinite(y) && y >= 1990 && y <= 2100) ? y : null; };
+    const wageOf = (p) => Number(p.wage) || 0;
+    const withContract = players.filter(p => yearOf(p) != null);
+    const byYear = {};
+    withContract.forEach(p => { const y = yearOf(p); (byYear[y] || (byYear[y] = [])).push(p); });
+    const timeline = Object.keys(byYear).map(Number).sort((a, b) => a - b)
+      .map(y => ({ year: y, count: byYear[y].length, players: byYear[y].map(p => p.name) }));
+    const expiringSoon = withContract.filter(p => yearOf(p) <= startYear + 1)
+      .sort((a, b) => yearOf(a) - yearOf(b))
+      .map(p => ({ name: p.name, year: yearOf(p), position: p.position, ovr: p.ovr, wage: wageOf(p) }));
+    const withWage = players.filter(p => wageOf(p) > 0);
+    const wageBill = withWage.reduce((s, p) => s + wageOf(p), 0);
+    const topEarners = withWage.slice().sort((a, b) => wageOf(b) - wageOf(a)).slice(0, 8)
+      .map(p => ({ name: p.name, wage: wageOf(p), position: p.position, ovr: p.ovr }));
+    const topConcentration = (wageBill && topEarners.length) ? Math.round(topEarners.slice(0, 3).reduce((s, p) => s + p.wage, 0) / wageBill * 100) : 0;
+    const insights = [];
+    const nextYear = startYear + 1;
+    const expThis = withContract.filter(p => yearOf(p) === startYear).length;
+    const expNext = withContract.filter(p => yearOf(p) === nextYear).length;
+    if (expThis) insights.push({ tone: "danger", text: expThis + " jugador(es) acaban contrato este año: renueva o traspasa antes de perderlos gratis." });
+    if (expNext >= 3) insights.push({ tone: "warn", text: "Ola de vencimientos: " + expNext + " contratos expiran en " + nextYear + " (riesgo Bosman)." });
+    if (withWage.length && topConcentration >= 50) insights.push({ tone: "warn", text: "El " + topConcentration + "% de tu masa salarial se concentra en solo 3 jugadores." });
+    if (players.length - withContract.length) insights.push({ tone: "neutral", text: (players.length - withContract.length) + " jugador(es) sin fin de contrato registrado." });
+    return {
+      hasContracts: withContract.length > 0, hasWages: withWage.length > 0,
+      startYear, timeline, expiringSoon,
+      wageBill, avgWage: withWage.length ? wageBill / withWage.length : 0,
+      topEarners, topConcentration, noWage: players.length - withWage.length, insights,
+    };
+  };
+
   // Parser CSV minimal: soporta campos entrecomillados ("" escapa comilla), comas
   // internas, y saltos \n/\r\n. Devuelve filas (arrays de celdas), sin filas vacías.
   function parseCSV(text) {
@@ -6802,6 +6922,7 @@ body.trip-open { overflow: hidden; }
      ============================================================ */
   // Estado de filtros de la Plantilla (módulo: persiste entre re-renders por S.emit).
   let squadView = { q: "", group: "", sort: "pos" };
+  let squadTab = "jugadores"; // "jugadores" | "analisis" (pirámide+jerarquía+carga)
   const SQUAD_GROUPS = ["Portería", "Defensa", "Medio", "Banda", "Ataque"];
   const SQUAD_SORTS = [["pos","Posición"],["ovr","OVR"],["pot","Potencial"],["age-asc","Edad ↑"],["age-desc","Edad ↓"],["goals","Goles"],["assists","Asistencias"],["motm","MOTM"]];
   FC.views.squad = function () {
@@ -6844,15 +6965,7 @@ body.trip-open { overflow: hidden; }
         <td class="num">${a.goals||0}</td><td class="num">${a.assists||0}</td><td class="num">${a.motm||0}</td>
         <td><button class="icon-btn sm" data-del-player="${p.id}"><span class="ni-icon" data-icon="trash"></span></button></td></tr>`;
     }
-    UI.mount(`
-      <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
-        <div class="flex gap center wrap">
-          <button class="btn btn-ghost" id="sq-injury"><span class="ni-icon" data-icon="bandage"></span> Enfermería${injuries.length ? ` <span class="chip" style="background:var(--danger);color:#fff;padding:1px 7px">${injuries.length}</span>` : ""}</button>
-          ${(D.SQUADS||{})[c.clubName] ? `<button class="btn btn-ghost" id="sq-import"><span class="ni-icon" data-icon="download"></span> Importar EA FC</button>` : ""}
-          <button class="btn btn-primary" id="sq-add"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
-        </div>
-      </div>
-      ${ageProfileCardHtml(c)}
+    const rosterHtml = `
       ${injuries.length ? `<div class="card tight" style="margin-bottom:16px">
         <div class="card-head"><h3 style="color:var(--danger)"><span class="ni-icon" data-icon="bandage"></span> Enfermería</h3></div>
         <div class="list">${injuries.map(i => `<div class="list-row">
@@ -6871,8 +6984,24 @@ body.trip-open { overflow: hidden; }
         <div class="table-wrap"><table class="tbl"><thead><tr>
           <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th></th>
         </tr></thead><tbody id="sq-body"></tbody></table></div>` : `<div class="empty"><div class="emoji">👕</div><h3>Plantilla vacía</h3><p>Añade tus jugadores para seguir sus estadísticas y planificar.</p></div>`}
+      </div>`;
+    const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${loadCardHtml(c, season.id)}`;
+    UI.mount(`
+      <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
+        <div class="flex gap center wrap">
+          <button class="btn btn-ghost" id="sq-injury"><span class="ni-icon" data-icon="bandage"></span> Enfermería${injuries.length ? ` <span class="chip" style="background:var(--danger);color:#fff;padding:1px 7px">${injuries.length}</span>` : ""}</button>
+          ${(D.SQUADS||{})[c.clubName] ? `<button class="btn btn-ghost" id="sq-import"><span class="ni-icon" data-icon="download"></span> Importar EA FC</button>` : ""}
+          <button class="btn btn-primary" id="sq-add"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
+        </div>
       </div>
+      ${players.length ? `<div class="seg" id="sq-tabs" style="margin-bottom:14px">
+        <button type="button" data-t="jugadores" class="${squadTab==="jugadores"?"active":""}">Jugadores</button>
+        <button type="button" data-t="analisis" class="${squadTab==="analisis"?"active":""}">Análisis</button>
+      </div>` : ""}
+      ${(players.length && squadTab === "analisis") ? analysisHtml : rosterHtml}
     `);
+    document.querySelectorAll("#sq-tabs button").forEach(b => b.addEventListener("click", () => { squadTab = b.dataset.t; FC.views.squad(); }));
+    content().querySelectorAll("#sq-hier [data-player]").forEach(r => r.addEventListener("click", () => UI.openPlayerCard(c, c.players.find(p => p.id === r.dataset.player))));
     function wireRows() {
       const body = document.getElementById("sq-body");
       if (!body) return;
@@ -6954,7 +7083,7 @@ body.trip-open { overflow: hidden; }
       <div class="grid cols-4 keep-2" style="margin:14px 0">
         ${statTile("OVR", `<span class="ovr ${U.ovrClass(cur)}">${cur||"—"}</span>`, (peak && peak !== cur) ? ("pico " + peak) : "")}
         ${statTile("Potencial", p.potential||"—", improve ? ((improve > 0 ? "+" : "") + improve + " desde inicio") : "")}
-        ${statTile("Valor", p.value ? U.money(p.value) : "—", "")}
+        ${statTile("Valor", p.value ? U.money(p.value) : "—", p.wage ? U.money(p.wage) + "/año" : "")}
         ${statTile("Contrato", p.contractEnd ? ("hasta " + U.esc(p.contractEnd)) : "—", "")}
       </div>
       <div class="section-title">Contribución <span class="faint" style="font-weight:400">· ${U.esc(season.label)} · (carrera)</span></div>
@@ -7123,8 +7252,9 @@ body.trip-open { overflow: hidden; }
         <div class="field"><label>Potencial</label><input type="number" id="p-pot" min="40" max="99" value="${ex.potential||""}"/></div>
         <div class="field"><label>Valor (€)</label><input type="number" id="p-val" value="${ex.value||""}"/></div>
       </div>
-      <div class="field-row">
+      <div class="field-row three">
         <div class="field"><label>Fin de contrato (año)</label><input type="number" id="p-con" value="${ex.contractEnd||""}" placeholder="p.ej. 2028"/></div>
+        <div class="field"><label>Sueldo (€/año)</label><input type="number" id="p-wage" min="0" value="${ex.wage||""}" placeholder="opcional"/></div>
         <div class="field"><label>Rol en plantilla</label><select id="p-role">
           ${["Estrella","Titular","Rotación","Promesa"].map(r => `<option ${r === ex.squadRole ? "selected" : ""}>${r}</option>`).join("")}</select></div>
       </div>
@@ -7146,6 +7276,7 @@ body.trip-open { overflow: hidden; }
         nationality: document.getElementById("p-nat").value.trim(), ovr: Number(document.getElementById("p-ovr").value) || null,
         potential: Number(document.getElementById("p-pot").value) || null, value: Number(document.getElementById("p-val").value) || 0,
         contractEnd: document.getElementById("p-con").value, squadRole: document.getElementById("p-role").value,
+        wage: Number(document.getElementById("p-wage").value) || 0,
         fromYouth: document.getElementById("p-youth").checked,
       };
       if (ex.id) { S.updatePlayer(c, ex.id, data); UI.toast("Jugador actualizado", "ok"); }
@@ -7299,6 +7430,97 @@ body.trip-open { overflow: hidden; }
       <div class="list" style="margin-bottom:6px">${groupRows}</div>
       <div class="list">${insightRows}</div>
     </div>`;
+  }
+  // Tarjeta "Jerarquía del vestuario" — usada en Plantilla (pestaña Análisis). "" si <2 jugadores.
+  function squadHierarchyCardHtml(c) {
+    const h = S.squadHierarchy(c);
+    if (!h) return "";
+    const tierCol = { "Capitán": "var(--accent-3)", "Líder": "var(--accent)", "Referente": "var(--accent-2)", "Rotación": "var(--text-dim)", "Periferia": "var(--text-dim)" };
+    const barCls = { "Capitán": "bar gold", "Referente": "bar blue" };
+    const rows = h.players.map(p => {
+      const col = tierCol[p.tier] || "var(--text-dim)";
+      const pct = Math.max(4, Math.round(p.score * 100));
+      return `<div class="list-row" data-player="${U.esc(String(p.id))}" style="cursor:pointer">
+        <div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
+        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.age ? " · " + p.age + " a" : ""}${p.fromYouth ? " · cantera" : ""} · ${p.apps} part.</small>
+          <div class="${barCls[p.tier] || "bar"}" style="margin-top:6px">${p.tier === "Rotación" || p.tier === "Periferia" ? `<i style="width:${pct}%;background:var(--text-dim)"></i>` : `<i style="width:${pct}%"></i>`}</div></div>
+        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${p.tier}</span>
+      </div>`;
+    }).join("");
+    const insightRows = h.insights.map(it => alertRow(it.tone === "warn" ? "flag" : "check", it.text, it.tone, null)).join("");
+    return `<div class="card" id="sq-hier" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="shield"></span> Jerarquía del vestuario <span class="faint" style="font-weight:400">· influencia derivada</span></div>
+      <div class="list">${rows}</div>
+      ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
+    </div>`;
+  }
+  // Tarjeta "Carga y rotaciones" — usada en Plantilla (pestaña Análisis). Empty-state si no hay minutos.
+  function loadCardHtml(c, seasonId) {
+    const l = S.loadReport(c, seasonId);
+    if (!l) return "";
+    if (!l.hasMinutes) return `<div class="card" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="bandage"></span> Carga y rotaciones</div>
+      <div class="empty" style="padding:24px"><div class="emoji">⏱️</div><h3>Sin minutos registrados</h3><p>Añade los minutos de tus jugadores en “Valoraciones” al registrar un partido para activar el control de carga y fatiga.</p></div>
+    </div>`;
+    const maxMin = Math.max(1, ...l.players.map(p => p.minutes));
+    const rows = l.players.slice(0, 14).map(p => {
+      const pct = Math.max(3, Math.round(p.minutes / maxMin * 100));
+      const heavy = p.recent >= 260, hot = p.share >= 85;
+      const col = heavy ? "var(--warn)" : hot ? "var(--accent-3)" : "var(--accent)";
+      return `<div class="list-row">
+        <div class="lr-main"><b>${U.esc(p.name)}${p.inSquad ? "" : ' <span class="faint" style="font-weight:400">(ya no en plantilla)</span>'}</b>
+          <small class="faint">${p.minutes.toLocaleString("es-ES")} min · ${p.apps} part.${p.recent ? " · " + p.recent + " min últimos 3" : ""}</small>
+          <div class="bar" style="margin-top:6px"><i style="width:${pct}%;background:${col}"></i></div></div>
+        <span class="chip" style="background:transparent;border:1px solid var(--line);color:var(--text-dim);font-weight:700;flex-shrink:0">${p.share}%</span>
+      </div>`;
+    }).join("");
+    const insightRows = l.insights.map(it => alertRow(it.tone === "warn" ? "flag" : it.tone === "neutral" ? "calendar" : "check", it.text, it.tone, null)).join("");
+    return `<div class="card" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="bandage"></span> Carga y rotaciones <span class="faint" style="font-weight:400">· minutos en ${l.matchesWithMin}/${l.totalMatches} partidos</span></div>
+      <div class="list">${rows}</div>
+      ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
+    </div>`;
+  }
+  // Sección "Contratos y masa salarial" — usada en Finanzas. "" si no hay datos.
+  function contractSectionHtml(c) {
+    const cr = S.contractReport(c);
+    if (!cr.hasContracts && !cr.hasWages) return "";
+    const M = (n) => U.money(n);
+    const startY = cr.startYear;
+    const maxYearCount = Math.max(1, ...cr.timeline.map(t => t.count));
+    const timelineBars = cr.timeline.map(t => {
+      const col = t.year <= startY ? "var(--danger)" : t.year === startY + 1 ? "var(--warn)" : "var(--accent)";
+      const ht = Math.max(8, Math.round(t.count / maxYearCount * 80));
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <small style="font-weight:700;font-size:12px">${t.count}</small>
+        <div style="width:60%;max-width:34px;height:${ht}px;background:${col};border-radius:5px 5px 0 0"></div>
+        <small class="faint" style="font-size:11px">${t.year}</small>
+      </div>`;
+    }).join("");
+    const expRows = cr.expiringSoon.slice(0, 8).map(p => {
+      const col = p.year <= startY ? "var(--danger)" : "var(--warn)";
+      return `<div class="list-row">
+        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.ovr ? " · " + p.ovr + " OVR" : ""}${p.wage ? " · " + M(p.wage) + "/año" : ""}</small></div>
+        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${p.year <= startY ? "último año" : "vence " + p.year}</span>
+      </div>`;
+    }).join("");
+    const earnRows = cr.topEarners.map(p => `<div class="list-row">
+        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.ovr ? " · " + p.ovr + " OVR" : ""}</small></div>
+        <b style="flex-shrink:0">${M(p.wage)}</b></div>`).join("");
+    const insightRows = cr.insights.map(it => alertRow(it.tone === "danger" ? "flame" : it.tone === "warn" ? "flag" : "check", it.text, it.tone, null)).join("");
+    return `<div class="section-title">Contratos y masa salarial</div>
+      <div class="card">
+        ${cr.hasWages ? `<div class="grid cols-3 keep-2" style="margin-bottom:14px">
+          ${statTile("Masa salarial", M(cr.wageBill), "anual" + (cr.noWage ? " · " + cr.noWage + " sin sueldo" : ""))}
+          ${statTile("Sueldo medio", M(cr.avgWage), "")}
+          ${statTile("Concentración top-3", cr.topConcentration + "%", "de la masa salarial")}
+        </div>` : ""}
+        ${cr.timeline.length ? `<div class="section-title" style="margin-top:0">Vencimientos por año</div>
+          <div class="flex" style="align-items:flex-end;gap:6px;margin-bottom:14px">${timelineBars}</div>` : ""}
+        ${expRows ? `<div class="section-title">Vencimientos próximos</div><div class="list" style="margin-bottom:6px">${expRows}</div>` : ""}
+        ${earnRows ? `<div class="section-title">Mayores sueldos</div><div class="list" style="margin-bottom:6px">${earnRows}</div>` : ""}
+        ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
+      </div>`;
   }
 
   FC.views.development = function () {
@@ -7685,6 +7907,8 @@ body.trip-open { overflow: hidden; }
         ${flow.length > 1 ? CH.line(flow, { h: 96, color: f.net >= 0 ? "var(--accent)" : "var(--danger)" }) : `<p class="faint">Registra movimientos con coste para ver la evolución del saldo.</p>`}
         <div class="faint" style="font-size:12px;margin-top:6px">Saldo acumulado de traspasos (ingresos − gastos)</div>
       </div>
+
+      ${contractSectionHtml(c)}
 
       ${moneyCh.length ? `
       <div class="section-title">Impacto en tus retos</div>
