@@ -343,6 +343,127 @@
   // Medias/totales de stats avanzadas de la temporada (null si no hay partidos con datos).
   S.statsAverages = (c, seasonId) => statsAggregate(S.userMatches(c, seasonId));
 
+  /* ---------- ANÁLISIS DE RENDIMIENTO (xPts / suerte) ----------
+     Puntos esperados a partir del xG de cada lado (modelo de Poisson):
+     revela si tus resultados van por encima/por debajo de tu juego real.
+     Todo derivado de match.stats.xg ([tú,rival]); funciones puras. */
+  function _poisson(k, lambda) {
+    if (lambda <= 0) return k === 0 ? 1 : 0;
+    let p = Math.exp(-lambda);
+    for (let i = 1; i <= k; i++) p *= lambda / i;
+    return p;
+  }
+  // Puntos esperados de un partido según el xG de ambos lados.
+  S.matchXpts = (xgF, xgA) => {
+    const lf = Math.max(0, Number(xgF) || 0), la = Math.max(0, Number(xgA) || 0);
+    const MAX = 10, pf = [], pa = [];
+    for (let i = 0; i <= MAX; i++) { pf[i] = _poisson(i, lf); pa[i] = _poisson(i, la); }
+    let pW = 0, pD = 0, pL = 0;
+    for (let i = 0; i <= MAX; i++) for (let j = 0; j <= MAX; j++) {
+      const p = pf[i] * pa[j];
+      if (i > j) pW += p; else if (i === j) pD += p; else pL += p;
+    }
+    return { xpts: pW * 3 + pD, pW, pD, pL };
+  };
+  // Veredicto de "suerte" de un partido: compara resultado real con el xG.
+  function _luckVerdict(res, gf, ga, xf, xa) {
+    const xd = xf - xa;
+    if (res === "W") {
+      if (xd <= -1) return { label: "Victoria con fortuna", tone: "lucky" };
+      if (xd >= 0.3) return { label: "Victoria merecida", tone: "ok" };
+      return { label: "Victoria ajustada", tone: "ok" };
+    }
+    if (res === "D") {
+      if (xd >= 1) return { label: "2 puntos perdidos", tone: "unlucky" };
+      if (xd <= -1) return { label: "Empate de oro", tone: "lucky" };
+      return { label: "Empate justo", tone: "neutral" };
+    }
+    if (xd >= 1) return { label: "Mereciste más", tone: "unlucky" };
+    if (xd <= -0.3) return { label: "Derrota merecida", tone: "neutral" };
+    return { label: "Derrota ajustada", tone: "neutral" };
+  }
+  // Análisis de suerte de la temporada (o vitalicio si seasonId es null).
+  // null si ningún partido registra xG. PDO = (%definición + %paradas)·1000.
+  S.luckSummary = (c, seasonId) => {
+    const ms = S.userMatches(c, seasonId)
+      .filter(m => m.stats && Array.isArray(m.stats.xg))
+      .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    if (!ms.length) return null;
+    const r1 = (x) => Math.round(x * 10) / 10;
+    let actualPts = 0, xpts = 0, gf = 0, ga = 0, xgF = 0, xgA = 0, sotF = 0, sotA = 0;
+    const series = [], matches = [];
+    ms.forEach(m => {
+      const g = S.userGoals(c, m), res = S.userResult(c, m);
+      const xf = Math.max(0, Number(m.stats.xg[0]) || 0), xa = Math.max(0, Number(m.stats.xg[1]) || 0);
+      const pts = res === "W" ? 3 : res === "D" ? 1 : 0;
+      const xp = S.matchXpts(xf, xa).xpts;
+      actualPts += pts; xpts += xp;
+      gf += g.for; ga += g.against; xgF += xf; xgA += xa;
+      if (Array.isArray(m.stats.sot)) { sotF += Number(m.stats.sot[0]) || 0; sotA += Number(m.stats.sot[1]) || 0; }
+      series.push({ actual: actualPts, xpts: r1(xpts) });
+      matches.push({ id: m.id, date: m.date, rival: S.opponentOf(c, m), res, gf: g.for, ga: g.against, xgF: r1(xf), xgA: r1(xa), xpts: xp, verdict: _luckVerdict(res, g.for, g.against, xf, xa) });
+    });
+    const shootPct = sotF ? gf / sotF : 0;
+    const savePct = sotA ? (sotA - ga) / sotA : 0;
+    return {
+      count: ms.length, actualPts, xpts: r1(xpts), diff: r1(actualPts - xpts),
+      gf, ga, xgF: r1(xgF), xgA: r1(xgA),
+      finishing: xgF ? gf / xgF : null, defending: xgA ? ga / xgA : null,
+      pdo: (sotF && sotA) ? Math.round((shootPct + savePct) * 1000) : null,
+      series, matches: matches.reverse(),
+    };
+  };
+
+  /* ---------- PERFIL DE EDAD DE LA PLANTILLA (pirámide + recambio) ----------
+     Curva de edad real por demarcación: extremos/banda pican antes y caen
+     pronto; centrales y porteros aguantan más. Solo usa age + position. */
+  const AGE_PEAK = { "Portería": [28, 34], "Defensa": [27, 32], "Medio": [25, 30], "Banda": [24, 28], "Ataque": [25, 30], default: [25, 30] };
+  S.squadAgeProfile = (c) => {
+    const players = (c.players || []).filter(p => Number(p.age) > 0);
+    if (!players.length) return null;
+    const peakOf = (p) => AGE_PEAK[FC.data.POS_GROUP[p.position] || "default"] || AGE_PEAK.default;
+    const phaseOf = (p) => { const pk = peakOf(p), a = Number(p.age); return a < pk[0] ? "joven" : a > pk[1] ? "declive" : "pico"; };
+    const fmt = (n) => (Math.round(n * 10) / 10).toString().replace(".", ",");
+    const BANDS = [[0, 20, "≤20"], [21, 23, "21-23"], [24, 26, "24-26"], [27, 29, "27-29"], [30, 32, "30-32"], [33, 99, "33+"]];
+    const hist = BANDS.map(b => ({ label: b[2], joven: 0, pico: 0, declive: 0, total: 0 }));
+    const phases = { joven: 0, pico: 0, declive: 0 };
+    let sum = 0;
+    players.forEach(p => {
+      const a = Number(p.age); sum += a;
+      const ph = phaseOf(p); phases[ph]++;
+      const ba = Math.floor(a);
+      const bi = BANDS.findIndex(b => ba >= b[0] && ba <= b[1]);
+      if (bi >= 0) { hist[bi][ph]++; hist[bi].total++; }
+    });
+    const avg = sum / players.length;
+    const byGroup = ["Portería", "Defensa", "Medio", "Banda", "Ataque"].map(g => {
+      const ps = players.filter(p => (FC.data.POS_GROUP[p.position] || "") === g);
+      if (!ps.length) return null;
+      const gsum = ps.reduce((s, p) => s + Number(p.age), 0);
+      const decline = ps.filter(p => phaseOf(p) === "declive").length;
+      const young = ps.filter(p => phaseOf(p) === "joven").length;
+      return { group: g, count: ps.length, avg: gsum / ps.length, decline, young, peak: ps.length - decline - young };
+    }).filter(Boolean);
+    const xi = players.slice().sort((a, b) => (Number(b.ovr) || 0) - (Number(a.ovr) || 0)).slice(0, 11);
+    const xiAvg = xi.length ? xi.reduce((s, p) => s + Number(p.age), 0) / xi.length : null;
+    const proj2 = players.filter(p => { const pk = peakOf(p), a = Number(p.age); return a <= pk[1] && a + 2 > pk[1]; }).length;
+    // Avisos de entrenador (priorizados).
+    const insights = [];
+    const refAge = xiAvg != null ? xiAvg : avg;
+    if (refAge >= 30) insights.push({ tone: "danger", text: "Tu once tipo es muy veterano (media " + fmt(refAge) + " años): el recambio es urgente." });
+    else if (refAge >= 28.5) insights.push({ tone: "warn", text: "Tu once tipo envejece (media " + fmt(refAge) + " años): planifica el recambio." });
+    byGroup.forEach(g => {
+      if (g.count >= 3 && g.decline >= Math.ceil(g.count / 2)) insights.push({ tone: "warn", text: g.group + ": " + g.decline + " de " + g.count + " en fase de declive — prioriza fichar o promocionar." });
+      else if (g.count >= 3 && g.young === 0 && g.avg >= 29) insights.push({ tone: "warn", text: g.group + ": sin relevo joven y edad media " + fmt(g.avg) + " — busca futuro." });
+    });
+    if (phases.joven === 0 && players.length >= 10) insights.push({ tone: "warn", text: "No tienes jugadores jóvenes en desarrollo: la plantilla no se está renovando." });
+    if (proj2 >= 3) insights.push({ tone: "warn", text: "En 2 temporadas, " + proj2 + (proj2 > 1 ? " jugadores actuales entrarán" : " jugador actual entrará") + " en declive." });
+    if (!insights.length) insights.push(avg <= 23.5
+      ? { tone: "ok", text: "Plantilla muy joven (media " + fmt(avg) + "): poca veteranía pero enorme margen de crecimiento." }
+      : { tone: "ok", text: "Pirámide de edad equilibrada (media " + fmt(avg) + "): base joven con un núcleo en su pico." });
+    return { count: players.length, avg, xiAvg, hist, phases, byGroup, insights, proj2 };
+  };
+
   // Parser CSV minimal: soporta campos entrecomillados ("" escapa comilla), comas
   // internas, y saltos \n/\r\n. Devuelve filas (arrays de celdas), sin filas vacías.
   function parseCSV(text) {

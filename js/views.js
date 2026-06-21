@@ -613,6 +613,7 @@
     const violations = activeChallenges.reduce((s, ch) => s + S.ruleViolations(c, ch).length, 0);
     const fin = S.financeSummary(c, season.id);
     const injuries = S.activeInjuries(c);
+    const luck = S.luckSummary(c, season.id);
     const nextM = S.nextMatch(c, season.id);
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const canScout = nextRival && S.rivalHistory(c, nextRival);
@@ -678,6 +679,7 @@
         <div class="card">
           <div class="card-head"><h3><span class="ni-icon" data-icon="bell"></span> Alertas</h3></div>
           <div class="list">
+            ${luck ? alertRow("growth", luck.diff >= 2 ? ("Rindes +" + f1(luck.diff) + " pts sobre tu xG — puede corregirse") : luck.diff <= -2 ? ("Mereces " + f1(-luck.diff) + " pts más según tu xG — mala suerte") : ("Resultados acordes a tu xG (xPts " + f1(luck.xpts) + ")"), Math.abs(luck.diff) >= 2 ? "warn" : "ok", "matches") : ""}
             ${alertRow("flag", violations ? violations + " infracción(es) de reto activas" : "Sin infracciones de reto", violations ? "danger" : "ok", "challenges")}
             ${alertRow("coin", expiring.length ? expiring.length + " contrato(s) a vencer" : "Sin contratos urgentes", expiring.length ? "warn" : "ok", "squad")}
             ${finAlert}
@@ -795,12 +797,14 @@
         ${sa.red ? statCompareRow("Rojas (total)", sa.red.f, sa.red.a) : ""}
         ${sa.pens ? statCompareRow("Penaltis (total)", sa.pens.f, sa.pens.a) : ""}
       </div>` : "";
+    const luckCard = luckCardHtml(c, season.id);
     const listHtml = `
       ${upcoming.length ? `<div class="card">
         <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> Próximos partidos <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
         ${upcoming.map(m => upcomingRow(c, m)).join("")}
       </div>` : ""}
       ${statsCard}
+      ${luckCard}
       <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>`;
     UI.mount(`
       <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados${upcoming.length ? " · " + upcoming.length + " programado" + (upcoming.length>1?"s":"") : ""}</div></div>
@@ -1554,6 +1558,7 @@
           <button class="btn btn-primary" id="sq-add"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
         </div>
       </div>
+      ${ageProfileCardHtml(c)}
       ${injuries.length ? `<div class="card tight" style="margin-bottom:16px">
         <div class="card-head"><h3 style="color:var(--danger)"><span class="ni-icon" data-icon="bandage"></span> Enfermería</h3></div>
         <div class="list">${injuries.map(i => `<div class="list-row">
@@ -1904,6 +1909,102 @@
     return `<svg viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px;vertical-align:middle">
       <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
       <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.4" fill="${col}"/></svg>`;
+  }
+  // Gráfico de dos líneas: puntos reales (sólida) vs esperados/xPts (discontinua).
+  // Solo trazo, sin <defs>/id (evita la colisión del id="lg" de CH.line).
+  function xptsChart(series) {
+    const w = 600, h = 140, pad = 10;
+    const pts = (series || []).filter(s => s && Number.isFinite(s.actual) && Number.isFinite(s.xpts));
+    if (pts.length < 2) return "";
+    const max = Math.max(1, ...pts.map(s => Math.max(s.actual, s.xpts)));
+    const stepX = (w - pad * 2) / (pts.length - 1);
+    const Y = (v) => h - pad - (v / max) * (h - pad * 2);
+    const X = (i) => pad + i * stepX;
+    const path = (key) => pts.map((s, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(s[key]).toFixed(1)).join(" ");
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px">
+      <path d="${path("xpts")}" fill="none" stroke="var(--accent-2)" stroke-width="2.2" stroke-dasharray="5 4" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="${path("actual")}" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`;
+  }
+  // Color por tono de veredicto de suerte (xPts).
+  function luckColor(tone) {
+    return tone === "ok" ? "var(--ok)" : tone === "lucky" ? "var(--warn)" : tone === "unlucky" ? "var(--accent-2)" : "var(--text-dim)";
+  }
+  // Tarjeta "Análisis de rendimiento (xPts)" — usada en Partidos. "" si no hay xG.
+  function luckCardHtml(c, seasonId) {
+    const l = S.luckSummary(c, seasonId);
+    if (!l) return "";
+    const d = l.diff;
+    let vTone, vText;
+    if (d >= 2) { vTone = "lucky"; vText = "Rindes por encima de tu juego: llevas " + f1(d) + " puntos más de los esperados por tu xG. Suele corregirse a la baja."; }
+    else if (d <= -2) { vTone = "unlucky"; vText = "Mereces más: te faltan " + f1(-d) + " puntos respecto a tu xG. La suerte debería equilibrarse a tu favor."; }
+    else { vTone = "ok"; vText = "Tus resultados reflejan fielmente tu juego (" + (d >= 0 ? "+" : "") + f1(d) + " frente a tu xPts)."; }
+    const vCol = luckColor(vTone);
+    const finTxt = l.finishing != null ? f1(l.finishing) + "×" : "—";
+    const defTxt = l.defending != null ? f1(l.defending) + "×" : "—";
+    const matchRows = l.matches.slice(0, 10).map(mm => {
+      const col = luckColor(mm.verdict.tone);
+      return `<div class="list-row" data-match="${U.esc(String(mm.id))}" style="cursor:pointer">
+        <span class="pill-${mm.res.toLowerCase()}">${mm.res}</span>
+        <div class="lr-main"><b>${U.esc(mm.rival || "—")}</b><small class="faint">${mm.gf}-${mm.ga} · xG ${f1(mm.xgF)}-${f1(mm.xgA)}</small></div>
+        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${mm.verdict.label}</span>
+      </div>`;
+    }).join("");
+    return `<div class="card">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Análisis de rendimiento <span class="faint" style="font-weight:400">· xPts · ${l.count} ${l.count === 1 ? "partido" : "partidos"} con xG</span></div>
+      <div style="border-left:3px solid ${vCol};padding:8px 0 8px 12px;margin-bottom:14px;color:var(--text)">${vText}</div>
+      <div class="grid cols-3 keep-2" style="margin-bottom:8px">
+        ${statTile("Puntos reales", l.actualPts, l.count + " partidos")}
+        ${statTile("Esperados (xPts)", f1(l.xpts), "según tu xG")}
+        ${statTile("Diferencia", `<span style="color:${vCol}">${(d >= 0 ? "+" : "") + f1(d)}</span>`, "real − xPts")}
+      </div>
+      ${l.series.length > 1 ? `<div style="margin:6px 0 4px">${xptsChart(l.series)}</div>
+      <div class="flex gap center wrap" style="font-size:12px;margin-bottom:12px">
+        <span class="flex gap center"><i style="display:inline-block;width:14px;height:3px;background:var(--accent);border-radius:2px"></i> Puntos reales</span>
+        <span class="flex gap center"><i style="display:inline-block;width:14px;height:0;border-top:3px dashed var(--accent-2)"></i> Esperados (xPts)</span>
+      </div>` : ""}
+      <div class="grid cols-3 keep-2" style="margin-bottom:8px">
+        ${statTile("Definición", finTxt, l.gf + " goles · " + f1(l.xgF) + " xG")}
+        ${statTile("Solidez atrás", defTxt, l.ga + " encajados · " + f1(l.xgA) + " xGA")}
+        ${statTile("PDO", l.pdo != null ? l.pdo : "—", "1000 = media · suerte")}
+      </div>
+      ${matchRows ? `<div class="section-title">Veredicto por partido</div><div class="list">${matchRows}</div>` : ""}
+    </div>`;
+  }
+  // Tarjeta "Pirámide de edad y recambio" — usada en Plantilla. "" si <5 jugadores con edad.
+  function ageProfileCardHtml(c) {
+    const ap = S.squadAgeProfile(c);
+    if (!ap || ap.count < 5) return "";
+    const maxTot = Math.max(1, ...ap.hist.map(b => b.total));
+    const seg = (n, col) => n ? `<div style="height:${(n / maxTot * 92).toFixed(1)}px;background:${col}"></div>` : "";
+    const bars = ap.hist.map(b => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;height:92px;width:60%;max-width:34px;border-radius:5px 5px 0 0;overflow:hidden;background:var(--panel-3)">
+          ${seg(b.declive, "var(--warn)")}${seg(b.pico, "var(--ok)")}${seg(b.joven, "var(--accent-2)")}
+        </div>
+        <small class="faint" style="font-size:11px">${b.label}</small>
+        <small style="font-weight:700;font-size:12px;min-height:14px">${b.total || ""}</small>
+      </div>`).join("");
+    const chip = (n, label, col) => n ? `<span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;padding:1px 7px;font-size:11px">${n} ${label}</span>` : "";
+    const groupRows = ap.byGroup.map(g => `<div class="list-row">
+        <div class="lr-main"><b>${g.group}</b><small class="faint">${g.count} jugador${g.count > 1 ? "es" : ""} · media ${f1(g.avg)} años</small></div>
+        <span class="flex gap center" style="flex-shrink:0">${chip(g.young, "joven", "var(--accent-2)")}${chip(g.peak, "pico", "var(--ok)")}${chip(g.decline, "declive", "var(--warn)")}</span>
+      </div>`).join("");
+    const insightRows = ap.insights.map(it => alertRow(it.tone === "ok" ? "check" : it.tone === "danger" ? "flame" : "flag", it.text, it.tone, null)).join("");
+    const legend = (col, txt) => `<span class="flex gap center"><i style="width:10px;height:10px;border-radius:2px;background:${col};display:inline-block"></i> ${txt}</span>`;
+    return `<div class="card" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Pirámide de edad y recambio</div>
+      <div class="grid cols-3 keep-2" style="margin-bottom:14px">
+        ${statTile("Edad media", f1(ap.avg), ap.count + " jugadores")}
+        ${statTile("Once tipo", ap.xiAvg != null ? f1(ap.xiAvg) : "—", "media de tus 11 mejores")}
+        ${statTile("En declive", ap.phases.declive, "de " + ap.count + " jugadores")}
+      </div>
+      <div class="flex" style="align-items:flex-end;gap:6px;margin-bottom:10px">${bars}</div>
+      <div class="flex gap center wrap" style="font-size:12px;margin-bottom:14px">
+        ${legend("var(--accent-2)", "En desarrollo")}${legend("var(--ok)", "En su pico")}${legend("var(--warn)", "En declive")}
+      </div>
+      <div class="list" style="margin-bottom:6px">${groupRows}</div>
+      <div class="list">${insightRows}</div>
+    </div>`;
   }
 
   FC.views.development = function () {
