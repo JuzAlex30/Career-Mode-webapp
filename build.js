@@ -10,7 +10,7 @@ const here = __dirname;
 const read = (f) => fs.readFileSync(path.join(here, f), "utf8");
 
 const css = read("styles.css");
-const js = ["js/data.js", "js/core.js", "js/cloud.js", "js/views.js", "js/app.js"].map(read).join("\n\n/* ───────── */\n\n");
+const js = ["js/data.js", "js/rosters.js", "js/core.js", "js/cloud.js", "js/views.js", "js/app.js"].map(read).join("\n\n/* ───────── */\n\n");
 
 // Seguridad: un cierre </script> dentro del JS rompería el bloque inline.
 const safeJs = js.replace(/<\/script>/gi, "<\\/script>");
@@ -30,6 +30,7 @@ const BODY = `
         <a class="nav-item" data-route="dashboard"><span class="ni-icon" data-icon="home"></span><span>Panel</span></a>
         <a class="nav-item" data-route="matches"><span class="ni-icon" data-icon="ball"></span><span>Partidos</span></a>
         <a class="nav-item" data-route="standings"><span class="ni-icon" data-icon="table"></span><span>Clasificación</span></a>
+        <a class="nav-item" data-route="rivales"><span class="ni-icon" data-icon="shield"></span><span>Rivales</span></a>
         <div class="nav-label">Club</div>
         <a class="nav-item" data-route="squad"><span class="ni-icon" data-icon="shirt"></span><span>Plantilla</span></a>
         <a class="nav-item" data-route="development"><span class="ni-icon" data-icon="growth"></span><span>Desarrollo</span></a>

@@ -4,8 +4,8 @@
 (function () {
   const { util: U, store: S, router: R, views: V, ui: UI } = FC;
   const App = {};
-  const ROUTES = ["dashboard","matches","standings","squad","development","youth","finance","challenges","story","viajes","history","hall","scouting","tools","cloud","settings","live"];
-  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", viajes:"Viajes", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes", live:"Modo en vivo" };
+  const ROUTES = ["dashboard","matches","standings","rivales","squad","development","youth","finance","challenges","story","viajes","history","hall","scouting","tools","cloud","settings","live"];
+  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", rivales:"Rivales", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", viajes:"Viajes", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes", live:"Modo en vivo" };
 
   // register routes (guard: require active career)
   ROUTES.forEach(name => R.register(name, () => {
