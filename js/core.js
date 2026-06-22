@@ -1417,11 +1417,24 @@
     let bestWin = null;
     S.userMatches(c).forEach(m => { const g = S.userGoals(c, m); if (!g || g.for <= g.against) return; const diff = g.for - g.against;
       if (!bestWin || diff > bestWin.diff) bestWin = { diff, match: m, g }; });
-    // longest unbeaten run
+    // longest unbeaten run + longest win streak
     const ordered = S.userMatches(c).slice().sort((a,b) => new Date(a.date||0) - new Date(b.date||0));
-    let run=0, bestRun=0;
-    ordered.forEach(m => { const r = S.userResult(c, m); if (r === "L") run = 0; else { run++; bestRun = Math.max(bestRun, run); } });
-    return { topScorer, topAssister, topApps, bestWin, bestUnbeaten: bestRun };
+    let run=0, bestRun=0, wrun=0, bestWrun=0;
+    ordered.forEach(m => {
+      const r = S.userResult(c, m);
+      if (r === "L") { run = 0; wrun = 0; } else { run++; bestRun = Math.max(bestRun, run); if (r === "W") { wrun++; bestWrun = Math.max(bestWrun, wrun); } else wrun = 0; }
+    });
+    // best season by points
+    let bestSeason = null;
+    (c.seasons || []).forEach(season => {
+      const ms = S.userMatches(c, season.id);
+      if (!ms.length) return;
+      const wins = ms.filter(m => S.userResult(c, m) === "W").length;
+      const pts  = ms.reduce((s, m) => { const r = S.userResult(c, m); return s + (r === "W" ? 3 : r === "D" ? 1 : 0); }, 0);
+      const gf   = ms.reduce((s, m) => { const g = S.userGoals(c, m); return s + (g ? g.for : 0); }, 0);
+      if (!bestSeason || pts > bestSeason.pts) bestSeason = { label: season.label, wins, pts, gf };
+    });
+    return { topScorer, topAssister, topApps, bestWin, bestUnbeaten: bestRun, bestWinStreak: bestWrun, bestSeason };
   };
 
   /* ---------- LOGROS ---------- */
