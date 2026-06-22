@@ -798,6 +798,7 @@
         ${sa.pens ? statCompareRow("Penaltis (total)", sa.pens.f, sa.pens.a) : ""}
       </div>` : "";
     const luckCard = luckCardHtml(c, season.id);
+    const famCard = formationFamiliarityCardHtml(c, season.id);
     const listHtml = `
       ${upcoming.length ? `<div class="card">
         <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> Próximos partidos <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
@@ -805,6 +806,7 @@
       </div>` : ""}
       ${statsCard}
       ${luckCard}
+      ${famCard}
       <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>`;
     UI.mount(`
       <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados${upcoming.length ? " · " + upcoming.length + " programado" + (upcoming.length>1?"s":"") : ""}</div></div>
@@ -1571,7 +1573,7 @@
           <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th></th>
         </tr></thead><tbody id="sq-body"></tbody></table></div>` : `<div class="empty"><div class="emoji">👕</div><h3>Plantilla vacía</h3><p>Añade tus jugadores para seguir sus estadísticas y planificar.</p></div>`}
       </div>`;
-    const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${loadCardHtml(c, season.id)}`;
+    const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${loadCardHtml(c, season.id)}${setPieceCardHtml(c)}`;
     UI.mount(`
       <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
         <div class="flex gap center wrap">
@@ -1588,6 +1590,7 @@
     `);
     document.querySelectorAll("#sq-tabs button").forEach(b => b.addEventListener("click", () => { squadTab = b.dataset.t; FC.views.squad(); }));
     content().querySelectorAll("#sq-hier [data-player]").forEach(r => r.addEventListener("click", () => UI.openPlayerCard(c, c.players.find(p => p.id === r.dataset.player))));
+    content().querySelectorAll("#sq-setpiece .sp-sel").forEach(sel => sel.addEventListener("change", () => S.setSetPieceTaker(c, sel.dataset.role, sel.value || null)));
     function wireRows() {
       const body = document.getElementById("sq-body");
       if (!body) return;
@@ -2108,6 +2111,69 @@
         ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
       </div>`;
   }
+  // Tarjeta "Familiaridad táctica" — usada en Partidos. "" si <2 partidos con formación.
+  function formationFamiliarityCardHtml(c, seasonId) {
+    const ff = S.formationFamiliarity(c, seasonId);
+    if (!ff) return "";
+    const rows = ff.formations.map(o => {
+      const isCur = o.name === ff.current;
+      const col = o.familiarity >= 70 ? "var(--ok)" : o.familiarity >= 40 ? "var(--warn)" : "var(--danger)";
+      return `<div class="list-row">
+        <div class="lr-main"><b>${U.esc(o.name)}${isCur ? ' <span class="chip accent" style="padding:1px 6px;font-size:10px">actual</span>' : ""}</b>
+          <small class="faint">${o.uses} part. · ${o.w}V ${o.d}E ${o.l}D · ${f1(o.ppg)} pts/p</small>
+          <div class="bar" style="margin-top:6px"><i style="width:${o.familiarity}%;background:${col}"></i></div></div>
+        <span class="flex gap center" style="flex-shrink:0">${CH.formBar(o.form)}</span>
+        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${o.familiarity}</span>
+      </div>`;
+    }).join("");
+    const insightRows = ff.insights.map(it => alertRow(it.tone === "warn" ? "flag" : it.tone === "ok" ? "check" : "table", it.text, it.tone, null)).join("");
+    return `<div class="card">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="table"></span> Familiaridad táctica <span class="faint" style="font-weight:400">· cohesión por sistema</span></div>
+      <div class="list">${rows}</div>
+      ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
+    </div>`;
+  }
+  // Tarjeta "Mentorías sugeridas" — usada en Desarrollo. "" si no hay material.
+  function mentoringCardHtml(c) {
+    const m = S.mentoringSuggestions(c);
+    if (!m) return "";
+    const av = (p) => `<div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>`;
+    const half = (p, role, sub) => `<span data-ment="${U.esc(String(p.id))}" style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;min-width:0">${av(p)}<span class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${role}${sub}</small></span></span>`;
+    const pairRows = m.pairs.map(pr => `<div class="list-row" style="gap:10px">
+      ${half(pr.mentor, "mentor", " · " + U.esc(String(pr.mentor.age)) + " a" + (pr.mentor.ovr ? " · " + U.esc(String(pr.mentor.ovr)) + " OVR" : ""))}
+      <span class="ni-icon" data-icon="chevron" style="color:var(--accent);flex-shrink:0"></span>
+      ${half(pr.mentee, "promesa", " · " + U.esc(String(pr.mentee.age)) + " a" + (pr.mentee.fromYouth ? " · cantera" : ""))}
+    </div>`).join("");
+    const insightRows = m.insights.map(it => alertRow("growth", it.text, it.tone, null)).join("");
+    return `<div class="card" id="dev-mentor" style="margin-top:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="sprout"></span> Mentorías sugeridas</div>
+      ${pairRows ? `<div class="list">${pairRows}</div>` : ""}
+      ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
+    </div>`;
+  }
+  // Tarjeta "Especialistas a balón parado" — usada en Plantilla (pestaña Análisis).
+  function setPieceCardHtml(c) {
+    const players = (c.players || []).filter(p => p && p.name);
+    if (players.length < 1) return "";
+    const sug = S.setPieceSuggestions(c);
+    const sp = c.setPieces || {};
+    const validIds = new Set(players.map(p => p.id));
+    const roles = [["penalty", "Penaltis", "⚽"], ["freekick", "Faltas directas", "🎯"], ["corner", "Córners", "🚩"]];
+    const opts = (selId, sugId) => `<option value="">— sin asignar —</option>` + players.map(p =>
+      `<option value="${U.esc(String(p.id))}"${(selId === p.id || (!selId && sugId === p.id)) ? " selected" : ""}>${U.esc(p.name)}${p.position ? " (" + U.esc(p.position) + ")" : ""}${(!selId && sugId === p.id) ? " — sugerido" : ""}</option>`).join("");
+    const rows = roles.map(([key, label, emoji]) => {
+      const selId = sp[key] && validIds.has(sp[key]) ? sp[key] : null;
+      return `<div class="list-row">
+        <div class="lr-main"><b>${emoji} ${label}</b>${sug[key] && !selId ? `<small class="faint">sugerencia: ${U.esc(sug[key].name)}</small>` : ""}</div>
+        <select class="sp-sel" data-role="${key}" style="flex:1;max-width:220px;padding:5px 8px">${opts(selId, sug[key] && sug[key].id)}</select>
+      </div>`;
+    }).join("");
+    return `<div class="card" id="sq-setpiece" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="target"></span> Especialistas a balón parado</div>
+      <div class="list">${rows}</div>
+      <p class="faint" style="font-size:11px;margin:10px 0 0">Apunte de planificación (el juego no lo aplica). Sugerencias según goles/asistencias que registres.</p>
+    </div>`;
+  }
 
   FC.views.development = function () {
     const c = S.getActiveCareer();
@@ -2151,8 +2217,10 @@
         }).join("")}
         </tbody></table></div>` : `<div class="empty"><div class="emoji">📈</div><h3>Sin jugadores</h3><p>Añade jugadores en Plantilla para seguir su progresión.</p></div>`}
       </div>
+      ${mentoringCardHtml(c)}
     `);
     content().querySelectorAll("[data-dev]").forEach(r => r.addEventListener("click", () => UI.openPlayerCard(c, (c.players||[]).find(p => p.id === r.dataset.dev))));
+    content().querySelectorAll("#dev-mentor [data-ment]").forEach(el => el.addEventListener("click", () => UI.openPlayerCard(c, (c.players||[]).find(p => p.id === el.dataset.ment))));
   };
 
   /* ============================================================
@@ -3266,7 +3334,7 @@
       <div class="bar"><i style="width:${pct}%"></i></div></div>`;
   }
   function alertRow(icon, text, tone, route) {
-    const col = tone === "danger" ? "var(--danger)" : tone === "warn" ? "var(--warn)" : "var(--ok)";
+    const col = tone === "danger" ? "var(--danger)" : tone === "warn" ? "var(--warn)" : tone === "neutral" ? "var(--text-dim)" : "var(--ok)";
     return `<div class="list-row" ${route ? `data-goto="${route}" style="cursor:pointer"` : ""}>
       <span class="ni-icon" data-icon="${icon}" style="color:${col}"></span><div class="lr-main"><b style="font-weight:500;font-size:13px">${U.esc(text)}</b></div>
       ${route ? '<span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>' : ""}</div>`;

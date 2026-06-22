@@ -197,6 +197,7 @@
     c.seasons.forEach(s => { if (typeof s.transferBudget !== "number" || !isFinite(s.transferBudget)) s.transferBudget = 0; });
     if (!c.seasons.some(s => s.id === c.currentSeasonId)) c.currentSeasonId = c.seasons[0].id;
     if (!c.clubName) c.clubName = c.name || "Mi club";
+    if (!c.setPieces || typeof c.setPieces !== "object" || Array.isArray(c.setPieces)) c.setPieces = {};
     return c;
   }
   function load() {
@@ -582,6 +583,98 @@
       wageBill, avgWage: withWage.length ? wageBill / withWage.length : 0,
       topEarners, topConcentration, noWage: players.length - withWage.length, insights,
     };
+  };
+
+  /* ---------- FAMILIARIDAD TÁCTICA (cohesión por sistema) ----------
+     La cohesión sube al repetir formación y baja al cambiar/rotar de sistema.
+     Derivado de m.formation + fechas; índice 0-100 que satura ~6 partidos. */
+  S.formationFamiliarity = (c, seasonId) => {
+    const ms = S.userMatches(c, seasonId).filter(m => m.formation)
+      .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    if (ms.length < 2) return null;
+    const map = {};
+    ms.forEach(m => {
+      const o = map[m.formation] || (map[m.formation] = { name: m.formation, uses: 0, w: 0, d: 0, l: 0, _res: [] });
+      o.uses++; const r = S.userResult(c, m);
+      if (r === "W") o.w++; else if (r === "D") o.d++; else o.l++;
+      o._res.push({ date: m.date, res: r });
+    });
+    const last = ms[ms.length - 1].formation;
+    let streak = 0;
+    for (let i = ms.length - 1; i >= 0; i--) { if (ms[i].formation === last) streak++; else break; }
+    const recent = ms.slice(-6).map(m => m.formation);
+    const list = Object.values(map).map(o => {
+      const recentUses = recent.filter(f => f === o.name).length;
+      let fam = Math.round(Math.min(6, o.uses) / 6 * 55 + recentUses / 6 * 45);
+      if (o.name === last) fam = Math.max(fam, Math.min(100, 45 + streak * 11));
+      o.familiarity = Math.min(100, fam);
+      o.ppg = o.uses ? (o.w * 3 + o.d) / o.uses : 0;
+      o.form = o._res.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 5).map(x => x.res);
+      delete o._res;
+      return o;
+    }).sort((a, b) => b.uses - a.uses || b.familiarity - a.familiarity);
+    const main = list[0];
+    const cur = list.find(o => o.name === last);
+    const insights = [];
+    if (main && main.uses >= 4 && main.familiarity >= 70) insights.push({ tone: "ok", text: "Tu equipo domina el " + main.name + " (" + main.uses + " partidos): automatismos asentados." });
+    if (list.length >= 4 && ms.length <= list.length * 2) insights.push({ tone: "warn", text: "Cambias mucho de sistema (" + list.length + " formaciones distintas): a tu equipo le cuesta asentar automatismos." });
+    if (cur && cur.uses <= 1) insights.push({ tone: "warn", text: "Estrenas el " + last + ": familiaridad baja, dale continuidad para que cuaje." });
+    if (!insights.length && main) insights.push({ tone: "neutral", text: "Tu sistema de referencia es el " + main.name + "." });
+    return { current: last, streak, total: ms.length, formations: list, insights };
+  };
+
+  /* ---------- MENTORÍAS (planificador veterano → promesa) ----------
+     Empareja un veterano influyente con una promesa con margen de mejora,
+     preferentemente de la misma línea. Es una GUÍA de plantilla: el juego no
+     la aplica, pero ayuda a planificar quién forma a tus jóvenes. */
+  S.mentoringSuggestions = (c) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id) && Number(p.age));
+    if (players.length < 2) return null;
+    const grp = (p) => FC.data.POS_GROUP[p.position] || "Otros";
+    const mentors = players.filter(p => (Number(p.age) >= 28 || p.squadRole === "Estrella") && (Number(p.ovr) || 0) >= 78)
+      .sort((a, b) => (Number(b.ovr) || 0) - (Number(a.ovr) || 0));
+    const mentees = players.filter(p => (Number(p.age) <= 21 || p.fromYouth) && ((Number(p.potential) || 0) - (Number(p.ovr) || 0) >= 3))
+      .sort((a, b) => ((Number(b.potential) || 0) - (Number(b.ovr) || 0)) - ((Number(a.potential) || 0) - (Number(a.ovr) || 0)));
+    if (!mentors.length || !mentees.length) {
+      return { pairs: [], insights: [{ tone: "neutral", text: !mentors.length ? "Sin veteranos de referencia (28+ años o estrellas con OVR alto) para ejercer de mentores." : "Sin jóvenes con margen de mejora para tutelar ahora mismo." }] };
+    }
+    const used = {}, pairs = [];
+    mentees.slice(0, 8).forEach(mentee => {
+      const line = grp(mentee);
+      let mentor = mentors.find(m => grp(m) === line && (used[m.id] || 0) < 2 && m.id !== mentee.id)
+        || mentors.find(m => (used[m.id] || 0) < 2 && m.id !== mentee.id);
+      if (!mentor) return;
+      used[mentor.id] = (used[mentor.id] || 0) + 1;
+      const sameLine = grp(mentor) === line;
+      const gap = (Number(mentee.potential) || 0) - (Number(mentee.ovr) || 0);
+      pairs.push({ mentor, mentee, sameLine, gap, reason: (sameLine ? "Misma línea (" + line + "). " : "") + "Margen de +" + gap + " hasta su potencial." });
+    });
+    return { pairs, insights: [{ tone: "neutral", text: "Las mentorías son una guía de planificación: el juego no las aplica, pero te orientan sobre quién debe formar a tus promesas." }] };
+  };
+
+  /* ---------- ESPECIALISTAS A BALÓN PARADO ----------
+     Sugiere lanzadores por stats derivadas (sin atributos de remate). Las
+     elecciones del usuario se persisten en c.setPieces (objeto, por id). */
+  S.setPieceSuggestions = (c) => {
+    const agg = S.playerAggregates(c, null);
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    const byName = (nm) => agg[(nm || "").trim().toLowerCase()] || {};
+    const attackers = players.filter(p => ["Banda", "Ataque", "Medio"].includes(FC.data.POS_GROUP[p.position] || ""));
+    const topBy = (pool, key) => pool.slice().sort((a, b) => (byName(b.name)[key] || 0) - (byName(a.name)[key] || 0) || (Number(b.ovr) || 0) - (Number(a.ovr) || 0))[0] || null;
+    const scorer = topBy(players, "goals");
+    const assister = topBy(players, "assists");
+    const bestAtt = attackers.slice().sort((a, b) => (Number(b.ovr) || 0) - (Number(a.ovr) || 0))[0] || null;
+    const pick = (p) => p ? { id: p.id, name: p.name } : null;
+    return {
+      penalty: pick(scorer && (byName(scorer.name).goals ? scorer : bestAtt) || bestAtt),
+      freekick: pick(bestAtt || scorer),
+      corner: pick(assister && byName(assister.name).assists ? assister : bestAtt),
+    };
+  };
+  S.setSetPieceTaker = (c, role, playerId) => {
+    if (!c.setPieces || typeof c.setPieces !== "object") c.setPieces = {};
+    if (playerId) c.setPieces[role] = playerId; else delete c.setPieces[role];
+    emit();
   };
 
   // Parser CSV minimal: soporta campos entrecomillados ("" escapa comilla), comas
