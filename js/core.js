@@ -623,6 +623,72 @@
     return { current: last, streak, total: ms.length, formations: list, insights };
   };
 
+  /* ---------- PERFIL GOLEADOR ----------
+     Analiza el patrón de goles del usuario: home/away, goles por resultado,
+     consistencia anotadora, rachas y sequías, y desglose por competición.
+     Devuelve null si hay menos de 3 partidos con marcador. */
+  S.scoringProfile = (c, seasonId) => {
+    const ms = S.userMatches(c, seasonId)
+      .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    if (ms.length < 3) return null;
+    const r1 = (n) => Math.round(n * 10) / 10;
+    const home = { pj: 0, gf: 0, ga: 0 };
+    const away = { pj: 0, gf: 0, ga: 0 };
+    const byResult = { W: { n: 0, gf: 0 }, D: { n: 0, gf: 0 }, L: { n: 0, gf: 0 } };
+    const byComp = {};
+    let scoredCount = 0, cleanSheetCount = 0;
+    let curStreak = 0, bestStreak = 0, curDrought = 0, longestDrought = 0;
+    ms.forEach(m => {
+      const g = S.userGoals(c, m);
+      if (!g) return;
+      const gf = g.for, ga = g.against;
+      const res = S.userResult(c, m);
+      const isHome = m.home === c.clubName;
+      const comp = m.competition || "Otros";
+      if (isHome) { home.pj++; home.gf += gf; home.ga += ga; }
+      else { away.pj++; away.gf += gf; away.ga += ga; }
+      if (res && byResult[res]) { byResult[res].n++; byResult[res].gf += gf; }
+      if (gf > 0) scoredCount++;
+      if (ga === 0) cleanSheetCount++;
+      if (gf > 0) { curStreak++; if (curStreak > bestStreak) bestStreak = curStreak; curDrought = 0; }
+      else { curDrought++; if (curDrought > longestDrought) longestDrought = curDrought; curStreak = 0; }
+      if (!byComp[comp]) byComp[comp] = { pj: 0, gf: 0, ga: 0 };
+      byComp[comp].pj++; byComp[comp].gf += gf; byComp[comp].ga += ga;
+    });
+    const count = ms.length;
+    const homeAvg = home.pj ? home.gf / home.pj : 0;
+    const awayAvg = away.pj ? away.gf / away.pj : 0;
+    const insights = [];
+    if (home.pj >= 3 && away.pj >= 3) {
+      if (homeAvg >= awayAvg + 0.5) insights.push({ tone: "ok", text: "Marcas más en casa (" + r1(homeAvg) + " goles/p) que fuera (" + r1(awayAvg) + "). Fuerte fortín local." });
+      else if (awayAvg >= homeAvg + 0.5) insights.push({ tone: "ok", text: "Marcas más fuera (" + r1(awayAvg) + " goles/p) que en casa (" + r1(homeAvg) + "). Equipo que sale a proponer." });
+    }
+    if (bestStreak >= 5) insights.push({ tone: "ok", text: "Racha de " + bestStreak + " partidos consecutivos marcando: gran fluidez ofensiva." });
+    if (curDrought >= 3) insights.push({ tone: "warn", text: "Llevas " + curDrought + " partidos sin marcar. El ataque necesita reactivarse." });
+    else if (curDrought >= 2) insights.push({ tone: "warn", text: "Llevas " + curDrought + " partidos sin anotar. Vigila el ataque." });
+    if (curStreak >= 4) insights.push({ tone: "ok", text: "Llevas " + curStreak + " partidos seguidos marcando. Buen momento goleador." });
+    if (longestDrought >= 4) insights.push({ tone: "warn", text: "Tu peor sequía fue de " + longestDrought + " partidos sin marcar. El ataque tiene altibajos." });
+    if (!insights.length) insights.push({ tone: "neutral", text: "Perfil goleador equilibrado para el volumen de partidos registrados." });
+    return {
+      home: { ...home, avgGf: r1(home.pj ? home.gf / home.pj : 0), avgGa: r1(home.pj ? home.ga / home.pj : 0) },
+      away: { ...away, avgGf: r1(away.pj ? away.gf / away.pj : 0), avgGa: r1(away.pj ? away.ga / away.pj : 0) },
+      byResult: {
+        W: { ...byResult.W, avgGf: r1(byResult.W.n ? byResult.W.gf / byResult.W.n : 0) },
+        D: { ...byResult.D, avgGf: r1(byResult.D.n ? byResult.D.gf / byResult.D.n : 0) },
+        L: { ...byResult.L, avgGf: r1(byResult.L.n ? byResult.L.gf / byResult.L.n : 0) },
+      },
+      scoredPct: Math.round(scoredCount / count * 100),
+      cleanSheetPct: Math.round(cleanSheetCount / count * 100),
+      currentScoringStreak: curStreak,
+      bestScoringStreak: bestStreak,
+      currentDrought: curDrought,
+      longestDrought,
+      byComp: Object.fromEntries(Object.entries(byComp).map(([k, v]) => [k, { ...v, avgGf: r1(v.pj ? v.gf / v.pj : 0) }])),
+      count,
+      insights
+    };
+  };
+
   /* ---------- MENTORÍAS (planificador veterano → promesa) ----------
      Empareja un veterano influyente con una promesa con margen de mejora,
      preferentemente de la misma línea. Es una GUÍA de plantilla: el juego no

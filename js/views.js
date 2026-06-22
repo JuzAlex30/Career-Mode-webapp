@@ -801,6 +801,7 @@
       </div>` : "";
     const luckCard = luckCardHtml(c, season.id);
     const famCard = formationFamiliarityCardHtml(c, season.id);
+    const scoringCard = scoringProfileCardHtml(c, season.id);
     const listHtml = `
       ${upcoming.length ? `<div class="card">
         <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> Próximos partidos <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
@@ -809,6 +810,7 @@
       ${statsCard}
       ${luckCard}
       ${famCard}
+      ${scoringCard}
       <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>`;
     UI.mount(`
       <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados${upcoming.length ? " · " + upcoming.length + " programado" + (upcoming.length>1?"s":"") : ""}</div></div>
@@ -2113,6 +2115,48 @@
         ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
       </div>`;
   }
+  // Tarjeta "Perfil goleador" — usada en Partidos. "" si <3 partidos.
+  function scoringProfileCardHtml(c, seasonId) {
+    const sp = S.scoringProfile(c, seasonId);
+    if (!sp) return "";
+    const haRows = (sp.home.pj && sp.away.pj) ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        ${statTile("En casa", f1(sp.home.avgGf) + " goles/p", sp.home.pj + " partidos · " + f1(sp.home.avgGa) + " enc.")}
+        ${statTile("Fuera", f1(sp.away.avgGf) + " goles/p", sp.away.pj + " partidos · " + f1(sp.away.avgGa) + " enc.")}
+      </div>` : "";
+    const streakLabel = sp.currentScoringStreak > 0
+      ? sp.currentScoringStreak + " con gol"
+      : (sp.currentDrought > 0 ? sp.currentDrought + " sin gol" : "—");
+    const streakTone = sp.currentDrought >= 2 ? "var(--warn)" : sp.currentScoringStreak >= 3 ? "var(--ok)" : "var(--text)";
+    const kpiRow = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      ${statTile("Marcan", sp.scoredPct + "%", "partidos con gol")}
+      ${statTile("Portería a 0", sp.cleanSheetPct + "%", "partidos sin encajar")}
+      <div class="stat-tile"><div class="st-value" style="color:${streakTone}">${streakLabel}</div><div class="st-label">racha actual</div></div>
+    </div>`;
+    const resRows = ["W","D","L"].filter(r => sp.byResult[r].n > 0).map(r => {
+      const label = r === "W" ? "Victorias" : r === "D" ? "Empates" : "Derrotas";
+      const col = r === "W" ? "var(--ok)" : r === "D" ? "var(--warn)" : "var(--danger)";
+      return `<div class="list-row"><span class="chip" style="background:${col};color:${r==="D"?"#000":"#fff"};flex-shrink:0">${label}</span>
+        <div class="lr-main faint" style="font-size:13px">${sp.byResult[r].n} partidos</div>
+        <b>${f1(sp.byResult[r].avgGf)} goles/p</b></div>`;
+    }).join("");
+    const compEntries = Object.entries(sp.byComp).sort((a, b) => b[1].pj - a[1].pj);
+    const compRows = compEntries.length > 1 ? compEntries.map(([comp, v]) =>
+      `<div class="list-row"><div class="lr-main"><b>${U.esc(comp)}</b>
+        <small class="faint">${v.pj} part. · ${f1(v.avgGf)} goles/p · ${v.ga} encajados</small></div></div>`
+    ).join("") : "";
+    const insightRows = sp.insights.map(it =>
+      alertRow(it.tone === "warn" ? "flag" : it.tone === "ok" ? "check" : "table", it.text, it.tone, null)
+    ).join("");
+    return `<div class="card">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="ball"></span> Perfil goleador <span class="faint" style="font-weight:400">· ${sp.count} partidos</span></div>
+      ${haRows}${kpiRow}
+      ${resRows ? `<div class="section-title" style="font-size:11px;margin:0 0 4px">GOLES POR RESULTADO</div><div class="list" style="margin-bottom:14px">${resRows}</div>` : ""}
+      ${compRows ? `<div class="section-title" style="font-size:11px;margin:0 0 4px">POR COMPETICIÓN</div><div class="list" style="margin-bottom:14px">${compRows}</div>` : ""}
+      ${insightRows ? `<div class="list">${insightRows}</div>` : ""}
+    </div>`;
+  }
+
   // Tarjeta "Familiaridad táctica" — usada en Partidos. "" si <2 partidos con formación.
   function formationFamiliarityCardHtml(c, seasonId) {
     const ff = S.formationFamiliarity(c, seasonId);
