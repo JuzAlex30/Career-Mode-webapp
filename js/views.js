@@ -2587,59 +2587,134 @@
       </div>
     </div>` : `<p class="faint">Sin artículo disponible.</p>`;
 
-    const htmlDXT = articleDXT ? `<div style="background:#0b0e15;border-radius:7px;overflow:hidden;font-family:var(--font-sans);min-height:220px;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px">
-        <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em">DXT<span style="color:#e23b3b">24</span></span>
-        <span style="display:flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.06em;background:#d11a1a;color:#fff;padding:2px 7px;border-radius:3px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:#fff;display:inline-block"></span>EN DIRECTO</span>
-      </div>
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 14px 4px">
-        <div style="font-size:13px;color:#aeb6c4;text-align:center">${tipoLabel(articleDXT.tipo)} · ${U.esc(pr.season)}</div>
-      </div>
-      <div>
-        <div style="display:flex;align-items:stretch">
-          <div style="background:#d11a1a;color:#fff;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:500;letter-spacing:.04em;flex-shrink:0">TITULAR</div>
-          <div style="flex:1;background:#f4f4f4;color:#10131a;display:flex;align-items:center;padding:9px 12px;font-size:16px;font-weight:500;line-height:1.1">${U.esc(articleDXT.titular)}</div>
+    const htmlDXT = articleDXT ? `<div style="background:#080b11;border-radius:8px;overflow:hidden;font-family:var(--font-sans)">
+      <!-- pantalla de emisión -->
+      <div style="position:relative;background:linear-gradient(160deg,#0d1929 0%,#080b14 55%,#150808 100%);min-height:190px;display:flex;align-items:center;justify-content:center">
+        <!-- mosca canal -->
+        <div style="position:absolute;top:10px;left:12px;background:rgba(0,0,0,.5);padding:3px 7px;border-radius:3px;backdrop-filter:blur(2px)">
+          <span style="font-size:14px;font-weight:800;color:#fff;letter-spacing:.02em">DXT<span style="color:#e23b3b">24</span></span>
         </div>
-        ${articleDXT.recuadroStats ? `<div style="background:#171b24;color:#aeb6c4;font-size:11px;padding:5px 12px">
-          ${U.esc(articleDXT.recuadroStats.rival || "")}${articleDXT.recuadroStats.gf != null ? "  ·  " + articleDXT.recuadroStats.gf + "-" + articleDXT.recuadroStats.ga : ""}${articleDXT.recuadroStats.mvp ? "  ·  MVP: " + U.esc(articleDXT.recuadroStats.mvp) : ""}
-        </div>` : ""}
-        <div style="background:#d11a1a;color:#fff;font-size:10.5px;padding:4px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(articleDXT.ticker || "")}</div>
-        <div style="background:#1b2130;color:#6b7584;font-size:10.5px;padding:4px 12px">${U.esc(articleDXT.firma)}</div>
+        <!-- badge en directo -->
+        <div style="position:absolute;top:10px;right:12px;display:flex;align-items:center;gap:5px;background:#d11a1a;padding:3px 9px;border-radius:2px">
+          <span style="width:5px;height:5px;border-radius:50%;background:#fff;flex-shrink:0"></span>
+          <span style="font-size:9.5px;font-weight:700;letter-spacing:.1em;color:#fff">EN DIRECTO</span>
+        </div>
+        <!-- marcador central (si hay stats) -->
+        ${articleDXT.recuadroStats ? `<div style="text-align:center">
+          <div style="font-size:10px;letter-spacing:.12em;color:#7a8598;margin-bottom:8px">${tipoLabel(articleDXT.tipo)} · ${U.esc(pr.season)}</div>
+          <div style="display:inline-flex;align-items:stretch;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,.1)">
+            <div style="background:rgba(255,255,255,.07);padding:7px 14px;max-width:100px;overflow:hidden">
+              <div style="font-size:10px;color:#7a8598;letter-spacing:.08em;margin-bottom:3px">LOCAL</div>
+              <div style="font-size:12px;font-weight:600;color:#e4e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(pr.club)}</div>
+            </div>
+            <div style="background:#d11a1a;padding:7px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div style="font-size:22px;font-weight:800;color:#fff;line-height:1;letter-spacing:.05em">${articleDXT.recuadroStats.gf}-${articleDXT.recuadroStats.ga}</div>
+              <div style="font-size:9px;color:rgba(255,255,255,.7);letter-spacing:.08em;margin-top:2px">FIN</div>
+            </div>
+            <div style="background:rgba(255,255,255,.07);padding:7px 14px;max-width:100px;overflow:hidden">
+              <div style="font-size:10px;color:#7a8598;letter-spacing:.08em;margin-bottom:3px">VISITANTE</div>
+              <div style="font-size:12px;font-weight:600;color:#e4e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(articleDXT.recuadroStats.rival||"Rival")}</div>
+            </div>
+          </div>
+          ${articleDXT.recuadroStats.mvp ? `<div style="margin-top:8px;font-size:10.5px;color:#e8a020"><span style="color:#7a8598">MVP ·</span> ${U.esc(articleDXT.recuadroStats.mvp)}</div>` : ""}
+        </div>` : `<div style="text-align:center;padding:20px">
+          <div style="font-size:10px;letter-spacing:.14em;color:#7a8598;margin-bottom:8px">${tipoLabel(articleDXT.tipo)} · ${U.esc(pr.season)}</div>
+          <div style="width:48px;height:48px;margin:0 auto;border-radius:50%;border:1.5px solid rgba(209,26,26,.4);display:flex;align-items:center;justify-content:center">
+            <div style="width:14px;height:14px;border-radius:50%;border:2px solid #d11a1a;border-top-color:transparent"></div>
+          </div>
+        </div>`}
+        <!-- lower third superpuesto -->
+        <div style="position:absolute;bottom:0;left:0;right:0">
+          <div style="display:flex;align-items:stretch">
+            <div style="background:#d11a1a;padding:5px 10px;display:flex;align-items:center;flex-shrink:0">
+              <span style="font-size:9.5px;font-weight:700;letter-spacing:.12em;color:#fff">${tipoLabel(articleDXT.tipo)}</span>
+            </div>
+            <div style="flex:1;background:rgba(8,11,17,.88);padding:5px 12px;display:flex;align-items:center">
+              <span style="font-size:15px;font-weight:600;color:#fff;line-height:1.15">${U.esc(articleDXT.titular)}</span>
+            </div>
+          </div>
+          <div style="background:rgba(15,20,30,.92);padding:4px 10px;display:flex;gap:10px;align-items:center">
+            <span style="font-size:10px;color:#7a8598;letter-spacing:.04em">${U.esc(pr.season)}</span>
+            ${articleDXT.recuadroStats?.rival ? `<span style="color:#2a3248;font-size:10px">|</span><span style="font-size:10px;color:#9aa3b2">${U.esc(articleDXT.recuadroStats.rival)}</span>` : ""}
+          </div>
+        </div>
+      </div>
+      <!-- ticker inferior -->
+      <div style="background:#d11a1a;padding:4px 12px;display:flex;gap:0;align-items:center">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.25);padding:0 7px 0 0;margin-right:8px;flex-shrink:0">NOTICIAS</span>
+        <span style="font-size:10.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(articleDXT.ticker||"")}</span>
+      </div>
+      <div style="background:#07090e;padding:3px 12px">
+        <span style="font-size:10px;color:#404859">${U.esc(articleDXT.firma)}</span>
       </div>
     </div>` : `<p class="faint">Sin emisión disponible.</p>`;
 
     const htmlZM = articleZM ? (() => {
-      const si = Math.min(99, Math.max(1, articleZM.pollSi || 50));
+      const si = Math.min(97, Math.max(3, articleZM.pollSi || 50));
       const no = 100 - si;
-      const av = (name) => `<div style="display:flex;flex-direction:column;align-items:center;gap:5px">
-        <div style="width:42px;height:42px;border-radius:50%;background:#1c2434;border:1px solid #2f3a4f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#aeb6c4">${U.esc(U.initials(name))}</div>
-        <div style="font-size:11px;color:#fff;font-weight:500;text-align:center">${U.esc(name)}</div>
-      </div>`;
-      const opRows = (articleZM.opiniones || []).map(([name, text]) =>
-        `<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
-          <div style="width:32px;height:32px;border-radius:50%;background:#1c2434;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#aeb6c4">${U.esc(U.initials(name))}</div>
-          <div><div style="font-size:11px;color:#e8a020;font-weight:500;margin-bottom:2px">${U.esc(name)}</div><div style="font-size:12.5px;color:#d1d8e4;line-height:1.4">"${U.esc(text)}"</div></div>
-        </div>`
-      ).join("");
-      return `<div style="background:#0c1019;border-radius:7px;overflow:hidden;font-family:var(--font-sans)">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1c2434">
-          <span style="font-size:15px;font-weight:700;color:#fff">Zona <span style="color:#e8a020">Mixta</span></span>
-          <span style="font-size:10px;letter-spacing:.08em;background:#e8a020;color:#3a2700;padding:2px 7px;border-radius:3px;font-weight:500">DEBATE</span>
+      const zmRoles = { "Marta Ríos": "Periodista", "J. Cana": "Ex futbolista", "El Profe": "Analista" };
+      const opRows = (articleZM.opiniones || []).map(([name, text]) => {
+        const role = zmRoles[name] || "Colaborador";
+        return `<div style="display:flex;gap:11px;align-items:flex-start">
+          <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(145deg,#1c2840,#0f1622);border:1.5px solid #c8920a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c8920a">${U.esc(U.initials(name))}</div>
+            <div style="font-size:9.5px;color:#c8920a;background:rgba(200,146,10,.12);padding:1px 5px;border-radius:2px;white-space:nowrap;font-weight:500">${U.esc(role)}</div>
+          </div>
+          <div style="flex:1;background:#0f141e;border-radius:4px;border-left:2.5px solid #c8920a;padding:7px 10px">
+            <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:4px">${U.esc(name)}</div>
+            <div style="font-size:12.5px;color:#c0c8d8;line-height:1.45;font-style:italic">"${U.esc(text)}"</div>
+          </div>
+        </div>`;
+      }).join(`<div style="display:flex;align-items:center;gap:8px;padding:2px 0"><div style="flex:1;height:1px;background:#141b28"></div><div style="font-size:10px;color:#2a3448;flex-shrink:0">VS</div><div style="flex:1;height:1px;background:#141b28"></div></div>`);
+      return `<div style="background:#08090f;border-radius:8px;overflow:hidden;font-family:var(--font-sans)">
+        <!-- cabecera show -->
+        <div style="background:linear-gradient(90deg,#12100a 0%,#1a1500 60%,#12100a 100%);border-bottom:2px solid #c8920a;display:flex;align-items:stretch">
+          <div style="background:#c8920a;padding:0 16px;display:flex;align-items:center">
+            <span style="font-size:14px;font-weight:900;color:#080600;letter-spacing:-.01em">ZONA MIXTA</span>
+          </div>
+          <div style="padding:8px 14px;display:flex;align-items:center;gap:6px">
+            <span style="width:5px;height:5px;border-radius:50%;background:#c8920a"></span>
+            <span style="font-size:9.5px;font-weight:700;letter-spacing:.12em;color:#c8920a">DEBATE EN DIRECTO</span>
+          </div>
+          <div style="margin-left:auto;padding:8px 14px;display:flex;align-items:center">
+            <span style="font-size:10px;color:#5a4e30">${U.esc(pr.season)}</span>
+          </div>
         </div>
-        <div style="padding:12px 14px">
-          <div style="font-size:16px;font-weight:500;color:#fff;line-height:1.2;margin-bottom:12px">${U.esc(articleZM.titular)}</div>
+        <!-- pregunta debate -->
+        <div style="padding:14px 14px 12px;border-bottom:1px solid #141b28">
+          <div style="font-size:9.5px;font-weight:700;letter-spacing:.14em;color:#c8920a;margin-bottom:6px">A DEBATE</div>
+          <div style="font-size:18px;font-weight:700;color:#fff;line-height:1.2">${U.esc(articleZM.titular)}</div>
+        </div>
+        <!-- opiniones -->
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:6px">
           ${opRows}
-          <div style="margin-top:10px;border:1px solid #1c2434;border-radius:4px;overflow:hidden">
-            <div style="display:flex;align-items:center;background:#171c27;padding:5px 10px;gap:8px">
-              <span style="font:500 10px var(--font-sans);letter-spacing:.06em;color:#8b95a8">ENCUESTA</span>
+        </div>
+        <!-- encuesta de audiencia -->
+        <div style="margin:0 14px 14px;border-radius:5px;overflow:hidden;border:1px solid #1a2030">
+          <div style="background:#10141e;padding:6px 12px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:9.5px;font-weight:700;letter-spacing:.12em;color:#c8920a">ENCUESTA DE AUDIENCIA</span>
             </div>
-            <div style="display:flex;height:18px">
-              <div style="width:${si}%;background:#1d9e75;display:flex;align-items:center;padding-left:7px;font-size:10px;font-weight:500;color:#04342c">SÍ ${si}%</div>
-              <div style="width:${no}%;background:#c01414;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;font-size:10px;font-weight:500;color:#fff">NO ${no}%</div>
+            <span style="font-size:10px;color:#3a4660">Canal 5</span>
+          </div>
+          <div style="background:#0c1019;padding:10px 12px 6px">
+            <div style="font-size:11px;color:#8b95a8;margin-bottom:7px;font-style:italic">${U.esc(articleZM.titular)}</div>
+            <div style="display:flex;border-radius:4px;overflow:hidden;height:28px">
+              <div style="width:${si}%;background:linear-gradient(90deg,#0a6640,#139e5e);display:flex;align-items:center;padding-left:8px;gap:4px;flex-shrink:0;min-width:42px">
+                <span style="font-size:11px;font-weight:700;color:#fff">SÍ</span>
+                <span style="font-size:11px;color:rgba(255,255,255,.8)">${si}%</span>
+              </div>
+              <div style="width:${no}%;background:linear-gradient(90deg,#8a1010,#c01414);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;gap:4px;flex-shrink:0;min-width:42px">
+                <span style="font-size:11px;color:rgba(255,255,255,.8)">${no}%</span>
+                <span style="font-size:11px;font-weight:700;color:#fff">NO</span>
+              </div>
             </div>
           </div>
         </div>
-        <div style="background:#0c1019;color:#7d8aa3;font-size:10.5px;padding:4px 14px;border-top:1px solid #1c2434">${U.esc(articleZM.firma)}</div>
+        <!-- pie -->
+        <div style="background:#060608;border-top:1px solid #141b28;padding:4px 14px">
+          <span style="font-size:10px;color:#3a4255">${U.esc(articleZM.firma)}</span>
+        </div>
       </div>`;
     })() : `<p class="faint">Sin debate disponible.</p>`;
 
