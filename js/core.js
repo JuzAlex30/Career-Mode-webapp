@@ -1320,6 +1320,96 @@
     return S.userMatches(c).length;
   };
 
+  /* ---------- CAPITAL POLÍTICO ----------
+     Deriva la tensión política (0-100) del manager a partir de:
+     – Líderes/Capitán ausentes en los últimos partidos con ratings
+     – Figuras clave perdiendo protagonismo respecto a partidos anteriores
+     – Jugadores con contrato a vencer que no están jugando
+     Devuelve null si no hay suficientes datos (< 3 partidos con ratings). */
+  S.politicalCapital = (c, seasonId) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    if (players.length < 2) return null;
+    const h = S.squadHierarchy(c);
+    if (!h || !h.players.length) return null;
+    const norm = (s) => (s || "").trim().toLowerCase();
+    const ms = S.userMatches(c, seasonId)
+      .filter(m => (m.ratings || []).length > 0)
+      .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    if (ms.length < 3) return null;
+
+    // Set de nombres que aparecen en los ratings de cada partido
+    const matchNames = ms.map(m =>
+      new Set((m.ratings || []).filter(r => r.name).map(r => norm(r.name)))
+    );
+    const recent3 = matchNames.slice(-3);
+    const prev3   = matchNames.slice(-6, -3);
+
+    const leaders = h.players.filter(p => p.tier === "Capitán" || p.tier === "Líder");
+    let tension = 0;
+    const events = [];
+
+    leaders.forEach(lp => {
+      const key = norm(lp.name);
+      const inRecent = recent3.filter(s => s.has(key)).length;
+      const inPrev   = prev3.length ? prev3.filter(s => s.has(key)).length : null;
+
+      if (inRecent === 0) {
+        // Ausente en los últimos 3 partidos con ratings
+        tension += lp.tier === "Capitán" ? 30 : 18;
+        events.push({
+          tone: lp.tier === "Capitán" ? "danger" : "warn",
+          text: lp.tier === "Capitán"
+            ? lp.name + " (Capitán) lleva 3 partidos fuera del XI. El vestuario está al rojo vivo."
+            : lp.name + " (Líder) ha desaparecido de las alineaciones. Hay rumores de tensión."
+        });
+      } else if (inPrev !== null && inPrev >= 2 && inRecent === 1) {
+        // Perdiendo protagonismo: antes fijo, ahora residual
+        tension += lp.tier === "Capitán" ? 15 : 8;
+        events.push({
+          tone: "warn",
+          text: lp.name + " está perdiendo protagonismo. Era titular fijo y ahora apenas juega."
+        });
+      }
+    });
+
+    // Figura con contrato a vencer sin minutos recientes → percepción de marginación
+    const curYear = Number(((S.currentSeason(c)) || {}).startYear || 0);
+    if (curYear) {
+      players.forEach(p => {
+        const yr = parseInt(p.contractEnd || "");
+        if (!Number.isFinite(yr) || yr < 1990 || yr > 2100) return;
+        if (yr - curYear > 1) return;
+        if (p.squadRole !== "Estrella" && p.squadRole !== "Titular") return;
+        const key = norm(p.name);
+        if (events.some(e => e.text.startsWith(p.name))) return; // ya flagueado
+        const inRecent = recent3.filter(s => s.has(key)).length;
+        if (inRecent === 0) {
+          tension += 10;
+          events.push({
+            tone: "warn",
+            text: p.name + " acaba contrato este año y no está jugando. El vestuario lo interpreta como una señal."
+          });
+        }
+      });
+    }
+
+    tension = Math.min(100, tension);
+    const level     = tension >= 60 ? "Crisis" : tension >= 25 ? "Tensión" : "Estable";
+    const levelTone = tension >= 60 ? "danger"  : tension >= 25 ? "warn"    : "ok";
+
+    const insights = [];
+    if (tension >= 60)
+      insights.push({ tone: "danger", text: "El vestuario está en crisis. La directiva podría intervenir si no atajas la situación." });
+    else if (tension >= 25)
+      insights.push({ tone: "warn", text: "Hay tensión en el ambiente. Da minutos a tus referentes antes de que escale." });
+    else if (!events.length)
+      insights.push({ tone: "ok", text: "El clima político es estable. Tus referentes tienen el protagonismo que merecen." });
+    else
+      insights.push({ tone: "neutral", text: "Situación bajo control, pero vigila la gestión de tus figuras de peso." });
+
+    return { tension, level, levelTone, events, insights };
+  };
+
   FC.store = S;
 
   /* ============================================================

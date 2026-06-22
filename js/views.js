@@ -614,6 +614,7 @@
     const fin = S.financeSummary(c, season.id);
     const injuries = S.activeInjuries(c);
     const luck = S.luckSummary(c, season.id);
+    const pol  = S.politicalCapital(c, season.id);
     const nextM = S.nextMatch(c, season.id);
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const canScout = nextRival && S.rivalHistory(c, nextRival);
@@ -685,6 +686,7 @@
             ${finAlert}
             ${alertRow("trophy", (c.trophies||[]).filter(t=>t.seasonId===season.id&&t.result==="winner").length + " título(s) esta temporada", "ok", "history")}
             ${injuries.length ? alertRow("bandage", injuries.length + " jugador" + (injuries.length > 1 ? "es" : "") + " lesionado" + (injuries.length > 1 ? "s" : ""), "danger", "squad") : ""}
+            ${pol && pol.tension >= 25 ? alertRow("shield", pol.level + " política: " + (pol.events[0] ? pol.events[0].text : "Tensión en el vestuario"), pol.levelTone, "squad") : ""}
           </div>
         </div>
       </div>
@@ -1573,7 +1575,7 @@
           <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th></th>
         </tr></thead><tbody id="sq-body"></tbody></table></div>` : `<div class="empty"><div class="emoji">👕</div><h3>Plantilla vacía</h3><p>Añade tus jugadores para seguir sus estadísticas y planificar.</p></div>`}
       </div>`;
-    const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${loadCardHtml(c, season.id)}${setPieceCardHtml(c)}`;
+    const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${loadCardHtml(c, season.id)}${politicalCapitalCardHtml(c, season.id)}${setPieceCardHtml(c)}`;
     UI.mount(`
       <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
         <div class="flex gap center wrap">
@@ -2172,6 +2174,31 @@
       <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="target"></span> Especialistas a balón parado</div>
       <div class="list">${rows}</div>
       <p class="faint" style="font-size:11px;margin:10px 0 0">Apunte de planificación (el juego no lo aplica). Sugerencias según goles/asistencias que registres.</p>
+    </div>`;
+  }
+
+  // Tarjeta "Clima político" — usada en Plantilla (pestaña Análisis).
+  function politicalCapitalCardHtml(c, seasonId) {
+    const pol = S.politicalCapital(c, seasonId);
+    if (!pol) return "";
+    const col = pol.levelTone === "danger" ? "var(--danger)" : pol.levelTone === "warn" ? "var(--warn)" : "var(--ok)";
+    const eventRows = pol.events.map(e =>
+      alertRow("flag", e.text, e.tone, null)
+    ).join("");
+    const insightRows = pol.insights.map(it =>
+      alertRow(it.tone === "danger" ? "bell" : it.tone === "warn" ? "flag" : "check", it.text, it.tone, null)
+    ).join("");
+    return `<div class="card" id="sq-political" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="shield"></span> Clima político <span class="faint" style="font-weight:400">· capital del mánager</span></div>
+      <div style="margin:0 0 14px">
+        <div class="flex between" style="font-size:12px;margin-bottom:6px">
+          <span class="faint">Tensión</span>
+          <span class="chip" style="background:${col};color:${pol.levelTone === 'ok' ? '#03110c' : '#fff'};font-weight:700">${pol.level} · ${pol.tension}/100</span>
+        </div>
+        <div class="bar"><i style="width:${pol.tension}%;background:${col}"></i></div>
+      </div>
+      ${eventRows ? `<div class="list" style="margin-bottom:8px">${eventRows}</div>` : ""}
+      ${insightRows ? `<div class="list">${insightRows}</div>` : ""}
     </div>`;
   }
 
