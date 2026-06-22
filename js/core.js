@@ -1115,6 +1115,179 @@
   };
   S.seasonsSome = (c, fn) => (c.seasons || []).some(s => fn(S.seasonSummary(c, s)));
 
+  /* ---------- RESUMEN DE TEMPORADA (veredicto de la junta) ----------
+     Análisis completo de una temporada, redactado como si lo emitiera la
+     junta directiva: nota global, comparación con la campaña anterior,
+     mejores actuaciones, mejor/peor partido, luces y sombras, y consejos
+     concretos para la próxima temporada. Todo derivado de los partidos. */
+  S.seasonReview = (c, seasonId) => {
+    const season = S.getSeason(c, seasonId) || S.currentSeason(c);
+    if (!season) return null;
+    const sm = S.seasonSummary(c, season);
+    if (!sm.played) return null;
+    const pos  = S.userPosition(c, season.id);
+    const isCurrent = season.id === c.currentSeasonId;
+    // Temporada anterior (mayor startYear por debajo de la actual).
+    const prevSeason = (c.seasons || []).filter(s => s.startYear < season.startYear).sort(U.by("startYear")).pop() || null;
+    const prevSm  = prevSeason ? S.seasonSummary(c, prevSeason) : null;
+    const prevPos = prevSeason ? S.userPosition(c, prevSeason.id) : null;
+    const agg = S.playerAggregates(c, season.id);
+    const players = Object.values(agg);
+    const sp  = S.scoringProfile(c, season.id);
+    const ms  = S.userMatches(c, season.id);
+    const gpg  = sm.played ? sm.gf / sm.played : 0;   // goles a favor por partido
+    const gapg = sm.played ? sm.ga / sm.played : 0;   // goles en contra por partido
+    // Puntos por partido local vs visitante (para el consejo de rendimiento fuera).
+    let _hp = 0, _hn = 0, _ap = 0, _an = 0;
+    ms.forEach(m => {
+      const r = S.userResult(c, m); if (!r) return;
+      const pts = r === "W" ? 3 : r === "D" ? 1 : 0;
+      if (m.home === c.clubName) { _hp += pts; _hn++; } else { _ap += pts; _an++; }
+    });
+    const homePpg = _hn ? _hp / _hn : 0, awayPpg = _an ? _ap / _an : 0;
+    const venueGap = (_hn >= 3 && _an >= 3) ? (homePpg - awayPpg) : 0;
+
+    // Objetivos de la junta (progreso manual current/target).
+    const objectives = (season.boardObjectives || []).map(o => {
+      const target = Number(o.target) || 0, current = Number(o.current) || 0;
+      const pct = target ? Math.min(100, Math.round((current / target) * 100)) : 0;
+      return { text: o.text, current, target, unit: o.unit || "", pct, met: target > 0 && current >= target };
+    });
+    const objMet = objectives.filter(o => o.met).length;
+    const objTotal = objectives.length;
+
+    // Mejor y peor partido de la temporada (por diferencia de goles).
+    let bestMatch = null, worstMatch = null;
+    ms.forEach(m => {
+      const g = S.userGoals(c, m); if (!g) return;
+      const r = S.userResult(c, m), diff = g.for - g.against;
+      if (r === "W" && (!bestMatch  || diff > bestMatch.diff))  bestMatch  = { diff, m, g };
+      if (r === "L" && (!worstMatch || diff < worstMatch.diff)) worstMatch = { diff, m, g };
+    });
+
+    // Mejores actuaciones individuales.
+    const byGoals  = players.slice().sort((a, b) => b.goals - a.goals);
+    const topScorer   = byGoals[0] && byGoals[0].goals > 0 ? byGoals[0] : null;
+    const topAssister = players.slice().sort((a, b) => b.assists - a.assists)[0];
+    const bestRated   = players.filter(p => p.ratingN >= 3).sort((a, b) => b.avg - a.avg)[0] || null;
+    const workhorse   = players.slice().sort((a, b) => b.apps - a.apps)[0] || null;
+    const topAssisterV = topAssister && topAssister.assists > 0 ? topAssister : null;
+
+    // Nota global (0-100) → grado y tono.
+    let score = 0;
+    score += Math.min(40, sm.winPct * 0.4);
+    score += objTotal ? (objMet / objTotal) * 28 : 14;
+    score += Math.min(22, sm.trophies * 13 + (sm.wonContinental ? 9 : 0));
+    if (pos && pos.total > 1) score += (1 - (pos.pos - 1) / (pos.total - 1)) * 10;
+    else score += 5;
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    const grade =
+      score >= 80 ? { label: "Sobresaliente", tone: "good",    emoji: "🏆", letter: "A" } :
+      score >= 65 ? { label: "Notable",        tone: "good",    emoji: "👏", letter: "B" } :
+      score >= 50 ? { label: "Aprobado",        tone: "neutral", emoji: "🙂", letter: "C" } :
+      score >= 35 ? { label: "Insuficiente",    tone: "warn",    emoji: "😕", letter: "D" } :
+                    { label: "Decepcionante",   tone: "bad",     emoji: "💢", letter: "E" };
+
+    // Comparación con la temporada anterior.
+    const deltas = prevSm ? {
+      points: sm.points - prevSm.points,
+      winPct: sm.winPct - prevSm.winPct,
+      gd: sm.gd - prevSm.gd,
+      pos: (pos && prevPos) ? (prevPos.pos - pos.pos) : null, // + = mejora (sube en la tabla)
+      label: prevSeason.label,
+    } : null;
+
+    // Veredicto redactado de la junta (referencia datos reales).
+    const posStr = pos ? pos.pos + "º de " + pos.total : null;
+    const trophyStr = sm.trophies > 0 ? (sm.trophies === 1 ? "un título" : sm.trophies + " títulos") : null;
+    const objStr = objTotal ? objMet + " de " + objTotal + " objetivos" : null;
+    let verdictTitle, verdictText;
+    const base = "La junta directiva ha analizado la temporada " + season.label + ". ";
+    if (grade.tone === "good" && sm.trophies > 0) {
+      verdictTitle = "Temporada para enmarcar";
+      verdictText = base + "El balance de " + sm.w + "V-" + sm.d + "E-" + sm.l + "D" + (posStr ? ", el " + posStr + " en liga" : "") + " y " + trophyStr + " confirman un curso brillante. El club está orgulloso del trabajo realizado y espera que esta exigencia se mantenga.";
+    } else if (grade.tone === "good") {
+      verdictTitle = "Curso muy satisfactorio";
+      verdictText = base + "Con " + sm.points + " puntos" + (posStr ? " y un " + posStr : "") + ", el equipo ha competido a gran nivel" + (objStr ? " (" + objStr + " cumplidos)" : "") + ". La dirección valora la solidez mostrada y confía en dar el siguiente paso.";
+    } else if (grade.tone === "neutral") {
+      verdictTitle = "Balance aceptable, con margen de mejora";
+      verdictText = base + "El " + sm.winPct + "% de victorias" + (posStr ? " y el " + posStr : "") + " dejan una sensación agridulce" + (objStr ? ": " + objStr + " cumplidos" : "") + ". La junta espera un salto de competitividad la próxima campaña.";
+    } else if (grade.tone === "warn") {
+      verdictTitle = "Temporada por debajo de las expectativas";
+      verdictText = base + "Los números — " + sm.w + "V-" + sm.d + "E-" + sm.l + "D" + (posStr ? ", " + posStr : "") + " — se quedan cortos para las aspiraciones del club" + (objStr && objMet < objTotal ? " (solo " + objStr + " cumplidos)" : "") + ". Se exige una reacción clara y un proyecto más sólido.";
+    } else {
+      verdictTitle = "La dirección exige un cambio de rumbo";
+      verdictText = base + "Con apenas " + sm.points + " puntos" + (posStr ? " y un preocupante " + posStr : "") + ", la temporada no ha estado a la altura. La junta reclama medidas inmediatas para enderezar el proyecto deportivo.";
+    }
+
+    // Luces, sombras y consejos (derivados de los datos).
+    const highlights = [], concerns = [], advice = [];
+    const totalGoals = sm.gf;
+    if (sm.wonLeague)       highlights.push({ icon: "trophy", text: "Campeones de liga: el mayor de los éxitos." });
+    if (sm.wonContinental)  highlights.push({ icon: "trophy", text: "Gloria continental para las vitrinas del club." });
+    if (sm.wonCup)          highlights.push({ icon: "trophy", text: "Título de copa que engrandece la temporada." });
+    if (sm.cleanSheets >= Math.max(5, Math.round(sm.played * 0.35))) highlights.push({ icon: "shield", text: sm.cleanSheets + " porterías a cero: la solidez defensiva fue una seña de identidad." });
+    if (gpg >= 2)           highlights.push({ icon: "ball", text: "Ataque demoledor: " + (Math.round(gpg * 10) / 10).toString().replace(".", ",") + " goles por partido de media." });
+    if (sp && sp.bestScoringStreak >= 5) highlights.push({ icon: "growth", text: "Una racha de " + sp.bestScoringStreak + " partidos seguidos marcando." });
+    if (topScorer)          highlights.push({ icon: "star", text: topScorer.name + " brilló con " + topScorer.goals + " goles esta temporada." });
+    if (deltas && deltas.pos != null && deltas.pos >= 2) highlights.push({ icon: "growth", text: "El equipo ha escalado " + deltas.pos + " puestos respecto a la temporada anterior." });
+
+    if (gapg >= 1.5)        concerns.push({ icon: "flame", text: "Defensa frágil: " + (Math.round(gapg * 10) / 10).toString().replace(".", ",") + " goles encajados por partido." });
+    if (gpg < 1)            concerns.push({ icon: "target", text: "Pegada escasa: menos de un gol por partido de media." });
+    if (sp && sp.longestDrought >= 4) concerns.push({ icon: "target", text: "Una sequía de " + sp.longestDrought + " partidos sin marcar lastró al equipo." });
+    if (objTotal && objMet < objTotal) concerns.push({ icon: "flag", text: (objTotal - objMet) + " de " + objTotal + " objetivos de la junta quedaron sin cumplir." });
+    if (sm.l > sm.w)        concerns.push({ icon: "growth", text: "Más derrotas (" + sm.l + ") que victorias (" + sm.w + "): falta regularidad." });
+    if (deltas && deltas.pos != null && deltas.pos <= -2) concerns.push({ icon: "growth", text: "El equipo ha caído " + Math.abs(deltas.pos) + " puestos respecto al curso anterior." });
+
+    // Consejos concretos para la próxima temporada.
+    if (gapg >= 1.4)        advice.push({ icon: "shield", title: "Reforzad la defensa", text: "Encajáis " + (Math.round(gapg * 10) / 10).toString().replace(".", ",") + " goles por partido. Un central de garantías o un pivote defensivo cambiarían la cara del equipo." });
+    if (gpg < 1.2)          advice.push({ icon: "target", title: "Buscad más pegada", text: "El ataque se queda en " + (Math.round(gpg * 10) / 10).toString().replace(".", ",") + " goles por partido. Hace falta un delantero diferencial que resuelva los partidos cerrados." });
+    if (topScorer && totalGoals > 0 && (topScorer.goals / totalGoals) >= 0.4) advice.push({ icon: "growth", title: "Repartid el gol", text: "El " + Math.round(topScorer.goals / totalGoals * 100) + "% de los goles los firmó " + topScorer.name + ". Si se lesiona o baja su nivel, el equipo se resiente. Distribuid la responsabilidad goleadora." });
+    if (venueGap >= 0.8) advice.push({ icon: "plane", title: "Mejorad lejos de casa", text: "Sumáis " + (Math.round(homePpg * 10) / 10).toString().replace(".", ",") + " pts por partido como local frente a " + (Math.round(awayPpg * 10) / 10).toString().replace(".", ",") + " a domicilio. Trabajad un plan específico para fuera: ahí se escapan muchos puntos." });
+    if (objTotal && objMet < objTotal) advice.push({ icon: "flag", title: "Cumplid los objetivos marcados", text: "La junta fijó metas que no se alcanzaron. La próxima temporada se evaluará con la misma vara: planificad el plantel para llegar a ellas." });
+    if (workhorse && workhorse.apps >= sm.played * 0.95 && sm.played >= 10) advice.push({ icon: "bandage", title: "Dad profundidad a la plantilla", text: workhorse.name + " ha jugado casi todo. Un plantel corto se desgasta en el tramo final: incorporad relevos de garantías." });
+    if (!advice.length) advice.push({ icon: "growth", title: "Mantened el rumbo", text: "El proyecto funciona. Conservad el bloque, haced retoques quirúrgicos y aspirad a un poco más sin romper lo que ya da resultados." });
+
+    return {
+      season, summary: sm, pos, isCurrent,
+      prevSeason, prevSm, prevPos, deltas,
+      objectives, objMet, objTotal,
+      bestMatch, worstMatch,
+      topScorer, topAssister: topAssisterV, bestRated, workhorse,
+      score, grade, verdictTitle, verdictText,
+      highlights, concerns, advice,
+    };
+  };
+
+  /* ---------- LÍNEA DE TIEMPO DE LA CARRERA ----------
+     Hitos cronológicos derivados: una entrada por temporada con su
+     resultado deportivo (posición, títulos, premios) y un descriptor
+     redactado. Pensada para visualizarse como timeline vertical. */
+  S.careerTimeline = (c) => {
+    const seasons = (c.seasons || []).slice().sort(U.by("startYear"));
+    if (!seasons.length) return [];
+    return seasons.map((s, idx) => {
+      const sm = S.seasonSummary(c, s);
+      const pos = S.userPosition(c, s.id);
+      const trophies = (c.trophies || []).filter(t => t.seasonId === s.id);
+      const awards = (c.awards || []).filter(a => a.season === s.label);
+      const badges = trophies.map(t => t.result === "winner" ? "🏆" : t.result === "promotion" ? "⬆️" : "🥈").concat(awards.map(a => a.icon || "🏅"));
+      let icon = "calendar", tone = "neutral", title;
+      if (sm.wonLeague)               { title = "Campeones de liga"; icon = "trophy"; tone = "good"; }
+      else if (sm.wonContinental)     { title = "Gloria continental"; icon = "trophy"; tone = "good"; }
+      else if (trophies.some(t => t.result === "promotion")) { title = "Ascenso de categoría"; icon = "growth"; tone = "good"; }
+      else if (sm.wonCup)             { title = "Título de copa"; icon = "trophy"; tone = "good"; }
+      else if (trophies.some(t => t.result === "runnerup")) { title = "Subcampeonato"; icon = "star"; tone = "neutral"; }
+      else if (pos && pos.pos <= 3)   { title = "Temporada en el podio"; icon = "growth"; tone = "good"; }
+      else if (pos && pos.total > 4 && pos.pos > pos.total - 3) { title = "Lucha por la permanencia"; icon = "flame"; tone = "bad"; }
+      else if (pos && pos.total > 1 && pos.pos <= Math.ceil(pos.total / 2)) { title = "Campaña en la zona alta"; icon = "shield"; tone = "neutral"; }
+      else if (idx === 0)             { title = "Inicio de la andadura"; icon = "flag"; tone = "neutral"; }
+      else                            { title = "Temporada de transición"; icon = "calendar"; tone = "neutral"; }
+      const sub = (pos ? pos.pos + "º · " : "") + sm.points + " pts · " + sm.w + "V-" + sm.d + "E-" + sm.l + "D · " + sm.gf + ":" + sm.ga + (awards.length ? " · " + awards.length + " premio" + (awards.length > 1 ? "s" : "") : "");
+      return { seasonId: s.id, label: s.label, startYear: s.startYear, icon, tone, title, sub, badges, isCurrent: s.id === c.currentSeasonId };
+    });
+  };
+
   // Resumen financiero de UNA temporada, derivado siempre de c.transfers (nunca
   // se persiste). Usa el mismo criterio de fee (Number||0) que el motor de retos,
   // así la vista y las reglas comparten una única fuente de verdad.

@@ -887,8 +887,11 @@
       UI.openMatchModal(c, findMatch(c, r.dataset.match));
     }));
     content().querySelectorAll("[data-up]").forEach(r => r.addEventListener("click", (e) => {
-      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]") || e.target.closest("[data-trip]")) return;
+      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]") || e.target.closest("[data-trip]") || e.target.closest("[data-scout]")) return;
       UI.openMatchModal(c, findMatch(c, r.dataset.up), { mode: "schedule" });
+    }));
+    content().querySelectorAll("[data-scout]").forEach(b => b.addEventListener("click", (e) => {
+      e.stopPropagation(); UI.openRivalDossier(c, b.dataset.scout);
     }));
     content().querySelectorAll("[data-play-match]").forEach(b => b.addEventListener("click", () => {
       UI.openMatchModal(c, findMatch(c, b.dataset.playMatch), { mode: "result" });
@@ -1153,6 +1156,17 @@
         ${statTile("Goles", a.gf + ":" + a.ga, "Dif " + (a.gd >= 0 ? "+" : "") + a.gd)}
         ${statTile("% Victorias", a.winPct + "%", f1(a.ppg) + " pts/partido")}
       </div>
+      <div class="flex between center" style="margin:12px 2px 0;flex-wrap:wrap;gap:8px">
+        <span class="flex gap center"><span class="faint" style="font-size:12px">Forma</span>${h.form.length ? CH.formBar(h.form) : '<span class="faint">—</span>'}</span>
+        <span class="faint" style="font-size:12px">
+          ${h.streak.unbeaten >= 2 ? `<span style="color:var(--ok)">😎 ${h.streak.unbeaten} sin perder</span>` : h.streak.winless >= 2 ? `<span style="color:var(--danger)">😰 ${h.streak.winless} sin ganar</span>` : ""}
+          ${h.cleanSheets ? ` · 🧤 ${h.cleanSheets} a cero` : ""}${h.failedToScore ? ` · 🚫 ${h.failedToScore} sin marcar` : ""}
+        </span>
+      </div>
+      ${(h.biggestWin || h.biggestLoss) ? `<div class="card" style="margin:10px 0 0">
+        ${h.biggestWin ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">Mayor victoria</span><b style="color:var(--ok)">${U.esc(h.biggestWin.home)} ${h.biggestWin.homeScore}-${h.biggestWin.awayScore} ${U.esc(h.biggestWin.away)}</b></div>` : ""}
+        ${h.biggestLoss ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">Mayor derrota</span><b style="color:var(--danger)">${U.esc(h.biggestLoss.home)} ${h.biggestLoss.homeScore}-${h.biggestLoss.awayScore} ${U.esc(h.biggestLoss.away)}</b></div>` : ""}
+      </div>` : ""}
       <div class="section-title">Análisis táctico</div>
       ${d.insights.length ? `<div class="list">${d.insights.map(i => `<div class="list-row" style="align-items:flex-start">
         <span class="ni-icon" data-icon="${i.icon}" style="color:${tone[i.tone]};flex-shrink:0;margin-top:2px"></span>
@@ -1168,6 +1182,99 @@
     UI.openModal("Dossier · " + rival, body, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
     const modal = document.getElementById("modal");
     modal.querySelectorAll("[data-rmatch]").forEach(el => el.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, el.dataset.rmatch))));
+  };
+
+  /* Resumen de temporada — veredicto de la junta directiva. */
+  UI.openSeasonReview = function (c, seasonId, opts) {
+    opts = opts || {};
+    const r = S.seasonReview(c, seasonId);
+    if (!r) { UI.toast("Esta temporada aún no tiene partidos para analizar", "err"); return; }
+    const tone = { good: "var(--ok)", neutral: "var(--text-dim)", warn: "var(--warn)", bad: "var(--danger)" };
+    const gtone = tone[r.grade.tone];
+    const sm = r.summary;
+    // Flecha de tendencia para un delta (signo: + es mejor).
+    const deltaChip = (val, suffix, invert) => {
+      if (val == null || val === 0) return `<span class="faint" style="font-size:11px">=</span>`;
+      const good = invert ? val < 0 : val > 0;
+      const arrow = val > 0 ? "▲" : "▼";
+      const col = good ? "var(--ok)" : "var(--danger)";
+      return `<span style="font-size:11px;color:${col};font-weight:700">${arrow} ${Math.abs(val)}${suffix || ""}</span>`;
+    };
+    const tileD = (label, value, sub, delta) => `<div class="card stat-tile"><div class="st-glow"></div>
+      <div class="st-label">${label}</div><div class="st-value">${value}</div>
+      <div class="st-sub">${sub || ""}${delta ? " · " + delta : ""}</div></div>`;
+    const perfTile = (label, p, statTxt) => `<div class="card tight text-c">
+      <div class="tile-label" style="font-size:11px">${label}</div>
+      <div class="tile-val" style="font-size:16px;font-weight:700">${p ? U.esc(p.name) : "—"}</div>
+      <div class="tile-sub faint" style="font-size:12px">${p ? statTxt(p) : "Sin datos"}</div></div>`;
+    const matchLine = (label, x, col) => x ? `<div class="flex between center" style="padding:7px 0">
+      <span class="faint" style="font-size:12px">${label}</span>
+      <span style="font-size:13px"><b style="color:${col}">${U.esc(x.m.home)} ${x.m.homeScore}-${x.m.awayScore} ${U.esc(x.m.away)}</b></span></div>` : "";
+    const liItem = (i, col) => `<div class="list-row" style="align-items:flex-start;padding:7px 0">
+      <span class="ni-icon" data-icon="${i.icon}" style="color:${col};flex-shrink:0;margin-top:2px"></span>
+      <div class="lr-main"><b style="font-weight:500;font-size:13px">${U.esc(i.text)}</b></div></div>`;
+
+    const objHtml = r.objTotal ? `<div class="section-title">Objetivos de la junta · ${r.objMet}/${r.objTotal} cumplidos</div>
+      <div class="card" style="margin:0">${r.objectives.map(o => `<div style="margin-bottom:10px">
+        <div class="flex between center" style="font-size:13px;margin-bottom:4px">
+          <span>${o.met ? "✅" : o.pct >= 60 ? "🔶" : "❌"} ${U.esc(o.text)}</span>
+          <span class="faint">${o.current}/${o.target} ${U.esc(o.unit)}</span></div>
+        <div class="bar"><i style="width:${o.pct}%;background:${o.met ? "var(--ok)" : o.pct >= 60 ? "var(--warn)" : "var(--danger)"}"></i></div></div>`).join("")}</div>` : "";
+
+    const body = `
+      <div class="flex gap center mb" style="align-items:stretch">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:${gtone}1a;border:1.5px solid ${gtone};border-radius:10px;padding:8px 16px;flex-shrink:0">
+          <div style="font-size:30px;line-height:1">${r.grade.emoji}</div>
+          <div style="font:800 13px var(--font-sans);color:${gtone};letter-spacing:.02em;margin-top:2px">${r.grade.label}</div>
+          <div class="faint" style="font-size:10px">Nota ${r.score}/100</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+          <b style="font-size:18px;line-height:1.15">${U.esc(r.verdictTitle)}</b>
+          <div class="faint" style="font-size:12px;margin-top:2px">Temporada ${U.esc(r.season.label)}${r.isCurrent ? " · en curso" : ""}</div>
+        </div>
+      </div>
+      <div style="border-left:3px solid ${gtone};background:var(--panel);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.5">${U.esc(r.verdictText)}</div>
+
+      <div class="grid cols-4 keep-2">
+        ${tileD("Posición", r.pos ? r.pos.pos + "º" : "—", r.pos ? "de " + r.pos.total : "Sin liga", r.deltas ? deltaChip(r.deltas.pos, "", false) : "")}
+        ${tileD("Puntos", sm.points, sm.played + " PJ", r.deltas ? deltaChip(r.deltas.points, "", false) : "")}
+        ${tileD("Balance", sm.w + "-" + sm.d + "-" + sm.l, sm.winPct + "% victorias", r.deltas ? deltaChip(r.deltas.winPct, "%", false) : "")}
+        ${tileD("Goles", sm.gf + ":" + sm.ga, "Dif " + (sm.gd >= 0 ? "+" : "") + sm.gd, r.deltas ? deltaChip(r.deltas.gd, "", false) : "")}
+      </div>
+      ${r.deltas ? `<div class="faint" style="font-size:11px;text-align:center;margin-top:6px">▲▼ comparado con la temporada ${U.esc(r.deltas.label)}</div>` : ""}
+
+      ${objHtml}
+
+      <div class="section-title">Actuaciones destacadas</div>
+      <div class="grid cols-4 keep-2">
+        ${perfTile("⚽ Goleador", r.topScorer, p => p.goals + " goles")}
+        ${perfTile("🅰️ Asistente", r.topAssister, p => p.assists + " asist.")}
+        ${perfTile("⭐ Mejor nota", r.bestRated, p => f1(p.avg) + " media")}
+        ${perfTile("👕 Más partidos", r.workhorse, p => p.apps + " PJ")}
+      </div>
+
+      ${(r.bestMatch || r.worstMatch) ? `<div class="section-title">Partidos del año</div>
+        <div class="card" style="margin:0">${matchLine("Mejor resultado", r.bestMatch, "var(--ok)")}${matchLine("Peor resultado", r.worstMatch, "var(--danger)")}</div>` : ""}
+
+      ${r.highlights.length ? `<div class="section-title">Lo mejor de la temporada</div>
+        <div class="card" style="margin:0">${r.highlights.map(i => liItem(i, "var(--ok)")).join("")}</div>` : ""}
+      ${r.concerns.length ? `<div class="section-title">Asignaturas pendientes</div>
+        <div class="card" style="margin:0">${r.concerns.map(i => liItem(i, "var(--danger)")).join("")}</div>` : ""}
+
+      <div class="section-title">Consejos de la junta para la próxima temporada</div>
+      <div class="list">${r.advice.map(i => `<div class="list-row" style="align-items:flex-start">
+        <span class="ni-icon" data-icon="${i.icon}" style="color:var(--accent);flex-shrink:0;margin-top:2px"></span>
+        <div class="lr-main"><b>${U.esc(i.title)}</b><div style="font-size:13px;margin-top:2px;color:var(--text-dim)">${U.esc(i.text)}</div></div>
+      </div>`).join("")}</div>
+    `;
+    const foot = opts.canAdvance
+      ? '<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="sr-advance"><span class="ni-icon" data-icon="growth"></span> Avanzar a la próxima temporada</button>'
+      : '<button class="btn btn-ghost" data-close>Cerrar</button>';
+    UI.openModal("Informe de temporada · " + r.season.label, body, foot, { lg: true });
+    if (opts.canAdvance) {
+      const adv = document.getElementById("sr-advance");
+      if (adv) adv.addEventListener("click", () => { S.addSeason(c); UI.closeModal(); UI.toast("Nueva temporada iniciada", "ok"); FC.router.go("dashboard"); });
+    }
   };
 
   /* ============================================================
@@ -3223,11 +3330,29 @@
     const rec = S.allTimeRecords(c);
     const trophies = (c.trophies || []).slice().sort((a,b) => (b.season||"").localeCompare(a.season||""));
     const seasonsRows = (c.seasons || []).slice().sort(U.by("startYear")).reverse().map(s => { const sm = S.seasonSummary(c, s); const pos = S.userPosition(c, s.id); return { s, sm, pos }; });
+    const reviewSeason = (c.seasons || []).slice().sort(U.by("startYear")).reverse().find(s => S.userMatches(c, s.id).length);
+    const review = reviewSeason ? S.seasonReview(c, reviewSeason.id) : null;
+    const rTone = review ? ({ good: "var(--ok)", neutral: "var(--text-dim)", warn: "var(--warn)", bad: "var(--danger)" })[review.grade.tone] : "";
+    const timeline = S.careerTimeline(c);
+    const tlTone = { good: "var(--ok)", neutral: "var(--text-dim)", warn: "var(--warn)", bad: "var(--danger)" };
     UI.mount(`
       <div class="page-head"><div><h1>Historia del club</h1><div class="sub">Tu legado, temporada a temporada</div></div>
         <div class="flex gap"><button class="btn btn-ghost" id="hs-award"><span class="ni-icon" data-icon="star"></span> Premio</button>
           <button class="btn btn-primary" id="hs-trophy"><span class="ni-icon" data-icon="trophy"></span> Añadir trofeo</button></div>
       </div>
+
+      ${review ? `<div class="card" id="hs-review-card" style="cursor:pointer;border-left:3px solid ${rTone};display:flex;align-items:center;gap:14px">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:${rTone}1a;border:1.5px solid ${rTone};border-radius:10px;padding:6px 12px;flex-shrink:0">
+          <div style="font-size:26px;line-height:1">${review.grade.emoji}</div>
+          <div style="font:800 11px var(--font-sans);color:${rTone}">${review.grade.label}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font:700 10px var(--font-sans);letter-spacing:.12em;color:${rTone}">VEREDICTO DE LA JUNTA · ${U.esc(review.season.label)}</div>
+          <b style="font-size:16px;display:block;margin:2px 0 1px">${U.esc(review.verdictTitle)}</b>
+          <div class="faint" style="font-size:12px">Pulsa para leer el informe completo de la temporada</div>
+        </div>
+        <span class="ni-icon" data-icon="chevron-right" style="flex-shrink:0;color:var(--text-dim)"></span>
+      </div>` : ""}
 
       <div class="section-title">Vitrina de trofeos</div>
       <div class="card">${trophies.length ? `<div class="grid cols-4 keep-2">${trophies.map(t => `<div class="card tight text-c" style="position:relative">
@@ -3255,12 +3380,28 @@
 
       <div class="section-title">Resumen por temporadas</div>
       <div class="card tight"><div class="table-wrap"><table class="tbl"><thead><tr>
-        <th>Temporada</th><th>Liga</th><th class="num">Pos</th><th class="num">PJ</th><th class="num">V-E-D</th><th class="num">GF:GC</th><th class="num">Títulos</th>
+        <th>Temporada</th><th>Liga</th><th class="num">Pos</th><th class="num">PJ</th><th class="num">V-E-D</th><th class="num">GF:GC</th><th class="num">Títulos</th><th></th>
       </tr></thead><tbody>
-      ${seasonsRows.map(({s, sm, pos}) => `<tr><td><b>${U.esc(s.label)}</b></td><td class="faint">${U.esc(s.leagueName||c.leagueName)}</td>
+      ${seasonsRows.map(({s, sm, pos}) => `<tr ${sm.played ? `data-review="${s.id}" style="cursor:pointer"` : ""}><td><b>${U.esc(s.label)}</b></td><td class="faint">${U.esc(s.leagueName||c.leagueName)}</td>
         <td class="num">${pos ? pos.pos + "º" : "—"}</td><td class="num">${sm.played}</td><td class="num">${sm.w}-${sm.d}-${sm.l}</td>
-        <td class="num">${sm.gf}:${sm.ga}</td><td class="num">${sm.trophies}</td></tr>`).join("")}
-      </tbody></table></div></div>
+        <td class="num">${sm.gf}:${sm.ga}</td><td class="num">${sm.trophies}</td>
+        <td class="num">${sm.played ? `<span class="ni-icon" data-icon="chevron-right" style="color:var(--text-dim)"></span>` : ""}</td></tr>`).join("")}
+      </tbody></table></div><div class="faint" style="font-size:11px;padding:6px 10px 0">Pulsa una temporada para ver el informe de la junta.</div></div>
+
+      ${timeline.length ? `<div class="section-title">Línea de tiempo de la carrera</div>
+      <div class="card"><div style="position:relative;padding-left:6px">
+        ${timeline.slice().reverse().map((t, i, arr) => `<div style="display:flex;gap:12px;align-items:flex-start;${i < arr.length - 1 ? "padding-bottom:14px" : ""};position:relative">
+          ${i < arr.length - 1 ? `<div style="position:absolute;left:9px;top:22px;bottom:-2px;width:2px;background:var(--line)"></div>` : ""}
+          <div style="width:20px;height:20px;border-radius:50%;background:${tlTone[t.tone]}1a;border:2px solid ${tlTone[t.tone]};display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1">
+            <span class="ni-icon" data-icon="${t.icon}" style="width:11px;height:11px;color:${tlTone[t.tone]}"></span></div>
+          <div style="flex:1;min-width:0">
+            <div class="flex between center" style="gap:8px">
+              <b style="font-size:14px">${U.esc(t.title)}${t.isCurrent ? ` <span class="chip" style="font-size:9px;padding:1px 6px;background:var(--accent);color:#fff">EN CURSO</span>` : ""}</b>
+              <span class="faint" style="font-size:12px;flex-shrink:0">${U.esc(t.label)}</span></div>
+            <div class="faint" style="font-size:12px;margin-top:2px">${U.esc(t.sub)}</div>
+            ${t.badges.length ? `<div style="font-size:17px;margin-top:3px;letter-spacing:1px">${t.badges.join(" ")}</div>` : ""}
+          </div></div>`).join("")}
+      </div></div>` : ""}
 
       ${(function(){
         const played = S.userMatches(c).filter(m => m.formation);
@@ -3279,6 +3420,9 @@
         <div id="hs-notes"></div></div>
     `);
     renderNotes(c);
+    const reviewCard = document.getElementById("hs-review-card");
+    if (reviewCard && reviewSeason) reviewCard.addEventListener("click", () => UI.openSeasonReview(c, reviewSeason.id));
+    content().querySelectorAll("[data-review]").forEach(row => row.addEventListener("click", () => UI.openSeasonReview(c, row.dataset.review)));
     document.getElementById("hs-trophy").addEventListener("click", () => trophyModal(c));
     document.getElementById("hs-award").addEventListener("click", () => awardModal(c));
     document.getElementById("hs-note").addEventListener("click", () => noteModal(c));
@@ -3453,7 +3597,12 @@
       S.updateCareer({ clubName: document.getElementById("se-club").value.trim() || c.clubName, managerName: document.getElementById("se-manager").value.trim() });
       UI.toast("Cambios guardados", "ok");
     });
-    document.getElementById("se-newseason").addEventListener("click", () => UI.confirm("¿Avanzar a una nueva temporada? La actual quedará archivada en tu historia.", () => { S.addSeason(c); UI.toast("Nueva temporada iniciada", "ok"); FC.router.go("dashboard"); }));
+    document.getElementById("se-newseason").addEventListener("click", () => {
+      const cur = S.currentSeason(c);
+      // Si la temporada en curso tiene partidos, la junta emite su informe antes de avanzar.
+      if (cur && S.userMatches(c, cur.id).length) UI.openSeasonReview(c, cur.id, { canAdvance: true });
+      else UI.confirm("¿Avanzar a una nueva temporada? La actual quedará archivada en tu historia.", () => { S.addSeason(c); UI.toast("Nueva temporada iniciada", "ok"); FC.router.go("dashboard"); });
+    });
     document.getElementById("se-delete").addEventListener("click", () => UI.confirm("¿Eliminar esta carrera y todos sus datos? No se puede deshacer.", () => {
       S.deleteCareer(c.id); FC.app.boot();
     }, true));
@@ -3760,6 +3909,8 @@
   }
   function upcomingRow(c, m) {
     const home = m.home === c.clubName, away = m.away === c.clubName;
+    const rival = S.opponentOf(c, m);
+    const canScout = rival && S.rivalHistory(c, rival);
     return `<div class="fixture upcoming" data-up="${m.id}" style="cursor:pointer">
       <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
       <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${U.esc(m.home||"—")}</span>
@@ -3767,6 +3918,7 @@
         <span class="t away" style="${away?"font-weight:700":""}">${U.esc(m.away||"—")}</span></div>
       <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
       <div class="up-actions">
+        ${canScout ? `<button class="btn btn-ghost btn-sm" data-scout="${U.esc(rival)}"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
         ${away ? `<button class="btn btn-ghost btn-sm" data-trip="${m.id}"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
         <button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>
         <button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>
