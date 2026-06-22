@@ -1579,7 +1579,7 @@
           <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th></th>
         </tr></thead><tbody id="sq-body"></tbody></table></div>` : `<div class="empty"><div class="emoji">👕</div><h3>Plantilla vacía</h3><p>Añade tus jugadores para seguir sus estadísticas y planificar.</p></div>`}
       </div>`;
-    const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${loadCardHtml(c, season.id)}${politicalCapitalCardHtml(c, season.id)}${setPieceCardHtml(c)}`;
+    const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${influenceNetworkCardHtml(c)}${adaptationCardHtml(c)}${loadCardHtml(c, season.id)}${politicalCapitalCardHtml(c, season.id)}${setPieceCardHtml(c)}`;
     UI.mount(`
       <div class="page-head"><div><h1>Plantilla</h1><div class="sub">${players.length} jugadores · ${U.esc(season.label)}</div></div>
         <div class="flex gap center wrap">
@@ -1991,6 +1991,29 @@
       ${matchRows ? `<div class="section-title">Veredicto por partido</div><div class="list">${matchRows}</div>` : ""}
     </div>`;
   }
+  // Tarjeta "Índice de adaptación al club" — usada en Plantilla (pestaña Análisis). "" si no hay jugadores.
+  function adaptationCardHtml(c) {
+    const ad = S.playerAdaptation(c);
+    if (!ad || !ad.players.length) return "";
+    const toneCol = (t) => t === "ok" ? "var(--ok)" : t === "warn" ? "var(--warn)" : t === "danger" ? "var(--danger)" : "var(--text-dim)";
+    const bar = (score) => `<div style="flex:1;height:6px;border-radius:3px;background:var(--panel-3);overflow:hidden"><div style="width:${score}%;height:100%;background:${toneCol(score >= 80 ? "ok" : score >= 50 ? "neutral" : score >= 25 ? "warn" : "danger")};border-radius:3px"></div></div>`;
+    const rows = ad.players.slice(0, 10).map(p =>
+      `<div class="list-row">
+        <div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
+        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${p.age ? U.esc(String(p.age)) + " a" : ""}${p.ovr ? " · " + U.esc(String(p.ovr)) + " OVR" : ""}${p.fromYouth ? " · <span style='color:var(--accent-2)'>Cantera</span>" : ""}</small></div>
+        <div style="display:flex;align-items:center;gap:8px;min-width:110px">${bar(p.score)}<span style="font-size:12px;font-weight:700;min-width:28px;text-align:right;color:${toneCol(p.tone)}">${p.score}%</span></div>
+        <span class="chip" style="background:${toneCol(p.tone)};color:#03110c;font-size:10px;padding:2px 6px;flex-shrink:0">${U.esc(p.level)}</span>
+      </div>`
+    ).join("");
+    const insightRows = ad.insights.map(i => alertRow(i.tone === "ok" ? "check" : "flag", i.text, i.tone, null)).join("");
+    return `<div class="card" id="sq-adaptation" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Adaptación al club <span class="faint" style="font-weight:400">· integración de la plantilla</span></div>
+      <div class="list">${rows}</div>
+      ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
+      <p class="faint" style="font-size:11px;margin:8px 0 0">Derivado de apariciones totales, cantera y rol asignado.</p>
+    </div>`;
+  }
+
   // Tarjeta "Pirámide de edad y recambio" — usada en Plantilla. "" si <5 jugadores con edad.
   function ageProfileCardHtml(c) {
     const ap = S.squadAgeProfile(c);
@@ -2049,6 +2072,36 @@
       ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
     </div>`;
   }
+  // Tarjeta "Red de influencia" — usada en Plantilla (pestaña Análisis). "" si <3 jugadores o sin órbitas.
+  function influenceNetworkCardHtml(c) {
+    const net = S.influenceNetwork(c);
+    if (!net) return "";
+    const av = (p) => `<div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>`;
+    const tierCol = (t) => t === "Capitán" ? "var(--accent-3)" : t === "Líder" ? "var(--accent-2)" : "var(--accent)";
+    const groupHtml = net.groups.map(g => {
+      const ldr = g.leader;
+      const orbitRows = g.orbit.map(p => {
+        const tags = p.reasons.map(r => `<span class="chip" style="padding:1px 5px;font-size:10px;background:var(--panel-3)">${r}</span>`).join(" ");
+        return `<div class="list-row" style="padding-left:28px;opacity:.9">
+          <span style="color:var(--text-dim);font-size:16px;flex-shrink:0">└</span>
+          ${av(p)}
+          <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${p.age ? U.esc(String(p.age)) + " a" : ""}${p.ovr ? " · " + U.esc(String(p.ovr)) + " OVR" : ""} ${tags}</small></div>
+        </div>`;
+      }).join("");
+      return `<div class="list-row" style="border-top:1px solid var(--line);padding-top:8px;margin-top:4px">
+        ${av(ldr)}
+        <div class="lr-main"><b>${U.esc(ldr.name)}</b>
+          <small class="faint">${ldr.age ? U.esc(String(ldr.age)) + " a · " : ""}${U.esc(String(ldr.ovr || ""))} OVR</small></div>
+        <span class="chip" style="background:${tierCol(ldr.tier)};color:#03110c;flex-shrink:0">${U.esc(ldr.tier)}</span>
+      </div>${orbitRows}`;
+    }).join("");
+    return `<div class="card" id="sq-influence" style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Red de influencia <span class="faint" style="font-weight:400">· órbitas del vestuario</span></div>
+      <div class="list">${groupHtml}</div>
+      <p class="faint" style="font-size:11px;margin:8px 0 0">Conexiones derivadas de línea, edad, cantera y mentorías asignadas.</p>
+    </div>`;
+  }
+
   // Tarjeta "Carga y rotaciones" — usada en Plantilla (pestaña Análisis). Empty-state si no hay minutos.
   function loadCardHtml(c, seasonId) {
     const l = S.loadReport(c, seasonId);

@@ -508,6 +508,38 @@
     return { count: n, captain, leaders, youngLeader, players: scored, insights };
   };
 
+  /* ---------- ÍNDICE DE ADAPTACIÓN AL CLUB ----------
+     Mide cuánto se ha "asentado" cada jugador: apps all-time como proxy de
+     tiempo en el club, bonificado por cantera y rol. Sin fecha de fichaje en
+     el modelo, las apps son el mejor indicador disponible. */
+  S.playerAdaptation = (c) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    if (!players.length) return null;
+    const agg = S.playerAggregates(c, null);
+    const results = players.map(p => {
+      const key  = (p.name || "").trim().toLowerCase();
+      const apps = (agg[key] && agg[key].apps) || 0;
+      let score  = Math.min(apps / 20, 1) * 70;
+      if (!!p.fromYouth) score += 20;
+      if (p.squadRole === "Estrella") score += 10;
+      else if (p.squadRole === "Titular") score += 5;
+      score = Math.round(Math.min(100, score));
+      const level = score >= 80 ? "Arraigado" : score >= 50 ? "Integrado" : score >= 25 ? "Adaptándose" : "Recién llegado";
+      const tone  = score >= 80 ? "ok" : score >= 50 ? "neutral" : score >= 25 ? "warn" : "danger";
+      return { id: p.id, name: p.name, apps, score, level, tone, fromYouth: !!p.fromYouth, position: p.position, age: p.age, ovr: p.ovr, badge: p.badge };
+    }).sort((a, b) => b.score - a.score);
+    const low = results.filter(p => p.score < 25);
+    const high = results.filter(p => p.score >= 80);
+    const insights = [];
+    if (low.length)
+      insights.push({ tone: "warn", text: low.length + " jugador" + (low.length > 1 ? "es" : "") + " aún no " + (low.length > 1 ? "están" : "está") + " integrado" + (low.length > 1 ? "s" : "") + ": " + low.slice(0, 3).map(p => p.name).join(", ") + "." });
+    if (high.length >= 5)
+      insights.push({ tone: "ok", text: "Núcleo sólido: " + high.length + " jugadores con alta adaptación al club." });
+    if (!insights.length)
+      insights.push({ tone: "neutral", text: "Plantilla en proceso de consolidación. Dale tiempo para que los fichajes se asienten." });
+    return { players: results, insights };
+  };
+
   /* ---------- CARGA Y ROTACIONES (gestión de minutos/fatiga) ----------
      Derivado de m.ratings[].minutes (opt-in) + m.date. Mide reparto de
      minutos, sobre-dependencia, carga reciente y congestión de calendario.
@@ -716,6 +748,49 @@
       pairs.push({ mentor, mentee, sameLine, gap, reason: (sameLine ? "Misma línea (" + line + "). " : "") + "Margen de +" + gap + " hasta su potencial." });
     });
     return { pairs, insights: [{ tone: "neutral", text: "Las mentorías son una guía de planificación: el juego no las aplica, pero te orientan sobre quién debe formar a tus promesas." }] };
+  };
+
+  /* ---------- RED DE INFLUENCIA ----------
+     Agrupa la plantilla en "órbitas": cada figura clave (Capitán/Líder/Referente)
+     con los jugadores que caen en su esfera de influencia (misma línea y joven,
+     de cantera, o emparejado como mentee suyo). Devuelve null si <3 jugadores. */
+  S.influenceNetwork = (c) => {
+    const players = (c.players || []).filter(p => p && (p.name || p.id));
+    if (players.length < 3) return null;
+    const h = S.squadHierarchy(c);
+    if (!h || !h.players.length) return null;
+    const grp = (p) => FC.data.POS_GROUP[p.position] || "Otros";
+    const mentoring = S.mentoringSuggestions(c);
+    const menteeOf = {};
+    if (mentoring) mentoring.pairs.forEach(pr => { menteeOf[pr.mentee.id] = pr.mentor.id; });
+    const figures = h.players.filter(p => p.tier === "Capitán" || p.tier === "Líder" || p.tier === "Referente");
+    if (!figures.length) return null;
+    const figureIds = new Set(figures.map(f => f.id));
+    const allInOrbit = new Set();
+    const groups = figures.map(ldr => {
+      const ldrGrp = grp(ldr);
+      const candidates = h.players.filter(p => {
+        if (p.id === ldr.id || figureIds.has(p.id) || allInOrbit.has(p.id)) return false;
+        const isMentee   = menteeOf[p.id] === ldr.id;
+        const sameLine   = grp(p) === ldrGrp && Number(p.age) <= 23;
+        const isYouthAny = !!p.fromYouth && Number(p.age) <= 24;
+        return isMentee || sameLine || isYouthAny;
+      });
+      const orbit = candidates.map(p => {
+        allInOrbit.add(p.id);
+        const isMentee   = menteeOf[p.id] === ldr.id;
+        const sameLine   = grp(p) === ldrGrp && Number(p.age) <= 23;
+        const isYouthAny = !!p.fromYouth && Number(p.age) <= 24;
+        const reasons = [];
+        if (isMentee)              reasons.push("mentoría");
+        if (sameLine)              reasons.push("línea");
+        if (isYouthAny && !sameLine) reasons.push("cantera");
+        return { id: p.id, name: p.name, tier: p.tier, age: p.age, ovr: p.ovr, badge: p.badge, reasons };
+      });
+      return { leader: ldr, orbit };
+    }).filter(g => g.orbit.length > 0);
+    if (!groups.length) return null;
+    return { groups };
   };
 
   /* ---------- ESPECIALISTAS A BALÓN PARADO ----------
