@@ -97,7 +97,7 @@
     const s = (row && row.summary) || {};
     const top = s.topScorer ? U.esc(s.topScorer.name) + " · " + (s.topScorer.goals || 0) + " goles" : "—";
     const trophies = s.titlesList || [];
-    return `<div class="flex gap center mb"><div class="career-badge" style="background:${U.safeColor(null, U.colorFor(s.club||""))}">${U.initials(s.club||"?")}</div>
+    return `<div class="flex gap center mb"><div class="career-badge" style="background:${U.teamColors(s.club||"").bg};color:${U.teamColors(s.club||"").text}">${U.initials(s.club||"?")}</div>
         <div><b style="font-size:18px">${U.esc(s.club||"Club")}</b><br><small class="faint">${U.esc(s.league||"")}${s.manager?" · "+U.esc(s.manager):""}</small></div></div>
       <div class="grid cols-4 keep-2">
         ${statTile("Títulos", s.titles||0, "")}
@@ -174,7 +174,7 @@
     const manager = (rows[0].manager || "").trim();
     const totalTitles = rows.reduce((a, r) => a + (Number(r.titles) || 0), 0);
     box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || "Manager")}</b><br><small class="faint">${rows.length} carrera(s) · ${totalTitles} título(s) en total</small></div></div>
-      <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.safeColor(null, U.colorFor(r.club || ""))}">${U.initials(r.club || "?")}</span><div class="lr-main"><b>${U.esc(r.club || "Club")}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} títulos</small></div></div>`).join("")}</div>`;
+      <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.teamColors(r.club||"").bg};color:${U.teamColors(r.club||"").text}">${U.initials(r.club||"?")}</span><div class="lr-main"><b>${U.esc(r.club || "Club")}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} títulos</small></div></div>`).join("")}</div>`;
     U.hydrateIcons(box);
     box.querySelectorAll("[data-pf]").forEach(el => el.addEventListener("click", () => UI.openSharedModal(rows[+el.dataset.pf], cfg)));
   };
@@ -191,7 +191,7 @@
     const club = U.esc(row.club || "su club");
     const headline = (Number(row.titles) || 0) > 0 ? `${who} presume de <b>${club}</b>` : `${who} empieza su aventura con <b>${club}</b>`;
     return `<div class="list-row" data-feed="${i}" style="cursor:pointer;align-items:flex-start">
-      <span class="career-badge" style="background:${U.safeColor(null, U.colorFor(row.club || ""))}">${U.initials(row.club || "?")}</span>
+      <span class="career-badge" style="background:${U.teamColors(row.club||"").bg};color:${U.teamColors(row.club||"").text}">${U.initials(row.club||"?")}</span>
       <div class="lr-main"><div>${headline}</div>
         <small class="faint">${U.esc(row.league || "")}${row.created_at ? " · " + U.fmtDate(row.created_at) : ""}</small>
         ${chips.length ? `<div class="cc-rules" style="margin-top:6px">${chips.join("")}</div>` : ""}
@@ -674,7 +674,7 @@
       ${nextM ? `<div class="card next-match" id="dash-next" style="cursor:pointer">
         <div class="nm-left"><span class="ni-icon" data-icon="calendar"></span>
           <div><div class="nm-label">Próximo partido${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
-          <div class="nm-teams">${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${U.esc(nextM.away||"—")}</div></div>
+          <div class="nm-teams">${teamDot(nextM.home||"")}${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${teamDot(nextM.away||"")}${U.esc(nextM.away||"—")}</div></div>
         </div>
         <div class="flex gap center">
           ${canScout ? `<button class="btn btn-ghost btn-sm" id="dash-next-scout"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
@@ -1135,15 +1135,15 @@
       const r = S.userResult(c, m), cls = r === "W" ? "win" : r === "L" ? "loss" : "";
       return `<div class="fixture" data-rmatch="${m.id}" style="cursor:pointer">
         <span class="fx-comp">${U.esc(m.competition || "")}${m.round ? " · " + U.esc(m.round) : ""}${m.formation ? ` <span class="chip" style="font-size:10px;padding:1px 5px;opacity:.75">${U.esc(m.formation)}</span>` : ""}</span>
-        <div class="fx-teams"><span class="t" style="${m.home === c.clubName ? "font-weight:700" : ""}">${U.esc(m.home)}</span>
+        <div class="fx-teams"><span class="t" style="${m.home === c.clubName ? "font-weight:700" : ""}">${teamDot(m.home)}${U.esc(m.home)}</span>
           <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
-          <span class="t away" style="${m.away === c.clubName ? "font-weight:700" : ""}">${U.esc(m.away)}</span></div>
+          <span class="t away" style="${m.away === c.clubName ? "font-weight:700" : ""}">${teamDot(m.away)}${U.esc(m.away)}</span></div>
         <span class="faint" style="font-size:11px;width:60px;text-align:right">${U.fmtDate(m.date) || ""}</span></div>`;
     }).join("");
 
     const body = `
       <div class="flex gap center mb">
-        <span class="career-badge" style="background:${U.safeColor(null, U.colorFor(rival))}">${U.initials(rival)}</span>
+        <span class="career-badge" style="background:${U.teamColors(rival).bg};color:${U.teamColors(rival).text}">${U.initials(rival)}</span>
         <div><b style="font-size:18px">${U.esc(rival)}</b><br><small class="faint">${a.pj} enfrentamiento${a.pj === 1 ? "" : "s"} · ${a.w}V-${a.d}E-${a.l}D · ${a.gf}:${a.ga}</small></div>
       </div>
       <div style="border-left:3px solid ${vtone};background:var(--panel);padding:12px 14px;border-radius:8px;margin-bottom:14px">
@@ -1403,7 +1403,7 @@
       <div class="live-screen">
         <div class="live-top">
           <div class="live-club">
-            <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
+            <span class="career-badge" style="background:${U.teamColors(c.clubName,c.badgeColor).bg};color:${U.teamColors(c.clubName,c.badgeColor).text}">${U.initials(c.clubName)}</span>
             <div class="live-club-meta"><b>${U.esc(c.clubName)}</b><small>${U.esc(season.leagueName || c.leagueName)} · ${U.esc(season.label)}</small></div>
           </div>
           <button class="btn btn-ghost" id="live-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
@@ -1549,7 +1549,7 @@
     ov.innerHTML = `
       <div class="live-top">
         <div class="live-club">
-          <span class="career-badge" style="background:${U.safeColor(c.badgeColor, U.colorFor(c.clubName))}">${U.initials(c.clubName)}</span>
+          <span class="career-badge" style="background:${U.teamColors(c.clubName,c.badgeColor).bg};color:${U.teamColors(c.clubName,c.badgeColor).text}">${U.initials(c.clubName)}</span>
           <div class="live-club-meta"><b>${U.esc(startCity.city)} → ${U.esc(endCity.city)}</b><small>${isReturn ? "Viaje de vuelta · " : ""}vs ${U.esc(ctx.rival)}${m.competition ? " · " + U.esc(m.competition) : ""}${m.round ? " " + U.esc(m.round) : ""}</small></div>
         </div>
         <div class="flex gap center">
@@ -2991,7 +2991,7 @@
         <th>Club</th><th>Liga</th><th class="num">Temp.</th><th class="num">Trofeos</th><th class="num">Títulos</th>
       </tr></thead><tbody>
       ${hof.careers.map(cc => `<tr>
-        <td><div class="flex gap center"><div class="career-badge" style="background:${U.safeColor(cc.badgeColor, U.colorFor(cc.clubName))}">${U.initials(cc.clubName)}</div><b>${U.esc(cc.clubName)}</b></div></td>
+        <td><div class="flex gap center"><div class="career-badge" style="background:${U.teamColors(cc.clubName,cc.badgeColor).bg};color:${U.teamColors(cc.clubName,cc.badgeColor).text}">${U.initials(cc.clubName)}</div><b>${U.esc(cc.clubName)}</b></div></td>
         <td class="faint">${U.esc(cc.leagueName||"")}</td>
         <td class="num">${cc.seasons}</td><td class="num">${cc.trophies}</td><td class="num"><b>${cc.titles}</b></td></tr>`).join("")}
       </tbody></table></div></div>
@@ -3610,7 +3610,7 @@
     // careers list
     const cl = document.getElementById("se-careers");
     cl.innerHTML = S.careersList().map(cc => `<div class="list-row">
-      <div class="career-badge" style="background:${U.safeColor(cc.badgeColor, U.colorFor(cc.clubName))}">${U.initials(cc.clubName)}</div>
+      <div class="career-badge" style="background:${U.teamColors(cc.clubName,cc.badgeColor).bg};color:${U.teamColors(cc.clubName,cc.badgeColor).text}">${U.initials(cc.clubName)}</div>
       <div class="lr-main"><b>${U.esc(cc.clubName)}</b><small>${U.esc(cc.leagueName)} · ${(cc.seasons||[]).length} temp.</small></div>
       ${cc.id === c.id ? `<span class="chip accent">Activa</span>` : `<button class="btn btn-ghost btn-sm" data-switch="${cc.id}">Abrir</button>`}</div>`).join("");
     cl.querySelectorAll("[data-switch]").forEach(b => b.addEventListener("click", () => { S.setActiveCareer(b.dataset.switch); FC.router.go("dashboard"); FC.app.refreshChrome(); }));
@@ -3873,7 +3873,7 @@
   function rivalRow(c, o) {
     const ppgCol = o.ppg >= 2 ? "var(--ok)" : o.ppg >= 1 ? "var(--warn)" : "var(--danger)";
     return `<div class="list-row" data-rival="${U.esc(o.rival)}" style="cursor:pointer">
-      <span class="career-badge" style="background:${U.safeColor(null, U.colorFor(o.rival))}">${U.initials(o.rival)}</span>
+      <span class="career-badge" style="background:${U.teamColors(o.rival).bg};color:${U.teamColors(o.rival).text}">${U.initials(o.rival)}</span>
       <div class="lr-main"><b>${U.esc(o.rival)}</b>
         <small class="faint">${o.played} duelo${o.played === 1 ? "" : "s"} · <span style="color:var(--ok);font-weight:700">${o.w}V</span> <span style="color:var(--warn);font-weight:700">${o.d}E</span> <span style="color:var(--danger);font-weight:700">${o.l}D</span> · ${o.gf}:${o.ga}</small></div>
       <span class="flex gap center" style="flex-shrink:0">${CH.formBar(o.form)}</span>
@@ -3896,14 +3896,15 @@
       <span class="ni-icon" data-icon="${icon}" style="color:${col}"></span><div class="lr-main"><b style="font-weight:500;font-size:13px">${U.esc(text)}</b></div>
       ${route ? '<span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>' : ""}</div>`;
   }
+  const teamDot = n => { const tc=U.teamColors(n||""); return `<span aria-hidden="true" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${tc.bg};margin-right:4px;vertical-align:middle;flex-shrink:0;box-shadow:0 0 0 1.5px rgba(255,255,255,0.18)"></span>`; };
   function fixtureRow(c, m, withDelete) {
     const g = S.userGoals(c, m); const r = S.userResult(c, m);
     const cls = r === "W" ? "win" : r === "L" ? "loss" : "";
     return `<div class="fixture" data-match="${m.id}" style="cursor:pointer">
       <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}${m.formation ? ` <span class="chip" style="font-size:10px;padding:1px 5px;opacity:.75">${U.esc(m.formation)}</span>` : ""}</span>
-      <div class="fx-teams"><span class="t ${m.home===c.clubName?"":""}" style="${m.home===c.clubName?"font-weight:700":""}">${U.esc(m.home)}</span>
+      <div class="fx-teams"><span class="t" style="${m.home===c.clubName?"font-weight:700":""}">${teamDot(m.home)}${U.esc(m.home)}</span>
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
-        <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${U.esc(m.away)}</span></div>
+        <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${teamDot(m.away)}${U.esc(m.away)}</span></div>
       <button class="icon-btn sm" data-cronica="${m.id}" title="Crónica del partido" style="flex-shrink:0"><span class="ni-icon" data-icon="book"></span></button>
       ${withDelete ? `<button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>` : `<span class="faint" style="font-size:11px;width:60px;text-align:right">${U.fmtDate(m.date)}</span>`}</div>`;
   }
@@ -3913,9 +3914,9 @@
     const canScout = rival && S.rivalHistory(c, rival);
     return `<div class="fixture upcoming" data-up="${m.id}" style="cursor:pointer">
       <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
-      <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${U.esc(m.home||"—")}</span>
+      <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${teamDot(m.home||"")}${U.esc(m.home||"—")}</span>
         <span class="fx-vs">vs</span>
-        <span class="t away" style="${away?"font-weight:700":""}">${U.esc(m.away||"—")}</span></div>
+        <span class="t away" style="${away?"font-weight:700":""}">${teamDot(m.away||"")}${U.esc(m.away||"—")}</span></div>
       <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
       <div class="up-actions">
         ${canScout ? `<button class="btn btn-ghost btn-sm" data-scout="${U.esc(rival)}"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
@@ -3934,9 +3935,9 @@
     const score = played ? `<span class="fx-score ${rc}">${m.homeScore}-${m.awayScore}</span>` : `<span class="fx-vs">vs</span>`;
     return `<div class="fixture${played ? "" : " upcoming"}${isNext ? " is-next" : ""}" ${played ? `data-match="${m.id}"` : `data-up="${m.id}"`} style="cursor:pointer">
       <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
-      <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${U.esc(m.home||"—")}</span>
+      <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${teamDot(m.home||"")}${U.esc(m.home||"—")}</span>
         ${score}
-        <span class="t away" style="${away?"font-weight:700":""}">${U.esc(m.away||"—")}</span></div>
+        <span class="t away" style="${away?"font-weight:700":""}">${teamDot(m.away||"")}${U.esc(m.away||"—")}</span></div>
       ${!played ? `<button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>` : ""}
       <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
     </div>`;

@@ -40,11 +40,34 @@
       || /^[a-z]{3,20}$/i.test(v);
     return ok ? v : (fallback || "var(--accent)");
   };
+  // Busca un equipo en TEAM_COLORS: exacto → normalizado → contiene (≥5 chars).
+  U._tcFind = (name) => {
+    const tc = FC.data && FC.data.TEAM_COLORS;
+    if (!tc) return null;
+    if (tc[name]) return tc[name];
+    const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();
+    const n = norm(name);
+    for (const k of Object.keys(tc)) { if (norm(k) === n) return tc[k]; }
+    for (const k of Object.keys(tc)) { const kn = norm(k); if (kn.length >= 5 && (n.includes(kn) || kn.includes(n))) return tc[k]; }
+    return null;
+  };
+  // Devuelve "#ffffff" o "#111111" según la luminancia percibida del color de fondo.
+  U.textOn = (bg) => {
+    const m = String(bg).match(/^#([0-9a-f]{3,6})$/i);
+    if (!m) return "#ffffff";
+    const h = m[1].length === 3 ? m[1].split("").map(c=>c+c).join("") : m[1];
+    return 0.2126*(parseInt(h.slice(0,2),16)/255)+0.7152*(parseInt(h.slice(2,4),16)/255)+0.0722*(parseInt(h.slice(4,6),16)/255) < 0.5 ? "#ffffff" : "#111111";
+  };
+  // {bg, text} para un equipo. badgeOverride respeta el color guardado por el usuario.
+  U.teamColors = (name, badgeOverride) => {
+    const tc = U._tcFind(name) || {};
+    const bg = U.safeColor(badgeOverride, U.safeColor(tc.primary, U.colorFor(name)));
+    return {bg, text: U.textOn(bg)};
+  };
   // Genera un escudo SVG con forma de escudo, colores oficiales del equipo e iniciales.
-  // Usa D.TEAM_COLORS si el equipo está catalogado; si no, cae al hash de color.
   U.teamCrest = (clubName, size) => {
     size = size || 36;
-    const tc = (FC.data && FC.data.TEAM_COLORS && FC.data.TEAM_COLORS[clubName]) || {};
+    const tc = U._tcFind(clubName) || {};
     const primary = U.safeColor(tc.primary, U.colorFor(clubName));
     const secondary = U.safeColor(tc.secondary, "#ffffff");
     const ini = U.initials(clubName);

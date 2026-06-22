@@ -26,8 +26,9 @@
       // Si tiene un badgeColor personalizado explícito (distinto del hash auto) → badge de color.
       // Para clubes custom sin catálogo → badge con hash de color.
       const _crestOrBadge = (clubName, badgeColor) => {
-        if (FC.data && FC.data.TEAM_COLORS && FC.data.TEAM_COLORS[clubName]) return U.teamCrest(clubName, 32);
-        return `<span class="career-badge" style="background:${U.safeColor(badgeColor, U.colorFor(clubName))}">${U.initials(clubName)}</span>`;
+        if (U._tcFind(clubName)) return U.teamCrest(clubName, 32);
+        const tc = U.teamColors(clubName, badgeColor);
+        return `<span class="career-badge" style="background:${tc.bg};color:${tc.text}">${U.initials(clubName)}</span>`;
       };
       cs.innerHTML = `<button class="career-chip" id="careerChip">
         ${_crestOrBadge(c.clubName, c.badgeColor)}
