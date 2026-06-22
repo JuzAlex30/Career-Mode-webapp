@@ -615,6 +615,8 @@
     const injuries = S.activeInjuries(c);
     const luck = S.luckSummary(c, season.id);
     const pol  = S.politicalCapital(c, season.id);
+    const pressData = S.pressRoom(c, season.id);
+    const dianaHd = pressData && pressData.articles.find(a => a.medio === "DIANA");
     const nextM = S.nextMatch(c, season.id);
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const canScout = nextRival && S.rivalHistory(c, nextRival);
@@ -649,6 +651,11 @@
           ${nextM.away === c.clubName ? `<button class="btn btn-ghost btn-sm" id="dash-next-trip"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
           <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
         </div>
+      </div>` : ""}
+      ${dianaHd ? `<div class="card" style="margin:10px 0 0;border-left:3px solid #bf1717;padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" id="dash-press-banner">
+        <span style="font:700 11px var(--font-sans);letter-spacing:.12em;color:#bf1717;flex-shrink:0">DIANA</span>
+        <span style="font:500 14px var(--font-serif);line-height:1.2;flex:1">${U.esc(dianaHd.titular)}</span>
+        <span class="ni-icon" data-icon="chevron-right" style="flex-shrink:0;color:var(--text-dim)"></span>
       </div>` : ""}
 
       <div class="grid cols-4 keep-2">
@@ -722,6 +729,8 @@
     // objectives
     renderObjectives(c, season);
 
+    const pressBanner = document.getElementById("dash-press-banner");
+    if (pressBanner) pressBanner.addEventListener("click", () => { pressTab = "DIANA"; FC.router.go("story"); });
     document.getElementById("dash-add").addEventListener("click", () => UI.openMatchModal(c));
     document.getElementById("dash-live").addEventListener("click", () => FC.router.go("live"));
     const nextEl = document.getElementById("dash-next");
@@ -780,6 +789,7 @@
      PARTIDOS
      ============================================================ */
   let matchesTab = "list"; // "list" | "calendar" — persiste entre re-renders
+  let pressTab = "DIANA";  // "DIANA" | "Crónica" | "GolDirecto"
   FC.views.matches = function () {
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
@@ -2520,6 +2530,129 @@
   };
 
   /* ============================================================
+     SALA DE PRENSA
+     ============================================================ */
+  function pressRoomHtml(c, seasonId) {
+    const pr = S.pressRoom(c, seasonId);
+    if (!pr || !pr.articles.length) return "";
+    const byMedio = (m) => pr.articles.filter(a => a.medio === m);
+    const MEDIOS = ["DIANA", "Crónica", "GolDirecto", "DXT24", "Zona Mixta"];
+    const tabBtn = (m) => `<button type="button" class="seg-btn${pressTab === m ? " active" : ""}" data-pm="${U.esc(m)}">${U.esc(m)}</button>`;
+    const tipoLabel = (t) => t === "cronica" ? "CRÓNICA" : t === "vestuario" ? "VESTUARIO" : "RACHA";
+    const statsBoxDiana = (rs) => rs ? `<div style="display:flex;gap:0;margin-top:10px;border:1px solid #1a1a1a;font-family:var(--font-sans)">
+      <div style="flex:1;text-align:center;padding:5px 0;border-right:1px solid #1a1a1a"><div style="font-size:15px;font-weight:700">${rs.gf}-${rs.ga}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">GOL</div></div>
+      <div style="flex:2;text-align:center;padding:5px 0;border-right:1px solid #1a1a1a"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(rs.rival || "")}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">RIVAL</div></div>
+      ${rs.mvp ? `<div style="flex:2;text-align:center;padding:5px 0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(rs.mvp)}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">MVP</div></div>` : ""}
+    </div>` : "";
+    const statsBoxCronica = (rs) => rs ? `<div style="border-left:2px solid #9a9178;padding:6px 10px;margin-top:8px;font-family:var(--font-sans);font-size:11px;color:#5b5546">
+      <b style="display:block;margin-bottom:2px">Estadísticas</b>
+      ${rs.rival ? "Rival: " + U.esc(rs.rival) + "  · " : ""}Marcador: ${rs.gf}-${rs.ga}${rs.mvp ? "  · Destacado: " + U.esc(rs.mvp) : ""}
+    </div>` : "";
+
+    const articleDiana = byMedio("DIANA")[0];
+    const articleCronica = byMedio("Crónica")[0];
+    const articleGD = byMedio("GolDirecto")[0];
+    const articleDXT = byMedio("DXT24")[0];
+    const articleZM = byMedio("Zona Mixta")[0];
+
+    const htmlDiana = articleDiana ? `<div style="background:#f5efe2;color:#1a1a1a;border-radius:2px;padding:14px 16px;font-family:var(--font-serif)">
+      <div style="border-top:3px double #1a1a1a;margin-bottom:7px"></div>
+      <div style="font:500 10.5px var(--font-sans);letter-spacing:.1em;color:#bf1717;margin-bottom:3px">${tipoLabel(articleDiana.tipo)}</div>
+      <div style="font-size:26px;font-weight:700;line-height:1;color:#bf1717;margin-bottom:6px">${U.esc(articleDiana.titular)}</div>
+      <div style="font-size:13px;font-style:italic;color:#3a342a;margin-bottom:10px">${U.esc(articleDiana.entradilla)}</div>
+      ${articleDiana.cuerpo.map(p => `<p style="font-size:12px;line-height:1.55;margin:0 0 5px;text-align:justify">${U.esc(p)}</p>`).join("")}
+      ${statsBoxDiana(articleDiana.recuadroStats)}
+      <div style="border-top:1px solid #cdc3ad;margin-top:8px;font:400 10.5px var(--font-sans);color:#6b6051;padding-top:5px">${U.esc(articleDiana.firma)}</div>
+    </div>` : `<p class="faint">Sin crónica disponible.</p>`;
+
+    const htmlCronica = articleCronica ? `<div style="background:#f3f1ea;color:#191818;border-radius:2px;padding:14px 16px;font-family:var(--font-serif)">
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#6c6657;font-family:var(--font-sans);border-bottom:1px solid #cdc3ad;padding-bottom:5px;margin-bottom:8px">
+        <span>Crónica · Deportes</span><span>${U.esc(pr.season)}</span>
+      </div>
+      <div style="font:500 10px var(--font-sans);letter-spacing:.28em;color:#5b5546;margin-bottom:4px">${tipoLabel(articleCronica.tipo)}</div>
+      <div style="font-size:22px;font-weight:500;line-height:1.1;margin-bottom:5px">${U.esc(articleCronica.titular)}</div>
+      <div style="font-size:12.5px;font-style:italic;color:#3c362b;margin-bottom:10px">${U.esc(articleCronica.entradilla)}</div>
+      ${articleCronica.cuerpo.map(p => `<p style="font-size:12px;line-height:1.6;margin:0 0 6px;text-align:justify">${U.esc(p)}</p>`).join("")}
+      ${statsBoxCronica(articleCronica.recuadroStats)}
+      <div style="border-top:1px solid #c7c1b1;margin-top:8px;font:400 10.5px var(--font-sans);color:#6c6657;font-style:italic;padding-top:5px">${U.esc(articleCronica.firma)}</div>
+    </div>` : `<p class="faint">Sin artículo disponible.</p>`;
+
+    const htmlGD = articleGD ? `<div style="border-radius:7px;overflow:hidden;font-family:var(--font-sans);border:1px solid var(--line)">
+      <div style="background:#d11a1a;padding:8px 12px;font-size:15px;font-weight:700;letter-spacing:-.01em;color:#fff">GolDirecto</div>
+      <div style="padding:12px 14px;background:#fff;color:#15171a">
+        <div style="font:500 10.5px var(--font-sans);letter-spacing:.07em;color:#d11a1a;margin-bottom:5px">${tipoLabel(articleGD.tipo)} · ÚLTIMA HORA</div>
+        <div style="font-size:17px;font-weight:500;line-height:1.2;margin-bottom:7px">${U.esc(articleGD.titular)}</div>
+        <div style="font-size:13px;color:#444;line-height:1.45">${U.esc(articleGD.entradilla)}</div>
+        <div style="margin-top:10px;font-size:11px;color:#888">${U.esc(articleGD.firma)}</div>
+      </div>
+    </div>` : `<p class="faint">Sin artículo disponible.</p>`;
+
+    const htmlDXT = articleDXT ? `<div style="background:#0b0e15;border-radius:7px;overflow:hidden;font-family:var(--font-sans);min-height:220px;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px">
+        <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em">DXT<span style="color:#e23b3b">24</span></span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.06em;background:#d11a1a;color:#fff;padding:2px 7px;border-radius:3px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:#fff;display:inline-block"></span>EN DIRECTO</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 14px 4px">
+        <div style="font-size:13px;color:#aeb6c4;text-align:center">${tipoLabel(articleDXT.tipo)} · ${U.esc(pr.season)}</div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:stretch">
+          <div style="background:#d11a1a;color:#fff;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:500;letter-spacing:.04em;flex-shrink:0">TITULAR</div>
+          <div style="flex:1;background:#f4f4f4;color:#10131a;display:flex;align-items:center;padding:9px 12px;font-size:16px;font-weight:500;line-height:1.1">${U.esc(articleDXT.titular)}</div>
+        </div>
+        ${articleDXT.recuadroStats ? `<div style="background:#171b24;color:#aeb6c4;font-size:11px;padding:5px 12px">
+          ${U.esc(articleDXT.recuadroStats.rival || "")}${articleDXT.recuadroStats.gf != null ? "  ·  " + articleDXT.recuadroStats.gf + "-" + articleDXT.recuadroStats.ga : ""}${articleDXT.recuadroStats.mvp ? "  ·  MVP: " + U.esc(articleDXT.recuadroStats.mvp) : ""}
+        </div>` : ""}
+        <div style="background:#d11a1a;color:#fff;font-size:10.5px;padding:4px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(articleDXT.ticker || "")}</div>
+        <div style="background:#1b2130;color:#6b7584;font-size:10.5px;padding:4px 12px">${U.esc(articleDXT.firma)}</div>
+      </div>
+    </div>` : `<p class="faint">Sin emisión disponible.</p>`;
+
+    const htmlZM = articleZM ? (() => {
+      const si = Math.min(99, Math.max(1, articleZM.pollSi || 50));
+      const no = 100 - si;
+      const av = (name) => `<div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:42px;height:42px;border-radius:50%;background:#1c2434;border:1px solid #2f3a4f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#aeb6c4">${U.esc(U.initials(name))}</div>
+        <div style="font-size:11px;color:#fff;font-weight:500;text-align:center">${U.esc(name)}</div>
+      </div>`;
+      const opRows = (articleZM.opiniones || []).map(([name, text]) =>
+        `<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#1c2434;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#aeb6c4">${U.esc(U.initials(name))}</div>
+          <div><div style="font-size:11px;color:#e8a020;font-weight:500;margin-bottom:2px">${U.esc(name)}</div><div style="font-size:12.5px;color:#d1d8e4;line-height:1.4">"${U.esc(text)}"</div></div>
+        </div>`
+      ).join("");
+      return `<div style="background:#0c1019;border-radius:7px;overflow:hidden;font-family:var(--font-sans)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1c2434">
+          <span style="font-size:15px;font-weight:700;color:#fff">Zona <span style="color:#e8a020">Mixta</span></span>
+          <span style="font-size:10px;letter-spacing:.08em;background:#e8a020;color:#3a2700;padding:2px 7px;border-radius:3px;font-weight:500">DEBATE</span>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-size:16px;font-weight:500;color:#fff;line-height:1.2;margin-bottom:12px">${U.esc(articleZM.titular)}</div>
+          ${opRows}
+          <div style="margin-top:10px;border:1px solid #1c2434;border-radius:4px;overflow:hidden">
+            <div style="display:flex;align-items:center;background:#171c27;padding:5px 10px;gap:8px">
+              <span style="font:500 10px var(--font-sans);letter-spacing:.06em;color:#8b95a8">ENCUESTA</span>
+            </div>
+            <div style="display:flex;height:18px">
+              <div style="width:${si}%;background:#1d9e75;display:flex;align-items:center;padding-left:7px;font-size:10px;font-weight:500;color:#04342c">SÍ ${si}%</div>
+              <div style="width:${no}%;background:#c01414;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;font-size:10px;font-weight:500;color:#fff">NO ${no}%</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:#0c1019;color:#7d8aa3;font-size:10.5px;padding:4px 14px;border-top:1px solid #1c2434">${U.esc(articleZM.firma)}</div>
+      </div>`;
+    })() : `<p class="faint">Sin debate disponible.</p>`;
+
+    const paneles = { "DIANA": htmlDiana, "Crónica": htmlCronica, "GolDirecto": htmlGD, "DXT24": htmlDXT, "Zona Mixta": htmlZM };
+
+    return `<div class="section-title" style="margin-top:20px">Sala de prensa</div>
+    <div class="card">
+      <div class="seg" id="press-tabs" style="margin-bottom:14px">${MEDIOS.map(tabBtn).join("")}</div>
+      ${MEDIOS.map(m => `<div id="press-panel-${m}" style="${pressTab !== m ? "display:none" : ""}">${paneles[m]}</div>`).join("")}
+    </div>`;
+  }
+
+  /* ============================================================
      NARRATIVA / STORYLINE
      ============================================================ */
   FC.views.story = function () {
@@ -2554,8 +2687,17 @@
         </div>
         <div id="story-incidents" style="margin-top:10px"></div>
       </div>
+      ${pressRoomHtml(c, season.id)}
     `);
     renderIncidents(c);
+    document.querySelectorAll("#press-tabs .seg-btn").forEach(b => b.addEventListener("click", () => {
+      pressTab = b.dataset.pm;
+      document.querySelectorAll("#press-tabs .seg-btn").forEach(x => x.classList.toggle("active", x.dataset.pm === pressTab));
+      ["DIANA","Crónica","GolDirecto","DXT24","Zona Mixta"].forEach(m => {
+        const el = document.getElementById("press-panel-" + m);
+        if (el) el.style.display = m === pressTab ? "" : "none";
+      });
+    }));
     document.getElementById("story-incident").addEventListener("click", () => {
       const inc = FC.incidents.generate(c);
       if (!inc) { UI.toast("Añade jugadores a tu plantilla para que ocurran cosas en el vestuario", "err"); return; }

@@ -5125,6 +5125,147 @@ body.trip-open { overflow: hidden; }
     return { last5, signals, mood, drought, scoringStreak, overloaded, injured: activeInjured };
   };
 
+  /* ---------- SALA DE PRENSA ----------
+     Genera artículos ficticios (crónica, vestuario, racha) para 3 medios
+     inventados con sesgos editoriales distintos. Totalmente determinista:
+     el mismo historial produce siempre los mismos artículos. */
+  S.pressRoom = (c, seasonId) => {
+    const season = (c.seasons || []).find(s => s.id === seasonId) || S.currentSeason(c);
+    if (!season || !c.clubName) return null;
+    const club = c.clubName;
+    const played = S.userMatches(c, seasonId)
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    if (!played.length) return null;
+    const pol  = S.politicalCapital(c, seasonId);
+    const sp   = S.scoringProfile(c, seasonId);
+    const hier = S.squadHierarchy(c);
+    const captain = hier && hier.captain ? hier.captain.name : null;
+    const h    = (s) => { let v = 7; s = String(s || ""); for (let i = 0; i < s.length; i++) v = (v * 31 + s.charCodeAt(i)) % 100003; return v; };
+    const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
+    const articles = [];
+
+    /* ---- CRÓNICA del último partido ---- */
+    const lastM = played[0];
+    const res   = S.userResult(c, lastM);
+    const gls   = S.userGoals(c, lastM);
+    const rival = S.opponentOf(c, lastM) || "el rival";
+    const isHome = lastM.home === club;
+    const locacion = isHome ? "en casa" : "a domicilio";
+    const score = gls ? gls.for + "-" + gls.against : null;
+    const ratings = (lastM.ratings || []).filter(r => r.name && r.rating).sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    const mvpName = ratings[0] ? ratings[0].name : null;
+    const comp  = lastM.competition || "la competición";
+    const seed  = h((lastM.id || "x") + (rival || ""));
+
+    if (res) {
+      const mkStats = () => gls ? { gf: gls.for, ga: gls.against, rival, locacion, mvp: mvpName, comp } : null;
+      /* DIANA */
+      const dTitW = ["IMPARABLE", "ESPECTACULAR", "¡A POR TODOS!", "QUÉ GRANDE ERES", "GANAMOS Y SOÑAMOS"];
+      const dTitD = ["SE NOS ESCAPA", "EMPATE QUE DUELE", "MEDIO PASO ATRÁS", "LA IGUALADA SABE A POCO"];
+      const dTitL = ["CATÁSTROFE", "¡ESTO ES UN DESASTRE!", "HUNDIDOS", "TODO SE DERRUMBA", "LA NOCHE NEGRA"];
+      const dTit  = res === "W" ? pick(dTitW, seed) : res === "D" ? pick(dTitD, seed) : pick(dTitL, seed);
+      const dSubW = ["Victoria contundente del " + club + " que desata la euforia de la afición", "El " + club + " no da tregua y vuelve a ganar" + (score ? " (" + score + ")" : ""), "Tres puntos de oro que lanzan al equipo hacia lo más alto"];
+      const dSubD = ["El " + club + " no puede con " + rival + " y regala un punto que duele", "El empate frena el vuelo de un equipo que merecía más", "Reparto de puntos que sabe a frustración"];
+      const dSubL = ["El " + club + " se hunde ante " + rival + " en una noche para olvidar", "Otra derrota que pone en duda el rumbo del equipo", "Sin argumentos: el " + club + " vuelve a casa con las manos vacías"];
+      const dSub  = res === "W" ? pick(dSubW, seed + 1) : res === "D" ? pick(dSubD, seed + 1) : pick(dSubL, seed + 1);
+      const dCW = [["Noche redonda para el " + club + ". El marcador" + (score ? " (" + score + ")" : "") + " refleja la diferencia " + locacion + ", donde el equipo controló el encuentro de principio a fin.", mvpName ? mvpName + " fue la gran figura, decisivo en cada balón que tocó." : "Un colectivo imperial, sólido en todas sus líneas.", "Con esta victoria, el equipo manda un mensaje claro al resto de la tabla."], ["Goleada y lección de fútbol. El " + club + " firmó una actuación para enmarcar ante " + rival + " y deja claro que está en un gran momento.", "La afición se marchó con una sonrisa y mucho optimismo de cara al futuro.", mvpName ? "Nadie quiso llevarse más protagonismo que " + mvpName + ", estelar de principio a fin." : "El colectivo, por encima de todo lo demás."]];
+      const dCD = [["El " + club + " no pasó del empate ante " + rival + " pese a merecer más. El marcador" + (score ? " (" + score + ")" : "") + " deja una sensación agridulce.", "Tuvo las ocasiones para llevarse los tres puntos, pero el gol no llegó en los momentos clave.", "Dos puntos perdidos que podrían pesar al final de la temporada."], ["Repartición de puntos en un duelo que pudo ser victoria. El " + club + " no encontró el camino al gol cuando más lo necesitaba.", "El empate no satisface a nadie en el vestuario.", "Toca reponerse y mirar al próximo compromiso con ambición."]];
+      const dCL = [["No hubo piedad. El " + club + " cayó ante " + rival + (score ? " (" + score + ")" : "") + " en un partido para olvidar lo antes posible.", "El equipo no apareció en la primera parte y el trabajo de remontar fue demasiado para los suyos.", "Las dudas vuelven a rodear al equipo en el peor momento."], ["Derrota dolorosa. El " + club + " volvió a perder y la preocupación empieza a instalarse en el entorno.", "Sin ideas, sin gol, sin reacción: el equipo necesita respuestas urgentes.", "El vestuario deberá dar un paso al frente si no quiere que la situación se complique más."]];
+      const dCuerpo = res === "W" ? pick(dCW, seed + 2) : res === "D" ? pick(dCD, seed + 2) : pick(dCL, seed + 2);
+      articles.push({ medio: "DIANA", sesgo: "sensacionalista", tipo: "cronica", resultado: res, titular: dTit, entradilla: dSub, cuerpo: dCuerpo, firma: pick(["Redacción DIANA", "J. Blanes · DIANA", "M. Ortega · DIANA"], seed + 3), recuadroStats: mkStats() });
+
+      /* Crónica */
+      const cTitW = [club + " suma ante " + rival + " con autoridad y sigue soñando", "Victoria sólida del " + club + " que consolida su posición en la tabla", "El " + club + " no falla " + (isHome ? "en casa" : "fuera") + ": tres puntos clave ante " + rival];
+      const cTitD = ["El " + club + " y " + rival + " se reparten los puntos en un duelo sin gol", "Empate que deja al " + club + " con la miel en los labios", "Reparto equitativo que no satisface a ninguno de los dos equipos"];
+      const cTitL = ["Derrota del " + club + " ante " + rival + " que abre el debate en el entorno", "El " + club + " cae " + locacion + " y genera incertidumbre de cara al tramo decisivo", rival + " vence al " + club + " con una actuación que deja muchas preguntas"];
+      const cTit  = res === "W" ? pick(cTitW, seed + 10) : res === "D" ? pick(cTitD, seed + 10) : pick(cTitL, seed + 10);
+      const cEntW = "El conjunto puso el partido bajo control desde el primer cuarto de hora y no dio opción al rival.";
+      const cEntD = "Un partido equilibrado donde ninguno de los dos equipos logró imponer su juego durante los noventa minutos.";
+      const cEntL = "La derrota pone de manifiesto las dificultades que atraviesa el equipo para mantener el nivel reciente.";
+      const cCW = ["El " + club + " resolvió el encuentro ante " + rival + " con solidez y madurez. El resultado" + (score ? " (" + score + ")" : "") + " refleja la diferencia entre ambos contendientes.", mvpName ? mvpName + " volvió a ser el hilo conductor de un equipo que sabe lo que quiere." : "El conjunto mostró la cohesión que le caracteriza en sus mejores momentos.", "Los tres puntos consolidan una dinámica positiva que el técnico querrá mantener de cara a los próximos compromisos."];
+      const cCD  = ["El " + club + " no pudo romper el cerrojo de " + rival + " pese a tener el balón y las intenciones.", "La falta de puntería en los metros finales volvió a aparecer en el momento más inoportuno.", "Con los deberes a medias, el equipo tendrá que analizar lo sucedido y buscar soluciones de cara al próximo partido."];
+      const cCL  = [rival + " fue superior en los momentos decisivos y el " + club + " no tuvo respuesta para ello.", "El equipo acusó las carencias en las transiciones defensivas, aspecto que el cuerpo técnico deberá corregir.", "La derrota no cierra puertas, pero sí obliga a reflexionar sobre el camino a seguir en los próximos compromisos."];
+      const cCuerpo = res === "W" ? cCW : res === "D" ? cCD : cCL;
+      articles.push({ medio: "Crónica", sesgo: "analítico", tipo: "cronica", resultado: res, titular: cTit, entradilla: res === "W" ? cEntW : res === "D" ? cEntD : cEntL, cuerpo: cCuerpo, firma: pick(["A. Serrano · Crónica", "P. Llorente · Crónica", "Redacción deportes"], seed + 13), recuadroStats: mkStats() });
+
+      /* GolDirecto */
+      const gTitW = ["¡VICTORIA! El " + club + (score ? " gana " + score : " gana") + " y no para", club + (score ? " " + score : "") + " ante " + rival + ": tres puntos de oro", "El " + club + " arrolla a " + rival + " y mira hacia arriba"];
+      const gTitD = [club + (score ? " " + score : "") + " ante " + rival + ": empate que sabe a poco", "El " + club + " no puede con " + rival + " y firma tablas", "Empate sin brillo entre " + club + " y " + rival];
+      const gTitL = [club + (score ? " " + score : "") + " ante " + rival + ": derrota que duele", rival + " vence al " + club + " y complica la situación", "El " + club + " pierde ante " + rival + " y enciende las alarmas"];
+      const gTit = res === "W" ? pick(gTitW, seed + 20) : res === "D" ? pick(gTitD, seed + 20) : pick(gTitL, seed + 20);
+      const gEntW = (mvpName ? mvpName + " brilla y " : "El equipo ") + "le da al " + club + " una victoria clave en " + comp + ".";
+      const gEntD = "Los dos equipos se reparten los puntos " + locacion + ". El " + club + " tendrá que analizar una actuación por debajo de su nivel.";
+      const gEntL = "Noche difícil para el " + club + ", superado por " + rival + " en un partido que nunca controló del todo.";
+      articles.push({ medio: "GolDirecto", sesgo: "digital", tipo: "cronica", resultado: res, titular: gTit, entradilla: res === "W" ? gEntW : res === "D" ? gEntD : gEntL, cuerpo: [], firma: pick(["Redacción GD", "GolDirecto", "M.G. · GolDirecto"], seed + 23), recuadroStats: mkStats() });
+
+      /* DXT24 (informativo) */
+      const dxtChyron = res === "W"
+        ? pick([club + " vence a " + rival, "Victoria del " + club + " ante " + rival, club + " gana y escala posiciones"], seed + 30)
+        : res === "D"
+          ? pick([club + " y " + rival + " empatan", "Reparto de puntos entre " + club + " y " + rival], seed + 30)
+          : pick([rival + " derrota al " + club, club + " cae ante " + rival + " en " + comp], seed + 30);
+      const dxtTicker = [
+        (score ? club + " " + score + " " + rival : club + " " + (res === "W" ? "gana" : res === "D" ? "empata" : "pierde")),
+        mvpName ? "Destacado: " + mvpName : club + " · " + comp,
+        "Próxima jornada: el " + club + " busca la reacción",
+        "Análisis completo en DXT24.com"
+      ].join("  ·  ");
+      articles.push({ medio: "DXT24", sesgo: "neutro", tipo: "cronica", resultado: res, titular: dxtChyron, entradilla: "", cuerpo: [], firma: "DXT24 · Deportes", recuadroStats: mkStats(), ticker: dxtTicker });
+
+      /* Zona Mixta (tertulia) */
+      const zmPregW = pick(["¿Puede el " + club + " pelear por el título?", "¿Es este " + club + " el mejor en años?", "¿Merece el técnico renovar tras esta victoria?"], seed + 40);
+      const zmPregD = pick(["¿Le falta gol al " + club + "?", "¿Está el " + club + " por debajo de sus posibilidades?", "¿Es el empate un paso atrás?"], seed + 40);
+      const zmPregL = pick(["¿Debe cambiar el técnico el sistema?", "¿Está el " + club + " en crisis?", "¿Cuántas derrotas más puede aguantar el entrenador?"], seed + 40);
+      const zmPregunta = res === "W" ? zmPregW : res === "D" ? zmPregD : zmPregL;
+      const zmPollSi = 45 + (h("poll:" + lastM.id) % 40);
+      const zmOpinionW = [
+        ["Marta Ríos", "Cuando un equipo domina así, la calidad habla por sí sola. Esta victoria dice mucho."],
+        ["J. Cana", "He visto plantillas mejores ganar menos. El mérito es del técnico."]
+      ];
+      const zmOpinionD = [
+        ["Marta Ríos", "El empate no refleja el juego. Este equipo merece más."],
+        ["J. Cana", "Sin gol no hay paraíso. El " + club + " tiene que encontrar la solución arriba."]
+      ];
+      const zmOpinionL = [
+        ["Marta Ríos", "No hay excusas. El equipo no apareció en momentos clave."],
+        ["J. Cana", "Hay que mirar al espejo. Esto no puede repetirse."]
+      ];
+      const zmOpiniones = res === "W" ? zmOpinionW : res === "D" ? zmOpinionD : zmOpinionL;
+      articles.push({ medio: "Zona Mixta", sesgo: "debate", tipo: "cronica", resultado: res, titular: zmPregunta, entradilla: "", cuerpo: [], firma: "Zona Mixta · Canal 5", recuadroStats: null, pollSi: zmPollSi, opiniones: zmOpiniones });
+    }
+
+    /* ---- VESTUARIO (tensión política) ---- */
+    if (pol && pol.tension >= 25) {
+      const s2 = h("pol:" + (captain || "x") + pol.level);
+      const capStr = captain || "el capitán";
+      const crisis = pol.tension >= 60;
+      const evt0text = pol.events[0] ? pol.events[0].text : "La gestión de los minutos genera tensión interna.";
+      articles.push({ medio: "DIANA", sesgo: "sensacionalista", tipo: "vestuario", titular: crisis ? pick(["GUERRA EN EL VESTUARIO", "SE ACABA LA PACIENCIA", "EL VESTUARIO ESTALLA", "CAOS TOTAL"], s2) : pick(["TENSIÓN EN EL VESTUARIO", "RUMORES DE CRISIS", "EL AMBIENTE SE ENRARECE", "ALGO SE CUECE"], s2), entradilla: crisis ? "La situación en el vestuario del " + club + " ha llegado a un punto de no retorno. Las decisiones técnicas con " + capStr + " encenden la mecha." : "El clima interno en el " + club + " no es el ideal. Fuentes del vestuario hablan de malestar creciente.", cuerpo: [evt0text, crisis ? "La directiva sigue la situación de cerca y no descarta intervenir." : "El técnico resta importancia a los rumores y confía en la unidad del grupo.", "El próximo partido será una prueba de fuego para la cohesión del equipo."], firma: pick(["J. Blanes · DIANA", "Redacción DIANA"], s2 + 1), recuadroStats: null });
+      articles.push({ medio: "Crónica", sesgo: "analítico", tipo: "vestuario", titular: crisis ? "El entorno del " + club + " pone bajo lupa las decisiones técnicas con los referentes del vestuario" : "El " + club + " gestiona las tensiones internas con discreción de cara al próximo partido", entradilla: "La gestión de los líderes del vestuario centra el debate interno en el " + club + ". La situación requiere una respuesta a corto plazo.", cuerpo: [evt0text, "El técnico deberá equilibrar las necesidades deportivas con la gestión del grupo humano.", "En clubes de este nivel, la cohesión del vestuario es tan determinante como el resultado sobre el campo."], firma: pick(["P. Llorente · Crónica", "A. Serrano"], s2 + 2), recuadroStats: null });
+      articles.push({ medio: "GolDirecto", sesgo: "digital", tipo: "vestuario", titular: crisis ? "🚨 Crisis en el " + club + ": el vestuario al límite por las decisiones técnicas" : "El " + club + " navega entre rumores de tensión interna", entradilla: evt0text, cuerpo: [], firma: "Redacción GD", recuadroStats: null });
+      articles.push({ medio: "DXT24", sesgo: "neutro", tipo: "vestuario", titular: crisis ? "Tensión interna en el " + club : "El " + club + " gestiona rumores internos", entradilla: "", cuerpo: [], firma: "DXT24 · Deportes", recuadroStats: null, ticker: evt0text + "  ·  " + club + " · Más información en DXT24.com" });
+      const zmPregVest = crisis
+        ? pick(["¿Debe la directiva intervenir ya?", "¿Puede el técnico sobrevivir a esta crisis?", "¿Es irreversible la situación en el " + club + "?"], s2 + 5)
+        : pick(["¿Cuánto puede aguantar el vestuario?", "¿Tiene razón el técnico en sus decisiones?", "¿Es el " + capStr + " parte del problema?"], s2 + 5);
+      const zmPollVest = 38 + (h("pollv:" + (captain || "x")) % 44);
+      articles.push({ medio: "Zona Mixta", sesgo: "debate", tipo: "vestuario", titular: zmPregVest, entradilla: "", cuerpo: [], firma: "Zona Mixta · Canal 5", recuadroStats: null, pollSi: zmPollVest, opiniones: [["Marta Ríos", crisis ? "Esto ya no es un vestuario, es un polvorín. Alguien tiene que poner orden." : "Hay tensión, sí, pero no hay que dramatizar. El fútbol tiene estas cosas."], ["J. Cana", crisis ? "He vivido vestuarios así. Si no se ataja rápido, el problema crece." : "El técnico tiene que hablar con los jugadores. Las cosas se resuelven dentro."]] });
+    }
+
+    /* ---- RACHA (sequía o buena racha goleadora) ---- */
+    if (sp && sp.currentDrought >= 2) {
+      const n = sp.currentDrought;
+      const s3 = h("drought:" + n);
+      articles.push({ medio: "DIANA", sesgo: "sensacionalista", tipo: "racha", titular: n >= 4 ? "¡EL ATAQUE SE MUERE!" : "SEQUÍA GOLEADORA: ¿CUÁNDO ACABA?", entradilla: "El " + club + " lleva " + n + " partidos sin ver portería. Una estadística alarmante que el técnico debe resolver.", cuerpo: ["El equipo ha generado ocasiones, pero la puntería ha desaparecido en el momento más inoportuno.", "La sequía de " + n + " encuentros sin marcar es la peor del curso y levanta ampollas entre la afición.", "¿Cambio de sistema? El análisis, en las próximas horas."], firma: "Redacción DIANA", recuadroStats: null });
+      articles.push({ medio: "GolDirecto", sesgo: "digital", tipo: "racha", titular: n + " partidos sin marcar: el " + club + " busca el gol perdido", entradilla: "La sequía ofensiva del " + club + " se convierte en el tema del día. ¿Cuándo llegará el próximo tanto?", cuerpo: [], firma: "Redacción GD", recuadroStats: null });
+    } else if (sp && sp.currentScoringStreak >= 3) {
+      const n = sp.currentScoringStreak;
+      articles.push({ medio: "DIANA", sesgo: "sensacionalista", tipo: "racha", titular: n >= 5 ? "¡IMPARABLE! " + n + " PARTIDOS MARCANDO" : "EN ESTADO DE GRACIA: " + n + " SEGUIDOS CON GOL", entradilla: "El " + club + " lleva " + n + " partidos consecutivos marcando. Una racha que ilusiona y pone al equipo en el punto de mira.", cuerpo: ["El ataque del " + club + " vive un momento dulce que el equipo debe aprovechar para seguir escalando posiciones.", "Con " + n + " encuentros seguidos viendo portería, la confianza ofensiva está por las nubes.", "Mantener esta dinámica sería un auténtico regalo de cara al tramo decisivo de la temporada."], firma: "Redacción DIANA", recuadroStats: null });
+    }
+
+    if (!articles.length) return null;
+    return { articles, club, season: season.label };
+  };
+
   FC.store = S;
 
   /* ============================================================
@@ -6390,6 +6531,8 @@ body.trip-open { overflow: hidden; }
     const injuries = S.activeInjuries(c);
     const luck = S.luckSummary(c, season.id);
     const pol  = S.politicalCapital(c, season.id);
+    const pressData = S.pressRoom(c, season.id);
+    const dianaHd = pressData && pressData.articles.find(a => a.medio === "DIANA");
     const nextM = S.nextMatch(c, season.id);
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const canScout = nextRival && S.rivalHistory(c, nextRival);
@@ -6424,6 +6567,11 @@ body.trip-open { overflow: hidden; }
           ${nextM.away === c.clubName ? `<button class="btn btn-ghost btn-sm" id="dash-next-trip"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
           <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
         </div>
+      </div>` : ""}
+      ${dianaHd ? `<div class="card" style="margin:10px 0 0;border-left:3px solid #bf1717;padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" id="dash-press-banner">
+        <span style="font:700 11px var(--font-sans);letter-spacing:.12em;color:#bf1717;flex-shrink:0">DIANA</span>
+        <span style="font:500 14px var(--font-serif);line-height:1.2;flex:1">${U.esc(dianaHd.titular)}</span>
+        <span class="ni-icon" data-icon="chevron-right" style="flex-shrink:0;color:var(--text-dim)"></span>
       </div>` : ""}
 
       <div class="grid cols-4 keep-2">
@@ -6497,6 +6645,8 @@ body.trip-open { overflow: hidden; }
     // objectives
     renderObjectives(c, season);
 
+    const pressBanner = document.getElementById("dash-press-banner");
+    if (pressBanner) pressBanner.addEventListener("click", () => { pressTab = "DIANA"; FC.router.go("story"); });
     document.getElementById("dash-add").addEventListener("click", () => UI.openMatchModal(c));
     document.getElementById("dash-live").addEventListener("click", () => FC.router.go("live"));
     const nextEl = document.getElementById("dash-next");
@@ -6555,6 +6705,7 @@ body.trip-open { overflow: hidden; }
      PARTIDOS
      ============================================================ */
   let matchesTab = "list"; // "list" | "calendar" — persiste entre re-renders
+  let pressTab = "DIANA";  // "DIANA" | "Crónica" | "GolDirecto"
   FC.views.matches = function () {
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
@@ -8295,6 +8446,129 @@ body.trip-open { overflow: hidden; }
   };
 
   /* ============================================================
+     SALA DE PRENSA
+     ============================================================ */
+  function pressRoomHtml(c, seasonId) {
+    const pr = S.pressRoom(c, seasonId);
+    if (!pr || !pr.articles.length) return "";
+    const byMedio = (m) => pr.articles.filter(a => a.medio === m);
+    const MEDIOS = ["DIANA", "Crónica", "GolDirecto", "DXT24", "Zona Mixta"];
+    const tabBtn = (m) => `<button type="button" class="seg-btn${pressTab === m ? " active" : ""}" data-pm="${U.esc(m)}">${U.esc(m)}</button>`;
+    const tipoLabel = (t) => t === "cronica" ? "CRÓNICA" : t === "vestuario" ? "VESTUARIO" : "RACHA";
+    const statsBoxDiana = (rs) => rs ? `<div style="display:flex;gap:0;margin-top:10px;border:1px solid #1a1a1a;font-family:var(--font-sans)">
+      <div style="flex:1;text-align:center;padding:5px 0;border-right:1px solid #1a1a1a"><div style="font-size:15px;font-weight:700">${rs.gf}-${rs.ga}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">GOL</div></div>
+      <div style="flex:2;text-align:center;padding:5px 0;border-right:1px solid #1a1a1a"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(rs.rival || "")}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">RIVAL</div></div>
+      ${rs.mvp ? `<div style="flex:2;text-align:center;padding:5px 0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(rs.mvp)}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">MVP</div></div>` : ""}
+    </div>` : "";
+    const statsBoxCronica = (rs) => rs ? `<div style="border-left:2px solid #9a9178;padding:6px 10px;margin-top:8px;font-family:var(--font-sans);font-size:11px;color:#5b5546">
+      <b style="display:block;margin-bottom:2px">Estadísticas</b>
+      ${rs.rival ? "Rival: " + U.esc(rs.rival) + "  · " : ""}Marcador: ${rs.gf}-${rs.ga}${rs.mvp ? "  · Destacado: " + U.esc(rs.mvp) : ""}
+    </div>` : "";
+
+    const articleDiana = byMedio("DIANA")[0];
+    const articleCronica = byMedio("Crónica")[0];
+    const articleGD = byMedio("GolDirecto")[0];
+    const articleDXT = byMedio("DXT24")[0];
+    const articleZM = byMedio("Zona Mixta")[0];
+
+    const htmlDiana = articleDiana ? `<div style="background:#f5efe2;color:#1a1a1a;border-radius:2px;padding:14px 16px;font-family:var(--font-serif)">
+      <div style="border-top:3px double #1a1a1a;margin-bottom:7px"></div>
+      <div style="font:500 10.5px var(--font-sans);letter-spacing:.1em;color:#bf1717;margin-bottom:3px">${tipoLabel(articleDiana.tipo)}</div>
+      <div style="font-size:26px;font-weight:700;line-height:1;color:#bf1717;margin-bottom:6px">${U.esc(articleDiana.titular)}</div>
+      <div style="font-size:13px;font-style:italic;color:#3a342a;margin-bottom:10px">${U.esc(articleDiana.entradilla)}</div>
+      ${articleDiana.cuerpo.map(p => `<p style="font-size:12px;line-height:1.55;margin:0 0 5px;text-align:justify">${U.esc(p)}</p>`).join("")}
+      ${statsBoxDiana(articleDiana.recuadroStats)}
+      <div style="border-top:1px solid #cdc3ad;margin-top:8px;font:400 10.5px var(--font-sans);color:#6b6051;padding-top:5px">${U.esc(articleDiana.firma)}</div>
+    </div>` : `<p class="faint">Sin crónica disponible.</p>`;
+
+    const htmlCronica = articleCronica ? `<div style="background:#f3f1ea;color:#191818;border-radius:2px;padding:14px 16px;font-family:var(--font-serif)">
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#6c6657;font-family:var(--font-sans);border-bottom:1px solid #cdc3ad;padding-bottom:5px;margin-bottom:8px">
+        <span>Crónica · Deportes</span><span>${U.esc(pr.season)}</span>
+      </div>
+      <div style="font:500 10px var(--font-sans);letter-spacing:.28em;color:#5b5546;margin-bottom:4px">${tipoLabel(articleCronica.tipo)}</div>
+      <div style="font-size:22px;font-weight:500;line-height:1.1;margin-bottom:5px">${U.esc(articleCronica.titular)}</div>
+      <div style="font-size:12.5px;font-style:italic;color:#3c362b;margin-bottom:10px">${U.esc(articleCronica.entradilla)}</div>
+      ${articleCronica.cuerpo.map(p => `<p style="font-size:12px;line-height:1.6;margin:0 0 6px;text-align:justify">${U.esc(p)}</p>`).join("")}
+      ${statsBoxCronica(articleCronica.recuadroStats)}
+      <div style="border-top:1px solid #c7c1b1;margin-top:8px;font:400 10.5px var(--font-sans);color:#6c6657;font-style:italic;padding-top:5px">${U.esc(articleCronica.firma)}</div>
+    </div>` : `<p class="faint">Sin artículo disponible.</p>`;
+
+    const htmlGD = articleGD ? `<div style="border-radius:7px;overflow:hidden;font-family:var(--font-sans);border:1px solid var(--line)">
+      <div style="background:#d11a1a;padding:8px 12px;font-size:15px;font-weight:700;letter-spacing:-.01em;color:#fff">GolDirecto</div>
+      <div style="padding:12px 14px;background:#fff;color:#15171a">
+        <div style="font:500 10.5px var(--font-sans);letter-spacing:.07em;color:#d11a1a;margin-bottom:5px">${tipoLabel(articleGD.tipo)} · ÚLTIMA HORA</div>
+        <div style="font-size:17px;font-weight:500;line-height:1.2;margin-bottom:7px">${U.esc(articleGD.titular)}</div>
+        <div style="font-size:13px;color:#444;line-height:1.45">${U.esc(articleGD.entradilla)}</div>
+        <div style="margin-top:10px;font-size:11px;color:#888">${U.esc(articleGD.firma)}</div>
+      </div>
+    </div>` : `<p class="faint">Sin artículo disponible.</p>`;
+
+    const htmlDXT = articleDXT ? `<div style="background:#0b0e15;border-radius:7px;overflow:hidden;font-family:var(--font-sans);min-height:220px;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px">
+        <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em">DXT<span style="color:#e23b3b">24</span></span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.06em;background:#d11a1a;color:#fff;padding:2px 7px;border-radius:3px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:#fff;display:inline-block"></span>EN DIRECTO</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px 14px 4px">
+        <div style="font-size:13px;color:#aeb6c4;text-align:center">${tipoLabel(articleDXT.tipo)} · ${U.esc(pr.season)}</div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:stretch">
+          <div style="background:#d11a1a;color:#fff;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:500;letter-spacing:.04em;flex-shrink:0">TITULAR</div>
+          <div style="flex:1;background:#f4f4f4;color:#10131a;display:flex;align-items:center;padding:9px 12px;font-size:16px;font-weight:500;line-height:1.1">${U.esc(articleDXT.titular)}</div>
+        </div>
+        ${articleDXT.recuadroStats ? `<div style="background:#171b24;color:#aeb6c4;font-size:11px;padding:5px 12px">
+          ${U.esc(articleDXT.recuadroStats.rival || "")}${articleDXT.recuadroStats.gf != null ? "  ·  " + articleDXT.recuadroStats.gf + "-" + articleDXT.recuadroStats.ga : ""}${articleDXT.recuadroStats.mvp ? "  ·  MVP: " + U.esc(articleDXT.recuadroStats.mvp) : ""}
+        </div>` : ""}
+        <div style="background:#d11a1a;color:#fff;font-size:10.5px;padding:4px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(articleDXT.ticker || "")}</div>
+        <div style="background:#1b2130;color:#6b7584;font-size:10.5px;padding:4px 12px">${U.esc(articleDXT.firma)}</div>
+      </div>
+    </div>` : `<p class="faint">Sin emisión disponible.</p>`;
+
+    const htmlZM = articleZM ? (() => {
+      const si = Math.min(99, Math.max(1, articleZM.pollSi || 50));
+      const no = 100 - si;
+      const av = (name) => `<div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:42px;height:42px;border-radius:50%;background:#1c2434;border:1px solid #2f3a4f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#aeb6c4">${U.esc(U.initials(name))}</div>
+        <div style="font-size:11px;color:#fff;font-weight:500;text-align:center">${U.esc(name)}</div>
+      </div>`;
+      const opRows = (articleZM.opiniones || []).map(([name, text]) =>
+        `<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#1c2434;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#aeb6c4">${U.esc(U.initials(name))}</div>
+          <div><div style="font-size:11px;color:#e8a020;font-weight:500;margin-bottom:2px">${U.esc(name)}</div><div style="font-size:12.5px;color:#d1d8e4;line-height:1.4">"${U.esc(text)}"</div></div>
+        </div>`
+      ).join("");
+      return `<div style="background:#0c1019;border-radius:7px;overflow:hidden;font-family:var(--font-sans)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1c2434">
+          <span style="font-size:15px;font-weight:700;color:#fff">Zona <span style="color:#e8a020">Mixta</span></span>
+          <span style="font-size:10px;letter-spacing:.08em;background:#e8a020;color:#3a2700;padding:2px 7px;border-radius:3px;font-weight:500">DEBATE</span>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-size:16px;font-weight:500;color:#fff;line-height:1.2;margin-bottom:12px">${U.esc(articleZM.titular)}</div>
+          ${opRows}
+          <div style="margin-top:10px;border:1px solid #1c2434;border-radius:4px;overflow:hidden">
+            <div style="display:flex;align-items:center;background:#171c27;padding:5px 10px;gap:8px">
+              <span style="font:500 10px var(--font-sans);letter-spacing:.06em;color:#8b95a8">ENCUESTA</span>
+            </div>
+            <div style="display:flex;height:18px">
+              <div style="width:${si}%;background:#1d9e75;display:flex;align-items:center;padding-left:7px;font-size:10px;font-weight:500;color:#04342c">SÍ ${si}%</div>
+              <div style="width:${no}%;background:#c01414;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;font-size:10px;font-weight:500;color:#fff">NO ${no}%</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:#0c1019;color:#7d8aa3;font-size:10.5px;padding:4px 14px;border-top:1px solid #1c2434">${U.esc(articleZM.firma)}</div>
+      </div>`;
+    })() : `<p class="faint">Sin debate disponible.</p>`;
+
+    const paneles = { "DIANA": htmlDiana, "Crónica": htmlCronica, "GolDirecto": htmlGD, "DXT24": htmlDXT, "Zona Mixta": htmlZM };
+
+    return `<div class="section-title" style="margin-top:20px">Sala de prensa</div>
+    <div class="card">
+      <div class="seg" id="press-tabs" style="margin-bottom:14px">${MEDIOS.map(tabBtn).join("")}</div>
+      ${MEDIOS.map(m => `<div id="press-panel-${m}" style="${pressTab !== m ? "display:none" : ""}">${paneles[m]}</div>`).join("")}
+    </div>`;
+  }
+
+  /* ============================================================
      NARRATIVA / STORYLINE
      ============================================================ */
   FC.views.story = function () {
@@ -8329,8 +8603,17 @@ body.trip-open { overflow: hidden; }
         </div>
         <div id="story-incidents" style="margin-top:10px"></div>
       </div>
+      ${pressRoomHtml(c, season.id)}
     `);
     renderIncidents(c);
+    document.querySelectorAll("#press-tabs .seg-btn").forEach(b => b.addEventListener("click", () => {
+      pressTab = b.dataset.pm;
+      document.querySelectorAll("#press-tabs .seg-btn").forEach(x => x.classList.toggle("active", x.dataset.pm === pressTab));
+      ["DIANA","Crónica","GolDirecto","DXT24","Zona Mixta"].forEach(m => {
+        const el = document.getElementById("press-panel-" + m);
+        if (el) el.style.display = m === pressTab ? "" : "none";
+      });
+    }));
     document.getElementById("story-incident").addEventListener("click", () => {
       const inc = FC.incidents.generate(c);
       if (!inc) { UI.toast("Añade jugadores a tu plantilla para que ocurran cosas en el vestuario", "err"); return; }
