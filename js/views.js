@@ -802,7 +802,9 @@
     const luckCard = luckCardHtml(c, season.id);
     const famCard = formationFamiliarityCardHtml(c, season.id);
     const scoringCard = scoringProfileCardHtml(c, season.id);
+    const previaCard = upcoming.length ? matchDayReportHtml(c, season.id) : "";
     const listHtml = `
+      ${previaCard}
       ${upcoming.length ? `<div class="card">
         <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> Próximos partidos <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
         ${upcoming.map(m => upcomingRow(c, m)).join("")}
@@ -2115,6 +2117,24 @@
         ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
       </div>`;
   }
+  // Tarjeta "Estado del vestuario" — previa del partido, usada en Partidos cuando hay próximos.
+  function matchDayReportHtml(c, seasonId) {
+    const rep = S.matchDayReport(c, seasonId);
+    if (!rep) return "";
+    const moodCol   = rep.mood === "critical" ? "var(--danger)" : rep.mood === "bad" ? "var(--warn)" : rep.mood === "caution" ? "var(--accent-3)" : "var(--ok)";
+    const moodLabel = rep.mood === "critical" ? "Estado crítico" : rep.mood === "bad" ? "Día complicado" : rep.mood === "caution" ? "Con reservas" : "Equipo listo";
+    const moodTextCol = (rep.mood === "caution" || rep.mood === "good") ? "#03110c" : "#fff";
+    const last5Html = rep.last5.length ? `<span class="flex gap center" style="flex-shrink:0">${CH.formBar(rep.last5)}</span>` : "";
+    const signalRows = rep.signals.map(s => alertRow(s.icon, s.text, s.tone, null)).join("");
+    return `<div class="card" style="border-left:3px solid ${moodCol};margin-bottom:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${rep.signals.length ? "12px" : "0"}">
+        <div class="section-title" style="margin:0"><span class="ni-icon" data-icon="shirt"></span> Estado del vestuario</div>
+        <div class="flex gap center">${last5Html}<span class="chip" style="background:${moodCol};color:${moodTextCol};font-weight:700">${moodLabel}</span></div>
+      </div>
+      ${signalRows ? `<div class="list">${signalRows}</div>` : ""}
+    </div>`;
+  }
+
   // Tarjeta "Perfil goleador" — usada en Partidos. "" si <3 partidos.
   function scoringProfileCardHtml(c, seasonId) {
     const sp = S.scoringProfile(c, seasonId);

@@ -1476,6 +1476,43 @@
     return { tension, level, levelTone, events, insights };
   };
 
+  /* ---------- INFORME PREVIA DE PARTIDO ----------
+     Consolida en un único objeto el estado actual del vestuario:
+     tensión política, sobrecarga, lesiones activas, racha reciente y
+     sequía/racha goleadora. Pensado para mostrarse antes de registrar
+     el resultado del partido. Devuelve null si no hay datos relevantes. */
+  S.matchDayReport = (c, seasonId) => {
+    const pol  = S.politicalCapital(c, seasonId);
+    const load = S.loadReport(c, seasonId);
+    const sp   = S.scoringProfile(c, seasonId);
+    const injuries = S.activeInjuries(c);
+    const playerNorms = new Set((c.players || []).map(p => (p.name || "").trim().toLowerCase()));
+    const activeInjured = injuries.filter(i => i.player && playerNorms.has((i.player || "").trim().toLowerCase()));
+    const overloaded = (load && load.hasMinutes)
+      ? load.players.filter(p => p.inSquad && (p.share || 0) >= 90).slice(0, 3)
+      : [];
+    const last5 = S.userMatches(c, seasonId)
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+      .slice(0, 5).map(m => S.userResult(c, m)).filter(Boolean).reverse();
+    const drought = sp ? sp.currentDrought : 0;
+    const scoringStreak = sp ? sp.currentScoringStreak : 0;
+    const signals = [];
+    if (pol && pol.tension >= 25)
+      signals.push({ tone: pol.levelTone, icon: "shield", text: pol.level + " política: " + (pol.events[0] ? pol.events[0].text : "Tensión en el vestuario.") });
+    if (overloaded.length)
+      signals.push({ tone: "warn", icon: "bandage", text: "Sobrecarga: " + overloaded.map(p => p.name).join(", ") + " acumulan demasiados minutos." });
+    if (activeInjured.length)
+      signals.push({ tone: "danger", icon: "bandage", text: activeInjured.length + " jugador" + (activeInjured.length > 1 ? "es" : "") + " en enfermería: " + activeInjured.map(i => i.player).join(", ") + "." });
+    if (drought >= 2)
+      signals.push({ tone: "warn", icon: "ball", text: "Sequía de " + drought + " partidos sin marcar. El ataque necesita activarse." });
+    else if (scoringStreak >= 3)
+      signals.push({ tone: "ok", icon: "ball", text: "Llevas " + scoringStreak + " partidos consecutivos marcando. Buen momento ofensivo." });
+    if (!last5.length && !signals.length) return null;
+    const warns = signals.filter(s => s.tone === "warn" || s.tone === "danger").length;
+    const mood  = warns >= 3 ? "critical" : warns >= 2 ? "bad" : warns === 1 ? "caution" : "good";
+    return { last5, signals, mood, drought, scoringStreak, overloaded, injured: activeInjured };
+  };
+
   FC.store = S;
 
   /* ============================================================
