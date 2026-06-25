@@ -604,6 +604,9 @@
       <div class="section-title" style="margin:8px 2px">Goleadores de tu equipo</div>
       <div id="m-scorers"></div>
       <button type="button" class="btn btn-ghost btn-sm" id="m-add-scorer"><span class="ni-icon" data-icon="plus"></span> Añadir gol</button>
+      <div class="section-title" style="margin:12px 2px 4px">Tarjetas</div>
+      <div id="m-cards"></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="m-add-card"><span class="ni-icon" data-icon="plus"></span> Añadir tarjeta</button>
       <div class="field" style="margin-top:16px"><label>Jugador del partido (MOTM)</label><input type="text" id="m-motm" list="${dlId}" value="${U.esc(ex.motm||"")}" placeholder="Nombre"/></div>
       <div class="field" style="margin-top:12px"><label>Formación utilizada (opcional)</label>
         <select id="m-formation"><option value="">— Sin especificar —</option>
@@ -672,6 +675,29 @@
     }
     (ex._scorers || []).forEach(addScorerRow);
     document.getElementById("m-add-scorer").addEventListener("click", () => addScorerRow());
+
+    const cardsBox = document.getElementById("m-cards");
+    const exCards = (ex.events || []).filter(ev => ev.type === "yellow" || ev.type === "red");
+    function addCardRow(card) {
+      card = card || {};
+      const isRed = card.type === "red";
+      const row = U.h("div", { style: "display:flex;gap:8px;margin-bottom:8px;align-items:center" }, []);
+      row.innerHTML = `
+        <div class="seg" style="flex:none">
+          <button type="button" data-ct="yellow" class="${!isRed ? "active" : ""}">🟡</button>
+          <button type="button" data-ct="red" class="${isRed ? "active" : ""}">🔴</button>
+        </div>
+        <input type="text" list="${dlId}" placeholder="Jugador" value="${U.esc(card.player||"")}" style="flex:1;min-width:0"/>
+        <button type="button" class="btn btn-ghost btn-sm card-del" style="flex:none" title="Quitar"><span class="ni-icon" data-icon="trash"></span></button>`;
+      row.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+        row.querySelectorAll(".seg button").forEach(x => x.classList.toggle("active", x === b));
+      }));
+      row.querySelector(".card-del").addEventListener("click", () => row.remove());
+      cardsBox.appendChild(row);
+      U.hydrateIcons(row);
+    }
+    exCards.forEach(addCardRow);
+    document.getElementById("m-add-card").addEventListener("click", () => addCardRow());
 
     const ratingsBox = document.getElementById("m-ratings");
     function addRatingRow(r) {
@@ -748,6 +774,13 @@
         const sc = ins[0].value.trim(), as = ins[1].value.trim();
         if (sc) { const p = (c.players||[]).find(x => x.name === sc); events.push({ type:"goal", player: sc, playerId: p && p.id }); }
         if (as) { const p = (c.players||[]).find(x => x.name === as); events.push({ type:"assist", player: as, playerId: p && p.id }); }
+      });
+      U.els("#m-cards > div").forEach(row => {
+        const player = (row.querySelector("input") || {}).value && row.querySelector("input").value.trim();
+        if (!player) return;
+        const ct = (row.querySelector(".seg button.active") || {}).dataset && row.querySelector(".seg button.active").dataset.ct || "yellow";
+        const p = (c.players||[]).find(x => x.name === player);
+        events.push({ type: ct, player, playerId: p && p.id });
       });
       const motm = document.getElementById("m-motm").value.trim();
       const motmP = (c.players||[]).find(x => x.name === motm);
@@ -844,6 +877,24 @@
 
     const objs = season.boardObjectives || [];
     const expiring = (c.players || []).filter(p => p.contractEnd && Number(p.contractEnd) <= season.startYear + 1);
+    const miniStandingsHtml = (!c.isNational && pos) ? (() => {
+      const tbl = S.computeStandings(c, season.id);
+      if (tbl.length < 2) return "";
+      const myIdx = tbl.findIndex(r => r.team === c.clubName);
+      if (myIdx < 0) return "";
+      const start = Math.max(0, myIdx - 2);
+      const end = Math.min(tbl.length, start + 5);
+      const n = tbl.length;
+      return tbl.slice(start, end).map((r, i) => {
+        const abs = start + i;
+        const zone = abs < 4 ? "zone-ucl" : abs >= n - 3 ? "zone-rel" : abs < 6 ? "zone-uel" : "";
+        return `<tr${r.team === c.clubName ? ' class="is-user"' : ''}>
+          <td><span class="pos-cell"><span class="zone-bar ${zone}"></span>${abs+1}</span></td>
+          <td style="width:100%">${U.esc(r.team)}</td>
+          <td class="num faint" style="font-size:11px">${r.pj}PJ</td>
+          <td class="num"><b>${r.pts}</b></td></tr>`;
+      }).join("");
+    })() : "";
     const activeChallenges = (c.challenges || []).filter(ch => ch.status === "active");
     const violations = activeChallenges.reduce((s, ch) => s + S.ruleViolations(c, ch).length, 0);
     const fin = S.financeSummary(c, season.id);
@@ -931,6 +982,10 @@
           ${pointsSeries.length > 1 ? CH.line(pointsSeries, { h: 96 }) : `<p class="faint">Registra partidos de liga para ver tu progresión.</p>`}
           <div class="faint" style="font-size:12px;margin-top:6px">Puntos acumulados</div>
         </div>
+        ${miniStandingsHtml ? `<div class="card tight" id="dash-mini-st" style="cursor:pointer">
+          <div class="card-head"><h3><span class="ni-icon" data-icon="trophy"></span> Clasificación</h3></div>
+          <div class="table-wrap"><table class="tbl"><tbody>${miniStandingsHtml}</tbody></table></div>
+        </div>` : ""}
         <div class="card">
           <div class="card-head"><h3><span class="ni-icon" data-icon="bell"></span> Alertas</h3></div>
           <div class="list">
@@ -999,6 +1054,8 @@
       nextEl.addEventListener("click", () => UI.openMatchModal(c, nextM, { mode: "schedule" }));
     }
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
+    const miniSt = document.getElementById("dash-mini-st");
+    if (miniSt) miniSt.addEventListener("click", () => FC.router.go("standings"));
     const firstMatch = document.getElementById("dash-first-match");
     if (firstMatch) firstMatch.addEventListener("click", () => UI.openMatchModal(c));
     fx.querySelectorAll("[data-match]").forEach(r => r.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, r.dataset.match))));
@@ -2069,7 +2126,7 @@
   let squadView = { q: "", group: "", sort: "pos" };
   let squadTab = "jugadores"; // "jugadores" | "analisis" (pirámide+jerarquía+carga)
   const SQUAD_GROUPS = ["Portería", "Defensa", "Medio", "Banda", "Ataque"];
-  const SQUAD_SORTS = [["pos","Posición"],["ovr","OVR"],["pot","Potencial"],["age-asc","Edad ↑"],["age-desc","Edad ↓"],["goals","Goles"],["assists","Asistencias"],["motm","MOTM"]];
+  const SQUAD_SORTS = [["pos","Posición"],["ovr","OVR"],["pot","Potencial"],["age-asc","Edad ↑"],["age-desc","Edad ↓"],["goals","Goles"],["assists","Asistencias"],["motm","MOTM"],["yellows","Amarillas"],["reds","Rojas"]];
   FC.views.squad = function () {
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
@@ -2090,6 +2147,8 @@
         case "goals": return (ab.goals||0)-(aa.goals||0) || posCmp(a,b);
         case "assists": return (ab.assists||0)-(aa.assists||0) || posCmp(a,b);
         case "motm": return (ab.motm||0)-(aa.motm||0) || posCmp(a,b);
+        case "yellows": return (ab.yellows||0)-(aa.yellows||0) || posCmp(a,b);
+        case "reds": return (ab.reds||0)-(aa.reds||0) || posCmp(a,b);
         default: return posCmp(a,b);
       }
     }
@@ -2108,6 +2167,7 @@
         <td class="num"><span class="ovr ${U.ovrClass(p.ovr)}">${p.ovr||"—"}</span></td>
         <td class="num faint">${p.potential||"—"}</td><td class="num">${p.age||"—"}</td>
         <td class="num">${a.goals||0}</td><td class="num">${a.assists||0}</td><td class="num">${a.motm||0}</td>
+        <td class="num">${a.yellows||0}</td><td class="num">${a.reds ? `<span style="color:var(--danger)">${a.reds}</span>` : 0}</td>
         <td><button class="icon-btn sm" data-del-player="${p.id}"><span class="ni-icon" data-icon="trash"></span></button></td></tr>`;
     }
     const rosterHtml = `
@@ -2127,7 +2187,7 @@
           <span class="faint" id="sq-count" style="margin-left:auto"></span>
         </div>
         <div class="table-wrap"><table class="tbl"><thead><tr>
-          <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th></th>
+          <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Edad</th><th class="num">G</th><th class="num">A</th><th class="num">MOTM</th><th class="num">🟡</th><th class="num">🔴</th><th></th>
         </tr></thead><tbody id="sq-body"></tbody></table></div>` : `<div class="empty"><div class="emoji">👕</div><h3>Plantilla vacía</h3><p>Añade tus jugadores para seguir sus estadísticas y planificar.</p></div>`}
       </div>`;
     const analysisHtml = `${ageProfileCardHtml(c)}${squadHierarchyCardHtml(c)}${influenceNetworkCardHtml(c)}${adaptationCardHtml(c)}${loadCardHtml(c, season.id)}${politicalCapitalCardHtml(c, season.id)}${setPieceCardHtml(c)}`;
