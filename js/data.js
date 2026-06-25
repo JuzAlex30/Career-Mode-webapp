@@ -167,6 +167,20 @@
   D.BOOKMAKERS = ["BetMáxima","GoolBet","Tipster365","ApuestaTotal","LiniaPro","GolazoBet",
     "OddsArena","JugadaMax","EstadioBet","PrimeraApuesta","MarcaBet","RemonteBet"];
 
+  /* ---------- Tipsters / expertos de apuestas (pool rotativo, sin repeticiones) ---------- */
+  D.TIPSTERS = [
+    {n:"El Profe Vázquez",p:"YouTube"},{n:"BetAnalysis_ES",p:"Twitter/X"},
+    {n:"Carlos Línea",p:"Telegram"},{n:"La Quiniela Pro",p:"Podcast"},
+    {n:"Matías Odd",p:"YouTube"},{n:"Rodrigo_Picks",p:"Twitter/X"},
+    {n:"El Marcador Exacto",p:"Instagram"},{n:"GoolAnalytics",p:"YouTube"},
+    {n:"Rosario Apuesta",p:"Telegram"},{n:"El Pronosticador FC",p:"Podcast"},
+    {n:"NúmerosFútbol",p:"Twitter/X"},{n:"Javier Hándicap",p:"YouTube"},
+    {n:"EstadísticaBet",p:"Twitter/X"},{n:"La Triple Chance",p:"Podcast"},
+    {n:"OddHunter_ES",p:"Telegram"},{n:"Toni Cuota",p:"Instagram"},
+    {n:"Apuestas360",p:"YouTube"},{n:"MarcaProno",p:"Twitter/X"},
+    {n:"ValueBet_Nando",p:"Telegram"},{n:"El Hándicap Express",p:"Podcast"},
+  ];
+
   /* ---------- Competiciones por defecto ---------- */
   D.COMPETITIONS = ["Liga","Copa nacional","Supercopa","Champions","Europa League","Conference","Amistoso"];
   D.CONTINENTAL = ["Champions","Europa League","Conference"];

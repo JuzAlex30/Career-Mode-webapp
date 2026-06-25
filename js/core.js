@@ -1231,11 +1231,61 @@
     ] };
     combo.odd = snap(combo.legs[0].odd * combo.legs[1].odd);
 
+    // 7) Marcador exacto: top 5 resultados Poisson más probables.
+    const scores = [];
+    for (let i = 0; i <= 5; i++) for (let j = 0; j <= 5; j++) {
+      const pp = pois(i, lamH) * pois(j, lamA);
+      scores.push({ h:i, a:j, prob:pp, odd:snap(oddFrom(pp, MARGIN + 0.045)) });
+    }
+    scores.sort((a,b) => b.prob - a.prob);
+    const exactScore = scores.slice(0, 5);
+
+    // 8) Panel de tipsters (4 del pool rotativo, picks deterministas con varianza).
+    const tipPool = (DD.TIPSTERS || []).slice();
+    const tipsters = [], usedT = {};
+    const tipTexts = {
+      home: [
+        home + " en casa es otro equipo. No me la juego en contra.",
+        "Los números me cuadran para el local. Con el " + home + ".",
+        "Factor campo decisivo hoy. Mi dinero va al " + home + ".",
+        "Locales con buenas sensaciones en las últimas jornadas.",
+      ],
+      draw: [
+        "Partido muy igualado. El empate tiene valor aquí.",
+        "No veo clara la victoria de ninguno. Jugada táctica: la X.",
+        "Fuerzas parejas. En este tipo de partidos la X siempre aparece.",
+        "Cuota de empate interesante dado el contexto del partido.",
+      ],
+      away: [
+        away + " llega en mejor momento. Me la juego por ellos.",
+        "Cuota del visitante con valor real según mis modelos.",
+        "Las sensaciones del " + away + " fuera de casa me convencen.",
+        "Datos de los últimos viajes del " + away + " muy sólidos.",
+      ],
+    };
+    for (let i = 0; i < 4; i++) {
+      if (!tipPool.length) break;
+      let idx = Math.abs(hsh(seed + "tip" + i)) % tipPool.length, g = 0;
+      while (usedT[idx] && g++ < tipPool.length) idx = (idx + 1) % tipPool.length;
+      usedT[idx] = 1;
+      const t = tipPool[idx];
+      const tNoise = rng("tnoise" + i, -0.1, 0.1);
+      const aH = Math.max(0, pH + (i % 2 === 0 ? tNoise : -tNoise * 0.6));
+      const aA = Math.max(0, pA + (i % 2 === 1 ? tNoise : -tNoise * 0.6));
+      const aD = Math.max(0, 1 - aH - aA);
+      const r = Math.abs(hsh(seed + "tipR" + i)) % 100;
+      const pick = r < aH * 100 ? "home" : r < (aH + aD) * 100 ? "draw" : "away";
+      const conf = 60 + Math.round(rng("tconf" + i, 0, 29));
+      const txtIdx = Math.abs(hsh(seed + "tipT" + i)) % 4;
+      tipsters.push({ name: t.n, platform: t.p, pick, conf, text: tipTexts[pick][txtIdx] });
+    }
+
     return {
       home, away, isUserHome: home === c.clubName, isUserAway: away === c.clubName,
       strength: { home: Math.round(sH), away: Math.round(sA) },
       prob: { home: pH, draw: pD, away: pA },
       consensus, books, best, public: publik, volume, movement, fav, extras, boost, combo,
+      exactScore, tipsters,
     };
   };
 

@@ -1265,6 +1265,25 @@
               ${odd("btts", "AMBOS MARCAN", "sí", o.extras.bttsYes, "Ambos equipos marcan")}
             </div>
 
+            <div class="bm-sec">Marcador más probable <span class="bm-badge">POISSON</span></div>
+            <div class="bm-scores">
+              ${o.exactScore.map((s,i) => `<div class="bm-score-chip${i===0?" top":""}" data-sel="sc${s.h}${s.a}" data-odd="${s.odd}" data-label="Marcador exacto ${s.h}-${s.a}">
+                <div class="sc">${s.h}–${s.a}</div>
+                <div class="ov">${fo(s.odd)}</div>
+                ${i===0?'<div class="tag">TOP</div>':''}
+              </div>`).join("")}
+            </div>
+
+            <div class="bm-sec">Panel de expertos <span class="bm-badge hot">TIPSTERS</span></div>
+            <div class="bm-tipsters">
+              ${o.tipsters.map(t => { const pn=t.pick==="home"?o.home:t.pick==="away"?o.away:"Empate"; const pc=t.pick==="home"?"var(--bm-lime)":t.pick==="away"?"var(--bm-amber)":"#7a8f8a"; return `<div class="bm-tip">
+                <div class="bm-tip-head"><span class="bm-tip-name">${U.esc(t.name)}</span><span class="bm-tip-plat">${U.esc(t.platform)}</span></div>
+                <div class="bm-tip-pick" style="color:${pc}">${U.esc(pn)} · ${t.conf}%</div>
+                <div class="bm-tip-bar-wrap"><div class="bm-tip-bar-fill" style="width:${t.conf}%;background:${pc}"></div></div>
+                <div class="bm-tip-text">"${U.esc(t.text)}"</div>
+              </div>`; }).join("")}
+            </div>
+
             <div class="bm-sec">Dinero del público <span class="r" style="color:var(--bm-dim);text-transform:none">${o.volume.toLocaleString("es-ES")} apuestas</span></div>
             <div class="bm-pbar">${seg(o.public.home, hc.bg, hc.text)}${seg(o.public.draw, "#3a4636", "#cfe0c0")}${seg(o.public.away, ac.bg, ac.text)}</div>
             <div class="bm-leg"><span><i style="background:${hc.bg}"></i>${U.esc(o.home)} ${o.public.home}%</span><span><i style="background:#3a4636"></i>Empate ${o.public.draw}%</span><span><i style="background:${ac.bg}"></i>${U.esc(o.away)} ${o.public.away}%</span></div>
@@ -1324,8 +1343,8 @@
       retEl.textContent = "€" + eur(stake * sel.odd);
     };
     const choose = (el) => {
-      root.querySelectorAll(".bm-odd.is-sel").forEach(x => x.classList.remove("is-sel"));
-      if (el.classList.contains("bm-odd")) el.classList.add("is-sel");
+      root.querySelectorAll(".bm-odd.is-sel, .bm-score-chip.is-sel").forEach(x => x.classList.remove("is-sel"));
+      if (el.classList.contains("bm-odd") || el.classList.contains("bm-score-chip")) el.classList.add("is-sel");
       sel = { odd: Number(el.dataset.odd), label: el.dataset.label };
       selEl.innerHTML = `${U.esc(sel.label)}<small>BETMÁXIMA · cuota ${fo(sel.odd)}</small>`;
       oddEl.textContent = fo(sel.odd);

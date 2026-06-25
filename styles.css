@@ -664,3 +664,24 @@ body.trip-open { overflow: hidden; }
 .bm-cta:hover { filter: brightness(1.06); } .bm-cta:active { transform: scale(.985); }
 .bm-cta.done { background: var(--bm-surf2); color: var(--bm-lime); border: 1px solid var(--bm-lime2); }
 .bm-note { font-size: 10.5px; color: #5f6f53; text-align: center; margin-top: 9px; }
+/* Fase 2 — marcador exacto */
+.bm-scores { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+.bm-score-chip { background: var(--bm-surf); border: 1px solid var(--bm-line); border-radius: 11px; padding: 9px 4px 8px; text-align: center; cursor: pointer; transition: border-color .12s, transform .08s; user-select: none; }
+.bm-score-chip:hover { border-color: var(--bm-lime2); transform: translateY(-2px); }
+.bm-score-chip:active { transform: scale(.97); }
+.bm-score-chip.top { border-color: var(--bm-lime2); background: linear-gradient(135deg,rgba(194,255,31,.08),var(--bm-surf)); }
+.bm-score-chip .sc { font-size: 15px; font-weight: 800; color: var(--bm-text); font-variant-numeric: tabular-nums; }
+.bm-score-chip .ov { font-size: 11.5px; color: var(--bm-lime); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.bm-score-chip .tag { font-size: 8px; font-weight: 800; letter-spacing: .06em; color: var(--bm-lime); margin-top: 3px; }
+.bm-score-chip.is-sel { background: var(--bm-lime); border-color: var(--bm-lime); box-shadow: 0 0 14px -4px rgba(194,255,31,.5); }
+.bm-score-chip.is-sel .sc,.bm-score-chip.is-sel .ov,.bm-score-chip.is-sel .tag { color: #0a0d0c; }
+/* Fase 2 — panel de tipsters */
+.bm-tipsters { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.bm-tip { background: var(--bm-surf); border: 1px solid var(--bm-line); border-radius: 12px; padding: 11px 12px; }
+.bm-tip-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.bm-tip-name { font-size: 12.5px; font-weight: 700; color: var(--bm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-tip-plat { font-size: 10px; color: var(--bm-dim); flex: none; }
+.bm-tip-pick { font-size: 13px; font-weight: 800; margin-bottom: 5px; }
+.bm-tip-bar-wrap { height: 3px; background: var(--bm-line); border-radius: 2px; margin-bottom: 7px; overflow: hidden; }
+.bm-tip-bar-fill { height: 100%; border-radius: 2px; }
+.bm-tip-text { font-size: 11.5px; color: var(--bm-dim); font-style: italic; line-height: 1.4; }
