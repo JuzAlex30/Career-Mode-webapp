@@ -50,6 +50,7 @@ const BODY = `
         <a class="nav-item" data-route="cloud"><span class="ni-icon" data-icon="cloud"></span><span>Comunidad</span></a>
         <a class="nav-item" data-route="settings"><span class="ni-icon" data-icon="gear"></span><span>Ajustes y datos</span></a>
         <button class="theme-toggle" id="themeToggle" title="Cambiar tema"><span class="ni-icon" data-icon="moon"></span></button>
+        <div class="nav-legal">Proyecto de fans no oficial · sin relación con EA Sports, EA Sports FC ni la FIFA</div>
       </div>
     </aside>
     <header class="topbar">
