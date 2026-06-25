@@ -1,5 +1,5 @@
 /* ============================================================
-   rosters.js — plantillas EA FC 25 (temporada 2024/25)
+   rosters.js — plantillas de referencia (temporada 2024/25)
    Premier League (20 equipos) + Bundesliga (18 equipos)
    Expuesto en window.FC.data.ROSTERS
    ============================================================ */

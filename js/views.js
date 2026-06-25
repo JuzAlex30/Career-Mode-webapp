@@ -2311,13 +2311,13 @@
     const roster = (D.SQUADS || {})[c.clubName];
     if (!roster || !roster.length) { UI.toast("No hay plantilla disponible para este club", "err"); return; }
     const hasPlayers = (c.players || []).length > 0;
-    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> (EA FC 25).</p>
+    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> <span class="faint">(plantilla de referencia 2024/25)</span>.</p>
       ${hasPlayers ? `<div class="field" style="margin-top:12px"><label>Plantilla actual (${c.players.length} jugadores)</label>
         <select id="imp-mode">
           <option value="merge">Fusionar (mantener existentes, añadir nuevos)</option>
           <option value="replace">Reemplazar (eliminar todos y cargar de nuevo)</option>
         </select></div>` : ""}`;
-    UI.openModal("Importar plantilla EA FC 25", body,
+    UI.openModal("Importar plantilla de referencia", body,
       `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="imp-confirm"><span class="ni-icon" data-icon="download"></span> Importar</button>`);
     document.getElementById("imp-confirm").addEventListener("click", () => {
       const mode = hasPlayers ? (document.getElementById("imp-mode").value) : "replace";

@@ -181,12 +181,14 @@
     {n:"ValueBet_Nando",p:"Telegram"},{n:"El Hándicap Express",p:"Podcast"},
   ];
 
-  /* ---------- Competiciones (catálogo de EA Sports FC) ----------
-     Agrupadas para el desplegable. Licencias EA FC 25: SÍ tiene UEFA (Champions/
-     Europa/Conference/Supercopa), CONMEBOL (Libertadores/Sudamericana/Recopa) y las
-     copas de Inglaterra/Italia/Alemania/Francia; NO tiene Copa del Rey/Supercopa de
-     España ni torneos de selecciones reales (solo amistosos + un torneo genérico).
-     Aquí usamos los NOMBRES REALES para narrar la carrera del usuario. */
+  /* ---------- Competiciones (catálogo de EA Sports FC 26) ----------
+     Agrupadas para el desplegable. Licencias FC 26: UEFA (Champions/Europa/
+     Conference/Super Cup) + CONMEBOL (Libertadores/Sudamericana/Recopa) + copas de
+     Inglaterra/Italia/Alemania/Francia. FC 26 NO licencia Copa del Rey/Supercopa de
+     España (el acuerdo con la RFEF de dic-2025 es patrocinio, no competición; quizá
+     en FC 27) ni torneos de selecciones reales: el único es "The World's Game"
+     (Mundial NO oficial de 48 selecciones, update post-lanzamiento). Aun así
+     incluimos los NOMBRES REALES (Copa del Rey, Mundial, Eurocopa...) para narrar. */
   // Copas/supercopas domésticas reales por país (nombre correcto según tu liga).
   D.DOMESTIC_CUPS = {
     "Inglaterra": ["FA Cup", "Carabao Cup", "Community Shield"],
@@ -237,7 +239,7 @@
   D._cupWord = /(copa|coppa|coupe|pokal|beker|taça|taca|supercup|schaal|\bcup\b)/i;
   D.isDomesticCup = (comp) => { comp = String(comp || ""); return D._cupWord.test(comp) && !D.isContinental(comp) && !D.isInternational(comp); };
 
-  /* ---------- Ligas seed (catálogo de EA Sports FC, plantillas ~2025/26) ----------
+  /* ---------- Ligas seed (catálogo de EA Sports FC 26, plantillas 2025/26) ----------
      Cada liga lleva `group` para agrupar el desplegable por región. Las plantillas
      son orientativas (editables por el usuario); priorizan clubes reconocibles. */
   D.LEAGUES = [
@@ -1250,8 +1252,8 @@
   };
 
   /* ============================================================
-     PLANTILLAS EA FC 25 — LaLiga y Serie A
-     Base: plantillas de verano 2024. Ratings EA FC 25 (sep 2024).
+     PLANTILLAS DE REFERENCIA — LaLiga y Serie A
+     Base: plantillas y ratings de referencia 2024/25 (editables por el usuario).
      { name, pos, age, ovr, nat }
      ============================================================ */
   D.SQUADS = {
