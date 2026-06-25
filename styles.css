@@ -319,6 +319,12 @@ textarea { resize: vertical; min-height: 80px; }
 .next-match .nm-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
 .next-match .nm-teams { font-weight: 700; font-size: 16px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .next-match .nm-vs { color: var(--text-dim); font-weight: 600; font-size: 13px; margin: 0 4px; }
+/* Fase 3 — tira de cuotas en la tarjeta de próximo partido */
+.nm-odds-strip { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.nmos-bm { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: #7a9068; }
+.nmos-bm-mark { width: 13px; height: 13px; border-radius: 4px; background: #c2ff1f; color: #0a0d0c; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 8.5px; flex: none; }
+.nmos { font-weight: 800; } .nmos.ok { color: var(--ok); } .nmos.dim { color: var(--text-dim); } .nmos.bl { color: var(--accent-2); }
+.nmos-sep { color: var(--line-strong); font-size: 11px; }
 
 /* ===================== Empty states ===================== */
 .empty { text-align: center; padding: 46px 20px; color: var(--text-dim); }

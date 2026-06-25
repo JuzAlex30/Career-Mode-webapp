@@ -366,7 +366,37 @@
     // Modo: "result" (con marcador) o "schedule" (partido futuro sin jugar).
     let mode = opts.mode || (existing && !S.isPlayed(existing) ? "schedule" : "result");
     const dlId = "dl-players";
+    const mktVerdict = (() => {
+      if (!existing || !S.isPlayed(existing)) return "";
+      const o = S.matchOdds(c, existing);
+      if (!o) return "";
+      const foq = (x) => x >= 10 ? x.toFixed(1).replace(".",",") : x.toFixed(2).replace(".",",");
+      const userProb = isHome ? o.prob.home : o.prob.away;
+      const userOdd  = isHome ? o.best.home  : o.best.away;
+      const r = S.userResult(c, existing);
+      const pct = Math.round(userProb * 100);
+      let icon, label, col;
+      if      (r === "W" && pct < 33)  { icon="⚡"; label="¡Diste la sorpresa!";         col="var(--accent-3)"; }
+      else if (r === "W")              { icon="✓";  label="Confirmaste el pronóstico";   col="var(--ok)"; }
+      else if (r === "D")              { icon="·";  label="Partido igualado";             col="var(--text-dim)"; }
+      else if (r === "L" && pct > 55)  { icon="💥"; label="Tropiezo inesperado";         col="var(--danger)"; }
+      else                             { icon="✗";  label="El mercado lo veía venir";    col="var(--danger)"; }
+      return `<div style="background:var(--panel-2);border:1px solid var(--line);border-left:3px solid ${col};border-radius:11px;padding:10px 13px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px">Veredicto del mercado · pre-partido</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+          <div><span style="font-size:15px;font-weight:800;color:${col}">${icon} ${label}</span>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">El mercado te daba un <b style="color:var(--text)">${pct}%</b> · cuota <b style="color:var(--text)">${foq(userOdd)}</b></div>
+          </div>
+          <div style="display:flex;gap:6px;font-size:12px;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--text-dim)">
+            <b style="color:var(--ok)">${foq(o.best.home)}</b><span>·</span>
+            <span>${foq(o.best.draw)}</span><span>·</span>
+            <b style="color:var(--accent-2)">${foq(o.best.away)}</b>
+          </div>
+        </div>
+      </div>`;
+    })();
     const body = `
+      ${mktVerdict}
       ${playersDatalist(c, dlId)}
       <div class="field"><label>Tipo de partido</label>
         <div class="seg" id="m-mode">
@@ -650,6 +680,8 @@
     const nextM = S.nextMatch(c, season.id);
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const canScout = nextRival && S.rivalHistory(c, nextRival);
+    const nextOdds = nextM ? S.matchOdds(c, nextM) : null;
+    const foQ = (x) => x >= 10 ? x.toFixed(1).replace(".",",") : x.toFixed(2).replace(".",",");
     const finAlert = fin.hasBudget
       ? (fin.remaining < 0
           ? alertRow("coin", "Presupuesto excedido en " + U.money(-fin.remaining), "danger", "finance")
@@ -674,7 +706,9 @@
       ${nextM ? `<div class="card next-match" id="dash-next" style="cursor:pointer">
         <div class="nm-left"><span class="ni-icon" data-icon="calendar"></span>
           <div><div class="nm-label">Próximo partido${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
-          <div class="nm-teams">${teamDot(nextM.home||"")}${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${teamDot(nextM.away||"")}${U.esc(nextM.away||"—")}</div></div>
+          <div class="nm-teams">${teamDot(nextM.home||"")}${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${teamDot(nextM.away||"")}${U.esc(nextM.away||"—")}</div>
+          ${nextOdds ? `<div class="nm-odds-strip"><span class="nmos-bm"><span class="nmos-bm-mark">B</span>BETMÁX</span><span class="nmos ok">${foQ(nextOdds.best.home)}</span><span class="nmos-sep">·</span><span class="nmos dim">${foQ(nextOdds.best.draw)}</span><span class="nmos-sep">·</span><span class="nmos bl">${foQ(nextOdds.best.away)}</span></div>` : ""}
+          </div></div>
         </div>
         <div class="flex gap center">
           ${canScout ? `<button class="btn btn-ghost btn-sm" id="dash-next-scout"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
