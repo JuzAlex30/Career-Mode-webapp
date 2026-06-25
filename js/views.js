@@ -1190,77 +1190,159 @@
     modal.querySelectorAll("[data-rmatch]").forEach(el => el.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, el.dataset.rmatch))));
   };
 
-  /* Mercado de apuestas simulado de un partido (programado o jugado). */
+  /* Mercado de apuestas simulado: overlay con marca propia "BETMÁXIMA",
+     estética de casa de apuestas real y boleto interactivo. Determinista. */
   UI.openBettingMarket = function (c, m) {
     const o = S.matchOdds(c, m);
     if (!o) { UI.toast("No se puede calcular el mercado de este partido", "err"); return; }
-    const fmtOdd = (x) => x >= 10 ? x.toFixed(1).replace(".", ",") : x.toFixed(2).replace(".", ",");
+    const fo = (x) => x >= 10 ? x.toFixed(1).replace(".", ",") : x.toFixed(2).replace(".", ",");
+    const eur = (x) => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
+    const dot = (name) => `<span class="bm-dot" style="background:${U.teamColors(name).bg}"></span>`;
     const hc = U.teamColors(o.home), ac = U.teamColors(o.away);
-    const drawCol = "var(--text-faint)";
-    const meta = `${U.esc(m.competition || "Partido")}${m.round ? " · " + U.esc(m.round) : ""} · ${m.date ? U.fmtDate(m.date) : "Sin fecha"}`;
+    const favSide = o.fav.even ? (o.public.home >= o.public.away ? "home" : "away") : o.fav.side;
+    const favName = favSide === "home" ? o.home : o.away;
+    const favPub = o.public[favSide];
+    const meta = `${U.esc(m.competition || "Partido")}${m.round ? " · " + U.esc(m.round) : ""} · ${m.date ? U.fmtDate(m.date) : "Por confirmar"}`;
+    const boostPct = Math.round((o.boost.to / o.boost.from - 1) * 100);
 
-    // Cabecera: equipos con su color.
-    const head = `<div class="flex between center" style="gap:10px;margin-bottom:6px">
-        <div class="flex gap center" style="min-width:0">${teamDot(o.home)}<div style="min-width:0"><b style="font-size:16px">${U.esc(o.home)}</b><div class="faint" style="font-size:11px;letter-spacing:.06em">LOCAL · FUERZA ${o.strength.home}</div></div></div>
-        <div style="text-align:center;flex:none"><div class="faint" style="font-size:12px">vs</div></div>
-        <div class="flex gap center" style="min-width:0;justify-content:flex-end;text-align:right"><div style="min-width:0"><b style="font-size:16px">${U.esc(o.away)}</b><div class="faint" style="font-size:11px;letter-spacing:.06em">VISITANTE · FUERZA ${o.strength.away}</div></div>${teamDot(o.away)}</div>
+    // Botón de cuota seleccionable (entra en el boleto). slip = etiqueta del boleto.
+    const odd = (sel, lab, nm, val, slip) => `<div class="bm-odd" data-sel="${sel}" data-odd="${val}" data-label="${U.esc(slip || (nm ? lab + " " + nm : lab))}">
+        <div class="lab">${lab}</div><div class="val">${fo(val)}</div>${nm ? `<div class="nm">${U.esc(nm)}</div>` : ""}</div>`;
+
+    const seg = (w, bg, txt) => w <= 0 ? "" : `<span style="width:${w}%;background:${bg};color:${txt}">${w >= 9 ? w + "%" : ""}</span>`;
+    const mvCell = (mv) => mv.dir === "flat"
+      ? `<span class="bm-flat">${fo(mv.now)} =</span>`
+      : `<span class="o"><span style="color:var(--bm-dim)">${fo(mv.open)}</span> <span style="color:var(--bm-dim)">→</span> <b>${fo(mv.now)}</b> <span class="bm-${mv.dir}">${mv.dir === "down" ? "▼" : "▲"}</span></span>`;
+    const cmp = (v, best) => `<span class="${v === best ? "best" : ""}">${fo(v)}</span>`;
+
+    const body = `<div class="bm-overlay" id="bmOverlay">
+      <div class="bm-sheet" role="dialog" aria-label="Mercado de apuestas">
+        <div class="bm-topbar">
+          <span class="bm-logo"><span class="bm-logo-mark">B</span>BET<b>MÁXIMA</b></span>
+          <span class="flex gap center" style="gap:9px"><span class="bm-live">● PREVIA</span><button class="bm-x" id="bmClose" aria-label="Cerrar"><span class="ni-icon" data-icon="close"></span></button></span>
+        </div>
+        <div class="bm-bonus"><span class="ni-icon" data-icon="star" style="color:var(--bm-amber)"></span><span><b>BONO BIENVENIDA</b> · duplicamos tu primer boleto en monedas de carrera</span></div>
+        <div class="bm-scroll">
+          <div class="bm-pad">
+            <div class="bm-head">
+              <span class="bm-team">${dot(o.home)}<span style="min-width:0"><span class="nm">${U.esc(o.home)}</span><span class="fz">LOCAL · FUERZA ${o.strength.home}</span></span></span>
+              <span class="bm-vs">VS</span>
+              <span class="bm-team" style="justify-content:flex-end;text-align:right"><span style="min-width:0"><span class="nm">${U.esc(o.away)}</span><span class="fz">VISITANTE · FUERZA ${o.strength.away}</span></span>${dot(o.away)}</span>
+            </div>
+            <div class="bm-meta">${meta}</div>
+
+            <div class="bm-sec">Ganador del partido <span class="r"><span class="ni-icon" data-icon="flame" style="width:13px;height:13px;vertical-align:-2px"></span> ${favPub}% al ${U.esc(favName)}</span></div>
+            <div class="bm-odds">
+              ${odd("home", "1 · LOCAL", o.home, o.best.home, "Gana " + o.home)}
+              ${odd("draw", "X · EMPATE", "", o.best.draw, "Empate")}
+              ${odd("away", "2 · VISITANTE", o.away, o.best.away, "Gana " + o.away)}
+            </div>
+
+            <div class="bm-sec">Cuota mejorada del día <span class="bm-badge amber">BOOST +${boostPct}%</span></div>
+            <div class="bm-card bm-boost">
+              <div class="flex between center" style="gap:10px">
+                <div style="min-width:0"><b style="font-size:14px">Gana el ${U.esc(o.boost.label)}</b>
+                  <div style="font-size:12px;color:var(--bm-dim);margin-top:2px">Cuota normal <span class="from">${fo(o.boost.from)}</span> · ahora <span class="to">${fo(o.boost.to)}</span></div></div>
+                <div class="bm-odd" data-sel="boost" data-odd="${o.boost.to}" data-label="${U.esc("Mejorada: gana " + o.boost.label)}" style="flex:none;min-width:88px;border-color:var(--bm-amber)">
+                  <div class="lab" style="color:var(--bm-amber)">MEJORADA</div><div class="val" style="color:var(--bm-amber)">${fo(o.boost.to)}</div></div>
+              </div>
+            </div>
+
+            <div class="bm-sec">Combinada del día <span class="bm-badge hot">MEGACUOTA</span></div>
+            <div class="bm-card bm-combo">
+              <div class="legs">${o.combo.legs.map(l => `<div class="leg"><span>${U.esc(l.text)}</span><span class="o">${fo(l.odd)}</span></div>`).join("")}</div>
+              <div class="flex between center" style="margin-top:9px;border-top:1px solid var(--bm-line);padding-top:9px">
+                <span style="font-size:12px;color:var(--bm-dim)">Cuota combinada</span>
+                <span class="flex gap center" style="gap:10px"><b style="font-size:19px;color:var(--bm-lime);font-variant-numeric:tabular-nums">${fo(o.combo.odd)}</b>
+                  <span class="bm-mini" data-sel="combo" data-odd="${o.combo.odd}" data-label="Combinada del día"><span class="ni-icon" data-icon="plus" style="width:13px;height:13px"></span> Al boleto</span></span>
+              </div>
+            </div>
+
+            <div class="bm-sec">Más mercados</div>
+            <div class="bm-odds">
+              ${odd("o25", "MÁS DE 2.5", "goles", o.extras.over25, "Más de 2.5 goles")}
+              ${odd("u25", "MENOS DE 2.5", "goles", o.extras.under25, "Menos de 2.5 goles")}
+              ${odd("btts", "AMBOS MARCAN", "sí", o.extras.bttsYes, "Ambos equipos marcan")}
+            </div>
+
+            <div class="bm-sec">Dinero del público <span class="r" style="color:var(--bm-dim);text-transform:none">${o.volume.toLocaleString("es-ES")} apuestas</span></div>
+            <div class="bm-pbar">${seg(o.public.home, hc.bg, hc.text)}${seg(o.public.draw, "#3a4636", "#cfe0c0")}${seg(o.public.away, ac.bg, ac.text)}</div>
+            <div class="bm-leg"><span><i style="background:${hc.bg}"></i>${U.esc(o.home)} ${o.public.home}%</span><span><i style="background:#3a4636"></i>Empate ${o.public.draw}%</span><span><i style="background:${ac.bg}"></i>${U.esc(o.away)} ${o.public.away}%</span></div>
+
+            <div class="bm-sec">Cómo se mueve la cuota</div>
+            <div class="bm-card" style="padding:2px 13px">
+              <div class="bm-move-row"><span>${U.esc(o.home)}</span>${mvCell(o.movement.home)}</div>
+              <div class="bm-move-row"><span>Empate</span>${mvCell(o.movement.draw)}</div>
+              <div class="bm-move-row"><span>${U.esc(o.away)}</span>${mvCell(o.movement.away)}</div>
+            </div>
+            ${o.movement[favSide].dir === "down" ? `<div style="font-size:11.5px;color:var(--bm-amber);margin-top:8px"><span class="ni-icon" data-icon="flame" style="width:12px;height:12px;vertical-align:-2px"></span> La cuota del ${U.esc(favName)} está bajando: el dinero entra fuerte.</div>` : ""}
+
+            <div class="bm-sec">El mercado en otras casas</div>
+            <div class="bm-card" style="padding:2px 13px">
+              <div class="bm-cmp-row bm-cmp-head"><span class="nm">CASA</span><span>1</span><span>X</span><span>2</span></div>
+              ${o.books.map(b => `<div class="bm-cmp-row"><span class="nm">${U.esc(b.name)}</span>${cmp(b.home, o.best.home)}${cmp(b.draw, o.best.draw)}${cmp(b.away, o.best.away)}</div>`).join("")}
+            </div>
+            <div style="font-size:11px;color:#5f6f53;margin-top:7px">BETMÁXIMA te paga la mejor cuota del mercado, resaltada en lima.</div>
+          </div>
+        </div>
+        <div class="bm-slip" id="bmSlip">
+          <div class="bm-slip-empty" id="bmEmpty">Toca una cuota para empezar tu boleto</div>
+          <div id="bmBet" hidden>
+            <div class="bm-slip-top"><div class="bm-slip-sel" id="bmSel"></div><div class="bm-slip-odd" id="bmOdd"></div></div>
+            <div class="bm-stake"><input type="number" id="bmStake" value="10" min="1" step="1" inputmode="numeric" aria-label="Importe"/>
+              <div class="chips">${[5, 10, 25, 50, 100].map(v => `<button data-stake="${v}">${v}</button>`).join("")}</div></div>
+            <div class="bm-ret"><span class="lab">Ganancia potencial</span><span class="val" id="bmRet">—</span></div>
+            <button class="bm-cta" id="bmGo">Apostar <span style="opacity:.7">· simulación</span></button>
+            <div class="bm-note">Simulación con fines de inmersión · sin dinero real · +18</div>
+          </div>
+        </div>
       </div>
-      <div class="faint" style="font-size:12px;margin-bottom:14px">${meta}</div>`;
+    </div>`;
 
-    // Favorito.
-    const fav = o.fav.even
-      ? `<div style="border-left:3px solid var(--text-dim);background:var(--panel);padding:10px 13px;border-radius:8px;margin-bottom:16px;font-size:13px"><b>Duelo igualado.</b> El mercado no ve un favorito claro: cuotas parejas.</div>`
-      : `<div class="flex gap center" style="border-left:3px solid var(--ok);background:var(--panel);padding:10px 13px;border-radius:8px;margin-bottom:16px">
-          <span class="ni-icon" data-icon="trophy" style="color:var(--ok);flex-shrink:0"></span>
-          <span style="font-size:13px;flex:1">El <b>${U.esc(o.fav.name)}</b> parte como favorito${o.fav.prob >= 70 ? " claro" : ""}.</span>
-          <span class="chip" style="color:var(--ok);white-space:nowrap">${o.fav.prob}% implícita</span></div>`;
+    const ov = U.h("div", {}, []);
+    ov.innerHTML = body;
+    const root = ov.firstElementChild;
+    document.body.appendChild(root);
+    U.hydrateIcons(root);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-    // 1X2 consenso.
-    const oTile = (lab, odd, hi) => `<div style="background:var(--panel-2);border:1px solid ${hi ? "var(--ok)" : "var(--line)"};border-radius:10px;padding:11px 8px;text-align:center">
-        <div class="faint" style="font-size:11px;letter-spacing:.05em;margin-bottom:4px">${lab}</div>
-        <div style="font-size:23px;font-weight:800;color:${hi ? "var(--ok)" : "var(--text)"};font-variant-numeric:tabular-nums">${fmtOdd(odd)}</div></div>`;
-    const oneXtwo = `<div class="section-title">Resultado (1X2)</div>
-      <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">
-        ${oTile("1 · LOCAL", o.consensus.home, o.fav.side === "home")}
-        ${oTile("X · EMPATE", o.consensus.draw, false)}
-        ${oTile("2 · VISITANTE", o.consensus.away, o.fav.side === "away")}
-      </div>`;
+    const close = () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; root.remove(); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    root.addEventListener("mousedown", (e) => { if (e.target === root) close(); });
+    root.querySelector("#bmClose").addEventListener("click", close);
 
-    // Comparativa de casas (mejor cuota de cada columna resaltada).
-    const cell = (v, isBest) => `<span style="text-align:center;font-variant-numeric:tabular-nums;${isBest ? "color:var(--ok);font-weight:700" : ""}">${fmtOdd(v)}</span>`;
-    const bookRows = o.books.map(b => `<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:9px 0;border-bottom:1px solid var(--line);align-items:center;font-size:14px">
-        <span style="font-size:13px;color:var(--text-dim)">${U.esc(b.name)}</span>
-        ${cell(b.home, b.home === o.best.home)}${cell(b.draw, b.draw === o.best.draw)}${cell(b.away, b.away === o.best.away)}
-      </div>`).join("");
-    const compare = `<div class="section-title">Comparativa de casas</div>
-      <div class="card" style="margin:0 0 4px;padding:2px 14px">
-        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:7px 0;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.04em;color:var(--text-faint)"><span>CASA</span><span style="text-align:center">1</span><span style="text-align:center">X</span><span style="text-align:center">2</span></div>
-        ${bookRows}
-      </div>
-      <div class="faint" style="font-size:11px;margin-bottom:16px">Mejor cuota de cada resultado resaltada en verde.</div>`;
-
-    // Dinero del público.
-    const seg = (w, bg, txt, lab) => w <= 0 ? "" : `<div style="width:${w}%;background:${bg};display:flex;align-items:center;justify-content:center;min-width:0" title="${lab} ${w}%">${w >= 9 ? `<span style="font-size:11px;font-weight:700;color:${txt}">${w}%</span>` : ""}</div>`;
-    const legDot = (bg) => `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${bg};box-shadow:0 0 0 1px rgba(255,255,255,.18)"></span>`;
-    const money = `<div class="flex between" style="align-items:baseline;margin-top:4px"><div class="section-title" style="margin-bottom:0">Dinero del público</div><span class="faint" style="font-size:12px">${o.volume.toLocaleString("es-ES")} apuestas</span></div>
-      <div style="display:flex;height:18px;border-radius:6px;overflow:hidden;margin:9px 0">
-        ${seg(o.public.home, hc.bg, hc.text, o.home)}${seg(o.public.draw, drawCol, "var(--text)", "Empate")}${seg(o.public.away, ac.bg, ac.text, o.away)}
-      </div>
-      <div class="flex gap" style="flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text-dim);margin-bottom:16px">
-        <span class="flex gap center" style="gap:5px">${legDot(hc.bg)}${U.esc(o.home)} ${o.public.home}%</span>
-        <span class="flex gap center" style="gap:5px">${legDot(drawCol)}Empate ${o.public.draw}%</span>
-        <span class="flex gap center" style="gap:5px">${legDot(ac.bg)}${U.esc(o.away)} ${o.public.away}%</span></div>`;
-
-    // Movimiento de línea.
-    const arrow = (dir) => dir === "down" ? `<span style="color:var(--ok)">▼</span>` : dir === "up" ? `<span style="color:var(--danger)">▲</span>` : `<span class="faint">=</span>`;
-    const mvRow = (lab, mv) => `<div class="flex between center" style="padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
-        <span>${U.esc(lab)}</span>
-        <span class="flex gap center" style="gap:8px;font-variant-numeric:tabular-nums">${mv.dir === "flat" ? `<span class="faint">${fmtOdd(mv.now)}</span>` : `<span class="faint">${fmtOdd(mv.open)}</span><span class="faint">→</span><b>${fmtOdd(mv.now)}</b>`} ${arrow(mv.dir)}</span></div>`;
-    const movement = `<div class="section-title">Movimiento de cuota</div>
-      <div class="card" style="margin:0 0 4px;padding:2px 14px">${mvRow(o.home, o.movement.home)}${mvRow("Empate", o.movement.draw)}${mvRow(o.away, o.movement.away)}</div>
-      <div class="faint" style="font-size:11px">El lado donde entra el dinero acorta su cuota. Simulación con fines de inmersión.</div>`;
-
-    UI.openModal("Mercado de apuestas", head + fav + oneXtwo + compare + money + movement, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
+    // Boleto interactivo.
+    let sel = null;
+    const empty = root.querySelector("#bmEmpty"), bet = root.querySelector("#bmBet");
+    const selEl = root.querySelector("#bmSel"), oddEl = root.querySelector("#bmOdd"), retEl = root.querySelector("#bmRet");
+    const stakeEl = root.querySelector("#bmStake"), goBtn = root.querySelector("#bmGo");
+    const recalc = () => {
+      if (!sel) return;
+      const stake = Math.max(0, Number(stakeEl.value) || 0);
+      retEl.textContent = "€" + eur(stake * sel.odd);
+    };
+    const choose = (el) => {
+      root.querySelectorAll(".bm-odd.is-sel").forEach(x => x.classList.remove("is-sel"));
+      if (el.classList.contains("bm-odd")) el.classList.add("is-sel");
+      sel = { odd: Number(el.dataset.odd), label: el.dataset.label };
+      selEl.innerHTML = `${U.esc(sel.label)}<small>BETMÁXIMA · cuota ${fo(sel.odd)}</small>`;
+      oddEl.textContent = fo(sel.odd);
+      empty.hidden = true; bet.hidden = false;
+      goBtn.classList.remove("done"); goBtn.innerHTML = `Apostar <span style="opacity:.7">· simulación</span>`;
+      recalc();
+    };
+    root.querySelectorAll("[data-sel]").forEach(el => el.addEventListener("click", () => choose(el)));
+    stakeEl.addEventListener("input", recalc);
+    root.querySelectorAll("[data-stake]").forEach(b => b.addEventListener("click", () => { stakeEl.value = b.dataset.stake; recalc(); }));
+    goBtn.addEventListener("click", () => {
+      if (!sel) return;
+      const stake = Math.max(0, Number(stakeEl.value) || 0);
+      goBtn.classList.add("done");
+      goBtn.innerHTML = `<span class="ni-icon" data-icon="check" style="width:16px;height:16px;vertical-align:-3px"></span> ¡Boleto simulado! Ganarías €${eur(stake * sel.odd)}`;
+      U.hydrateIcons(goBtn);
+    });
   };
 
   /* Resumen de temporada — veredicto de la junta directiva. */

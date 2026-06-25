@@ -1211,11 +1211,31 @@
       : (pH >= pA ? { side: "home", name: home, prob: Math.round(100 / consensus.home) }
                   : { side: "away", name: away, prob: Math.round(100 / consensus.away) });
 
+    // 6) Mercados derivados (alimentan combinada y cuota mejorada): Poisson del total + BTTS.
+    const pois = (k, l) => { if (l <= 0) return k === 0 ? 1 : 0; let p = Math.exp(-l); for (let i = 1; i <= k; i++) p *= l / i; return p; };
+    let pO15 = 0, pO25 = 0, pBtts = 0; const MG = 8;
+    for (let i = 0; i <= MG; i++) for (let j = 0; j <= MG; j++) { const pp = pois(i, lamH) * pois(j, lamA); if (i + j >= 2) pO15 += pp; if (i + j >= 3) pO25 += pp; if (i >= 1 && j >= 1) pBtts += pp; }
+    const extras = {
+      over15: oddFrom(pO15, MARGIN), under15: oddFrom(1 - pO15, MARGIN),
+      over25: oddFrom(pO25, MARGIN), under25: oddFrom(1 - pO25, MARGIN),
+      bttsYes: oddFrom(pBtts, MARGIN), bttsNo: oddFrom(1 - pBtts, MARGIN),
+    };
+    // Cuota mejorada (incentivo): potencia la mejor cuota del favorito.
+    const favKey = fav.even ? "home" : fav.side;
+    const fromOdd = best[favKey];
+    const boost = { sel: favKey, label: favKey === "draw" ? "Empate" : (favKey === "home" ? home : away), from: fromOdd, to: snap(fromOdd * (1.12 + rng("boost", 0, 0.13))) };
+    // Combinada sugerida del día (2 patas).
+    const combo = { legs: [
+      { sel: favKey, text: "Gana " + (fav.even ? home : fav.name), odd: consensus[favKey] },
+      { sel: "over15", text: "Más de 1.5 goles", odd: extras.over15 },
+    ] };
+    combo.odd = snap(combo.legs[0].odd * combo.legs[1].odd);
+
     return {
       home, away, isUserHome: home === c.clubName, isUserAway: away === c.clubName,
       strength: { home: Math.round(sH), away: Math.round(sA) },
       prob: { home: pH, draw: pD, away: pA },
-      consensus, books, best, public: publik, volume, movement, fav,
+      consensus, books, best, public: publik, volume, movement, fav, extras, boost, combo,
     };
   };
 
