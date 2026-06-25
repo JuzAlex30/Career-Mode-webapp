@@ -592,6 +592,16 @@
           </div>
         </div>
       </div>
+      <div class="field-row">
+        <div class="field"><label>Etiqueta</label>
+          <div class="seg" id="m-tag-seg">
+            <button type="button" class="${!ex.tag?"active":""}" data-tag="">Ninguna</button>
+            <button type="button" class="${ex.tag==="derbi"?"active":""}" data-tag="derbi">🔥 Derbi</button>
+            <button type="button" class="${ex.tag==="final"?"active":""}" data-tag="final">🏆 Final</button>
+            <button type="button" class="${ex.tag==="clasico"?"active":""}" data-tag="clasico">⭐ Clásico</button>
+          </div>
+        </div>
+      </div>
       <div class="field"><label>Rival</label>
         <input type="text" id="m-opp" list="dl-teams" value="${U.esc(oppName)}" placeholder="Nombre del rival"/>
         <datalist id="dl-teams">${teams.map(t => `<option value="${U.esc(t)}">`).join("")}</datalist>
@@ -720,6 +730,9 @@
       venue = b.dataset.v;
       document.querySelectorAll("#m-venue button").forEach(x => x.classList.toggle("active", x === b));
     }));
+    document.querySelectorAll("#m-tag-seg button").forEach(b => b.addEventListener("click", () => {
+      document.querySelectorAll("#m-tag-seg button").forEach(x => x.classList.toggle("active", x === b));
+    }));
 
     const resultFields = document.getElementById("m-result-fields");
     document.querySelectorAll("#m-mode button").forEach(b => b.addEventListener("click", () => {
@@ -824,6 +837,7 @@
         ratings: ratings.length ? ratings : undefined,
         formation,
         lineup,
+        tag: (document.querySelector("#m-tag-seg button.active") || {}).dataset.tag || undefined,
       });
       // crónica automática: flash de portada para el dashboard
       const _isUser = data.home === c.clubName || data.away === c.clubName;
@@ -859,6 +873,135 @@
       UI.closeModal();
       UI.toast(existing ? "Partido actualizado" : "Partido registrado ⚽", "ok");
     });
+  };
+
+  /* ============================================================
+     TARJETA DE TEMPORADA (Canvas 2D, sin dependencias)
+     ============================================================ */
+  function generateSeasonCard(c, season, pos, sum, agg) {
+    const W = 1200, H = 630;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    const FONT = '"Inter","Segoe UI",system-ui,sans-serif';
+
+    // Fondo degradado
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, "#0b1015"); bg.addColorStop(1, "#141d29");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    // Retícula sutil
+    ctx.strokeStyle = "rgba(255,255,255,0.025)"; ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Barra de acento izquierda
+    ctx.fillStyle = "#00e1a0"; ctx.fillRect(0, 0, 8, H);
+
+    // Badge del club
+    const bc = c.badgeColor || "#00e1a0";
+    const bx = 80, by = 95, br = 52;
+    ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI*2);
+    ctx.fillStyle = bc; ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = `bold 36px ${FONT}`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(U.initials(c.clubName), bx, by + 2);
+
+    // Nombre del club
+    ctx.fillStyle = "#eaf1f8"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.font = `bold 52px ${FONT}`;
+    ctx.fillText(c.clubName, 155, 44);
+
+    // Temporada + mánager
+    ctx.fillStyle = "#93a6bd"; ctx.font = `26px ${FONT}`;
+    const sub = season.label + (c.leagueName && !c.isNational ? " · " + c.leagueName : "") + (c.managerName ? " · " + c.managerName : "");
+    ctx.fillText(sub.length > 60 ? sub.slice(0, 58) + "…" : sub, 155, 108);
+
+    // Separador
+    ctx.strokeStyle = "rgba(255,255,255,0.09)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(40, 162); ctx.lineTo(W-40, 162); ctx.stroke();
+
+    // Estadísticas (fila central)
+    const statsRow = [
+      pos  ? { big: pos.pos + "º", small: "de " + pos.total }  : { big: "—", small: "posición" },
+      { big: String(sum.points), small: "puntos" },
+      { big: sum.w + "V " + sum.d + "E " + sum.l + "D", small: sum.played + " partidos" },
+      { big: sum.gf + ":" + sum.ga, small: "Dif " + (sum.gd >= 0 ? "+" : "") + sum.gd },
+    ];
+    const colW = (W - 80) / statsRow.length;
+    statsRow.forEach((st, i) => {
+      const x = 40 + colW * i + colW / 2;
+      ctx.fillStyle = "#eaf1f8"; ctx.font = `bold 50px ${FONT}`;
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText(st.big, x, 178);
+      ctx.fillStyle = "#93a6bd"; ctx.font = `20px ${FONT}`;
+      ctx.fillText(st.small, x, 238);
+    });
+
+    // Separador
+    ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(40, 280); ctx.lineTo(W-40, 280); ctx.stroke();
+
+    // Sección inferior: goleador + trofeos
+    let cy = 298;
+    const topScorer = Object.values(agg).filter(p => p.goals > 0).sort((a,b) => b.goals-a.goals)[0];
+    const trophies = (c.trophies||[]).filter(t => t.seasonId===season.id && t.result==="winner");
+
+    if (topScorer) {
+      ctx.fillStyle = "#93a6bd"; ctx.font = `19px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText("⚽  Máximo goleador", 48, cy);
+      ctx.fillStyle = "#eaf1f8"; ctx.font = `bold 32px ${FONT}`;
+      ctx.fillText(topScorer.name + "  ·  " + topScorer.goals + " goles", 48, cy + 24);
+      cy += 82;
+    }
+    if (trophies.length) {
+      ctx.fillStyle = "#ffd02e"; ctx.font = `19px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText("🏆  " + (trophies.length === 1 ? "Trofeo" : trophies.length + " trofeos"), 48, cy);
+      ctx.fillStyle = "#ffd02e"; ctx.font = `bold 29px ${FONT}`;
+      const tText = trophies.slice(0,3).map(t=>t.competition).join("  ·  ");
+      ctx.fillText(tText.length > 68 ? tText.slice(0,66)+"…" : tText, 48, cy + 24);
+      cy += 78;
+    }
+    if (!topScorer && !trophies.length) {
+      ctx.fillStyle = "#62748c"; ctx.font = `24px ${FONT}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText("Sigue registrando partidos para completar la tarjeta", W/2, cy + 10);
+    }
+
+    // Footer
+    ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(40, H-55); ctx.lineTo(W-40, H-55); ctx.stroke();
+    ctx.fillStyle = "#00e1a0"; ctx.font = `bold 20px ${FONT}`;
+    ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+    ctx.fillText("Carrera FC", W-40, H-16);
+    ctx.fillStyle = "#62748c"; ctx.font = `17px ${FONT}`;
+    ctx.textAlign = "left";
+    ctx.fillText("Compañero del Modo Carrera · EA Sports FC", 40, H-16);
+
+    return cv;
+  }
+
+  UI.openShareCard = function (c, season) {
+    const pos = S.userPosition(c, season.id);
+    const sum = S.seasonSummary(c, season);
+    const agg = S.playerAggregates(c, season.id);
+    const cv = generateSeasonCard(c, season, pos, sum, agg);
+    const body = `<div style="text-align:center">
+      <canvas id="share-cv" style="max-width:100%;border-radius:10px;display:block;margin:0 auto"></canvas>
+      <p style="color:var(--text-dim);font-size:13px;margin:10px 0 0">Descarga la imagen y compártela donde quieras.</p>
+    </div>`;
+    UI.openModal("Compartir · Temporada " + U.esc(season.label), body,
+      `<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="share-dl"><span class="ni-icon" data-icon="download"></span> Descargar PNG</button>`, { lg: true });
+    const mc = document.getElementById("share-cv");
+    mc.width = cv.width; mc.height = cv.height;
+    mc.getContext("2d").drawImage(cv, 0, 0);
+    document.getElementById("share-dl").addEventListener("click", () => {
+      cv.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = Object.assign(document.createElement("a"), { href: url, download: (c.clubName + "-" + season.label).replace(/[\/\s]/g, "-") + ".png" });
+        a.click(); setTimeout(() => URL.revokeObjectURL(url), 1200);
+      }, "image/png");
+    });
+    U.hydrateIcons(document.querySelector(".modal-foot"));
   };
 
   /* ============================================================
@@ -925,6 +1068,7 @@
         <div class="flex gap center wrap">
           ${seasonSelect(c)}
           <button class="btn btn-ghost" id="dash-live"><span class="ni-icon" data-icon="play"></span> Modo en vivo</button>
+          ${sum.played > 0 ? `<button class="btn btn-ghost btn-sm" id="dash-share" title="Compartir temporada"><span class="ni-icon" data-icon="star"></span></button>` : ""}
           <button class="btn btn-primary" id="dash-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button>
         </div>
       </div>
@@ -1056,6 +1200,8 @@
     document.getElementById("dash-add-obj").addEventListener("click", () => objectiveModal(c, season));
     const miniSt = document.getElementById("dash-mini-st");
     if (miniSt) miniSt.addEventListener("click", () => FC.router.go("standings"));
+    const dashShare = document.getElementById("dash-share");
+    if (dashShare) dashShare.addEventListener("click", () => UI.openShareCard(c, season));
     const firstMatch = document.getElementById("dash-first-match");
     if (firstMatch) firstMatch.addEventListener("click", () => UI.openMatchModal(c));
     fx.querySelectorAll("[data-match]").forEach(r => r.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, r.dataset.match))));
@@ -4350,7 +4496,7 @@
     const g = S.userGoals(c, m); const r = S.userResult(c, m);
     const cls = r === "W" ? "win" : r === "L" ? "loss" : "";
     return `<div class="fixture" data-match="${m.id}" style="cursor:pointer">
-      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}${m.formation ? ` <span class="chip" style="font-size:10px;padding:1px 5px;opacity:.75">${U.esc(m.formation)}</span>` : ""}</span>
+      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}${m.formation ? ` <span class="chip" style="font-size:10px;padding:1px 5px;opacity:.75">${U.esc(m.formation)}</span>` : ""}${m.tag ? ` <span class="chip ${U.esc(m.tag)}" style="font-size:10px;padding:1px 6px">${m.tag==="derbi"?"🔥 Derbi":m.tag==="final"?"🏆 Final":"⭐ Clásico"}</span>` : ""}</span>
       <div class="fx-teams"><span class="t" style="${m.home===c.clubName?"font-weight:700":""}">${teamDot(m.home)}${U.esc(m.home)}</span>
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
         <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${teamDot(m.away)}${U.esc(m.away)}</span></div>

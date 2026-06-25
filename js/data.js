@@ -671,6 +671,15 @@
     unlucky:     ["El marcador fue injusto con el {team}: mereció más", "El fútbol fue cruel con el {team}", "El {team} generó de sobra, pero no le entró"],
     wasteful:    ["{shots} remates y poco premio: al {team} le faltó puntería", "El {team} disparó mucho y acertó poco", "Dominó los disparos pero no la red: el {team}"],
     redcard:     ["Tarde caliente: el {team} acabó con uno menos", "Drama y expulsión en el partido del {team}", "El {team} sufrió en inferioridad numérica"],
+    derbi_W:     ["¡El derbi es nuestro! {team} derrota al {rival}", "Noche de gloria: {team} conquista el derbi ante {rival}", "El derbi tiene dueño: {team} aplasta al {rival}"],
+    derbi_L:     ["Derrota dolorosa en el derbi ante {rival}", "El {rival} se lleva el derbi con superioridad", "Noche negra para {team}: el derbi se va con {rival}"],
+    derbi_D:     ["Nadie pudo con nadie: derbi sin vencedor", "El derbi se reparte: empate cargado de tensión", "Igualdad en el derbi entre {team} y {rival}"],
+    final_W:     ["¡CAMPEONES! {team} gana la final ante {rival}", "La final es nuestra: {team} supera al {rival}", "Historia pura: {team} se corona en la gran final"],
+    final_L:     ["Final cruel: {rival} arrebata el título al {team}", "Subcampeones: la final se le escapa al {team}", "Agonía en la final: {rival} fue un poco mejor"],
+    final_D:     ["Final igualada y sin goles: el drama está por venir", "Empate en la final: el título se decide a los penaltis", "La final no se decide en 90 minutos: todo queda abierto"],
+    clasico_W:   ["El Clásico es del {team}: victoria ante {rival}", "Noche épica: {team} vence al {rival} en el Clásico", "Superioridad total: {team} domina el Clásico"],
+    clasico_L:   ["El {rival} se impone en el Clásico", "El Clásico se va con {rival}: noche amarga para {team}", "Derrota en el Clásico: el {rival} fue mejor"],
+    clasico_D:   ["El Clásico acaba sin vencedor: espectáculo puro", "Empate en el Clásico: igualados en el campo y en la tabla", "El Clásico reparte honores: nadie pudo romper el equilibrio"],
   };
 
   /* ============================================================

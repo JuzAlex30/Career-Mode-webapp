@@ -1646,6 +1646,18 @@
         }
         if (kind) push({ phase: 1, date, tone, icon, title: phrase(kind, "stat:" + kind + ":" + m.id, vars), sub: (m.competition ? esc(m.competition) + " · " : "") + scoreline });
       }
+      // Beat de partido especial (derbi / final / clásico)
+      if (m.tag && (m.tag === "derbi" || m.tag === "final" || m.tag === "clasico")) {
+        const res = S.userResult(c, m);
+        if (res) {
+          const poolKey = m.tag + "_" + res;
+          const tagIcon = m.tag === "final" ? "trophy" : m.tag === "clasico" ? "star" : "flame";
+          const tagTone = res === "W" ? "good" : res === "L" ? "bad" : "neutral";
+          push({ phase: 1, date, tone: tagTone, icon: tagIcon,
+            title: phrase(poolKey, "tag:" + m.tag + ":" + m.id, { team: T, rival, gf: g.for, ga: g.against }),
+            sub: (m.competition ? esc(m.competition) + " · " : "") + scoreline });
+        }
+      }
     });
 
     (c.transfers || []).filter(t => t.seasonId === sid).forEach(t => {

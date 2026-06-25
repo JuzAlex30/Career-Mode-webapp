@@ -71,6 +71,12 @@ const out = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Carrera FC · Compañero del Modo Carrera</title>
   <meta name="description" content="El compañero definitivo del Modo Carrera de EA Sports FC: tracking, clasificaciones, retos y la historia de tu club." />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00e1a0" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
   <style>
 ${css}
   </style>

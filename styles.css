@@ -218,6 +218,9 @@ button { font-family: inherit; }
 .chip.accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .chip.gold { color: var(--accent-3); border-color: color-mix(in srgb, var(--accent-3) 40%, transparent); background: color-mix(in srgb, var(--accent-3) 12%, transparent); }
 .chip.danger { color: #ffb3c1; border-color: color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.chip.derbi  { color: #ff8c57; border-color: rgba(255,107,53,.45); background: rgba(255,107,53,.13); }
+.chip.final  { color: #ffd02e; border-color: rgba(255,208,46,.45); background: rgba(255,208,46,.12); }
+.chip.clasico{ color: #b8a4ff; border-color: rgba(167,139,250,.45); background: rgba(167,139,250,.12); }
 .pill-w, .pill-d, .pill-l { width: 22px; height: 22px; border-radius: 6px; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; }
 .pill-w { background: var(--ok); } .pill-d { background: #8a99ad; } .pill-l { background: var(--danger); }
 
