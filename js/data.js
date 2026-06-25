@@ -134,6 +134,39 @@
     "Metz":{primary:"#7B1127",secondary:"#F4D01C"},
   };
 
+  /* ---------- Fuerza base por club (rating tipo media de equipo, ~60-91) ----------
+     Alimenta el simulador del mercado de apuestas: a mayor fuerza, más favorito.
+     Mismas claves que TEAM_COLORS (búsqueda difusa). Clubes no catalogados → 72. */
+  D.TEAM_STRENGTH = {
+    // Premier League
+    "Arsenal":88,"Aston Villa":82,"Bournemouth":78,"Brentford":77,"Brighton":80,"Burnley":73,
+    "Chelsea":84,"Crystal Palace":78,"Everton":76,"Fulham":77,"Leeds United":75,"Liverpool":88,
+    "Manchester City":90,"Manchester United":83,"Newcastle United":83,"Nottingham Forest":78,
+    "Sunderland":73,"Tottenham Hotspur":83,"West Ham United":78,"Wolverhampton Wanderers":76,
+    // LaLiga
+    "Alavés":73,"Athletic Club":81,"Atlético de Madrid":85,"Barcelona":88,"Celta de Vigo":76,
+    "Elche":72,"Espanyol":74,"Getafe":75,"Girona":77,"Levante":72,"Mallorca":74,"Osasuna":75,
+    "Rayo Vallecano":75,"Real Betis":79,"Real Madrid":90,"Real Oviedo":71,"Real Sociedad":80,
+    "Sevilla":78,"Valencia":77,"Villarreal":80,
+    // Serie A
+    "Atalanta":84,"Bologna":79,"Cagliari":74,"Como":76,"Cremonese":72,"Fiorentina":80,"Genoa":75,
+    "Inter":87,"Juventus":84,"Lazio":81,"Lecce":73,"Milan":84,"Napoli":86,"Parma":74,"Pisa":72,
+    "Roma":82,"Sassuolo":73,"Torino":77,"Udinese":76,"Hellas Verona":73,
+    // Bundesliga
+    "Bayern Múnich":89,"Borussia Dortmund":84,"RB Leipzig":83,"Bayer Leverkusen":85,
+    "Eintracht Frankfurt":80,"VfB Stuttgart":81,"SC Freiburg":78,"Werder Bremen":77,"FC Augsburg":75,
+    "VfL Wolfsburg":77,"Borussia Mönchengladbach":77,"Mainz 05":76,"Union Berlin":76,
+    "TSG Hoffenheim":76,"FC St. Pauli":73,"1. FC Heidenheim":73,"1. FC Köln":74,"Hamburgo SV":73,
+    // Ligue 1
+    "Paris Saint-Germain":89,"Marsella":82,"Mónaco":82,"Niza":79,"Lille":80,"Lyon":80,"Lens":78,
+    "Rennes":78,"Estrasburgo":76,"Nantes":75,"Brest":76,"Toulouse":76,"Auxerre":73,"Le Havre":73,
+    "Angers":72,"Lorient":73,"Paris FC":73,"Metz":72,
+  };
+
+  /* ---------- Casas de apuestas ficticias (pool rotativo, sin repeticiones) ---------- */
+  D.BOOKMAKERS = ["BetMáxima","GoolBet","Tipster365","ApuestaTotal","LiniaPro","GolazoBet",
+    "OddsArena","JugadaMax","EstadioBet","PrimeraApuesta","MarcaBet","RemonteBet"];
+
   /* ---------- Competiciones por defecto ---------- */
   D.COMPETITIONS = ["Liga","Copa nacional","Supercopa","Champions","Europa League","Conference","Amistoso"];
   D.CONTINENTAL = ["Champions","Europa League","Conference"];

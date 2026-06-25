@@ -678,6 +678,7 @@
         </div>
         <div class="flex gap center">
           ${canScout ? `<button class="btn btn-ghost btn-sm" id="dash-next-scout"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
+          <button class="btn btn-ghost btn-sm" id="dash-next-odds"><span class="ni-icon" data-icon="coin"></span> Cuotas</button>
           ${nextM.away === c.clubName ? `<button class="btn btn-ghost btn-sm" id="dash-next-trip"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
           <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
         </div>
@@ -782,6 +783,8 @@
       document.getElementById("dash-next-play").addEventListener("click", (e) => { e.stopPropagation(); UI.openMatchModal(c, nextM, { mode: "result" }); });
       const dns = document.getElementById("dash-next-scout");
       if (dns) dns.addEventListener("click", (e) => { e.stopPropagation(); UI.openRivalDossier(c, nextRival); });
+      const dno = document.getElementById("dash-next-odds");
+      if (dno) dno.addEventListener("click", (e) => { e.stopPropagation(); UI.openBettingMarket(c, nextM); });
       const dnt = document.getElementById("dash-next-trip");
       if (dnt) dnt.addEventListener("click", (e) => { e.stopPropagation(); UI.openTrip(c, nextM); });
       nextEl.addEventListener("click", () => UI.openMatchModal(c, nextM, { mode: "schedule" }));
@@ -887,11 +890,14 @@
       UI.openMatchModal(c, findMatch(c, r.dataset.match));
     }));
     content().querySelectorAll("[data-up]").forEach(r => r.addEventListener("click", (e) => {
-      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]") || e.target.closest("[data-trip]") || e.target.closest("[data-scout]")) return;
+      if (e.target.closest("[data-del-match]") || e.target.closest("[data-play-match]") || e.target.closest("[data-trip]") || e.target.closest("[data-scout]") || e.target.closest("[data-odds]")) return;
       UI.openMatchModal(c, findMatch(c, r.dataset.up), { mode: "schedule" });
     }));
     content().querySelectorAll("[data-scout]").forEach(b => b.addEventListener("click", (e) => {
       e.stopPropagation(); UI.openRivalDossier(c, b.dataset.scout);
+    }));
+    content().querySelectorAll("[data-odds]").forEach(b => b.addEventListener("click", (e) => {
+      e.stopPropagation(); UI.openBettingMarket(c, findMatch(c, b.dataset.odds));
     }));
     content().querySelectorAll("[data-play-match]").forEach(b => b.addEventListener("click", () => {
       UI.openMatchModal(c, findMatch(c, b.dataset.playMatch), { mode: "result" });
@@ -1182,6 +1188,79 @@
     UI.openModal("Dossier · " + rival, body, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
     const modal = document.getElementById("modal");
     modal.querySelectorAll("[data-rmatch]").forEach(el => el.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, el.dataset.rmatch))));
+  };
+
+  /* Mercado de apuestas simulado de un partido (programado o jugado). */
+  UI.openBettingMarket = function (c, m) {
+    const o = S.matchOdds(c, m);
+    if (!o) { UI.toast("No se puede calcular el mercado de este partido", "err"); return; }
+    const fmtOdd = (x) => x >= 10 ? x.toFixed(1).replace(".", ",") : x.toFixed(2).replace(".", ",");
+    const hc = U.teamColors(o.home), ac = U.teamColors(o.away);
+    const drawCol = "var(--text-faint)";
+    const meta = `${U.esc(m.competition || "Partido")}${m.round ? " · " + U.esc(m.round) : ""} · ${m.date ? U.fmtDate(m.date) : "Sin fecha"}`;
+
+    // Cabecera: equipos con su color.
+    const head = `<div class="flex between center" style="gap:10px;margin-bottom:6px">
+        <div class="flex gap center" style="min-width:0">${teamDot(o.home)}<div style="min-width:0"><b style="font-size:16px">${U.esc(o.home)}</b><div class="faint" style="font-size:11px;letter-spacing:.06em">LOCAL · FUERZA ${o.strength.home}</div></div></div>
+        <div style="text-align:center;flex:none"><div class="faint" style="font-size:12px">vs</div></div>
+        <div class="flex gap center" style="min-width:0;justify-content:flex-end;text-align:right"><div style="min-width:0"><b style="font-size:16px">${U.esc(o.away)}</b><div class="faint" style="font-size:11px;letter-spacing:.06em">VISITANTE · FUERZA ${o.strength.away}</div></div>${teamDot(o.away)}</div>
+      </div>
+      <div class="faint" style="font-size:12px;margin-bottom:14px">${meta}</div>`;
+
+    // Favorito.
+    const fav = o.fav.even
+      ? `<div style="border-left:3px solid var(--text-dim);background:var(--panel);padding:10px 13px;border-radius:8px;margin-bottom:16px;font-size:13px"><b>Duelo igualado.</b> El mercado no ve un favorito claro: cuotas parejas.</div>`
+      : `<div class="flex gap center" style="border-left:3px solid var(--ok);background:var(--panel);padding:10px 13px;border-radius:8px;margin-bottom:16px">
+          <span class="ni-icon" data-icon="trophy" style="color:var(--ok);flex-shrink:0"></span>
+          <span style="font-size:13px;flex:1">El <b>${U.esc(o.fav.name)}</b> parte como favorito${o.fav.prob >= 70 ? " claro" : ""}.</span>
+          <span class="chip" style="color:var(--ok);white-space:nowrap">${o.fav.prob}% implícita</span></div>`;
+
+    // 1X2 consenso.
+    const oTile = (lab, odd, hi) => `<div style="background:var(--panel-2);border:1px solid ${hi ? "var(--ok)" : "var(--line)"};border-radius:10px;padding:11px 8px;text-align:center">
+        <div class="faint" style="font-size:11px;letter-spacing:.05em;margin-bottom:4px">${lab}</div>
+        <div style="font-size:23px;font-weight:800;color:${hi ? "var(--ok)" : "var(--text)"};font-variant-numeric:tabular-nums">${fmtOdd(odd)}</div></div>`;
+    const oneXtwo = `<div class="section-title">Resultado (1X2)</div>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">
+        ${oTile("1 · LOCAL", o.consensus.home, o.fav.side === "home")}
+        ${oTile("X · EMPATE", o.consensus.draw, false)}
+        ${oTile("2 · VISITANTE", o.consensus.away, o.fav.side === "away")}
+      </div>`;
+
+    // Comparativa de casas (mejor cuota de cada columna resaltada).
+    const cell = (v, isBest) => `<span style="text-align:center;font-variant-numeric:tabular-nums;${isBest ? "color:var(--ok);font-weight:700" : ""}">${fmtOdd(v)}</span>`;
+    const bookRows = o.books.map(b => `<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:9px 0;border-bottom:1px solid var(--line);align-items:center;font-size:14px">
+        <span style="font-size:13px;color:var(--text-dim)">${U.esc(b.name)}</span>
+        ${cell(b.home, b.home === o.best.home)}${cell(b.draw, b.draw === o.best.draw)}${cell(b.away, b.away === o.best.away)}
+      </div>`).join("");
+    const compare = `<div class="section-title">Comparativa de casas</div>
+      <div class="card" style="margin:0 0 4px;padding:2px 14px">
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:7px 0;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.04em;color:var(--text-faint)"><span>CASA</span><span style="text-align:center">1</span><span style="text-align:center">X</span><span style="text-align:center">2</span></div>
+        ${bookRows}
+      </div>
+      <div class="faint" style="font-size:11px;margin-bottom:16px">Mejor cuota de cada resultado resaltada en verde.</div>`;
+
+    // Dinero del público.
+    const seg = (w, bg, txt, lab) => w <= 0 ? "" : `<div style="width:${w}%;background:${bg};display:flex;align-items:center;justify-content:center;min-width:0" title="${lab} ${w}%">${w >= 9 ? `<span style="font-size:11px;font-weight:700;color:${txt}">${w}%</span>` : ""}</div>`;
+    const legDot = (bg) => `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${bg};box-shadow:0 0 0 1px rgba(255,255,255,.18)"></span>`;
+    const money = `<div class="flex between" style="align-items:baseline;margin-top:4px"><div class="section-title" style="margin-bottom:0">Dinero del público</div><span class="faint" style="font-size:12px">${o.volume.toLocaleString("es-ES")} apuestas</span></div>
+      <div style="display:flex;height:18px;border-radius:6px;overflow:hidden;margin:9px 0">
+        ${seg(o.public.home, hc.bg, hc.text, o.home)}${seg(o.public.draw, drawCol, "var(--text)", "Empate")}${seg(o.public.away, ac.bg, ac.text, o.away)}
+      </div>
+      <div class="flex gap" style="flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text-dim);margin-bottom:16px">
+        <span class="flex gap center" style="gap:5px">${legDot(hc.bg)}${U.esc(o.home)} ${o.public.home}%</span>
+        <span class="flex gap center" style="gap:5px">${legDot(drawCol)}Empate ${o.public.draw}%</span>
+        <span class="flex gap center" style="gap:5px">${legDot(ac.bg)}${U.esc(o.away)} ${o.public.away}%</span></div>`;
+
+    // Movimiento de línea.
+    const arrow = (dir) => dir === "down" ? `<span style="color:var(--ok)">▼</span>` : dir === "up" ? `<span style="color:var(--danger)">▲</span>` : `<span class="faint">=</span>`;
+    const mvRow = (lab, mv) => `<div class="flex between center" style="padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+        <span>${U.esc(lab)}</span>
+        <span class="flex gap center" style="gap:8px;font-variant-numeric:tabular-nums">${mv.dir === "flat" ? `<span class="faint">${fmtOdd(mv.now)}</span>` : `<span class="faint">${fmtOdd(mv.open)}</span><span class="faint">→</span><b>${fmtOdd(mv.now)}</b>`} ${arrow(mv.dir)}</span></div>`;
+    const movement = `<div class="section-title">Movimiento de cuota</div>
+      <div class="card" style="margin:0 0 4px;padding:2px 14px">${mvRow(o.home, o.movement.home)}${mvRow("Empate", o.movement.draw)}${mvRow(o.away, o.movement.away)}</div>
+      <div class="faint" style="font-size:11px">El lado donde entra el dinero acorta su cuota. Simulación con fines de inmersión.</div>`;
+
+    UI.openModal("Mercado de apuestas", head + fav + oneXtwo + compare + money + movement, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
   };
 
   /* Resumen de temporada — veredicto de la junta directiva. */
@@ -3920,6 +3999,7 @@
       <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
       <div class="up-actions">
         ${canScout ? `<button class="btn btn-ghost btn-sm" data-scout="${U.esc(rival)}"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
+        <button class="btn btn-ghost btn-sm" data-odds="${m.id}"><span class="ni-icon" data-icon="coin"></span> Cuotas</button>
         ${away ? `<button class="btn btn-ghost btn-sm" data-trip="${m.id}"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
         <button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>
         <button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>

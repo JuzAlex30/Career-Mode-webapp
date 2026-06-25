@@ -40,17 +40,18 @@
       || /^[a-z]{3,20}$/i.test(v);
     return ok ? v : (fallback || "var(--accent)");
   };
-  // Busca un equipo en TEAM_COLORS: exacto → normalizado → contiene (≥5 chars).
-  U._tcFind = (name) => {
-    const tc = FC.data && FC.data.TEAM_COLORS;
-    if (!tc) return null;
-    if (tc[name]) return tc[name];
-    const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();
-    const n = norm(name);
-    for (const k of Object.keys(tc)) { if (norm(k) === n) return tc[k]; }
-    for (const k of Object.keys(tc)) { const kn = norm(k); if (kn.length >= 5 && (n.includes(kn) || kn.includes(n))) return tc[k]; }
+  // Normaliza un nombre de equipo (minúsculas, sin acentos ni símbolos).
+  U._normTeam = (s) => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();
+  // Busca una clave de equipo en un mapa: exacto → normalizado → contiene (≥5 chars).
+  U._findTeam = (map, name) => {
+    if (!map) return null;
+    if (map[name] != null) return map[name];
+    const n = U._normTeam(name);
+    for (const k in map) { if (U._normTeam(k) === n) return map[k]; }
+    for (const k in map) { const kn = U._normTeam(k); if (kn.length >= 5 && (n.includes(kn) || kn.includes(n))) return map[k]; }
     return null;
   };
+  U._tcFind = (name) => U._findTeam(FC.data && FC.data.TEAM_COLORS, name);
   // Devuelve "#ffffff" o "#111111" según la luminancia percibida del color de fondo.
   U.textOn = (bg) => {
     const m = String(bg).match(/^#([0-9a-f]{3,6})$/i);
@@ -1111,6 +1112,111 @@
       if (forms.length >= 2 && worst.ppg <= 0.75 && worst.name !== bestFormation.name) add("bad", "shirt", "Sistema a evitar", `El ${worst.name} no te ha funcionado (${f1(worst.ppg)} pts en ${worst.pj}). Plantéate otro dibujo.`);
     }
     return { rival, verdict, insights, bestFormation, sample: a.pj, history: h };
+  };
+
+  /* ============================================================
+     MERCADO DE APUESTAS (simulación determinista)
+     Cuotas, dinero del público y movimiento de línea derivados de la
+     FUERZA de cada equipo + el motor Poisson. Funciones puras; nada se
+     persiste y el mismo partido produce siempre el mismo mercado.
+     ============================================================ */
+  // Fuerza 0-100 de un equipo. Para TU club mezcla el rating catalogado con el
+  // OVR real de tu once y tu forma reciente; para el rival usa el catálogo (72 si no).
+  S.teamStrength = (c, teamName) => {
+    const DD = FC.data || {};
+    const base = U._findTeam(DD.TEAM_STRENGTH, teamName); // null si no catalogado
+    let strength = base != null ? base : 72;
+    if (teamName === c.clubName) {
+      const xi = (c.players || []).map(p => Number(p.ovr) || 0).filter(o => o > 0)
+        .sort((a, b) => b - a).slice(0, 11);
+      if (xi.length >= 7) {
+        const avg = xi.reduce((s, o) => s + o, 0) / xi.length;
+        const squad = Math.max(50, Math.min(94, avg + 2)); // la media de equipo supera al OVR medio
+        strength = base != null ? base * 0.45 + squad * 0.55 : squad;
+      }
+      const ms = S.userMatches(c).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 5);
+      if (ms.length >= 3) {
+        let pts = 0;
+        ms.forEach(m => { const r = S.userResult(c, m); pts += r === "W" ? 3 : r === "D" ? 1 : 0; });
+        strength += Math.max(-5, Math.min(5, (pts / ms.length - 1.4) * 3.2));
+      }
+    }
+    return Math.max(45, Math.min(96, strength));
+  };
+
+  // Mercado completo de un partido (jugado o programado): 1X2, comparativa de
+  // casas, favorito, dinero del público y movimiento de línea. Determinista.
+  S.matchOdds = (c, m) => {
+    if (!m || m.home == null || m.away == null || m.home === "" || m.away === "") return null;
+    const home = m.home, away = m.away, DD = FC.data || {};
+    const hsh = (s) => { let v = 7; s = String(s || ""); for (let i = 0; i < s.length; i++) v = (v * 31 + s.charCodeAt(i)) % 100003; return v; };
+    const seed = hsh(home + "|" + away + "|" + (m.date || "") + "|" + (m.id || "") + "|" + (m.seasonId || ""));
+    const rng = (k, lo, hi) => lo + (Math.abs(hsh(seed + ":" + k)) % 1000) / 1000 * (hi - lo);
+
+    // 1) Fuerzas → goles esperados (Poisson) → probabilidades 1X2.
+    const sH = S.teamStrength(c, home), sA = S.teamStrength(c, away);
+    const HOME_ADV = 4.5, GOAL_SCALE = 13;
+    const total = Math.max(2.2, Math.min(3.35, 2.6 + (sH + sA - 154) / 120));
+    const sup = Math.max(-1.9, Math.min(1.9, (sH + HOME_ADV - sA) / GOAL_SCALE));
+    const lamH = Math.max(0.3, total / 2 + sup / 2);
+    const lamA = Math.max(0.3, total / 2 - sup / 2);
+    const xp = S.matchXpts(lamH, lamA);
+    let pH = xp.pW, pD = xp.pD, pA = xp.pL;
+    const psum = pH + pD + pA; pH /= psum; pD /= psum; pA /= psum;
+
+    // 2) Probabilidad → cuota con margen de casa, redondeada a pasos creíbles.
+    const snap = (o) => o < 2 ? Math.round(o * 100) / 100 : o < 4 ? Math.round(o * 20) / 20 : o < 10 ? Math.round(o * 10) / 10 : Math.round(o * 2) / 2;
+    const oddFrom = (p, mg) => snap(Math.max(1.02, (1 / Math.max(0.001, p)) / (1 + mg)));
+    const MARGIN = 0.065;
+
+    // 3) Tres casas del pool, cada una con su margen. El consenso es su media y
+    //    la "mejor cuota" el máximo, de modo que best ≥ consenso (coherente).
+    const pool = (DD.BOOKMAKERS || ["Casa A", "Casa B", "Casa C"]).slice();
+    const margins = [MARGIN - 0.012, MARGIN + 0.004, MARGIN + 0.02]; // una casa más sharp, otra más cara
+    const books = [], used = {};
+    for (let i = 0; i < 3; i++) {
+      let idx = Math.abs(hsh(seed + "#" + i)) % pool.length, guard = 0;
+      while (used[idx] && guard++ < pool.length) idx = (idx + 1) % pool.length;
+      used[idx] = 1;
+      const mg = margins[i] + rng("mg" + i, -0.004, 0.004);
+      const jit = (p, k) => snap(Math.max(1.02, oddFrom(p, mg) * (1 + rng("j" + i + k, -0.012, 0.012))));
+      books.push({ name: pool[idx], home: jit(pH, "h"), draw: jit(pD, "d"), away: jit(pA, "a") });
+    }
+    const avgOdd = (key) => snap(books.reduce((s, b) => s + b[key], 0) / books.length);
+    const consensus = { home: avgOdd("home"), draw: avgOdd("draw"), away: avgOdd("away") };
+    const best = { home: Math.max(...books.map(b => b.home)), draw: Math.max(...books.map(b => b.draw)), away: Math.max(...books.map(b => b.away)) };
+
+    // 4) Dinero del público: probabilidad + sesgo al favorito + ruido.
+    const favSide = pH >= pA ? "home" : "away";
+    const wH = Math.pow(pH, 0.92) * (favSide === "home" ? 1.28 : 1) * (1 + rng("ph", -0.05, 0.05));
+    const wD = Math.pow(pD, 1.05) * 0.8 * (1 + rng("pd", -0.05, 0.05));
+    const wA = Math.pow(pA, 0.92) * (favSide === "away" ? 1.28 : 1) * (1 + rng("pa", -0.05, 0.05));
+    const wsum = wH + wD + wA;
+    let hub = Math.round(wH / wsum * 100), dub = Math.round(wD / wsum * 100), aub = 100 - hub - dub;
+    if (aub < 0) { hub += aub; aub = 0; }
+    const publik = { home: hub, draw: dub, away: aub };
+    const relevance = (sH + sA) / 2;
+    const volume = Math.round((1500 + (relevance - 60) * 220 + Math.max(pH, pA) * 5200) * (0.75 + rng("vol", 0, 0.5)));
+
+    // 5) Movimiento de línea: donde entra el dinero, la cuota se acorta.
+    const move = (k, oddNow, handle, prob) => {
+      if (handle >= 45 && handle > prob * 100 + 4) return { open: snap(oddNow * (1 + rng("o" + k, 0.04, 0.09))), now: oddNow, dir: "down" };
+      if (handle <= 18 || handle < prob * 100 - 5) return { open: snap(oddNow * (1 - rng("o" + k, 0.04, 0.08))), now: oddNow, dir: "up" };
+      return { open: oddNow, now: oddNow, dir: "flat" };
+    };
+    const movement = { home: move("h", consensus.home, publik.home, pH), draw: move("d", consensus.draw, publik.draw, pD), away: move("a", consensus.away, publik.away, pA) };
+
+    const even = Math.abs(pH - pA) < 0.06;
+    const fav = even ? { even: true }
+      : (pH >= pA ? { side: "home", name: home, prob: Math.round(100 / consensus.home) }
+                  : { side: "away", name: away, prob: Math.round(100 / consensus.away) });
+
+    return {
+      home, away, isUserHome: home === c.clubName, isUserAway: away === c.clubName,
+      strength: { home: Math.round(sH), away: Math.round(sA) },
+      prob: { home: pH, draw: pD, away: pA },
+      consensus, books, best, public: publik, volume, movement, fav,
+    };
   };
 
   S.seasonSummary = (c, season) => {
