@@ -181,9 +181,61 @@
     {n:"ValueBet_Nando",p:"Telegram"},{n:"El Hándicap Express",p:"Podcast"},
   ];
 
-  /* ---------- Competiciones por defecto ---------- */
-  D.COMPETITIONS = ["Liga","Copa nacional","Supercopa","Champions","Europa League","Conference","Amistoso"];
-  D.CONTINENTAL = ["Champions","Europa League","Conference"];
+  /* ---------- Competiciones (catálogo de EA Sports FC) ----------
+     Agrupadas para el desplegable. Licencias EA FC 25: SÍ tiene UEFA (Champions/
+     Europa/Conference/Supercopa), CONMEBOL (Libertadores/Sudamericana/Recopa) y las
+     copas de Inglaterra/Italia/Alemania/Francia; NO tiene Copa del Rey/Supercopa de
+     España ni torneos de selecciones reales (solo amistosos + un torneo genérico).
+     Aquí usamos los NOMBRES REALES para narrar la carrera del usuario. */
+  // Copas/supercopas domésticas reales por país (nombre correcto según tu liga).
+  D.DOMESTIC_CUPS = {
+    "Inglaterra": ["FA Cup", "Carabao Cup", "Community Shield"],
+    "España": ["Copa del Rey", "Supercopa de España"],
+    "Italia": ["Coppa Italia", "Supercoppa Italiana"],
+    "Alemania": ["DFB-Pokal", "DFL-Supercup"],
+    "Francia": ["Coupe de France", "Trophée des Champions"],
+    "Países Bajos": ["KNVB Beker", "Johan Cruyff Schaal"],
+    "Portugal": ["Taça de Portugal", "Taça da Liga", "Supertaça"],
+    "Turquía": ["Copa de Turquía", "Supercopa de Turquía"],
+    "Escocia": ["Scottish Cup", "Scottish League Cup"],
+    "Bélgica": ["Copa de Bélgica", "Supercopa de Bélgica"],
+    "Dinamarca": ["Copa de Dinamarca"],
+    "Suecia": ["Copa de Suecia"],
+    "Noruega": ["Copa de Noruega"],
+    "Austria": ["Copa de Austria"],
+    "Suiza": ["Copa de Suiza"],
+    "Polonia": ["Copa de Polonia", "Supercopa de Polonia"],
+    "Arabia Saudí": ["Copa del Rey de Campeones", "Supercopa de Arabia"],
+    "EE. UU. / Canadá": ["US Open Cup", "MLS Cup"],
+    "México": ["Copa MX", "Campeón de Campeones"],
+    "Argentina": ["Copa Argentina", "Trofeo de Campeones"],
+    "Australia": ["Australia Cup"],
+    "Corea del Sur": ["Copa FA de Corea"],
+  };
+  // Continentales de CLUBES (UEFA + CONMEBOL): vuelos, logros y palmarés.
+  D.CONTINENTAL = ["Champions League", "Europa League", "Conference League", "Supercopa de Europa",
+    "Libertadores", "Sudamericana", "Recopa"];
+  // Competiciones de SELECCIONES (internacionales): vuelos de selección y narrativa.
+  D.INTERNATIONAL = ["Mundial", "Eurocopa", "Copa América", "Nations League", "Finalissima",
+    "Clasificación", "Amistoso internacional"];
+  // Grupos del desplegable, con las copas del país de la carrera inyectadas.
+  D.compGroupsFor = function (country) {
+    const dc = (D.DOMESTIC_CUPS[country] || ["Copa nacional", "Supercopa nacional"]).slice();
+    return [
+      { group: "Doméstico", items: ["Liga"].concat(dc).concat(["Play-off de ascenso", "Amistoso"]) },
+      { group: "Europa · UEFA", items: ["UEFA Champions League", "UEFA Europa League", "UEFA Conference League", "Supercopa de Europa"] },
+      { group: "Sudamérica · CONMEBOL", items: ["CONMEBOL Libertadores", "CONMEBOL Sudamericana", "Recopa Sudamericana"] },
+      { group: "Selecciones", items: ["Mundial", "Eurocopa", "Copa América", "UEFA Nations League", "Finalissima", "Clasificación Mundial", "Clasificación Eurocopa", "Amistoso internacional"] },
+      { group: "Femenino", items: ["UEFA Women's Champions League"] },
+    ];
+  };
+  // Lista plana (compatibilidad / datalists). Genérica, sin país.
+  D.COMPETITIONS = D.compGroupsFor(null).reduce((a, g) => a.concat(g.items), []);
+  // Clasificadores de competición (compartidos por logros, palmarés y viajes).
+  D.isContinental = (comp) => { comp = String(comp || ""); return D.CONTINENTAL.some(cc => comp.includes(cc)); };
+  D.isInternational = (comp) => { comp = String(comp || ""); return D.INTERNATIONAL.some(cc => comp.includes(cc)); };
+  D._cupWord = /(copa|coppa|coupe|pokal|beker|taça|taca|supercup|schaal|\bcup\b)/i;
+  D.isDomesticCup = (comp) => { comp = String(comp || ""); return D._cupWord.test(comp) && !D.isContinental(comp) && !D.isInternational(comp); };
 
   /* ---------- Ligas seed (catálogo de EA Sports FC, plantillas ~2025/26) ----------
      Cada liga lleva `group` para agrupar el desplegable por región. Las plantillas
@@ -430,9 +482,9 @@
     { id:"promotion", name:"Ascenso", emoji:"⬆️", tier:"silver", desc:"Logra un ascenso de categoría.",
       check:(c)=> (c.trophies||[]).some(t => t.result === "promotion") },
     { id:"cup-winner", name:"Rey de copas", emoji:"🥤", tier:"gold", desc:"Gana una copa nacional.",
-      check:(c)=> (c.trophies||[]).some(t => /copa/i.test(t.competition || "") && t.result === "winner") },
-    { id:"continental", name:"Noche europea", emoji:"🌟", tier:"gold", desc:"Gana una competición continental (Champions/Europa/Conference).",
-      check:(c)=> (c.trophies||[]).some(t => D.CONTINENTAL.some(cc => (t.competition || "").includes(cc)) && t.result === "winner") },
+      check:(c)=> (c.trophies||[]).some(t => D.isDomesticCup(t.competition) && t.result === "winner") },
+    { id:"continental", name:"Gloria continental", emoji:"🌟", tier:"gold", desc:"Gana una competición continental (Champions, Europa, Conference o Libertadores).",
+      check:(c)=> (c.trophies||[]).some(t => D.isContinental(t.competition) && t.result === "winner") },
     { id:"invincible", name:"Los Invencibles", emoji:"🛡️", tier:"legend", desc:"Termina una temporada de liga sin perder (mín. 20 partidos).",
       check:(c)=> FC.store.seasonsSome(c, s => s.leaguePlayed >= 20 && s.leagueLost === 0) },
     { id:"treble", name:"El Triplete", emoji:"👑", tier:"legend", desc:"Gana liga + copa + continental en una misma temporada.",

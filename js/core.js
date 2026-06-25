@@ -1301,8 +1301,8 @@
     league.forEach(m => { const r = S.userResult(c, m); if (r==="W") lw++; else if (r==="D") ld++; else ll++; });
     const trophies = (c.trophies || []).filter(t => t.seasonId === sid && t.result === "winner");
     const wonLeague = trophies.some(t => /liga/i.test(t.competition || ""));
-    const wonCup = trophies.some(t => /copa/i.test(t.competition || ""));
-    const wonContinental = trophies.some(t => FC.data.CONTINENTAL.some(cc => (t.competition || "").includes(cc)));
+    const wonCup = trophies.some(t => FC.data.isDomesticCup(t.competition));
+    const wonContinental = trophies.some(t => FC.data.isContinental(t.competition));
     const played = w+d+l;
     return {
       season, played, w, d, l, gf, ga, gd: gf - ga, cleanSheets: cs,
@@ -2604,7 +2604,7 @@
     const rival = m.home;
     const origin = TRIPS.cityOf(club), dest = TRIPS.cityOf(rival);
     const dist = Math.round(TRIPS.distance(origin, dest));
-    const continental = (FC.data.CONTINENTAL || []).some(x => (m.competition || "").includes(x));
+    const continental = FC.data.isContinental(m.competition) || FC.data.isInternational(m.competition);
     const mode = (continental || dist >= 300) ? "avion" : "bus";
     const played = S.userMatches(c).filter(x => x.id !== m.id);
     const atVenue = played.filter(x => x.home === rival && x.away === club).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
@@ -2617,7 +2617,7 @@
     let unbeaten = 0; for (let i = 0; i < before.length; i++) { if (S.userResult(c, before[i]) === "L") break; unbeaten++; }
     let stake = "media";
     if (continental) stake = /final/i.test(m.round || "") ? "final_euro" : "continental";
-    else if (/copa/i.test(m.competition || "")) stake = "copa";
+    else if (FC.data.isDomesticCup(m.competition)) stake = "copa";
     else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
     // Rivalidad all-time (ambas sedes) con nivel de intensidad acumulado.
     const allVs = played.filter(x => x.home === rival || x.away === rival);

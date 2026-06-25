@@ -210,6 +210,21 @@
       `<option value="${U.esc(l.id)}"${l.id === sel ? " selected" : ""}>${U.esc(l.name)}${l.country && l.country !== "—" ? " · " + U.esc(l.country) : ""}</option>`
     ).join("")}</optgroup>`).join("");
   }
+  // País de una carrera (campo country o derivado de la liga).
+  function careerCountry(c) {
+    if (c && c.country) return c.country;
+    const l = c && D.LEAGUES.find(x => x.id === c.leagueId);
+    return l ? l.country : null;
+  }
+  // Opciones del desplegable de competiciones (optgroups) con las copas del país.
+  function compSelectOptions(c, selected) {
+    const sel = selected || "Liga";
+    const groups = D.compGroupsFor(careerCountry(c));
+    const inGroups = groups.some(g => g.items.includes(sel));
+    const extra = inGroups ? "" : `<option selected>${U.esc(sel)}</option>`;
+    return extra + groups.map(g => `<optgroup label="${U.esc(g.group)}">${g.items.map(it =>
+      `<option${it === sel ? " selected" : ""}>${U.esc(it)}</option>`).join("")}</optgroup>`).join("");
+  }
   FC.views = {};
 
   /* ---- Pantalla de entrada (landing híbrida): bienvenida con marca, login/registro
@@ -515,7 +530,7 @@
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Competición</label><select id="m-comp">${D.COMPETITIONS.map(x => `<option ${x === (ex.competition||"Liga") ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+        <div class="field"><label>Competición</label><select id="m-comp">${compSelectOptions(c, ex.competition)}</select></div>
         <div class="field"><label>Jornada / ronda</label><input type="text" id="m-round" value="${U.esc(ex.round||"")}" placeholder="p.ej. J5 / Octavos"/></div>
       </div>
       <div class="field-row">
@@ -1180,7 +1195,7 @@
     const postcard = (m) => {
       const cc = FC.trips.cityOf(m.home);
       const km = Math.round(FC.trips.distance(home, cc));
-      const continental = (D.CONTINENTAL || []).some(x => (m.competition || "").includes(x));
+      const continental = D.isContinental(m.competition) || D.isInternational(m.competition);
       const avion = continental || km >= 300;
       const res = S.userResult(c, m);
       const resWord = res === "W" ? "victoria" : res === "D" ? "empate" : res === "L" ? "derrota" : "";
@@ -3772,7 +3787,7 @@
     const season = S.currentSeason(c);
     UI.openModal("Añadir trofeo", `
       <div class="field"><label>Competición</label><input type="text" id="t-comp" list="dl-comp" placeholder="p.ej. LaLiga / Champions"/>
-        <datalist id="dl-comp">${D.COMPETITIONS.map(x => `<option value="${x}">`).join("")}</datalist></div>
+        <datalist id="dl-comp">${D.compGroupsFor(careerCountry(c)).reduce((a,g)=>a.concat(g.items),[]).map(x => `<option value="${U.esc(x)}">`).join("")}</datalist></div>
       <div class="field-row"><div class="field"><label>Temporada</label><select id="t-season">${(c.seasons||[]).map(s => `<option value="${s.label}" ${s.id===season.id?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div>
         <div class="field"><label>Resultado</label><select id="t-res"><option value="winner">Campeón 🏆</option><option value="runnerup">Subcampeón 🥈</option><option value="promotion">Ascenso ⬆️</option></select></div></div>
     `, `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="t-save">Guardar</button>`);

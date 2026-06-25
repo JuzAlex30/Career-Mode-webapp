@@ -997,9 +997,61 @@ body.trip-open { overflow: hidden; }
     {n:"ValueBet_Nando",p:"Telegram"},{n:"El Hándicap Express",p:"Podcast"},
   ];
 
-  /* ---------- Competiciones por defecto ---------- */
-  D.COMPETITIONS = ["Liga","Copa nacional","Supercopa","Champions","Europa League","Conference","Amistoso"];
-  D.CONTINENTAL = ["Champions","Europa League","Conference"];
+  /* ---------- Competiciones (catálogo de EA Sports FC) ----------
+     Agrupadas para el desplegable. Licencias EA FC 25: SÍ tiene UEFA (Champions/
+     Europa/Conference/Supercopa), CONMEBOL (Libertadores/Sudamericana/Recopa) y las
+     copas de Inglaterra/Italia/Alemania/Francia; NO tiene Copa del Rey/Supercopa de
+     España ni torneos de selecciones reales (solo amistosos + un torneo genérico).
+     Aquí usamos los NOMBRES REALES para narrar la carrera del usuario. */
+  // Copas/supercopas domésticas reales por país (nombre correcto según tu liga).
+  D.DOMESTIC_CUPS = {
+    "Inglaterra": ["FA Cup", "Carabao Cup", "Community Shield"],
+    "España": ["Copa del Rey", "Supercopa de España"],
+    "Italia": ["Coppa Italia", "Supercoppa Italiana"],
+    "Alemania": ["DFB-Pokal", "DFL-Supercup"],
+    "Francia": ["Coupe de France", "Trophée des Champions"],
+    "Países Bajos": ["KNVB Beker", "Johan Cruyff Schaal"],
+    "Portugal": ["Taça de Portugal", "Taça da Liga", "Supertaça"],
+    "Turquía": ["Copa de Turquía", "Supercopa de Turquía"],
+    "Escocia": ["Scottish Cup", "Scottish League Cup"],
+    "Bélgica": ["Copa de Bélgica", "Supercopa de Bélgica"],
+    "Dinamarca": ["Copa de Dinamarca"],
+    "Suecia": ["Copa de Suecia"],
+    "Noruega": ["Copa de Noruega"],
+    "Austria": ["Copa de Austria"],
+    "Suiza": ["Copa de Suiza"],
+    "Polonia": ["Copa de Polonia", "Supercopa de Polonia"],
+    "Arabia Saudí": ["Copa del Rey de Campeones", "Supercopa de Arabia"],
+    "EE. UU. / Canadá": ["US Open Cup", "MLS Cup"],
+    "México": ["Copa MX", "Campeón de Campeones"],
+    "Argentina": ["Copa Argentina", "Trofeo de Campeones"],
+    "Australia": ["Australia Cup"],
+    "Corea del Sur": ["Copa FA de Corea"],
+  };
+  // Continentales de CLUBES (UEFA + CONMEBOL): vuelos, logros y palmarés.
+  D.CONTINENTAL = ["Champions League", "Europa League", "Conference League", "Supercopa de Europa",
+    "Libertadores", "Sudamericana", "Recopa"];
+  // Competiciones de SELECCIONES (internacionales): vuelos de selección y narrativa.
+  D.INTERNATIONAL = ["Mundial", "Eurocopa", "Copa América", "Nations League", "Finalissima",
+    "Clasificación", "Amistoso internacional"];
+  // Grupos del desplegable, con las copas del país de la carrera inyectadas.
+  D.compGroupsFor = function (country) {
+    const dc = (D.DOMESTIC_CUPS[country] || ["Copa nacional", "Supercopa nacional"]).slice();
+    return [
+      { group: "Doméstico", items: ["Liga"].concat(dc).concat(["Play-off de ascenso", "Amistoso"]) },
+      { group: "Europa · UEFA", items: ["UEFA Champions League", "UEFA Europa League", "UEFA Conference League", "Supercopa de Europa"] },
+      { group: "Sudamérica · CONMEBOL", items: ["CONMEBOL Libertadores", "CONMEBOL Sudamericana", "Recopa Sudamericana"] },
+      { group: "Selecciones", items: ["Mundial", "Eurocopa", "Copa América", "UEFA Nations League", "Finalissima", "Clasificación Mundial", "Clasificación Eurocopa", "Amistoso internacional"] },
+      { group: "Femenino", items: ["UEFA Women's Champions League"] },
+    ];
+  };
+  // Lista plana (compatibilidad / datalists). Genérica, sin país.
+  D.COMPETITIONS = D.compGroupsFor(null).reduce((a, g) => a.concat(g.items), []);
+  // Clasificadores de competición (compartidos por logros, palmarés y viajes).
+  D.isContinental = (comp) => { comp = String(comp || ""); return D.CONTINENTAL.some(cc => comp.includes(cc)); };
+  D.isInternational = (comp) => { comp = String(comp || ""); return D.INTERNATIONAL.some(cc => comp.includes(cc)); };
+  D._cupWord = /(copa|coppa|coupe|pokal|beker|taça|taca|supercup|schaal|\bcup\b)/i;
+  D.isDomesticCup = (comp) => { comp = String(comp || ""); return D._cupWord.test(comp) && !D.isContinental(comp) && !D.isInternational(comp); };
 
   /* ---------- Ligas seed (catálogo de EA Sports FC, plantillas ~2025/26) ----------
      Cada liga lleva `group` para agrupar el desplegable por región. Las plantillas
@@ -1246,9 +1298,9 @@ body.trip-open { overflow: hidden; }
     { id:"promotion", name:"Ascenso", emoji:"⬆️", tier:"silver", desc:"Logra un ascenso de categoría.",
       check:(c)=> (c.trophies||[]).some(t => t.result === "promotion") },
     { id:"cup-winner", name:"Rey de copas", emoji:"🥤", tier:"gold", desc:"Gana una copa nacional.",
-      check:(c)=> (c.trophies||[]).some(t => /copa/i.test(t.competition || "") && t.result === "winner") },
-    { id:"continental", name:"Noche europea", emoji:"🌟", tier:"gold", desc:"Gana una competición continental (Champions/Europa/Conference).",
-      check:(c)=> (c.trophies||[]).some(t => D.CONTINENTAL.some(cc => (t.competition || "").includes(cc)) && t.result === "winner") },
+      check:(c)=> (c.trophies||[]).some(t => D.isDomesticCup(t.competition) && t.result === "winner") },
+    { id:"continental", name:"Gloria continental", emoji:"🌟", tier:"gold", desc:"Gana una competición continental (Champions, Europa, Conference o Libertadores).",
+      check:(c)=> (c.trophies||[]).some(t => D.isContinental(t.competition) && t.result === "winner") },
     { id:"invincible", name:"Los Invencibles", emoji:"🛡️", tier:"legend", desc:"Termina una temporada de liga sin perder (mín. 20 partidos).",
       check:(c)=> FC.store.seasonsSome(c, s => s.leaguePlayed >= 20 && s.leagueLost === 0) },
     { id:"treble", name:"El Triplete", emoji:"👑", tier:"legend", desc:"Gana liga + copa + continental en una misma temporada.",
@@ -5109,8 +5161,8 @@ body.trip-open { overflow: hidden; }
     league.forEach(m => { const r = S.userResult(c, m); if (r==="W") lw++; else if (r==="D") ld++; else ll++; });
     const trophies = (c.trophies || []).filter(t => t.seasonId === sid && t.result === "winner");
     const wonLeague = trophies.some(t => /liga/i.test(t.competition || ""));
-    const wonCup = trophies.some(t => /copa/i.test(t.competition || ""));
-    const wonContinental = trophies.some(t => FC.data.CONTINENTAL.some(cc => (t.competition || "").includes(cc)));
+    const wonCup = trophies.some(t => FC.data.isDomesticCup(t.competition));
+    const wonContinental = trophies.some(t => FC.data.isContinental(t.competition));
     const played = w+d+l;
     return {
       season, played, w, d, l, gf, ga, gd: gf - ga, cleanSheets: cs,
@@ -6412,7 +6464,7 @@ body.trip-open { overflow: hidden; }
     const rival = m.home;
     const origin = TRIPS.cityOf(club), dest = TRIPS.cityOf(rival);
     const dist = Math.round(TRIPS.distance(origin, dest));
-    const continental = (FC.data.CONTINENTAL || []).some(x => (m.competition || "").includes(x));
+    const continental = FC.data.isContinental(m.competition) || FC.data.isInternational(m.competition);
     const mode = (continental || dist >= 300) ? "avion" : "bus";
     const played = S.userMatches(c).filter(x => x.id !== m.id);
     const atVenue = played.filter(x => x.home === rival && x.away === club).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
@@ -6425,7 +6477,7 @@ body.trip-open { overflow: hidden; }
     let unbeaten = 0; for (let i = 0; i < before.length; i++) { if (S.userResult(c, before[i]) === "L") break; unbeaten++; }
     let stake = "media";
     if (continental) stake = /final/i.test(m.round || "") ? "final_euro" : "continental";
-    else if (/copa/i.test(m.competition || "")) stake = "copa";
+    else if (FC.data.isDomesticCup(m.competition)) stake = "copa";
     else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
     // Rivalidad all-time (ambas sedes) con nivel de intensidad acumulado.
     const allVs = played.filter(x => x.home === rival || x.away === rival);
@@ -7187,6 +7239,21 @@ body.trip-open { overflow: hidden; }
       `<option value="${U.esc(l.id)}"${l.id === sel ? " selected" : ""}>${U.esc(l.name)}${l.country && l.country !== "—" ? " · " + U.esc(l.country) : ""}</option>`
     ).join("")}</optgroup>`).join("");
   }
+  // País de una carrera (campo country o derivado de la liga).
+  function careerCountry(c) {
+    if (c && c.country) return c.country;
+    const l = c && D.LEAGUES.find(x => x.id === c.leagueId);
+    return l ? l.country : null;
+  }
+  // Opciones del desplegable de competiciones (optgroups) con las copas del país.
+  function compSelectOptions(c, selected) {
+    const sel = selected || "Liga";
+    const groups = D.compGroupsFor(careerCountry(c));
+    const inGroups = groups.some(g => g.items.includes(sel));
+    const extra = inGroups ? "" : `<option selected>${U.esc(sel)}</option>`;
+    return extra + groups.map(g => `<optgroup label="${U.esc(g.group)}">${g.items.map(it =>
+      `<option${it === sel ? " selected" : ""}>${U.esc(it)}</option>`).join("")}</optgroup>`).join("");
+  }
   FC.views = {};
 
   /* ---- Pantalla de entrada (landing híbrida): bienvenida con marca, login/registro
@@ -7492,7 +7559,7 @@ body.trip-open { overflow: hidden; }
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Competición</label><select id="m-comp">${D.COMPETITIONS.map(x => `<option ${x === (ex.competition||"Liga") ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+        <div class="field"><label>Competición</label><select id="m-comp">${compSelectOptions(c, ex.competition)}</select></div>
         <div class="field"><label>Jornada / ronda</label><input type="text" id="m-round" value="${U.esc(ex.round||"")}" placeholder="p.ej. J5 / Octavos"/></div>
       </div>
       <div class="field-row">
@@ -8157,7 +8224,7 @@ body.trip-open { overflow: hidden; }
     const postcard = (m) => {
       const cc = FC.trips.cityOf(m.home);
       const km = Math.round(FC.trips.distance(home, cc));
-      const continental = (D.CONTINENTAL || []).some(x => (m.competition || "").includes(x));
+      const continental = D.isContinental(m.competition) || D.isInternational(m.competition);
       const avion = continental || km >= 300;
       const res = S.userResult(c, m);
       const resWord = res === "W" ? "victoria" : res === "D" ? "empate" : res === "L" ? "derrota" : "";
@@ -10749,7 +10816,7 @@ body.trip-open { overflow: hidden; }
     const season = S.currentSeason(c);
     UI.openModal("Añadir trofeo", `
       <div class="field"><label>Competición</label><input type="text" id="t-comp" list="dl-comp" placeholder="p.ej. LaLiga / Champions"/>
-        <datalist id="dl-comp">${D.COMPETITIONS.map(x => `<option value="${x}">`).join("")}</datalist></div>
+        <datalist id="dl-comp">${D.compGroupsFor(careerCountry(c)).reduce((a,g)=>a.concat(g.items),[]).map(x => `<option value="${U.esc(x)}">`).join("")}</datalist></div>
       <div class="field-row"><div class="field"><label>Temporada</label><select id="t-season">${(c.seasons||[]).map(s => `<option value="${s.label}" ${s.id===season.id?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div>
         <div class="field"><label>Resultado</label><select id="t-res"><option value="winner">Campeón 🏆</option><option value="runnerup">Subcampeón 🥈</option><option value="promotion">Ascenso ⬆️</option></select></div></div>
     `, `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="t-save">Guardar</button>`);
