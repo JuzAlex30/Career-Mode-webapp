@@ -202,60 +202,170 @@
   /* ============================================================
      ONBOARDING
      ============================================================ */
+  // Desplegable de ligas agrupado por región (optgroups), catálogo de EA Sports FC.
   function leagueOptions(sel) {
-    return D.LEAGUES.map(l => `<option value="${l.id}" ${l.id === sel ? "selected" : ""}>${U.esc(l.name)}${l.country !== "—" ? " · " + U.esc(l.country) : ""}</option>`).join("");
+    const order = [], byG = {};
+    D.LEAGUES.forEach(l => { const g = l.group || "Otros"; if (!byG[g]) { byG[g] = []; order.push(g); } byG[g].push(l); });
+    return order.map(g => `<optgroup label="${U.esc(g)}">${byG[g].map(l =>
+      `<option value="${U.esc(l.id)}"${l.id === sel ? " selected" : ""}>${U.esc(l.name)}${l.country && l.country !== "—" ? " · " + U.esc(l.country) : ""}</option>`
+    ).join("")}</optgroup>`).join("");
   }
   FC.views = {};
+
+  /* ---- Pantalla de entrada (landing híbrida): bienvenida con marca, login/registro
+     passwordless opcional (código OTP o enlace mágico) y creación de carrera. ---- */
+  let obStep = null;   // "home" | "auth" | "restore" | "create"
+  let obEmail = "";
+  let obCodeSent = false;
+  let obBusy = false;
+
   FC.views.onboarding = function () {
+    const CL = FC.cloud;
     document.getElementById("app").style.display = "none";
     let host = document.getElementById("onboardHost");
     if (!host) { host = U.h("div", { id: "onboardHost" }, []); document.body.appendChild(host); }
+    if (obStep == null) obStep = CL && CL.isLoggedIn() ? "restore" : "home";
     const thisYear = new Date().getFullYear();
-    host.innerHTML = `
-      <div class="hero">
-        <div class="hero-card card">
-          <div class="hero-logo"><div class="brand-mark">CF</div></div>
-          <h1>Crea tu carrera</h1>
-          <p class="lead">Tu historia del Modo Carrera, guardada para siempre. Empecemos por tu club.</p>
-          <div class="field">
-            <label>Nombre del club <span class="faint">(tu equipo)</span></label>
-            <input type="text" id="ob-club" placeholder="p.ej. Real Oviedo" autofocus />
-          </div>
-          <div class="field-row">
-            <div class="field"><label>Liga</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
-            <div class="field"><label>Temporada inicial</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
-          </div>
-          <div class="field" id="ob-custom-wrap" hidden>
-            <label>Equipos de tu liga <span class="faint">(separa por comas)</span></label>
-            <textarea id="ob-teams" placeholder="Equipo 1, Equipo 2, Equipo 3..."></textarea>
-          </div>
-          <div class="field"><label>Tu nombre de mánager <span class="faint">(opcional)</span></label><input type="text" id="ob-manager" placeholder="Mánager" /></div>
-          <button class="btn btn-primary btn-lg btn-block" id="ob-create">Empezar carrera</button>
-          <p class="faint text-c" style="margin:14px 0 0;font-size:12px">Tus datos se guardan en este navegador. Podrás exportarlos cuando quieras.</p>
-        </div>
+    const go = (s) => { obStep = s; FC.views.onboarding(); };
+    const finish = () => { obStep = null; obCodeSent = false; obBusy = false; host.remove(); document.getElementById("app").style.display = ""; FC.app.refreshChrome(); FC.router.go("dashboard"); };
+
+    // —— Columna de marca (izquierda) ——
+    const feat = (icon, title, desc) => `<div class="wl-feat"><span class="wl-feat-ic"><span class="ni-icon" data-icon="${icon}"></span></span><div><b>${title}</b><span>${desc}</span></div></div>`;
+    const brand = `<div class="wl-brand">
+      <div class="wl-logo"><div class="brand-mark">CF</div><div><div class="wl-name">Carrera FC</div><div class="wl-tag">Tu Modo Carrera, contado como una historia</div></div></div>
+      <div class="wl-feats">
+        ${feat("coin", "Mercado BETMÁXIMA", "Cuotas, tipsters y boleto en vivo de cada partido")}
+        ${feat("news", "Prensa y crónicas", "Titulares y crónicas generadas de tu temporada")}
+        ${feat("trophy", "Tu legado", "Palmarés, récords y línea de tiempo de la carrera")}
+        ${feat("cloud", "Comunidad y nube", "Guarda en la nube, comparte y compite en el ranking")}
+      </div>
+      <div class="wl-foot">Simulación de inmersión · sin dinero real · hecho para fans del Modo Carrera</div>
+    </div>`;
+
+    // —— Panel de acción (derecha), según el paso ——
+    let panel = "";
+    if (obStep === "home") {
+      panel = `<div class="wl-panel">
+        <div class="wl-h">Bienvenido</div>
+        <p class="wl-sub">Crea una cuenta para guardar tus carreras en la nube y competir en la comunidad, o entra directo y juega en este dispositivo.</p>
+        <button class="btn btn-primary btn-lg btn-block" id="wl-go-auth"><span class="ni-icon" data-icon="cloud"></span> Crear cuenta / Iniciar sesión</button>
+        <button class="btn btn-block wl-mt" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> Continuar sin cuenta</button>
+        <p class="wl-note">Sin contraseñas: te enviamos un código a tu email. Continuar sin cuenta guarda todo en este navegador.</p>
       </div>`;
-    const leagueSel = host.querySelector("#ob-league");
-    const customWrap = host.querySelector("#ob-custom-wrap");
-    leagueSel.addEventListener("change", () => { customWrap.hidden = leagueSel.value !== "custom"; });
-    host.querySelector("#ob-create").addEventListener("click", () => {
-      const club = host.querySelector("#ob-club").value.trim();
-      if (!club) { UI.toast("Escribe el nombre de tu club", "err"); return; }
-      const lid = leagueSel.value;
-      const league = D.LEAGUES.find(l => l.id === lid);
-      let teams = league ? league.teams.slice() : [];
-      if (lid === "custom") teams = host.querySelector("#ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
-      if (!teams.includes(club)) teams.unshift(club);
-      S.createCareer({
-        name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : "Liga",
-        country: league ? league.country : "", teams,
-        managerName: host.querySelector("#ob-manager").value.trim(),
-        startYear: Number(host.querySelector("#ob-year").value) || new Date().getFullYear(),
+    } else if (obStep === "auth") {
+      panel = `<div class="wl-panel">
+        <button class="wl-back" id="wl-back"><span class="ni-icon" data-icon="chevron"></span> Volver</button>
+        <div class="wl-h">${obCodeSent ? "Introduce tu código" : "Entra con tu email"}</div>
+        ${!obCodeSent
+          ? `<p class="wl-sub">Te enviaremos un código de acceso de un solo uso. Si ya tienes cuenta, recuperarás tus carreras.</p>
+             <div class="field"><label>Email</label><input type="email" id="wl-email" value="${U.esc(obEmail)}" placeholder="tu@email.com" autocomplete="email" autofocus /></div>
+             <button class="btn btn-primary btn-lg btn-block" id="wl-send"><span class="ni-icon" data-icon="bell"></span> Enviar código</button>`
+          : `<p class="wl-sub">Hemos enviado un código a <b>${U.esc(obEmail)}</b>. Pégalo aquí (o pulsa el enlace del email).</p>
+             <div class="field"><label>Código de 6 dígitos</label><input type="text" id="wl-code" inputmode="numeric" maxlength="8" placeholder="000000" class="wl-otp" autofocus /></div>
+             <button class="btn btn-primary btn-lg btn-block" id="wl-verify"><span class="ni-icon" data-icon="check"></span> Entrar</button>
+             <div class="wl-row"><button class="wl-link" id="wl-resend">Reenviar código</button><button class="wl-link" id="wl-changeemail">Cambiar email</button></div>`}
+        <div class="wl-or"><span>o</span></div>
+        <button class="btn btn-block" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> Continuar sin cuenta</button>
+      </div>`;
+    } else if (obStep === "restore") {
+      const email = (CL.user() || {}).email || obEmail || "";
+      panel = `<div class="wl-panel">
+        <div class="wl-badge-ok"><span class="ni-icon" data-icon="check"></span> Sesión iniciada${email ? " · " + U.esc(email) : ""}</div>
+        <div class="wl-h">¿Recuperar tus carreras?</div>
+        <p class="wl-sub">Trae tus carreras guardadas en la nube a este dispositivo, o empieza una nueva.</p>
+        <button class="btn btn-primary btn-lg btn-block" id="wl-restore"><span class="ni-icon" data-icon="download"></span> Traer mis carreras de la nube</button>
+        <button class="btn btn-block wl-mt" id="wl-new"><span class="ni-icon" data-icon="plus"></span> Empezar una carrera nueva</button>
+        <button class="wl-link wl-center" id="wl-logout">Cerrar sesión</button>
+      </div>`;
+    } else { // create
+      const logged = CL && CL.isLoggedIn();
+      panel = `<div class="wl-panel">
+        <button class="wl-back" id="wl-back-create"><span class="ni-icon" data-icon="chevron"></span> Volver</button>
+        <div class="wl-h">Crea tu carrera</div>
+        <p class="wl-sub">Elige tu club y tu liga. Podrás cambiar todo más adelante.</p>
+        <div class="field"><label>Nombre del club <span class="faint">(tu equipo)</span></label>
+          <input type="text" id="ob-club" placeholder="p.ej. Real Oviedo" autofocus /></div>
+        <div class="field-row">
+          <div class="field"><label>Liga</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
+          <div class="field"><label>Temporada inicial</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
+        </div>
+        <div class="field" id="ob-custom-wrap" hidden>
+          <label>Equipos de tu liga <span class="faint">(separa por comas)</span></label>
+          <textarea id="ob-teams" placeholder="Equipo 1, Equipo 2, Equipo 3..."></textarea></div>
+        <div class="field"><label>Tu nombre de mánager <span class="faint">(opcional)</span></label><input type="text" id="ob-manager" placeholder="Mánager" /></div>
+        <button class="btn btn-primary btn-lg btn-block" id="ob-create"><span class="ni-icon" data-icon="ball"></span> Empezar carrera</button>
+        <p class="wl-note">${logged ? "Tu carrera se guardará también en la nube." : "Tus datos se guardan en este navegador. Podrás exportarlos cuando quieras."}</p>
+      </div>`;
+    }
+
+    host.innerHTML = `<div class="welcome"><div class="welcome-bg"></div><div class="welcome-grid">${brand}${panel}</div></div>`;
+    U.hydrateIcons(host);
+    const $ = (id) => host.querySelector("#" + id);
+    const setBusy = (id, on) => { const el = $(id); if (el) el.disabled = on; obBusy = on; };
+
+    // —— wiring por paso ——
+    if (obStep === "home") {
+      $("wl-go-auth").addEventListener("click", () => go("auth"));
+      $("wl-go-guest").addEventListener("click", () => go("create"));
+    } else if (obStep === "auth") {
+      $("wl-back").addEventListener("click", () => { obCodeSent = false; go("home"); });
+      $("wl-go-guest").addEventListener("click", () => go("create"));
+      if ($("wl-send")) $("wl-send").addEventListener("click", async () => {
+        const email = ($("wl-email").value || "").trim();
+        if (!/.+@.+\..+/.test(email)) { UI.toast("Escribe un email válido", "err"); return; }
+        if (obBusy) return; setBusy("wl-send", true);
+        try { await CL.sendCode(email); obEmail = email; obCodeSent = true; UI.toast("¡Código enviado! Revisa tu email.", "ok"); go("auth"); }
+        catch (e) { UI.toast(e.message || "No se pudo enviar el código", "err"); setBusy("wl-send", false); }
       });
-      host.remove();
-      document.getElementById("app").style.display = "";
-      UI.toast("¡Carrera creada! A por la gloria ⚽", "ok");
-      FC.router.go("dashboard");
-    });
+      if ($("wl-verify")) {
+        const doVerify = async () => {
+          const code = ($("wl-code").value || "").trim();
+          if (code.length < 4) { UI.toast("Introduce el código del email", "err"); return; }
+          if (obBusy) return; setBusy("wl-verify", true);
+          try { await CL.verifyCode(obEmail, code); UI.toast("¡Sesión iniciada!", "ok"); go("restore"); }
+          catch (e) { UI.toast(e.message || "Código no válido", "err"); setBusy("wl-verify", false); }
+        };
+        $("wl-verify").addEventListener("click", doVerify);
+        $("wl-code").addEventListener("keydown", (e) => { if (e.key === "Enter") doVerify(); });
+        $("wl-resend").addEventListener("click", async () => { try { await CL.sendCode(obEmail); UI.toast("Código reenviado", "ok"); } catch (e) { UI.toast(e.message || "Error", "err"); } });
+        $("wl-changeemail").addEventListener("click", () => { obCodeSent = false; go("auth"); });
+      }
+    } else if (obStep === "restore") {
+      $("wl-restore").addEventListener("click", async () => {
+        if (obBusy) return; setBusy("wl-restore", true);
+        try {
+          const r = await CL.pull();
+          if (r.pulled > 0) { UI.toast("Restauradas " + r.pulled + " carrera(s)", "ok"); finish(); }
+          else { UI.toast("No tienes carreras en la nube todavía", "warn"); go("create"); }
+        } catch (e) { UI.toast(e.message || "No se pudo restaurar", "err"); setBusy("wl-restore", false); }
+      });
+      $("wl-new").addEventListener("click", () => go("create"));
+      $("wl-logout").addEventListener("click", () => { CL.logout(); obCodeSent = false; UI.toast("Sesión cerrada"); go("home"); });
+    } else { // create
+      const backTo = (CL && CL.isLoggedIn()) ? "restore" : "home";
+      $("wl-back-create").addEventListener("click", () => go(backTo));
+      const leagueSel = $("ob-league");
+      const customWrap = $("ob-custom-wrap");
+      leagueSel.addEventListener("change", () => { customWrap.hidden = leagueSel.value !== "custom"; });
+      $("ob-create").addEventListener("click", async () => {
+        const club = ($("ob-club").value || "").trim();
+        if (!club) { UI.toast("Escribe el nombre de tu club", "err"); return; }
+        const lid = leagueSel.value;
+        const league = D.LEAGUES.find(l => l.id === lid);
+        let teams = league ? league.teams.slice() : [];
+        if (lid === "custom") teams = $("ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
+        if (!teams.includes(club)) teams.unshift(club);
+        S.createCareer({
+          name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : "Liga",
+          country: league ? league.country : "", teams,
+          managerName: ($("ob-manager").value || "").trim(),
+          startYear: Number($("ob-year").value) || new Date().getFullYear(),
+        });
+        UI.toast("¡Carrera creada! A por la gloria ⚽", "ok");
+        if (CL && CL.isLoggedIn()) { try { await CL.push(); } catch (e) { /* la nube es best-effort */ } }
+        finish();
+      });
+    }
   };
 
   /* ============================================================

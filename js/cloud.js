@@ -59,6 +59,20 @@
 
   /* ---------- auth passwordless (código OTP por email) ---------- */
   C.sendCode = (email) => api("/auth/v1/otp?redirect_to=" + encodeURIComponent("https://juzalex30.github.io/Career-Mode-webapp/"), { method: "POST", body: { email: String(email || "").trim(), create_user: true } });
+  // verifyCode: el usuario teclea el código de 6 dígitos del email (en vez de pulsar el enlace).
+  // Inicia sesión directamente sin depender del redirect. Tras éxito, deja la sesión lista.
+  C.verifyCode = async (email, token) => {
+    const data = await api("/auth/v1/verify", { method: "POST", body: { type: "email", email: String(email || "").trim(), token: String(token || "").trim() } });
+    if (!data || !data.access_token) throw new Error("Código no válido o caducado");
+    saveSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || "",
+      expires_at: Date.now() + (Number(data.expires_in) || 3600) * 1000,
+      user: data.user ? { id: data.user.id, email: data.user.email || "" } : { id: null, email: String(email || "").trim() },
+    });
+    if (!session.user || !session.user.id) await C.fetchUser();
+    return C.user();
+  };
   // handleMagicLink: procesa el hash #access_token=... que Supabase añade al redirect tras el clic en el email.
   C.handleMagicLink = (hash) => {
     try {

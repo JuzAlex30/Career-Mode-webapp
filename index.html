@@ -327,6 +327,12 @@ textarea { resize: vertical; min-height: 80px; }
 .next-match .nm-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
 .next-match .nm-teams { font-weight: 700; font-size: 16px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .next-match .nm-vs { color: var(--text-dim); font-weight: 600; font-size: 13px; margin: 0 4px; }
+/* Fase 3 — tira de cuotas en la tarjeta de próximo partido */
+.nm-odds-strip { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.nmos-bm { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: #7a9068; }
+.nmos-bm-mark { width: 13px; height: 13px; border-radius: 4px; background: #c2ff1f; color: #0a0d0c; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 8.5px; flex: none; }
+.nmos { font-weight: 800; } .nmos.ok { color: var(--ok); } .nmos.dim { color: var(--text-dim); } .nmos.bl { color: var(--accent-2); }
+.nmos-sep { color: var(--line-strong); font-size: 11px; }
 
 /* ===================== Empty states ===================== */
 .empty { text-align: center; padding: 46px 20px; color: var(--text-dim); }
@@ -340,6 +346,68 @@ textarea { resize: vertical; min-height: 80px; }
 .hero-logo .brand-mark { width: 54px; height: 54px; font-size: 20px; border-radius: 15px; }
 .hero h1 { text-align: center; font-size: 30px; margin: 0 0 6px; letter-spacing: -.6px; }
 .hero p.lead { text-align:center; color: var(--text-dim); margin: 0 0 26px; }
+
+/* ===================== Welcome / landing híbrida ===================== */
+.welcome { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 32px 20px; overflow: hidden; }
+.welcome-bg { position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(900px 520px at 12% -8%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 60%),
+    radial-gradient(760px 520px at 105% 110%, color-mix(in srgb, var(--accent-2) 24%, transparent), transparent 58%),
+    linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%); }
+.welcome-bg::after { content: ""; position: absolute; inset: 0;
+  background-image: linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 46px 46px; mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 72%); opacity: .5; }
+.welcome-grid { position: relative; z-index: 1; width: 100%; max-width: 940px; display: grid; grid-template-columns: 1.05fr .95fr; gap: 0;
+  background: color-mix(in srgb, var(--panel) 86%, transparent); border: 1px solid var(--line-strong); border-radius: 22px; overflow: hidden;
+  box-shadow: 0 30px 80px -30px rgba(0,0,0,.7); backdrop-filter: blur(10px); animation: wlIn .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes wlIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* Columna de marca */
+.wl-brand { padding: 36px 34px; display: flex; flex-direction: column; gap: 22px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%), color-mix(in srgb, var(--bg-2) 70%, transparent);
+  border-right: 1px solid var(--line); }
+.wl-logo { display: flex; align-items: center; gap: 14px; }
+.wl-logo .brand-mark { width: 50px; height: 50px; font-size: 18px; border-radius: 14px; flex: none; }
+.wl-name { font-size: 23px; font-weight: 800; letter-spacing: -.5px; line-height: 1; }
+.wl-tag { font-size: 12.5px; color: var(--text-dim); margin-top: 5px; max-width: 230px; line-height: 1.35; }
+.wl-feats { display: flex; flex-direction: column; gap: 15px; }
+.wl-feat { display: flex; align-items: flex-start; gap: 12px; }
+.wl-feat-ic { width: 36px; height: 36px; border-radius: 10px; flex: none; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+.wl-feat-ic .ni-icon { width: 18px; height: 18px; }
+.wl-feat b { display: block; font-size: 13.5px; font-weight: 700; }
+.wl-feat span { display: block; font-size: 12px; color: var(--text-dim); margin-top: 1px; line-height: 1.35; }
+.wl-foot { margin-top: auto; font-size: 11px; color: var(--text-faint); line-height: 1.5; }
+
+/* Panel de acción */
+.wl-panel { padding: 38px 34px; display: flex; flex-direction: column; justify-content: center; }
+.wl-h { font-size: 25px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 7px; }
+.wl-sub { font-size: 13.5px; color: var(--text-dim); line-height: 1.5; margin: 0 0 20px; }
+.wl-mt { margin-top: 10px; }
+.wl-note { font-size: 11.5px; color: var(--text-faint); text-align: center; margin: 16px 0 0; line-height: 1.5; }
+.wl-back { align-self: flex-start; background: none; border: none; color: var(--text-dim); font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; padding: 0 0 14px; }
+.wl-back .ni-icon { width: 15px; height: 15px; transform: rotate(180deg); }
+.wl-back:hover { color: var(--text); }
+.wl-otp { letter-spacing: .42em; font-size: 21px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+.wl-row { display: flex; justify-content: space-between; margin-top: 12px; }
+.wl-link { background: none; border: none; color: var(--accent); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 2px 0; }
+.wl-link:hover { text-decoration: underline; }
+.wl-center { align-self: center; margin-top: 14px; color: var(--text-dim); }
+.wl-or { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--text-faint); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
+.wl-or::before, .wl-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.wl-badge-ok { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 14%, transparent); border: 1px solid color-mix(in srgb, var(--ok) 32%, transparent); border-radius: 999px; padding: 4px 11px; margin-bottom: 16px; }
+.wl-badge-ok .ni-icon { width: 13px; height: 13px; }
+
+@media (max-width: 720px) {
+  .welcome { padding: 0; align-items: stretch; }
+  .welcome-grid { grid-template-columns: 1fr; grid-template-rows: auto 1fr; max-width: 540px; border-radius: 0; min-height: 100vh; border: none; }
+  .wl-brand { border-right: none; border-bottom: 1px solid var(--line); padding: 26px 22px 20px; gap: 14px; }
+  .wl-feats { display: none; }
+  .wl-foot { display: none; }
+  .wl-panel { padding: 26px 22px 32px; }
+  .wl-h { font-size: 22px; }
+}
 
 /* ===================== Modal ===================== */
 .modal-overlay { position: fixed; inset: 0; background: rgba(4,8,12,.62); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 18px; z-index: 100; }
@@ -672,6 +740,27 @@ body.trip-open { overflow: hidden; }
 .bm-cta:hover { filter: brightness(1.06); } .bm-cta:active { transform: scale(.985); }
 .bm-cta.done { background: var(--bm-surf2); color: var(--bm-lime); border: 1px solid var(--bm-lime2); }
 .bm-note { font-size: 10.5px; color: #5f6f53; text-align: center; margin-top: 9px; }
+/* Fase 2 — marcador exacto */
+.bm-scores { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+.bm-score-chip { background: var(--bm-surf); border: 1px solid var(--bm-line); border-radius: 11px; padding: 9px 4px 8px; text-align: center; cursor: pointer; transition: border-color .12s, transform .08s; user-select: none; }
+.bm-score-chip:hover { border-color: var(--bm-lime2); transform: translateY(-2px); }
+.bm-score-chip:active { transform: scale(.97); }
+.bm-score-chip.top { border-color: var(--bm-lime2); background: linear-gradient(135deg,rgba(194,255,31,.08),var(--bm-surf)); }
+.bm-score-chip .sc { font-size: 15px; font-weight: 800; color: var(--bm-text); font-variant-numeric: tabular-nums; }
+.bm-score-chip .ov { font-size: 11.5px; color: var(--bm-lime); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.bm-score-chip .tag { font-size: 8px; font-weight: 800; letter-spacing: .06em; color: var(--bm-lime); margin-top: 3px; }
+.bm-score-chip.is-sel { background: var(--bm-lime); border-color: var(--bm-lime); box-shadow: 0 0 14px -4px rgba(194,255,31,.5); }
+.bm-score-chip.is-sel .sc,.bm-score-chip.is-sel .ov,.bm-score-chip.is-sel .tag { color: #0a0d0c; }
+/* Fase 2 — panel de tipsters */
+.bm-tipsters { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.bm-tip { background: var(--bm-surf); border: 1px solid var(--bm-line); border-radius: 12px; padding: 11px 12px; }
+.bm-tip-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.bm-tip-name { font-size: 12.5px; font-weight: 700; color: var(--bm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-tip-plat { font-size: 10px; color: var(--bm-dim); flex: none; }
+.bm-tip-pick { font-size: 13px; font-weight: 800; margin-bottom: 5px; }
+.bm-tip-bar-wrap { height: 3px; background: var(--bm-line); border-radius: 2px; margin-bottom: 7px; overflow: hidden; }
+.bm-tip-bar-fill { height: 100%; border-radius: 2px; }
+.bm-tip-text { font-size: 11.5px; color: var(--bm-dim); font-style: italic; line-height: 1.4; }
 
   </style>
 </head>
@@ -894,18 +983,65 @@ body.trip-open { overflow: hidden; }
   D.BOOKMAKERS = ["BetMáxima","GoolBet","Tipster365","ApuestaTotal","LiniaPro","GolazoBet",
     "OddsArena","JugadaMax","EstadioBet","PrimeraApuesta","MarcaBet","RemonteBet"];
 
+  /* ---------- Tipsters / expertos de apuestas (pool rotativo, sin repeticiones) ---------- */
+  D.TIPSTERS = [
+    {n:"El Profe Vázquez",p:"YouTube"},{n:"BetAnalysis_ES",p:"Twitter/X"},
+    {n:"Carlos Línea",p:"Telegram"},{n:"La Quiniela Pro",p:"Podcast"},
+    {n:"Matías Odd",p:"YouTube"},{n:"Rodrigo_Picks",p:"Twitter/X"},
+    {n:"El Marcador Exacto",p:"Instagram"},{n:"GoolAnalytics",p:"YouTube"},
+    {n:"Rosario Apuesta",p:"Telegram"},{n:"El Pronosticador FC",p:"Podcast"},
+    {n:"NúmerosFútbol",p:"Twitter/X"},{n:"Javier Hándicap",p:"YouTube"},
+    {n:"EstadísticaBet",p:"Twitter/X"},{n:"La Triple Chance",p:"Podcast"},
+    {n:"OddHunter_ES",p:"Telegram"},{n:"Toni Cuota",p:"Instagram"},
+    {n:"Apuestas360",p:"YouTube"},{n:"MarcaProno",p:"Twitter/X"},
+    {n:"ValueBet_Nando",p:"Telegram"},{n:"El Hándicap Express",p:"Podcast"},
+  ];
+
   /* ---------- Competiciones por defecto ---------- */
   D.COMPETITIONS = ["Liga","Copa nacional","Supercopa","Champions","Europa League","Conference","Amistoso"];
   D.CONTINENTAL = ["Champions","Europa League","Conference"];
 
-  /* ---------- Ligas seed (datos 2025/26) ---------- */
+  /* ---------- Ligas seed (catálogo de EA Sports FC, plantillas ~2025/26) ----------
+     Cada liga lleva `group` para agrupar el desplegable por región. Las plantillas
+     son orientativas (editables por el usuario); priorizan clubes reconocibles. */
   D.LEAGUES = [
-    { id: "eng-pl", name: "Premier League", country: "Inglaterra", teams: ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Burnley","Chelsea","Crystal Palace","Everton","Fulham","Leeds United","Liverpool","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sunderland","Tottenham Hotspur","West Ham United","Wolverhampton Wanderers"] },
-    { id: "esp-laliga", name: "LaLiga", country: "España", teams: ["Alavés","Athletic Club","Atlético de Madrid","Barcelona","Celta de Vigo","Elche","Espanyol","Getafe","Girona","Levante","Mallorca","Osasuna","Rayo Vallecano","Real Betis","Real Madrid","Real Oviedo","Real Sociedad","Sevilla","Valencia","Villarreal"] },
-    { id: "ita-seriea", name: "Serie A", country: "Italia", teams: ["Atalanta","Bologna","Cagliari","Como","Cremonese","Fiorentina","Genoa","Inter","Juventus","Lazio","Lecce","Milan","Napoli","Parma","Pisa","Roma","Sassuolo","Torino","Udinese","Hellas Verona"] },
-    { id: "ger-bundesliga", name: "Bundesliga", country: "Alemania", teams: ["Bayern Múnich","Borussia Dortmund","RB Leipzig","Bayer Leverkusen","Eintracht Frankfurt","VfB Stuttgart","SC Freiburg","Werder Bremen","FC Augsburg","VfL Wolfsburg","Borussia Mönchengladbach","Mainz 05","Union Berlin","TSG Hoffenheim","FC St. Pauli","1. FC Heidenheim","1. FC Köln","Hamburgo SV"] },
-    { id: "fra-ligue1", name: "Ligue 1", country: "Francia", teams: ["Paris Saint-Germain","Marsella","Mónaco","Niza","Lille","Lyon","Lens","Rennes","Estrasburgo","Nantes","Brest","Toulouse","Auxerre","Le Havre","Angers","Lorient","Paris FC","Metz"] },
-    { id: "custom", name: "Liga personalizada", country: "—", teams: [] },
+    // —— Inglaterra ——
+    { id: "eng-pl", name: "Premier League", country: "Inglaterra", group: "Inglaterra", teams: ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Burnley","Chelsea","Crystal Palace","Everton","Fulham","Leeds United","Liverpool","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sunderland","Tottenham Hotspur","West Ham United","Wolverhampton Wanderers"] },
+    { id: "eng-champ", name: "EFL Championship", country: "Inglaterra", group: "Inglaterra", teams: ["Leicester City","Southampton","Ipswich Town","West Bromwich Albion","Norwich City","Coventry City","Middlesbrough","Hull City","Sheffield United","Sheffield Wednesday","Watford","Bristol City","Preston North End","Stoke City","Millwall","Swansea City","Blackburn Rovers","Queens Park Rangers","Derby County","Portsmouth","Oxford United","Wrexham","Charlton Athletic","Birmingham City"] },
+    { id: "eng-l1", name: "EFL League One", country: "Inglaterra", group: "Inglaterra", teams: ["Bolton Wanderers","Wigan Athletic","Barnsley","Huddersfield Town","Reading","Stockport County","Wycombe Wanderers","Lincoln City","Leyton Orient","Blackpool","Mansfield Town","Peterborough United","Burton Albion","Northampton Town","Rotherham United","Cardiff City","Plymouth Argyle","Luton Town","Stevenage","Bristol Rovers","Exeter City","Port Vale","Doncaster Rovers","AFC Wimbledon"] },
+    { id: "eng-l2", name: "EFL League Two", country: "Inglaterra", group: "Inglaterra", teams: ["Notts County","Bradford City","Walsall","Chesterfield","Gillingham","MK Dons","Colchester United","Crewe Alexandra","Salford City","Swindon Town","Bromley","Grimsby Town","Newport County","Crawley Town","Accrington Stanley","Harrogate Town","Tranmere Rovers","Cheltenham Town","Barrow","Fleetwood Town","Morecambe","Carlisle United","Shrewsbury Town","Cambridge United"] },
+    // —— España ——
+    { id: "esp-laliga", name: "LaLiga EA Sports", country: "España", group: "España", teams: ["Alavés","Athletic Club","Atlético de Madrid","Barcelona","Celta de Vigo","Elche","Espanyol","Getafe","Girona","Levante","Mallorca","Osasuna","Rayo Vallecano","Real Betis","Real Madrid","Real Oviedo","Real Sociedad","Sevilla","Valencia","Villarreal"] },
+    { id: "esp-hypermotion", name: "LaLiga Hypermotion", country: "España", group: "España", teams: ["Almería","Cádiz","Eibar","Granada","Las Palmas","Leganés","Real Valladolid","Huesca","Sporting de Gijón","Real Zaragoza","Racing de Santander","Burgos","Albacete","Mirandés","Castellón","Córdoba","Deportivo de La Coruña","Málaga","Andorra","Cultural Leonesa","Real Sociedad B","Ceuta"] },
+    // —— Italia ——
+    { id: "ita-seriea", name: "Serie A", country: "Italia", group: "Italia", teams: ["Atalanta","Bologna","Cagliari","Como","Cremonese","Fiorentina","Genoa","Inter","Juventus","Lazio","Lecce","Milan","Napoli","Parma","Pisa","Roma","Sassuolo","Torino","Udinese","Hellas Verona"] },
+    // —— Alemania ——
+    { id: "ger-bundesliga", name: "Bundesliga", country: "Alemania", group: "Alemania", teams: ["Bayern Múnich","Borussia Dortmund","RB Leipzig","Bayer Leverkusen","Eintracht Frankfurt","VfB Stuttgart","SC Freiburg","Werder Bremen","FC Augsburg","VfL Wolfsburg","Borussia Mönchengladbach","Mainz 05","Union Berlin","TSG Hoffenheim","FC St. Pauli","1. FC Heidenheim","1. FC Köln","Hamburgo SV"] },
+    { id: "ger-2bundesliga", name: "2. Bundesliga", country: "Alemania", group: "Alemania", teams: ["Hertha BSC","Schalke 04","Fortuna Düsseldorf","1. FC Nürnberg","Karlsruher SC","Hannover 96","SC Paderborn","SV Darmstadt 98","Holstein Kiel","1. FC Kaiserslautern","Greuther Fürth","SV Elversberg","1. FC Magdeburg","Eintracht Braunschweig","Preußen Münster","Arminia Bielefeld","SpVgg Greuther","Dynamo Dresden"] },
+    // —— Francia ——
+    { id: "fra-ligue1", name: "Ligue 1", country: "Francia", group: "Francia", teams: ["Paris Saint-Germain","Marsella","Mónaco","Niza","Lille","Lyon","Lens","Rennes","Estrasburgo","Nantes","Brest","Toulouse","Auxerre","Le Havre","Angers","Lorient","Paris FC","Metz"] },
+    { id: "fra-ligue2", name: "Ligue 2", country: "Francia", group: "Francia", teams: ["Saint-Étienne","Guingamp","Bastia","Le Mans","Grenoble","Amiens","Troyes","Laval","Rodez","Pau","Annecy","Clermont Foot","Red Star","Montpellier","Reims","Boulogne","Dunkerque","Nancy"] },
+    // —— Resto de Europa ——
+    { id: "ned-eredivisie", name: "Eredivisie", country: "Países Bajos", group: "Resto de Europa", teams: ["Ajax","PSV","Feyenoord","AZ Alkmaar","FC Twente","FC Utrecht","Heerenveen","Go Ahead Eagles","Sparta Rotterdam","NEC Nijmegen","FC Groningen","Fortuna Sittard","PEC Zwolle","Heracles Almelo","Telstar","NAC Breda","Excelsior","FC Volendam"] },
+    { id: "por-ligaportugal", name: "Liga Portugal", country: "Portugal", group: "Resto de Europa", teams: ["Benfica","Porto","Sporting CP","Braga","Vitória SC","Famalicão","Moreirense","Gil Vicente","Santa Clara","Rio Ave","Estoril","Casa Pia","Arouca","Estrela Amadora","Nacional","AVS","Tondela","Alverca"] },
+    { id: "tur-superlig", name: "Süper Lig", country: "Turquía", group: "Resto de Europa", teams: ["Galatasaray","Fenerbahçe","Beşiktaş","Trabzonspor","Başakşehir","Konyaspor","Antalyaspor","Alanyaspor","Kayserispor","Samsunspor","Çaykur Rizespor","Göztepe","Kasımpaşa","Gaziantep FK","Eyüpspor","Bodrum","Kocaelispor","Gençlerbirliği"] },
+    { id: "sco-premiership", name: "Scottish Premiership", country: "Escocia", group: "Resto de Europa", teams: ["Celtic","Rangers","Aberdeen","Heart of Midlothian","Hibernian","Dundee United","Dundee","Motherwell","St Mirren","Kilmarnock","Ross County","St Johnstone","Livingston","Falkirk"] },
+    { id: "bel-proleague", name: "Pro League", country: "Bélgica", group: "Resto de Europa", teams: ["Club Brugge","Anderlecht","Royal Antwerp","Genk","Gent","Union Saint-Gilloise","Standard Liège","Cercle Brugge","Charleroi","Mechelen","Westerlo","OH Leuven","Sint-Truiden","Dender","Kortrijk","Beerschot"] },
+    { id: "den-superliga", name: "Superliga", country: "Dinamarca", group: "Resto de Europa", teams: ["FC Copenhagen","FC Midtjylland","Brøndby","AGF Aarhus","Nordsjælland","Silkeborg","Viborg","Randers","SønderjyskE","Vejle","Lyngby","Fredericia"] },
+    { id: "swe-allsvenskan", name: "Allsvenskan", country: "Suecia", group: "Resto de Europa", teams: ["Malmö FF","AIK","Djurgården","Hammarby","IFK Göteborg","IF Elfsborg","BK Häcken","IFK Norrköping","Kalmar FF","Halmstad","Mjällby","GAIS","IK Sirius","Värnamo","Brommapojkarna","Degerfors"] },
+    { id: "nor-eliteserien", name: "Eliteserien", country: "Noruega", group: "Resto de Europa", teams: ["Bodø/Glimt","Molde","Rosenborg","Brann","Viking","Lillestrøm","Vålerenga","Strømsgodset","Sarpsborg 08","Tromsø","Haugesund","Fredrikstad","KFUM Oslo","Kristiansund","Sandefjord","HamKam"] },
+    { id: "aut-bundesliga", name: "Bundesliga (Austria)", country: "Austria", group: "Resto de Europa", teams: ["Red Bull Salzburg","Sturm Graz","Rapid Wien","Austria Wien","LASK","Wolfsberger AC","TSV Hartberg","WSG Tirol","Austria Klagenfurt","Blau-Weiß Linz","Grazer AK","SCR Altach"] },
+    { id: "sui-superleague", name: "Super League (Suiza)", country: "Suiza", group: "Resto de Europa", teams: ["Young Boys","Basel","Servette","Lugano","FC Zürich","Lausanne-Sport","St. Gallen","Luzern","Sion","Grasshopper","Yverdon-Sport","Winterthur"] },
+    { id: "pol-ekstraklasa", name: "Ekstraklasa", country: "Polonia", group: "Resto de Europa", teams: ["Lech Poznań","Legia Warszawa","Jagiellonia Białystok","Raków Częstochowa","Pogoń Szczecin","Górnik Zabrze","Wisła Płock","Cracovia","Widzew Łódź","Piast Gliwice","Korona Kielce","Zagłębie Lubin","Lechia Gdańsk","Motor Lublin","Radomiak Radom","GKS Katowice","Arka Gdynia","Bruk-Bet Termalica"] },
+    // —— Resto del mundo ——
+    { id: "sau-prolegaue", name: "Roshn Saudi League", country: "Arabia Saudí", group: "Resto del mundo", teams: ["Al-Hilal","Al-Nassr","Al-Ittihad","Al-Ahli","Al-Ettifaq","Al-Shabab","Al-Taawoun","Al-Fateh","Al-Khaleej","Al-Fayha","Al-Riyadh","Al-Wehda","Al-Okhdood","Al-Qadsiah","Damac","Al-Raed","Al-Hazem","Neom"] },
+    { id: "usa-mls", name: "MLS", country: "EE. UU. / Canadá", group: "Resto del mundo", teams: ["Inter Miami","LA Galaxy","Los Angeles FC","Seattle Sounders","Atlanta United","Austin FC","Columbus Crew","FC Cincinnati","New York City FC","New York Red Bulls","Philadelphia Union","Toronto FC","Portland Timbers","Sporting Kansas City","Nashville SC","Orlando City","Real Salt Lake","Houston Dynamo","Minnesota United","Chicago Fire","FC Dallas","Colorado Rapids","San Diego FC","St. Louis City","Charlotte FC","D.C. United","New England Revolution","Vancouver Whitecaps","CF Montréal","San Jose Earthquakes"] },
+    { id: "mex-ligamx", name: "Liga BBVA MX", country: "México", group: "Resto del mundo", teams: ["Club América","Guadalajara","Cruz Azul","Pumas UNAM","Monterrey","Tigres UANL","Toluca","Santos Laguna","León","Pachuca","Atlas","Necaxa","Querétaro","Puebla","Mazatlán","Atlético San Luis","FC Juárez","Tijuana"] },
+    { id: "arg-ligaprofesional", name: "Liga Profesional", country: "Argentina", group: "Resto del mundo", teams: ["River Plate","Boca Juniors","Racing Club","Independiente","San Lorenzo","Estudiantes","Vélez Sarsfield","Talleres","Argentinos Juniors","Rosario Central","Newell's Old Boys","Lanús","Defensa y Justicia","Huracán","Banfield","Gimnasia La Plata","Belgrano","Instituto","Godoy Cruz","Tigre"] },
+    { id: "aus-aleague", name: "A-League Men", country: "Australia", group: "Resto del mundo", teams: ["Melbourne City","Melbourne Victory","Sydney FC","Western Sydney Wanderers","Central Coast Mariners","Adelaide United","Brisbane Roar","Wellington Phoenix","Macarthur FC","Perth Glory","Newcastle Jets","Western United","Auckland FC"] },
+    { id: "kor-kleague", name: "K League 1", country: "Corea del Sur", group: "Resto del mundo", teams: ["Ulsan HD","Jeonbuk Hyundai Motors","FC Seoul","Pohang Steelers","Gangwon FC","Gwangju FC","Suwon FC","Daejeon Hana Citizen","Gimcheon Sangmu","Jeju SK","FC Anyang","Daegu FC"] },
+    // —— Otros ——
+    { id: "custom", name: "Liga personalizada", country: "—", group: "Otros", teams: [] },
   ];
 
   /* ---------- Wonderkids (teaser de scouting) ---------- */
@@ -4903,11 +5039,61 @@ body.trip-open { overflow: hidden; }
     ] };
     combo.odd = snap(combo.legs[0].odd * combo.legs[1].odd);
 
+    // 7) Marcador exacto: top 5 resultados Poisson más probables.
+    const scores = [];
+    for (let i = 0; i <= 5; i++) for (let j = 0; j <= 5; j++) {
+      const pp = pois(i, lamH) * pois(j, lamA);
+      scores.push({ h:i, a:j, prob:pp, odd:snap(oddFrom(pp, MARGIN + 0.045)) });
+    }
+    scores.sort((a,b) => b.prob - a.prob);
+    const exactScore = scores.slice(0, 5);
+
+    // 8) Panel de tipsters (4 del pool rotativo, picks deterministas con varianza).
+    const tipPool = (DD.TIPSTERS || []).slice();
+    const tipsters = [], usedT = {};
+    const tipTexts = {
+      home: [
+        home + " en casa es otro equipo. No me la juego en contra.",
+        "Los números me cuadran para el local. Con el " + home + ".",
+        "Factor campo decisivo hoy. Mi dinero va al " + home + ".",
+        "Locales con buenas sensaciones en las últimas jornadas.",
+      ],
+      draw: [
+        "Partido muy igualado. El empate tiene valor aquí.",
+        "No veo clara la victoria de ninguno. Jugada táctica: la X.",
+        "Fuerzas parejas. En este tipo de partidos la X siempre aparece.",
+        "Cuota de empate interesante dado el contexto del partido.",
+      ],
+      away: [
+        away + " llega en mejor momento. Me la juego por ellos.",
+        "Cuota del visitante con valor real según mis modelos.",
+        "Las sensaciones del " + away + " fuera de casa me convencen.",
+        "Datos de los últimos viajes del " + away + " muy sólidos.",
+      ],
+    };
+    for (let i = 0; i < 4; i++) {
+      if (!tipPool.length) break;
+      let idx = Math.abs(hsh(seed + "tip" + i)) % tipPool.length, g = 0;
+      while (usedT[idx] && g++ < tipPool.length) idx = (idx + 1) % tipPool.length;
+      usedT[idx] = 1;
+      const t = tipPool[idx];
+      const tNoise = rng("tnoise" + i, -0.1, 0.1);
+      const aH = Math.max(0, pH + (i % 2 === 0 ? tNoise : -tNoise * 0.6));
+      const aA = Math.max(0, pA + (i % 2 === 1 ? tNoise : -tNoise * 0.6));
+      const aD = Math.max(0, 1 - aH - aA);
+      const r = Math.abs(hsh(seed + "tipR" + i)) % 100;
+      const pick = r < aH * 100 ? "home" : r < (aH + aD) * 100 ? "draw" : "away";
+      const conf = 60 + Math.round(rng("tconf" + i, 0, 29));
+      const txtIdx = Math.abs(hsh(seed + "tipT" + i)) % 4;
+      tipsters.push({ name: t.n, platform: t.p, pick, conf, text: tipTexts[pick][txtIdx] });
+    }
+
     return {
       home, away, isUserHome: home === c.clubName, isUserAway: away === c.clubName,
       strength: { home: Math.round(sH), away: Math.round(sA) },
       prob: { home: pH, draw: pD, away: pA },
       consensus, books, best, public: publik, volume, movement, fav, extras, boost, combo,
+      exactScore, tipsters,
     };
   };
 
@@ -6593,6 +6779,20 @@ body.trip-open { overflow: hidden; }
 
   /* ---------- auth passwordless (código OTP por email) ---------- */
   C.sendCode = (email) => api("/auth/v1/otp?redirect_to=" + encodeURIComponent("https://juzalex30.github.io/Career-Mode-webapp/"), { method: "POST", body: { email: String(email || "").trim(), create_user: true } });
+  // verifyCode: el usuario teclea el código de 6 dígitos del email (en vez de pulsar el enlace).
+  // Inicia sesión directamente sin depender del redirect. Tras éxito, deja la sesión lista.
+  C.verifyCode = async (email, token) => {
+    const data = await api("/auth/v1/verify", { method: "POST", body: { type: "email", email: String(email || "").trim(), token: String(token || "").trim() } });
+    if (!data || !data.access_token) throw new Error("Código no válido o caducado");
+    saveSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || "",
+      expires_at: Date.now() + (Number(data.expires_in) || 3600) * 1000,
+      user: data.user ? { id: data.user.id, email: data.user.email || "" } : { id: null, email: String(email || "").trim() },
+    });
+    if (!session.user || !session.user.id) await C.fetchUser();
+    return C.user();
+  };
   // handleMagicLink: procesa el hash #access_token=... que Supabase añade al redirect tras el clic en el email.
   C.handleMagicLink = (hash) => {
     try {
@@ -6979,60 +7179,170 @@ body.trip-open { overflow: hidden; }
   /* ============================================================
      ONBOARDING
      ============================================================ */
+  // Desplegable de ligas agrupado por región (optgroups), catálogo de EA Sports FC.
   function leagueOptions(sel) {
-    return D.LEAGUES.map(l => `<option value="${l.id}" ${l.id === sel ? "selected" : ""}>${U.esc(l.name)}${l.country !== "—" ? " · " + U.esc(l.country) : ""}</option>`).join("");
+    const order = [], byG = {};
+    D.LEAGUES.forEach(l => { const g = l.group || "Otros"; if (!byG[g]) { byG[g] = []; order.push(g); } byG[g].push(l); });
+    return order.map(g => `<optgroup label="${U.esc(g)}">${byG[g].map(l =>
+      `<option value="${U.esc(l.id)}"${l.id === sel ? " selected" : ""}>${U.esc(l.name)}${l.country && l.country !== "—" ? " · " + U.esc(l.country) : ""}</option>`
+    ).join("")}</optgroup>`).join("");
   }
   FC.views = {};
+
+  /* ---- Pantalla de entrada (landing híbrida): bienvenida con marca, login/registro
+     passwordless opcional (código OTP o enlace mágico) y creación de carrera. ---- */
+  let obStep = null;   // "home" | "auth" | "restore" | "create"
+  let obEmail = "";
+  let obCodeSent = false;
+  let obBusy = false;
+
   FC.views.onboarding = function () {
+    const CL = FC.cloud;
     document.getElementById("app").style.display = "none";
     let host = document.getElementById("onboardHost");
     if (!host) { host = U.h("div", { id: "onboardHost" }, []); document.body.appendChild(host); }
+    if (obStep == null) obStep = CL && CL.isLoggedIn() ? "restore" : "home";
     const thisYear = new Date().getFullYear();
-    host.innerHTML = `
-      <div class="hero">
-        <div class="hero-card card">
-          <div class="hero-logo"><div class="brand-mark">CF</div></div>
-          <h1>Crea tu carrera</h1>
-          <p class="lead">Tu historia del Modo Carrera, guardada para siempre. Empecemos por tu club.</p>
-          <div class="field">
-            <label>Nombre del club <span class="faint">(tu equipo)</span></label>
-            <input type="text" id="ob-club" placeholder="p.ej. Real Oviedo" autofocus />
-          </div>
-          <div class="field-row">
-            <div class="field"><label>Liga</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
-            <div class="field"><label>Temporada inicial</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
-          </div>
-          <div class="field" id="ob-custom-wrap" hidden>
-            <label>Equipos de tu liga <span class="faint">(separa por comas)</span></label>
-            <textarea id="ob-teams" placeholder="Equipo 1, Equipo 2, Equipo 3..."></textarea>
-          </div>
-          <div class="field"><label>Tu nombre de mánager <span class="faint">(opcional)</span></label><input type="text" id="ob-manager" placeholder="Mánager" /></div>
-          <button class="btn btn-primary btn-lg btn-block" id="ob-create">Empezar carrera</button>
-          <p class="faint text-c" style="margin:14px 0 0;font-size:12px">Tus datos se guardan en este navegador. Podrás exportarlos cuando quieras.</p>
-        </div>
+    const go = (s) => { obStep = s; FC.views.onboarding(); };
+    const finish = () => { obStep = null; obCodeSent = false; obBusy = false; host.remove(); document.getElementById("app").style.display = ""; FC.app.refreshChrome(); FC.router.go("dashboard"); };
+
+    // —— Columna de marca (izquierda) ——
+    const feat = (icon, title, desc) => `<div class="wl-feat"><span class="wl-feat-ic"><span class="ni-icon" data-icon="${icon}"></span></span><div><b>${title}</b><span>${desc}</span></div></div>`;
+    const brand = `<div class="wl-brand">
+      <div class="wl-logo"><div class="brand-mark">CF</div><div><div class="wl-name">Carrera FC</div><div class="wl-tag">Tu Modo Carrera, contado como una historia</div></div></div>
+      <div class="wl-feats">
+        ${feat("coin", "Mercado BETMÁXIMA", "Cuotas, tipsters y boleto en vivo de cada partido")}
+        ${feat("news", "Prensa y crónicas", "Titulares y crónicas generadas de tu temporada")}
+        ${feat("trophy", "Tu legado", "Palmarés, récords y línea de tiempo de la carrera")}
+        ${feat("cloud", "Comunidad y nube", "Guarda en la nube, comparte y compite en el ranking")}
+      </div>
+      <div class="wl-foot">Simulación de inmersión · sin dinero real · hecho para fans del Modo Carrera</div>
+    </div>`;
+
+    // —— Panel de acción (derecha), según el paso ——
+    let panel = "";
+    if (obStep === "home") {
+      panel = `<div class="wl-panel">
+        <div class="wl-h">Bienvenido</div>
+        <p class="wl-sub">Crea una cuenta para guardar tus carreras en la nube y competir en la comunidad, o entra directo y juega en este dispositivo.</p>
+        <button class="btn btn-primary btn-lg btn-block" id="wl-go-auth"><span class="ni-icon" data-icon="cloud"></span> Crear cuenta / Iniciar sesión</button>
+        <button class="btn btn-block wl-mt" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> Continuar sin cuenta</button>
+        <p class="wl-note">Sin contraseñas: te enviamos un código a tu email. Continuar sin cuenta guarda todo en este navegador.</p>
       </div>`;
-    const leagueSel = host.querySelector("#ob-league");
-    const customWrap = host.querySelector("#ob-custom-wrap");
-    leagueSel.addEventListener("change", () => { customWrap.hidden = leagueSel.value !== "custom"; });
-    host.querySelector("#ob-create").addEventListener("click", () => {
-      const club = host.querySelector("#ob-club").value.trim();
-      if (!club) { UI.toast("Escribe el nombre de tu club", "err"); return; }
-      const lid = leagueSel.value;
-      const league = D.LEAGUES.find(l => l.id === lid);
-      let teams = league ? league.teams.slice() : [];
-      if (lid === "custom") teams = host.querySelector("#ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
-      if (!teams.includes(club)) teams.unshift(club);
-      S.createCareer({
-        name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : "Liga",
-        country: league ? league.country : "", teams,
-        managerName: host.querySelector("#ob-manager").value.trim(),
-        startYear: Number(host.querySelector("#ob-year").value) || new Date().getFullYear(),
+    } else if (obStep === "auth") {
+      panel = `<div class="wl-panel">
+        <button class="wl-back" id="wl-back"><span class="ni-icon" data-icon="chevron"></span> Volver</button>
+        <div class="wl-h">${obCodeSent ? "Introduce tu código" : "Entra con tu email"}</div>
+        ${!obCodeSent
+          ? `<p class="wl-sub">Te enviaremos un código de acceso de un solo uso. Si ya tienes cuenta, recuperarás tus carreras.</p>
+             <div class="field"><label>Email</label><input type="email" id="wl-email" value="${U.esc(obEmail)}" placeholder="tu@email.com" autocomplete="email" autofocus /></div>
+             <button class="btn btn-primary btn-lg btn-block" id="wl-send"><span class="ni-icon" data-icon="bell"></span> Enviar código</button>`
+          : `<p class="wl-sub">Hemos enviado un código a <b>${U.esc(obEmail)}</b>. Pégalo aquí (o pulsa el enlace del email).</p>
+             <div class="field"><label>Código de 6 dígitos</label><input type="text" id="wl-code" inputmode="numeric" maxlength="8" placeholder="000000" class="wl-otp" autofocus /></div>
+             <button class="btn btn-primary btn-lg btn-block" id="wl-verify"><span class="ni-icon" data-icon="check"></span> Entrar</button>
+             <div class="wl-row"><button class="wl-link" id="wl-resend">Reenviar código</button><button class="wl-link" id="wl-changeemail">Cambiar email</button></div>`}
+        <div class="wl-or"><span>o</span></div>
+        <button class="btn btn-block" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> Continuar sin cuenta</button>
+      </div>`;
+    } else if (obStep === "restore") {
+      const email = (CL.user() || {}).email || obEmail || "";
+      panel = `<div class="wl-panel">
+        <div class="wl-badge-ok"><span class="ni-icon" data-icon="check"></span> Sesión iniciada${email ? " · " + U.esc(email) : ""}</div>
+        <div class="wl-h">¿Recuperar tus carreras?</div>
+        <p class="wl-sub">Trae tus carreras guardadas en la nube a este dispositivo, o empieza una nueva.</p>
+        <button class="btn btn-primary btn-lg btn-block" id="wl-restore"><span class="ni-icon" data-icon="download"></span> Traer mis carreras de la nube</button>
+        <button class="btn btn-block wl-mt" id="wl-new"><span class="ni-icon" data-icon="plus"></span> Empezar una carrera nueva</button>
+        <button class="wl-link wl-center" id="wl-logout">Cerrar sesión</button>
+      </div>`;
+    } else { // create
+      const logged = CL && CL.isLoggedIn();
+      panel = `<div class="wl-panel">
+        <button class="wl-back" id="wl-back-create"><span class="ni-icon" data-icon="chevron"></span> Volver</button>
+        <div class="wl-h">Crea tu carrera</div>
+        <p class="wl-sub">Elige tu club y tu liga. Podrás cambiar todo más adelante.</p>
+        <div class="field"><label>Nombre del club <span class="faint">(tu equipo)</span></label>
+          <input type="text" id="ob-club" placeholder="p.ej. Real Oviedo" autofocus /></div>
+        <div class="field-row">
+          <div class="field"><label>Liga</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
+          <div class="field"><label>Temporada inicial</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
+        </div>
+        <div class="field" id="ob-custom-wrap" hidden>
+          <label>Equipos de tu liga <span class="faint">(separa por comas)</span></label>
+          <textarea id="ob-teams" placeholder="Equipo 1, Equipo 2, Equipo 3..."></textarea></div>
+        <div class="field"><label>Tu nombre de mánager <span class="faint">(opcional)</span></label><input type="text" id="ob-manager" placeholder="Mánager" /></div>
+        <button class="btn btn-primary btn-lg btn-block" id="ob-create"><span class="ni-icon" data-icon="ball"></span> Empezar carrera</button>
+        <p class="wl-note">${logged ? "Tu carrera se guardará también en la nube." : "Tus datos se guardan en este navegador. Podrás exportarlos cuando quieras."}</p>
+      </div>`;
+    }
+
+    host.innerHTML = `<div class="welcome"><div class="welcome-bg"></div><div class="welcome-grid">${brand}${panel}</div></div>`;
+    U.hydrateIcons(host);
+    const $ = (id) => host.querySelector("#" + id);
+    const setBusy = (id, on) => { const el = $(id); if (el) el.disabled = on; obBusy = on; };
+
+    // —— wiring por paso ——
+    if (obStep === "home") {
+      $("wl-go-auth").addEventListener("click", () => go("auth"));
+      $("wl-go-guest").addEventListener("click", () => go("create"));
+    } else if (obStep === "auth") {
+      $("wl-back").addEventListener("click", () => { obCodeSent = false; go("home"); });
+      $("wl-go-guest").addEventListener("click", () => go("create"));
+      if ($("wl-send")) $("wl-send").addEventListener("click", async () => {
+        const email = ($("wl-email").value || "").trim();
+        if (!/.+@.+\..+/.test(email)) { UI.toast("Escribe un email válido", "err"); return; }
+        if (obBusy) return; setBusy("wl-send", true);
+        try { await CL.sendCode(email); obEmail = email; obCodeSent = true; UI.toast("¡Código enviado! Revisa tu email.", "ok"); go("auth"); }
+        catch (e) { UI.toast(e.message || "No se pudo enviar el código", "err"); setBusy("wl-send", false); }
       });
-      host.remove();
-      document.getElementById("app").style.display = "";
-      UI.toast("¡Carrera creada! A por la gloria ⚽", "ok");
-      FC.router.go("dashboard");
-    });
+      if ($("wl-verify")) {
+        const doVerify = async () => {
+          const code = ($("wl-code").value || "").trim();
+          if (code.length < 4) { UI.toast("Introduce el código del email", "err"); return; }
+          if (obBusy) return; setBusy("wl-verify", true);
+          try { await CL.verifyCode(obEmail, code); UI.toast("¡Sesión iniciada!", "ok"); go("restore"); }
+          catch (e) { UI.toast(e.message || "Código no válido", "err"); setBusy("wl-verify", false); }
+        };
+        $("wl-verify").addEventListener("click", doVerify);
+        $("wl-code").addEventListener("keydown", (e) => { if (e.key === "Enter") doVerify(); });
+        $("wl-resend").addEventListener("click", async () => { try { await CL.sendCode(obEmail); UI.toast("Código reenviado", "ok"); } catch (e) { UI.toast(e.message || "Error", "err"); } });
+        $("wl-changeemail").addEventListener("click", () => { obCodeSent = false; go("auth"); });
+      }
+    } else if (obStep === "restore") {
+      $("wl-restore").addEventListener("click", async () => {
+        if (obBusy) return; setBusy("wl-restore", true);
+        try {
+          const r = await CL.pull();
+          if (r.pulled > 0) { UI.toast("Restauradas " + r.pulled + " carrera(s)", "ok"); finish(); }
+          else { UI.toast("No tienes carreras en la nube todavía", "warn"); go("create"); }
+        } catch (e) { UI.toast(e.message || "No se pudo restaurar", "err"); setBusy("wl-restore", false); }
+      });
+      $("wl-new").addEventListener("click", () => go("create"));
+      $("wl-logout").addEventListener("click", () => { CL.logout(); obCodeSent = false; UI.toast("Sesión cerrada"); go("home"); });
+    } else { // create
+      const backTo = (CL && CL.isLoggedIn()) ? "restore" : "home";
+      $("wl-back-create").addEventListener("click", () => go(backTo));
+      const leagueSel = $("ob-league");
+      const customWrap = $("ob-custom-wrap");
+      leagueSel.addEventListener("change", () => { customWrap.hidden = leagueSel.value !== "custom"; });
+      $("ob-create").addEventListener("click", async () => {
+        const club = ($("ob-club").value || "").trim();
+        if (!club) { UI.toast("Escribe el nombre de tu club", "err"); return; }
+        const lid = leagueSel.value;
+        const league = D.LEAGUES.find(l => l.id === lid);
+        let teams = league ? league.teams.slice() : [];
+        if (lid === "custom") teams = $("ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
+        if (!teams.includes(club)) teams.unshift(club);
+        S.createCareer({
+          name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : "Liga",
+          country: league ? league.country : "", teams,
+          managerName: ($("ob-manager").value || "").trim(),
+          startYear: Number($("ob-year").value) || new Date().getFullYear(),
+        });
+        UI.toast("¡Carrera creada! A por la gloria ⚽", "ok");
+        if (CL && CL.isLoggedIn()) { try { await CL.push(); } catch (e) { /* la nube es best-effort */ } }
+        finish();
+      });
+    }
   };
 
   /* ============================================================
@@ -7143,7 +7453,37 @@ body.trip-open { overflow: hidden; }
     // Modo: "result" (con marcador) o "schedule" (partido futuro sin jugar).
     let mode = opts.mode || (existing && !S.isPlayed(existing) ? "schedule" : "result");
     const dlId = "dl-players";
+    const mktVerdict = (() => {
+      if (!existing || !S.isPlayed(existing)) return "";
+      const o = S.matchOdds(c, existing);
+      if (!o) return "";
+      const foq = (x) => x >= 10 ? x.toFixed(1).replace(".",",") : x.toFixed(2).replace(".",",");
+      const userProb = isHome ? o.prob.home : o.prob.away;
+      const userOdd  = isHome ? o.best.home  : o.best.away;
+      const r = S.userResult(c, existing);
+      const pct = Math.round(userProb * 100);
+      let icon, label, col;
+      if      (r === "W" && pct < 33)  { icon="⚡"; label="¡Diste la sorpresa!";         col="var(--accent-3)"; }
+      else if (r === "W")              { icon="✓";  label="Confirmaste el pronóstico";   col="var(--ok)"; }
+      else if (r === "D")              { icon="·";  label="Partido igualado";             col="var(--text-dim)"; }
+      else if (r === "L" && pct > 55)  { icon="💥"; label="Tropiezo inesperado";         col="var(--danger)"; }
+      else                             { icon="✗";  label="El mercado lo veía venir";    col="var(--danger)"; }
+      return `<div style="background:var(--panel-2);border:1px solid var(--line);border-left:3px solid ${col};border-radius:11px;padding:10px 13px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px">Veredicto del mercado · pre-partido</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+          <div><span style="font-size:15px;font-weight:800;color:${col}">${icon} ${label}</span>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">El mercado te daba un <b style="color:var(--text)">${pct}%</b> · cuota <b style="color:var(--text)">${foq(userOdd)}</b></div>
+          </div>
+          <div style="display:flex;gap:6px;font-size:12px;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--text-dim)">
+            <b style="color:var(--ok)">${foq(o.best.home)}</b><span>·</span>
+            <span>${foq(o.best.draw)}</span><span>·</span>
+            <b style="color:var(--accent-2)">${foq(o.best.away)}</b>
+          </div>
+        </div>
+      </div>`;
+    })();
     const body = `
+      ${mktVerdict}
       ${playersDatalist(c, dlId)}
       <div class="field"><label>Tipo de partido</label>
         <div class="seg" id="m-mode">
@@ -7427,6 +7767,8 @@ body.trip-open { overflow: hidden; }
     const nextM = S.nextMatch(c, season.id);
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const canScout = nextRival && S.rivalHistory(c, nextRival);
+    const nextOdds = nextM ? S.matchOdds(c, nextM) : null;
+    const foQ = (x) => x >= 10 ? x.toFixed(1).replace(".",",") : x.toFixed(2).replace(".",",");
     const finAlert = fin.hasBudget
       ? (fin.remaining < 0
           ? alertRow("coin", "Presupuesto excedido en " + U.money(-fin.remaining), "danger", "finance")
@@ -7451,7 +7793,9 @@ body.trip-open { overflow: hidden; }
       ${nextM ? `<div class="card next-match" id="dash-next" style="cursor:pointer">
         <div class="nm-left"><span class="ni-icon" data-icon="calendar"></span>
           <div><div class="nm-label">Próximo partido${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
-          <div class="nm-teams">${teamDot(nextM.home||"")}${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${teamDot(nextM.away||"")}${U.esc(nextM.away||"—")}</div></div>
+          <div class="nm-teams">${teamDot(nextM.home||"")}${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${teamDot(nextM.away||"")}${U.esc(nextM.away||"—")}</div>
+          ${nextOdds ? `<div class="nm-odds-strip"><span class="nmos-bm"><span class="nmos-bm-mark">B</span>BETMÁX</span><span class="nmos ok">${foQ(nextOdds.best.home)}</span><span class="nmos-sep">·</span><span class="nmos dim">${foQ(nextOdds.best.draw)}</span><span class="nmos-sep">·</span><span class="nmos bl">${foQ(nextOdds.best.away)}</span></div>` : ""}
+          </div></div>
         </div>
         <div class="flex gap center">
           ${canScout ? `<button class="btn btn-ghost btn-sm" id="dash-next-scout"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
@@ -8042,6 +8386,25 @@ body.trip-open { overflow: hidden; }
               ${odd("btts", "AMBOS MARCAN", "sí", o.extras.bttsYes, "Ambos equipos marcan")}
             </div>
 
+            <div class="bm-sec">Marcador más probable <span class="bm-badge">POISSON</span></div>
+            <div class="bm-scores">
+              ${o.exactScore.map((s,i) => `<div class="bm-score-chip${i===0?" top":""}" data-sel="sc${s.h}${s.a}" data-odd="${s.odd}" data-label="Marcador exacto ${s.h}-${s.a}">
+                <div class="sc">${s.h}–${s.a}</div>
+                <div class="ov">${fo(s.odd)}</div>
+                ${i===0?'<div class="tag">TOP</div>':''}
+              </div>`).join("")}
+            </div>
+
+            <div class="bm-sec">Panel de expertos <span class="bm-badge hot">TIPSTERS</span></div>
+            <div class="bm-tipsters">
+              ${o.tipsters.map(t => { const pn=t.pick==="home"?o.home:t.pick==="away"?o.away:"Empate"; const pc=t.pick==="home"?"var(--bm-lime)":t.pick==="away"?"var(--bm-amber)":"#7a8f8a"; return `<div class="bm-tip">
+                <div class="bm-tip-head"><span class="bm-tip-name">${U.esc(t.name)}</span><span class="bm-tip-plat">${U.esc(t.platform)}</span></div>
+                <div class="bm-tip-pick" style="color:${pc}">${U.esc(pn)} · ${t.conf}%</div>
+                <div class="bm-tip-bar-wrap"><div class="bm-tip-bar-fill" style="width:${t.conf}%;background:${pc}"></div></div>
+                <div class="bm-tip-text">"${U.esc(t.text)}"</div>
+              </div>`; }).join("")}
+            </div>
+
             <div class="bm-sec">Dinero del público <span class="r" style="color:var(--bm-dim);text-transform:none">${o.volume.toLocaleString("es-ES")} apuestas</span></div>
             <div class="bm-pbar">${seg(o.public.home, hc.bg, hc.text)}${seg(o.public.draw, "#3a4636", "#cfe0c0")}${seg(o.public.away, ac.bg, ac.text)}</div>
             <div class="bm-leg"><span><i style="background:${hc.bg}"></i>${U.esc(o.home)} ${o.public.home}%</span><span><i style="background:#3a4636"></i>Empate ${o.public.draw}%</span><span><i style="background:${ac.bg}"></i>${U.esc(o.away)} ${o.public.away}%</span></div>
@@ -8101,8 +8464,8 @@ body.trip-open { overflow: hidden; }
       retEl.textContent = "€" + eur(stake * sel.odd);
     };
     const choose = (el) => {
-      root.querySelectorAll(".bm-odd.is-sel").forEach(x => x.classList.remove("is-sel"));
-      if (el.classList.contains("bm-odd")) el.classList.add("is-sel");
+      root.querySelectorAll(".bm-odd.is-sel, .bm-score-chip.is-sel").forEach(x => x.classList.remove("is-sel"));
+      if (el.classList.contains("bm-odd") || el.classList.contains("bm-score-chip")) el.classList.add("is-sel");
       sel = { odd: Number(el.dataset.odd), label: el.dataset.label };
       selEl.innerHTML = `${U.esc(sel.label)}<small>BETMÁXIMA · cuota ${fo(sel.odd)}</small>`;
       oddEl.textContent = fo(sel.odd);
