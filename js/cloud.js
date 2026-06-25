@@ -201,6 +201,32 @@
     return { ok: true };
   };
 
+  /* ---------- RGPD: borrado de cuenta y datos (derecho de supresión) ----------
+     Dos niveles: (1) borra SIEMPRE los datos del usuario en la nube vía RLS
+     (funciona con la sola sesión); (2) intenta borrar la propia cuenta de
+     auth.users mediante una Edge Function con service-role (que el dueño del
+     proyecto despliega como `delete-account`). Si la función no está desplegada,
+     los datos personales ya quedaron eliminados y devolvemos authDeleted:false. */
+  C.deleteAccount = async () => {
+    if (!(await ensureFresh())) throw new Error("Inicia sesión primero");
+    const uid = (session.user || {}).id;
+    if (!uid) throw new Error("No se pudo identificar tu cuenta");
+    const eid = encodeURIComponent(uid);
+    const minimal = { method: "DELETE", auth: true, headers: { Prefer: "return=minimal" } };
+    // 1) Datos del usuario en la nube (PostgREST exige filtro en DELETE → por id propio).
+    await api("/rest/v1/shared_comments?author_id=eq." + eid, minimal);
+    await api("/rest/v1/shared_careers?owner_id=eq." + eid, minimal);
+    await api("/rest/v1/careers?user_id=eq." + eid, minimal);
+    // 2) Cuenta de auth (Edge Function con service-role). Opcional/best-effort.
+    let authDeleted = false;
+    try { await api("/functions/v1/delete-account", { method: "POST", auth: true }); authDeleted = true; }
+    catch (e) { authDeleted = false; }
+    // 3) Limpiar sesión local y referencias de publicación.
+    const s = S.settings().cloud; if (s) { s.shares = {}; S.settings().cloud = s; S.save(); }
+    C.logout();
+    return { authDeleted };
+  };
+
   // SQL que el usuario ejecuta una vez en Supabase (mostrado en la UI).
   C.SETUP_SQL = [
     "-- 1) Carreras (sync privado por usuario)",

@@ -7125,6 +7125,32 @@ body.trip-open { overflow: hidden; }
     return { ok: true };
   };
 
+  /* ---------- RGPD: borrado de cuenta y datos (derecho de supresión) ----------
+     Dos niveles: (1) borra SIEMPRE los datos del usuario en la nube vía RLS
+     (funciona con la sola sesión); (2) intenta borrar la propia cuenta de
+     auth.users mediante una Edge Function con service-role (que el dueño del
+     proyecto despliega como `delete-account`). Si la función no está desplegada,
+     los datos personales ya quedaron eliminados y devolvemos authDeleted:false. */
+  C.deleteAccount = async () => {
+    if (!(await ensureFresh())) throw new Error("Inicia sesión primero");
+    const uid = (session.user || {}).id;
+    if (!uid) throw new Error("No se pudo identificar tu cuenta");
+    const eid = encodeURIComponent(uid);
+    const minimal = { method: "DELETE", auth: true, headers: { Prefer: "return=minimal" } };
+    // 1) Datos del usuario en la nube (PostgREST exige filtro en DELETE → por id propio).
+    await api("/rest/v1/shared_comments?author_id=eq." + eid, minimal);
+    await api("/rest/v1/shared_careers?owner_id=eq." + eid, minimal);
+    await api("/rest/v1/careers?user_id=eq." + eid, minimal);
+    // 2) Cuenta de auth (Edge Function con service-role). Opcional/best-effort.
+    let authDeleted = false;
+    try { await api("/functions/v1/delete-account", { method: "POST", auth: true }); authDeleted = true; }
+    catch (e) { authDeleted = false; }
+    // 3) Limpiar sesión local y referencias de publicación.
+    const s = S.settings().cloud; if (s) { s.shares = {}; S.settings().cloud = s; S.save(); }
+    C.logout();
+    return { authDeleted };
+  };
+
   // SQL que el usuario ejecuta una vez en Supabase (mostrado en la UI).
   C.SETUP_SQL = [
     "-- 1) Carreras (sync privado por usuario)",
@@ -7242,6 +7268,65 @@ body.trip-open { overflow: hidden; }
     UI.openModal("Confirmar", `<p style="margin:0">${U.esc(msg)}</p>`,
       `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn ${danger ? "btn-danger" : "btn-primary"}" id="cfYes">Sí, continuar</button>`);
     document.getElementById("cfYes").addEventListener("click", () => { UI.closeModal(); onYes(); });
+  };
+
+  // Política de privacidad + aviso legal (RGPD). Contacto: cambia CONTACT_EMAIL
+  // si quieres mostrar un correo de contacto público (déjalo vacío para ocultarlo).
+  const CONTACT_EMAIL = "";
+  UI.openPrivacy = () => {
+    const h = (t) => `<h4 style="margin:18px 0 6px;font-size:15px">${t}</h4>`;
+    const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
+    const body = `
+      <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">Última actualización: junio de 2026</p>
+      ${h("Qué es Carrera FC")}
+      ${p("Carrera FC es una aplicación web <b>gratuita y de fans</b>, companion del Modo Carrera de EA Sports FC. Funciona en tu navegador y guarda tus datos en este dispositivo; la nube y la comunidad son <b>opcionales</b>.")}
+      ${h("Aviso legal — proyecto no oficial")}
+      ${p("Carrera FC es un proyecto <b>no oficial</b> sin afiliación, patrocinio ni licencia de Electronic Arts Inc., EA Sports, EA Sports FC, la FIFA, ni de los clubes, ligas, competiciones o jugadores mencionados. Todas las marcas, nombres y derechos pertenecen a sus respectivos propietarios y se usan solo con fines descriptivos para que registres tu propia carrera.")}
+      ${h("Qué datos tratamos y con qué fin")}
+      ${p("• <b>Tus carreras</b> (partidos, plantilla, etc.) se guardan en <b>tu navegador</b> (localStorage). No salen de tu dispositivo salvo que tú decidas subirlas a la nube.")}
+      ${p("• <b>Email</b>: solo si creas una cuenta. Se usa para enviarte un <b>código de acceso de un solo uso</b> (no usamos contraseñas). Base legal: tu consentimiento.")}
+      ${p("• <b>Copia en la nube</b> (opcional): si pulsas «Subir a la nube», tus carreras se guardan en tu cuenta de forma <b>privada</b> (solo tú las ves).")}
+      ${p("• <b>Comunidad</b> (opcional): si <b>publicas</b> una carrera, se hace público un <b>resumen</b> (club, liga, nombre de mánager, palmarés y récords). Si <b>comentas</b>, se publican el nombre que muestras y tu texto. No se publican notas, plantilla ni finanzas.")}
+      ${h("Dónde se guardan")}
+      ${p("La copia en la nube y los datos de comunidad se alojan en <b>Supabase</b> (proveedor de backend), en servidores de la <b>Unión Europea</b>. En tu dispositivo, los datos viven en el almacenamiento local del navegador.")}
+      ${h("Cookies y seguimiento")}
+      ${p("No usamos cookies de seguimiento ni analítica de terceros. Solo almacenamiento local técnico imprescindible para que la app funcione.")}
+      ${h("Cuánto tiempo conservamos tus datos")}
+      ${p("Hasta que los elimines: puedes retirar una publicación, cerrar sesión o <b>eliminar tu cuenta y datos</b> desde la sección <b>Comunidad</b>. Los datos locales los controlas tú desde <b>Ajustes</b> (exportar o borrar).")}
+      ${h("Tus derechos (RGPD)")}
+      ${p("Tienes derecho de acceso, rectificación, supresión y portabilidad. Para <b>portabilidad</b>, exporta tus datos en JSON desde Ajustes. Para <b>supresión</b>, usa «Eliminar mi cuenta y datos» en Comunidad" + (CONTACT_EMAIL ? ` o escríbenos a <b>${U.esc(CONTACT_EMAIL)}</b>` : "") + ".")}
+      ${h("Menores")}
+      ${p("La app no está dirigida a menores de 14 años. Si eres menor de esa edad, no crees una cuenta sin el consentimiento de tus padres o tutores.")}`;
+    UI.openModal("Privacidad y aviso legal", body, `<button class="btn btn-primary" data-close>Entendido</button>`, { lg: true });
+  };
+
+  // Confirmación fuerte e irreversible para el borrado de cuenta (RGPD).
+  UI.confirmDeleteAccount = (after) => {
+    const body = `
+      <p style="margin-top:0">Esto eliminará de forma <b>permanente</b>:</p>
+      <ul style="margin:0 0 12px;padding-left:20px;color:var(--text-dim);font-size:14px;line-height:1.6">
+        <li>Tu cuenta de acceso (email).</li>
+        <li>Las carreras que hayas subido a la nube.</li>
+        <li>Tus carreras publicadas y comentarios en la comunidad.</li>
+      </ul>
+      <p style="font-size:13px;color:var(--text-dim);margin:0">Tus carreras guardadas en <b>este dispositivo</b> no se borran (puedes exportarlas o eliminarlas en Ajustes). <b>Esta acción no se puede deshacer.</b></p>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13.5px;cursor:pointer"><input type="checkbox" id="da-confirm" style="flex:none" /> Entiendo que es permanente y quiero continuar.</label>`;
+    UI.openModal("Eliminar mi cuenta y datos", body,
+      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-danger" id="da-go" disabled>Eliminar definitivamente</button>`);
+    const chk = document.getElementById("da-confirm"), go = document.getElementById("da-go");
+    chk.addEventListener("change", () => { go.disabled = !chk.checked; });
+    go.addEventListener("click", async () => {
+      go.disabled = true; go.textContent = "Eliminando…";
+      try {
+        const r = await FC.cloud.deleteAccount();
+        UI.closeModal();
+        UI.toast(r.authDeleted ? "Cuenta y datos eliminados" : "Tus datos se han eliminado y se ha cerrado la sesión", "ok");
+        if (after) after();
+      } catch (e) {
+        UI.toast(e.message || "No se pudo eliminar la cuenta", "err");
+        go.disabled = false; go.textContent = "Eliminar definitivamente";
+      }
+    });
   };
   // Tarjeta compartible en PNG (canvas, sin dependencias). spec: {brand,title,subtitle,difficulty?,lines[],chips[],footer,filename}
   UI.downloadCard = (spec) => {
@@ -7446,7 +7531,9 @@ body.trip-open { overflow: hidden; }
         ${feat("trophy", "Tu legado", "Palmarés, récords y línea de tiempo de la carrera")}
         ${feat("cloud", "Comunidad y nube", "Guarda en la nube, comparte y compite en el ranking")}
       </div>
-      <div class="wl-foot">Simulación de inmersión · sin dinero real · hecho para fans del Modo Carrera</div>
+      <div class="wl-foot">Proyecto de fans no oficial · sin afiliación con EA Sports / FIFA · sin dinero real
+        <div style="margin-top:6px"><button type="button" class="wl-link" id="wl-privacy-foot" style="display:inline">Privacidad y aviso legal</button></div>
+      </div>
     </div>`;
 
     // —— Panel de acción (derecha), según el paso ——
@@ -7466,6 +7553,7 @@ body.trip-open { overflow: hidden; }
         ${!obCodeSent
           ? `<p class="wl-sub">Te enviaremos un código de acceso de un solo uso. Si ya tienes cuenta, recuperarás tus carreras.</p>
              <div class="field"><label>Email</label><input type="email" id="wl-email" value="${U.esc(obEmail)}" placeholder="tu@email.com" autocomplete="email" autofocus /></div>
+             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 14px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="wl-consent" style="margin-top:2px;flex:none" /> <span>He leído y acepto la <button type="button" class="wl-link" id="wl-privacy-link" style="display:inline">Política de privacidad</button> y el uso de mi email para el acceso.</span></label>
              <button class="btn btn-primary btn-lg btn-block" id="wl-send"><span class="ni-icon" data-icon="bell"></span> Enviar código</button>`
           : `<p class="wl-sub">Hemos enviado un código a <b>${U.esc(obEmail)}</b>. Pégalo aquí (o pulsa el enlace del email).</p>
              <div class="field"><label>Código de 6 dígitos</label><input type="text" id="wl-code" inputmode="numeric" maxlength="8" placeholder="000000" class="wl-otp" autofocus /></div>
@@ -7518,6 +7606,7 @@ body.trip-open { overflow: hidden; }
     U.hydrateIcons(host);
     const $ = (id) => host.querySelector("#" + id);
     const setBusy = (id, on) => { const el = $(id); if (el) el.disabled = on; obBusy = on; };
+    if ($("wl-privacy-foot")) $("wl-privacy-foot").addEventListener("click", () => UI.openPrivacy());
 
     // —— wiring por paso ——
     if (obStep === "home") {
@@ -7526,9 +7615,11 @@ body.trip-open { overflow: hidden; }
     } else if (obStep === "auth") {
       $("wl-back").addEventListener("click", () => { obCodeSent = false; go("home"); });
       $("wl-go-guest").addEventListener("click", () => go("create"));
+      if ($("wl-privacy-link")) $("wl-privacy-link").addEventListener("click", () => UI.openPrivacy());
       if ($("wl-send")) $("wl-send").addEventListener("click", async () => {
         const email = ($("wl-email").value || "").trim();
         if (!/.+@.+\..+/.test(email)) { UI.toast("Escribe un email válido", "err"); return; }
+        if (!$("wl-consent") || !$("wl-consent").checked) { UI.toast("Debes aceptar la política de privacidad", "err"); return; }
         if (obBusy) return; setBusy("wl-send", true);
         try { await CL.sendCode(email); obEmail = email; obCodeSent = true; UI.toast("¡Código enviado! Revisa tu email.", "ok"); go("auth"); }
         catch (e) { UI.toast(e.message || "No se pudo enviar el código", "err"); setBusy("wl-send", false); }
@@ -11368,11 +11459,17 @@ body.trip-open { overflow: hidden; }
         <p style="margin-top:0">EA Sports FC <b>no ofrece una API oficial</b> para el Modo Carrera: los datos están en tu partida. Por eso esta app funciona con <b>entrada manual asistida</b> y nada se sincroniza automáticamente.</p>
         <p style="margin-bottom:0">Ya puedes <b>importar partidos por CSV</b> (arriba). En la hoja de ruta quedan capas que requieren más infraestructura: subir el save de PC (solo lectura), OCR de capturas, y la versión con cuentas en la nube y comunidad (compartir carreras, leaderboards).</p>
       </div>
+      <div class="section-title">Privacidad y aviso legal</div>
+      <div class="card" style="font-size:13px">
+        <p class="faint" style="margin-top:0">Carrera FC es un proyecto de fans <b>no oficial</b>, sin afiliación con EA Sports / EA Sports FC, la FIFA ni los clubes o competiciones mencionados.</p>
+        <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad y aviso legal</button>
+      </div>
     `);
     document.getElementById("se-save").addEventListener("click", () => {
       S.updateCareer({ clubName: document.getElementById("se-club").value.trim() || c.clubName, managerName: document.getElementById("se-manager").value.trim() });
       UI.toast("Cambios guardados", "ok");
     });
+    document.getElementById("se-privacy").addEventListener("click", () => UI.openPrivacy());
     document.getElementById("se-newseason").addEventListener("click", () => {
       const cur = S.currentSeason(c);
       // Si la temporada en curso tiene partidos, la junta emite su informe antes de avanzar.
@@ -11473,6 +11570,7 @@ body.trip-open { overflow: hidden; }
         <p class="muted">Acceso sin contraseña: te enviamos un <b>enlace mágico</b> a tu email. Haz clic en él y volverás aquí con la sesión iniciada.</p>
         ${!cloudCodeSent
           ? `<div class="field"><label>Email</label><input type="email" id="cl-email" value="${U.esc(cloudPendingEmail)}" placeholder="tu@email.com"/></div>
+             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 12px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="cl-consent" style="margin-top:2px;flex:none" /> <span>He leído y acepto la <button type="button" class="btn-link" id="cl-privacy-link" style="display:inline;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline">Política de privacidad</button> y el uso de mi email para el acceso.</span></label>
              <button class="btn btn-primary" id="cl-send"><span class="ni-icon" data-icon="bell"></span> Enviar enlace</button>`
           : `<div style="background:var(--card-alt,rgba(255,255,255,.06));border-radius:10px;padding:16px;text-align:center">
                <div style="font-size:28px;margin-bottom:8px">📬</div>
@@ -11521,6 +11619,14 @@ body.trip-open { overflow: hidden; }
         <p class="faint" style="font-size:12px;margin:10px 0 0">Publica una carrera (arriba) y aparecerá en el ranking global de abajo.</p>
         <div class="divider"></div>
         <div class="flex" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" id="cl-disconnect">Desconectar nube</button></div>
+      </div>
+      <div class="section-title">Privacidad y cuenta</div>
+      <div class="card">
+        <p class="faint" style="font-size:12px;margin-top:0">Consulta cómo tratamos tus datos y ejerce tus derechos (RGPD).</p>
+        <div class="flex gap wrap">
+          <button class="btn btn-ghost btn-sm" id="cl-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad</button>
+          <button class="btn btn-danger btn-sm" id="cl-delete-account"><span class="ni-icon" data-icon="trash"></span> Eliminar mi cuenta y datos</button>
+        </div>
       </div>`;
     }
     if (configured) body += `
@@ -11548,8 +11654,10 @@ body.trip-open { overflow: hidden; }
         CL.setConfig(url, key); UI.toast("Nube conectada", "ok"); rerender();
       });
     } else if (!logged) {
+      if ($("cl-privacy-link")) $("cl-privacy-link").addEventListener("click", () => UI.openPrivacy());
       if ($("cl-send")) $("cl-send").addEventListener("click", busy("cl-send", async () => {
         const email = $("cl-email").value.trim(); if (!email) { UI.toast("Escribe tu email", "err"); return; }
+        if (!$("cl-consent") || !$("cl-consent").checked) { UI.toast("Debes aceptar la política de privacidad", "err"); return; }
         await CL.sendCode(email); cloudPendingEmail = email; cloudCodeSent = true; UI.toast("¡Enlace enviado! Revisa tu email.", "ok"); rerender();
       }));
       if ($("cl-back")) $("cl-back").addEventListener("click", () => { cloudCodeSent = false; rerender(); });
@@ -11593,6 +11701,8 @@ body.trip-open { overflow: hidden; }
         else UI.toast(link, "ok");
       });
       $("cl-disconnect").addEventListener("click", () => UI.confirm("¿Desconectar la nube de este navegador? (no borra nada de la nube)", () => { CL.disconnect(); UI.toast("Nube desconectada"); rerender(); }, true));
+      if ($("cl-privacy")) $("cl-privacy").addEventListener("click", () => UI.openPrivacy());
+      if ($("cl-delete-account")) $("cl-delete-account").addEventListener("click", () => UI.confirmDeleteAccount(() => { FC.app.refreshChrome(); rerender(); }));
     }
     if (configured && $("cl-lb-load")) {
       let lbRows = [];
