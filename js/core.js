@@ -285,6 +285,7 @@
       leagueId: data.leagueId, leagueName: data.leagueName, country: data.country || "",
       managerName: data.managerName || "", badgeColor: data.badgeColor || U.colorFor(data.clubName),
       createdAt: Date.now(), currentSeasonId: seasonId,
+      isNational: !!data.isNational,
       seasons: [season], players: [], matches: [], trophies: [], awards: [],
       transfers: [], challenges: [], achievements: [], notes: [],
     };

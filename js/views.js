@@ -216,6 +216,17 @@
     const l = c && D.LEAGUES.find(x => x.id === c.leagueId);
     return l ? l.country : null;
   }
+  // Opciones del desplegable de selecciones nacionales agrupadas por confederación.
+  function nationalTeamOptions() {
+    const order = [], byC = {};
+    D.NATIONAL_TEAMS.forEach(t => {
+      if (!byC[t.confederation]) { byC[t.confederation] = []; order.push(t.confederation); }
+      byC[t.confederation].push(t);
+    });
+    return order.map(conf => `<optgroup label="${U.esc(conf)}">${byC[conf].map(t =>
+      `<option value="${U.esc(t.id)}">${U.esc(t.name)}</option>`
+    ).join("")}</optgroup>`).join("");
+  }
   // Opciones del desplegable de competiciones (optgroups) con las copas del país.
   function compSelectOptions(c, selected) {
     const sel = selected || "Liga";
@@ -297,17 +308,26 @@
       panel = `<div class="wl-panel">
         <button class="wl-back" id="wl-back-create"><span class="ni-icon" data-icon="chevron"></span> Volver</button>
         <div class="wl-h">Crea tu carrera</div>
-        <p class="wl-sub">Elige tu club y tu liga. Podrás cambiar todo más adelante.</p>
-        <div class="field"><label>Nombre del club <span class="faint">(tu equipo)</span></label>
-          <input type="text" id="ob-club" placeholder="p.ej. Real Oviedo" autofocus /></div>
-        <div class="field-row">
-          <div class="field"><label>Liga</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
-          <div class="field"><label>Temporada inicial</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
+        <p class="wl-sub">Elige si entrenas un club o diriges una selección nacional.</p>
+        <div class="seg" id="ob-type-seg" style="margin-bottom:16px">
+          <button type="button" class="active" data-type="club">⚽ Club</button>
+          <button type="button" data-type="national">🌍 Selección</button>
         </div>
-        <div class="field" id="ob-custom-wrap" hidden>
-          <label>Equipos de tu liga <span class="faint">(separa por comas)</span></label>
-          <textarea id="ob-teams" placeholder="Equipo 1, Equipo 2, Equipo 3..."></textarea></div>
-        <div class="field"><label>Tu nombre de mánager <span class="faint">(opcional)</span></label><input type="text" id="ob-manager" placeholder="Mánager" /></div>
+        <div id="ob-club-fields">
+          <div class="field"><label>Nombre del club <span class="faint">(tu equipo)</span></label>
+            <input type="text" id="ob-club" placeholder="p.ej. Real Oviedo" autofocus /></div>
+          <div class="field"><label>Liga</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
+          <div class="field" id="ob-custom-wrap" hidden>
+            <label>Equipos de tu liga <span class="faint">(separa por comas)</span></label>
+            <textarea id="ob-teams" placeholder="Equipo 1, Equipo 2, Equipo 3..."></textarea></div>
+        </div>
+        <div id="ob-national-fields" hidden>
+          <div class="field"><label>Selección nacional</label><select id="ob-national-team">${nationalTeamOptions()}</select></div>
+        </div>
+        <div class="field-row" style="margin-top:4px">
+          <div class="field"><label>Temporada inicial</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
+          <div class="field"><label>Nombre de mánager <span class="faint">(opcional)</span></label><input type="text" id="ob-manager" placeholder="Mánager" /></div>
+        </div>
         <button class="btn btn-primary btn-lg btn-block" id="ob-create"><span class="ni-icon" data-icon="ball"></span> Empezar carrera</button>
         <p class="wl-note">${logged ? "Tu carrera se guardará también en la nube." : "Tus datos se guardan en este navegador. Podrás exportarlos cuando quieras."}</p>
       </div>`;
@@ -359,23 +379,53 @@
     } else { // create
       const backTo = (CL && CL.isLoggedIn()) ? "restore" : "home";
       $("wl-back-create").addEventListener("click", () => go(backTo));
+
+      // Toggle Club / Selección
+      let careerType = "club";
+      const typeBtns = host.querySelectorAll("#ob-type-seg button");
+      const clubFields = $("ob-club-fields");
+      const natFields = $("ob-national-fields");
+      typeBtns.forEach(btn => btn.addEventListener("click", () => {
+        careerType = btn.dataset.type;
+        typeBtns.forEach(b => b.classList.toggle("active", b === btn));
+        clubFields.hidden = careerType === "national";
+        natFields.hidden = careerType === "club";
+      }));
+
+      // League / custom toggle
       const leagueSel = $("ob-league");
       const customWrap = $("ob-custom-wrap");
       leagueSel.addEventListener("change", () => { customWrap.hidden = leagueSel.value !== "custom"; });
+
       $("ob-create").addEventListener("click", async () => {
-        const club = ($("ob-club").value || "").trim();
-        if (!club) { UI.toast("Escribe el nombre de tu club", "err"); return; }
-        const lid = leagueSel.value;
-        const league = D.LEAGUES.find(l => l.id === lid);
-        let teams = league ? league.teams.slice() : [];
-        if (lid === "custom") teams = $("ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
-        if (!teams.includes(club)) teams.unshift(club);
-        S.createCareer({
-          name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : "Liga",
-          country: league ? league.country : "", teams,
-          managerName: ($("ob-manager").value || "").trim(),
-          startYear: Number($("ob-year").value) || new Date().getFullYear(),
-        });
+        let createData;
+        const startYear = Number($("ob-year").value) || new Date().getFullYear();
+        const managerName = ($("ob-manager").value || "").trim();
+        if (careerType === "national") {
+          const natSel = $("ob-national-team");
+          const natTeam = D.NATIONAL_TEAMS.find(t => t.id === natSel.value);
+          if (!natTeam) { UI.toast("Elige una selección", "err"); return; }
+          const rivals = D.NATIONAL_TEAMS.filter(t => t.id !== natTeam.id).map(t => t.name);
+          createData = {
+            name: natTeam.name, clubName: natTeam.name,
+            leagueId: "national", leagueName: natTeam.confederation + " · Selecciones",
+            country: natTeam.country, teams: [natTeam.name, ...rivals],
+            managerName, startYear, isNational: true,
+          };
+        } else {
+          const club = ($("ob-club").value || "").trim();
+          if (!club) { UI.toast("Escribe el nombre de tu club", "err"); return; }
+          const lid = leagueSel.value;
+          const league = D.LEAGUES.find(l => l.id === lid);
+          let teams = league ? league.teams.slice() : [];
+          if (lid === "custom") teams = $("ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
+          if (!teams.includes(club)) teams.unshift(club);
+          createData = {
+            name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : "Liga",
+            country: league ? league.country : "", teams, managerName, startYear,
+          };
+        }
+        S.createCareer(createData);
         UI.toast("¡Carrera creada! A por la gloria ⚽", "ok");
         if (CL && CL.isLoggedIn()) { try { await CL.push(); } catch (e) { /* la nube es best-effort */ } }
         finish();
@@ -819,7 +869,7 @@
       <div class="page-head">
         <div>
           <h1>${U.esc(c.clubName)}</h1>
-          <div class="sub">${U.esc(c.leagueName)} · Temporada ${U.esc(season.label)}${c.managerName ? " · " + U.esc(c.managerName) : ""}</div>
+          <div class="sub">${c.isNational ? "🌍 Selección Nacional" : U.esc(c.leagueName)} · Temporada ${U.esc(season.label)}${c.managerName ? " · " + U.esc(c.managerName) : ""}</div>
         </div>
         <div class="flex gap center wrap">
           ${seasonSelect(c)}
