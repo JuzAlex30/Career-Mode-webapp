@@ -483,7 +483,7 @@ textarea { resize: vertical; min-height: 80px; }
     backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
   }
   .topbar-title { font-weight: 700; font-size: 16px; flex: 1; }
-  .content { padding: 18px 14px 90px; }
+  .content { padding: 18px 14px calc(20px + env(safe-area-inset-bottom, 0px)); min-width: 0; }
   .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
   .cols-4.keep-2, .cols-3.keep-2 { grid-template-columns: 1fr 1fr; }
   .span-2 { grid-column: auto; }

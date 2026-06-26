@@ -2407,6 +2407,7 @@
         <div class="flex gap center wrap">
           <button class="btn btn-ghost" id="sq-injury"><span class="ni-icon" data-icon="bandage"></span> Enfermería${injuries.length ? ` <span class="chip" style="background:var(--danger);color:#fff;padding:1px 7px">${injuries.length}</span>` : ""}</button>
           ${(D.SQUADS||{})[c.clubName] ? `<button class="btn btn-ghost" id="sq-import"><span class="ni-icon" data-icon="download"></span> Importar EA FC</button>` : ""}
+          <button class="btn btn-ghost" id="sq-dev"><span class="ni-icon" data-icon="growth"></span> Desarrollo</button>
           <button class="btn btn-primary" id="sq-add"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
         </div>
       </div>
@@ -2440,6 +2441,7 @@
       if (cnt) cnt.textContent = (list.length === players.length) ? "" : `${list.length} de ${players.length}`;
     }
     document.getElementById("sq-add").addEventListener("click", () => playerModal(c));
+    document.getElementById("sq-dev").addEventListener("click", () => FC.router.go("development"));
     document.getElementById("sq-injury").addEventListener("click", () => injuryModal(c));
     const sqImport = document.getElementById("sq-import");
     if (sqImport) sqImport.addEventListener("click", () => importSquadModal(c));
@@ -3997,7 +3999,8 @@
     const tlTone = { good: "var(--ok)", neutral: "var(--text-dim)", warn: "var(--warn)", bad: "var(--danger)" };
     UI.mount(`
       <div class="page-head"><div><h1>Historia del club</h1><div class="sub">Tu legado, temporada a temporada</div></div>
-        <div class="flex gap"><button class="btn btn-ghost" id="hs-award"><span class="ni-icon" data-icon="star"></span> Premio</button>
+        <div class="flex gap wrap"><button class="btn btn-ghost" id="hs-hall"><span class="ni-icon" data-icon="medal"></span> Salón de la fama</button>
+          <button class="btn btn-ghost" id="hs-award"><span class="ni-icon" data-icon="star"></span> Premio</button>
           <button class="btn btn-primary" id="hs-trophy"><span class="ni-icon" data-icon="trophy"></span> Añadir trofeo</button></div>
       </div>
 
@@ -4083,6 +4086,7 @@
     const reviewCard = document.getElementById("hs-review-card");
     if (reviewCard && reviewSeason) reviewCard.addEventListener("click", () => UI.openSeasonReview(c, reviewSeason.id));
     content().querySelectorAll("[data-review]").forEach(row => row.addEventListener("click", () => UI.openSeasonReview(c, row.dataset.review)));
+    document.getElementById("hs-hall").addEventListener("click", () => FC.router.go("hall"));
     document.getElementById("hs-trophy").addEventListener("click", () => trophyModal(c));
     document.getElementById("hs-award").addEventListener("click", () => awardModal(c));
     document.getElementById("hs-note").addEventListener("click", () => noteModal(c));
