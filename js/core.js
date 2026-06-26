@@ -1130,7 +1130,16 @@
        rival, su rating revierte solo hacia el catálogo (la "deriva" correcta a
        la Glicko: lo que crece con el tiempo es la desconfianza, no el número).
      Determinista y puro: se recalcula del historial; nada se persiste. */
-  const ELO = { DECAY: 0.55, KCONF: 3, PTS_PER_GOAL: 8, HOME_ADV: 4.5, GD_CAP: 3 };
+  const ELO = {
+    DECAY: 0.55,          // peso por temporada de antigüedad (0.55^0=1, 0.55^1=0.55, 0.55^4≈0.09)
+    KCONF: 3,             // duelos para llegar al 50% de confianza Elo
+    PTS_PER_GOAL: 8,      // cada gol de margen = 8 pts de fuerza implícita
+    HOME_ADV: 4.5,        // corrección ventaja de campo
+    GD_CAP: 3,            // cap al margen de gol (antiruido en goleadas)
+    TABLE_KCONF: 6,       // partidos para llegar al 50% de confianza de tabla
+    TABLE_SCALE: 24,      // rango ±pts de la señal de tabla (desde primer al último)
+    TABLE_BLEND: 0.30,    // la tabla puede mover hasta el 30% del residual Elo
+  };
   // Memo: clave = objeto carrera (WeakMap → NUNCA se serializa, cero fugas al
   // export/nube). Una sola pasada por carrera+plantilla; lookups O(1) después.
   const _ratingsCache = new WeakMap();
@@ -1144,7 +1153,7 @@
       .sort((a, b) => b - a).slice(0, 11);
     if (xi.length >= 7) {
       const avg = xi.reduce((s, o) => s + o, 0) / xi.length;
-      const squad = Math.max(50, Math.min(94, avg + 2)); // la media de equipo supera al OVR medio
+      const squad = Math.max(50, Math.min(94, avg + 2));
       strength = base != null ? base * 0.45 + squad * 0.55 : squad;
     }
     const ms = S.userMatches(c).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 5);
@@ -1156,12 +1165,16 @@
     return Math.max(45, Math.min(96, strength));
   };
 
-  // Mapa { rival -> { obs, conf } } a partir de TUS resultados, en UNA pasada.
-  // obs = fuerza observada (media de fuerzas implícitas, ponderada por decaimiento);
-  // conf = confianza 0..1 (sube con nº de duelos recientes, baja sola con el tiempo).
+  /* teamRatings: combina DOS canales de evidencia en UNA pasada + memo compartido.
+     · Canal Elo   → resultado partido a partido, ponderado por decaimiento temporal.
+     · Canal Tabla → posición relativa del rival en la clasificación de cada temporada,
+       usando tu fuerza conocida (selfStrength) como ancla. Funciona aunque solo tengas
+       el partido de vuelta: si el rival está 3 puestos por encima de ti en la tabla
+       que resulta de tus duelos, probablemente es algo más fuerte que tú.
+     Ambos canales comparten la firma de invalidación y el WeakMap → cero coste extra. */
   S.teamRatings = (c) => {
     const matches = c.matches || [], players = c.players || [];
-    // Firma de invalidación numérica y barata (cambia con marcadores y OVRs).
+    // Firma de invalidación numérica y barata.
     let sig = players.length * 131 + matches.length;
     for (let i = 0; i < players.length; i++) sig = (sig * 31 + (Number(players[i].ovr) || 0)) % 2147483647;
     for (let i = 0; i < matches.length; i++) {
@@ -1169,45 +1182,81 @@
       sig = (sig * 33 + (Number(m.homeScore) || 0) * 7 + (Number(m.awayScore) || 0) * 13 + (S.isPlayed(m) ? 1 : 0)) % 2147483647;
     }
     const cached = _ratingsCache.get(c);
-    if (cached && cached.sig === sig) return cached.map;
+    if (cached && cached.sig === sig) return cached;
 
     const curYear = (S.currentSeason(c) || {}).startYear || 0;
     const yearOf = {};
     (c.seasons || []).forEach(s => { yearOf[s.id] = s.startYear; });
     const sU = S.selfStrength(c);
-    const acc = {}; // rival -> { sw, sval }
+
+    // — Canal Elo (partido a partido) —
+    const acc = {};
     matches.forEach(m => {
       if (!S.isUserMatch(c, m) || !S.isPlayed(m)) return;
       const rival = S.opponentOf(c, m); if (!rival) return;
       const g = S.userGoals(c, m); if (!g) return;
       const gd = Math.max(-ELO.GD_CAP, Math.min(ELO.GD_CAP, (Number(g.for) || 0) - (Number(g.against) || 0)));
       const wasHome = m.home === c.clubName;
-      // Fuerza implícita del rival según ESTE resultado: si te gano/empata fuerte,
-      // jugó como un equipo fuerte. La ventaja de campo descuenta lo "esperado".
       const implied = Math.max(45, Math.min(96,
         sU - gd * ELO.PTS_PER_GOAL + (wasHome ? ELO.HOME_ADV : -ELO.HOME_ADV)));
       const sy = yearOf[m.seasonId];
       const seasonsAgo = (typeof sy === "number" && curYear) ? Math.max(0, curYear - sy) : 0;
-      const w = Math.pow(ELO.DECAY, seasonsAgo); // duelos recientes pesan más
+      const w = Math.pow(ELO.DECAY, seasonsAgo);
       const a = acc[rival] || (acc[rival] = { sw: 0, sval: 0 });
       a.sw += w; a.sval += w * implied;
     });
-    const map = {};
+    const elo = {};
     Object.keys(acc).forEach(name => {
       const a = acc[name];
-      map[name] = { obs: a.sval / a.sw, conf: a.sw / (a.sw + ELO.KCONF) };
+      elo[name] = { obs: a.sval / a.sw, conf: a.sw / (a.sw + ELO.KCONF) };
     });
-    _ratingsCache.set(c, { sig, map });
-    return map;
+
+    // — Canal Tabla (posición relativa por temporada) —
+    // Para cada temporada con tabla mínima, anclamos la fuerza de los rivales
+    // relativa a tu posición. Un rival N posiciones por encima → +N/total·TABLE_SCALE.
+    const tacc = {};
+    (c.seasons || []).forEach(season => {
+      const table = S.computeStandings(c, season.id);
+      const uIdx = table.findIndex(r => r.team === c.clubName);
+      if (uIdx < 0 || table[uIdx].pj < 2 || table.length < 2) return;
+      const n = table.length;
+      const seasonsAgo = typeof season.startYear === "number" ? Math.max(0, curYear - season.startYear) : 0;
+      const decay = Math.pow(ELO.DECAY, seasonsAgo);
+      table.forEach((row, idx) => {
+        if (row.team === c.clubName || row.pj < 1) return;
+        // relPos ∈ (-1, 1): + → rival está por encima → más fuerte
+        const relPos = (uIdx - idx) / n;
+        const tableEst = Math.max(45, Math.min(96, sU + relPos * ELO.TABLE_SCALE));
+        // peso = decaimiento × cuántas veces nos enfrentamos esta temporada (max 1)
+        const w = decay * Math.min(1, row.pj / 2);
+        const a = tacc[row.team] || (tacc[row.team] = { sw: 0, sval: 0 });
+        a.sw += w; a.sval += w * tableEst;
+      });
+    });
+    const tmap = {};
+    Object.keys(tacc).forEach(name => {
+      const a = tacc[name];
+      // conf capada a 0.40: la tabla nunca manda sola (solo refuerza al Elo)
+      tmap[name] = { obs: a.sval / a.sw, conf: Math.min(0.40, a.sw / (a.sw + ELO.TABLE_KCONF)) };
+    });
+
+    const result = { sig, elo, table: tmap };
+    _ratingsCache.set(c, result);
+    return result;
   };
 
   S.teamStrength = (c, teamName) => {
     if (teamName === c.clubName) return S.selfStrength(c);
-    const base = U._findTeam((FC.data || {}).TEAM_STRENGTH, teamName); // null si no catalogado
+    const base = U._findTeam((FC.data || {}).TEAM_STRENGTH, teamName);
     const prior = base != null ? base : 72;
-    const r = S.teamRatings(c)[teamName];
-    // Mezcla prior↔observado ponderada por confianza (sin datos → catálogo puro).
-    const strength = r ? prior * (1 - r.conf) + r.obs * r.conf : prior;
+    const { elo, table } = S.teamRatings(c);
+    const r = elo[teamName], t = table[teamName];
+    // Paso 1 — mezcla Elo: prior↔observado por confianza Elo.
+    const eloBased = r ? prior * (1 - r.conf) + r.obs * r.conf : prior;
+    // Paso 2 — nudge de tabla: la señal de posición ajusta hasta TABLE_BLEND·30% del residual.
+    //   Sin datos de tabla → catálogo/Elo inalterados. Tabla sola NUNCA domina.
+    const tableConf = t ? t.conf * ELO.TABLE_BLEND : 0;
+    const strength = tableConf > 0 ? eloBased * (1 - tableConf) + t.obs * tableConf : eloBased;
     return Math.max(45, Math.min(96, strength));
   };
 
