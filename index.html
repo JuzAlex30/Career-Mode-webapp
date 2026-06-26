@@ -4218,7 +4218,12 @@ body.trip-open { overflow: hidden; }
     if (!c || typeof c !== "object") return c;
     ["players", "matches", "trophies", "awards", "transfers", "challenges", "achievements", "notes", "youth", "injuries"]
       .forEach(k => { if (!Array.isArray(c[k])) c[k] = []; });
-    c.players.forEach(p => { if (p && !Array.isArray(p.ovrHistory)) p.ovrHistory = []; });
+    c.players.forEach(p => {
+      if (!p) return;
+      if (!Array.isArray(p.ovrHistory)) p.ovrHistory = [];
+      const ovr = Number(p.ovr);
+      p.ovr = Number.isFinite(ovr) && ovr > 0 ? ovr : 70;
+    });
     if (!Array.isArray(c.seasons)) c.seasons = [];
     if (!c.seasons.length) {
       const startYear = Number(c.startYear) || new Date().getFullYear();
@@ -4981,7 +4986,7 @@ body.trip-open { overflow: hidden; }
     const ensure = (name) => (tbl[name] || (tbl[name] = { team: name, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 }));
     (season && season.teams || []).forEach(ensure);
     league.forEach(m => {
-      if (m.home == null || m.away == null || !S.isPlayed(m)) return;
+      if (m.home == null || m.away == null || m.home === m.away || !S.isPlayed(m)) return;
       const hs = Number(m.homeScore), as = Number(m.awayScore);
       const H = ensure(m.home), A = ensure(m.away);
       H.pj++; A.pj++; H.gf += hs; H.gc += as; A.gf += as; A.gc += hs;
@@ -5275,7 +5280,7 @@ body.trip-open { overflow: hidden; }
   // Mercado completo de un partido (jugado o programado): 1X2, comparativa de
   // casas, favorito, dinero del público y movimiento de línea. Determinista.
   S.matchOdds = (c, m) => {
-    if (!m || m.home == null || m.away == null || m.home === "" || m.away === "") return null;
+    if (!m || m.home == null || m.away == null || m.home === "" || m.away === "" || m.home === m.away) return null;
     const home = m.home, away = m.away, DD = FC.data || {};
     const hsh = (s) => { let v = 7; s = String(s || ""); for (let i = 0; i < s.length; i++) v = (v * 31 + s.charCodeAt(i)) % 100003; return v; };
     const seed = hsh(home + "|" + away + "|" + (m.date || "") + "|" + (m.id || "") + "|" + (m.seasonId || ""));
