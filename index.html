@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Carrera FC · Compañero del Modo Carrera</title>
   <meta name="description" content="El compañero definitivo del Modo Carrera de EA Sports FC: tracking, clasificaciones, retos y la historia de tu club." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://juzalex30.github.io/Career-Mode-webapp/" />
+  <meta property="og:title" content="Carrera FC · Compañero del Modo Carrera" />
+  <meta property="og:description" content="Lleva tu Modo Carrera al siguiente nivel: plantilla, partidos, estadísticas, retos y comunidad." />
+  <meta property="og:image" content="https://juzalex30.github.io/Career-Mode-webapp/social.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Carrera FC · Compañero del Modo Carrera" />
+  <meta name="twitter:description" content="Lleva tu Modo Carrera al siguiente nivel: plantilla, partidos, estadísticas, retos y comunidad." />
+  <meta name="twitter:image" content="https://juzalex30.github.io/Career-Mode-webapp/social.png" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00e1a0" />
   <link rel="icon" type="image/svg+xml" href="icon.svg" />
@@ -7118,7 +7129,8 @@ body.trip-open { overflow: hidden; }
     const text = String(body || "").trim().slice(0, 500);
     if (text.length < 2) throw new Error("Escribe un comentario un poco más largo");
     if (Date.now() - lastCommentAt < 8000) throw new Error("Espera unos segundos antes de comentar de nuevo");
-    const author = (((C.user() || {}).email) || "Anónimo").split("@")[0];
+    const emailFallback = (((C.user() || {}).email) || "Anónimo").split("@")[0];
+    const author = (S.settings().displayName || "").trim().slice(0, 30) || emailFallback;
     // author_id explícito (mismo patrón probado que C.publish con owner_id) para no depender solo del default RLS.
     await api("/rest/v1/shared_comments", { method: "POST", auth: true, headers: { Prefer: "return=minimal" }, body: [{ share_id: String(shareId || "").trim(), author_id: session.user.id, author, body: text }] });
     lastCommentAt = Date.now();
@@ -11502,12 +11514,25 @@ body.trip-open { overflow: hidden; }
         <p style="margin-top:0">EA Sports FC <b>no ofrece una API oficial</b> para el Modo Carrera: los datos están en tu partida. Por eso esta app funciona con <b>entrada manual asistida</b> y nada se sincroniza automáticamente.</p>
         <p style="margin-bottom:0">Ya puedes <b>importar partidos por CSV</b> (arriba). En la hoja de ruta quedan capas que requieren más infraestructura: subir el save de PC (solo lectura), OCR de capturas, y la versión con cuentas en la nube y comunidad (compartir carreras, leaderboards).</p>
       </div>
+      <div class="section-title">Comunidad</div>
+      <div class="card">
+        <div class="field"><label>Alias en comentarios</label>
+          <input type="text" id="se-displayname" maxlength="30" placeholder="Nombre visible para los demás" value="${U.esc(S.settings().displayName||"")}"/>
+        </div>
+        <button class="btn btn-primary btn-sm mt" id="se-displayname-save">Guardar alias</button>
+      </div>
       <div class="section-title">Privacidad y aviso legal</div>
       <div class="card" style="font-size:13px">
         <p class="faint" style="margin-top:0">Carrera FC es un proyecto de fans <b>no oficial</b>, sin afiliación con EA Sports / EA Sports FC, la FIFA ni los clubes o competiciones mencionados.</p>
         <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad y aviso legal</button>
       </div>
     `);
+    document.getElementById("se-displayname-save").addEventListener("click", () => {
+      const val = (document.getElementById("se-displayname").value || "").trim().slice(0, 30);
+      S.settings().displayName = val || undefined;
+      S.save();
+      UI.toast("Alias actualizado", "ok");
+    });
     document.getElementById("se-save").addEventListener("click", () => {
       S.updateCareer({ clubName: document.getElementById("se-club").value.trim() || c.clubName, managerName: document.getElementById("se-manager").value.trim() });
       UI.toast("Cambios guardados", "ok");

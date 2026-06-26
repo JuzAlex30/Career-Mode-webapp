@@ -4252,12 +4252,25 @@
         <p style="margin-top:0">EA Sports FC <b>no ofrece una API oficial</b> para el Modo Carrera: los datos están en tu partida. Por eso esta app funciona con <b>entrada manual asistida</b> y nada se sincroniza automáticamente.</p>
         <p style="margin-bottom:0">Ya puedes <b>importar partidos por CSV</b> (arriba). En la hoja de ruta quedan capas que requieren más infraestructura: subir el save de PC (solo lectura), OCR de capturas, y la versión con cuentas en la nube y comunidad (compartir carreras, leaderboards).</p>
       </div>
+      <div class="section-title">Comunidad</div>
+      <div class="card">
+        <div class="field"><label>Alias en comentarios</label>
+          <input type="text" id="se-displayname" maxlength="30" placeholder="Nombre visible para los demás" value="${U.esc(S.settings().displayName||"")}"/>
+        </div>
+        <button class="btn btn-primary btn-sm mt" id="se-displayname-save">Guardar alias</button>
+      </div>
       <div class="section-title">Privacidad y aviso legal</div>
       <div class="card" style="font-size:13px">
         <p class="faint" style="margin-top:0">Carrera FC es un proyecto de fans <b>no oficial</b>, sin afiliación con EA Sports / EA Sports FC, la FIFA ni los clubes o competiciones mencionados.</p>
         <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad y aviso legal</button>
       </div>
     `);
+    document.getElementById("se-displayname-save").addEventListener("click", () => {
+      const val = (document.getElementById("se-displayname").value || "").trim().slice(0, 30);
+      S.settings().displayName = val || undefined;
+      S.save();
+      UI.toast("Alias actualizado", "ok");
+    });
     document.getElementById("se-save").addEventListener("click", () => {
       S.updateCareer({ clubName: document.getElementById("se-club").value.trim() || c.clubName, managerName: document.getElementById("se-manager").value.trim() });
       UI.toast("Cambios guardados", "ok");

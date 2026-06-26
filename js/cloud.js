@@ -192,7 +192,8 @@
     const text = String(body || "").trim().slice(0, 500);
     if (text.length < 2) throw new Error("Escribe un comentario un poco más largo");
     if (Date.now() - lastCommentAt < 8000) throw new Error("Espera unos segundos antes de comentar de nuevo");
-    const author = (((C.user() || {}).email) || "Anónimo").split("@")[0];
+    const emailFallback = (((C.user() || {}).email) || "Anónimo").split("@")[0];
+    const author = (S.settings().displayName || "").trim().slice(0, 30) || emailFallback;
     // author_id explícito (mismo patrón probado que C.publish con owner_id) para no depender solo del default RLS.
     await api("/rest/v1/shared_comments", { method: "POST", auth: true, headers: { Prefer: "return=minimal" }, body: [{ share_id: String(shareId || "").trim(), author_id: session.user.id, author, body: text }] });
     lastCommentAt = Date.now();
