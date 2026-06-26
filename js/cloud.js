@@ -272,6 +272,15 @@
     "create policy \"comments owner write\" on shared_comments for insert with check (author_id = auth.uid());",
     "create policy \"comments owner delete\" on shared_comments for delete using (author_id = auth.uid());",
     "create index if not exists shared_comments_share_idx on shared_comments(share_id, created_at);",
+    "",
+    "-- 4) Permisos base (GRANT) que PostgREST necesita ADEMÁS de las policies RLS.",
+    "--    Sin esto, las tablas públicas dan 'permission denied' a los visitantes",
+    "--    sin sesión (ranking, feed, enlaces compartidos y comentarios no se ven).",
+    "grant select, insert, update, delete on public.careers to authenticated;",
+    "grant select on public.shared_careers to anon, authenticated;",
+    "grant insert, update, delete on public.shared_careers to authenticated;",
+    "grant select on public.shared_comments to anon, authenticated;",
+    "grant insert, delete on public.shared_comments to authenticated;",
   ].join("\n");
 
   loadSession();
