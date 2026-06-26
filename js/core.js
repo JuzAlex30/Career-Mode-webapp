@@ -1121,27 +1121,93 @@
      FUERZA de cada equipo + el motor Poisson. Funciones puras; nada se
      persiste y el mismo partido produce siempre el mismo mercado.
      ============================================================ */
-  // Fuerza 0-100 de un equipo. Para TU club mezcla el rating catalogado con el
-  // OVR real de tu once y tu forma reciente; para el rival usa el catálogo (72 si no).
-  S.teamStrength = (c, teamName) => {
+  /* Fuerza 0-100 de un equipo (modelo prior-anclado + evidencia ponderada por
+     confianza, estilo SPI/Elo).
+     · TU club: OVR de tu once + forma reciente (lo conoces con precisión).
+     · Rival: mezcla el CATÁLOGO (prior) con la fuerza IMPLÍCITA por TUS
+       resultados contra él, ponderada por la confianza acumulada. La evidencia
+       DECAE por temporada: los duelos recientes mandan y, si dejas de jugar a un
+       rival, su rating revierte solo hacia el catálogo (la "deriva" correcta a
+       la Glicko: lo que crece con el tiempo es la desconfianza, no el número).
+     Determinista y puro: se recalcula del historial; nada se persiste. */
+  const ELO = { DECAY: 0.55, KCONF: 3, PTS_PER_GOAL: 8, HOME_ADV: 4.5, GD_CAP: 3 };
+  // Memo: clave = objeto carrera (WeakMap → NUNCA se serializa, cero fugas al
+  // export/nube). Una sola pasada por carrera+plantilla; lookups O(1) después.
+  const _ratingsCache = new WeakMap();
+
+  // Fuerza de TU club. Sin Elo (rompe la recursión y es mejor evidencia que el Elo).
+  S.selfStrength = (c) => {
     const DD = FC.data || {};
-    const base = U._findTeam(DD.TEAM_STRENGTH, teamName); // null si no catalogado
+    const base = U._findTeam(DD.TEAM_STRENGTH, c.clubName); // null si no catalogado
     let strength = base != null ? base : 72;
-    if (teamName === c.clubName) {
-      const xi = (c.players || []).map(p => Number(p.ovr) || 0).filter(o => o > 0)
-        .sort((a, b) => b - a).slice(0, 11);
-      if (xi.length >= 7) {
-        const avg = xi.reduce((s, o) => s + o, 0) / xi.length;
-        const squad = Math.max(50, Math.min(94, avg + 2)); // la media de equipo supera al OVR medio
-        strength = base != null ? base * 0.45 + squad * 0.55 : squad;
-      }
-      const ms = S.userMatches(c).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 5);
-      if (ms.length >= 3) {
-        let pts = 0;
-        ms.forEach(m => { const r = S.userResult(c, m); pts += r === "W" ? 3 : r === "D" ? 1 : 0; });
-        strength += Math.max(-5, Math.min(5, (pts / ms.length - 1.4) * 3.2));
-      }
+    const xi = (c.players || []).map(p => Number(p.ovr) || 0).filter(o => o > 0)
+      .sort((a, b) => b - a).slice(0, 11);
+    if (xi.length >= 7) {
+      const avg = xi.reduce((s, o) => s + o, 0) / xi.length;
+      const squad = Math.max(50, Math.min(94, avg + 2)); // la media de equipo supera al OVR medio
+      strength = base != null ? base * 0.45 + squad * 0.55 : squad;
     }
+    const ms = S.userMatches(c).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 5);
+    if (ms.length >= 3) {
+      let pts = 0;
+      ms.forEach(m => { const r = S.userResult(c, m); pts += r === "W" ? 3 : r === "D" ? 1 : 0; });
+      strength += Math.max(-5, Math.min(5, (pts / ms.length - 1.4) * 3.2));
+    }
+    return Math.max(45, Math.min(96, strength));
+  };
+
+  // Mapa { rival -> { obs, conf } } a partir de TUS resultados, en UNA pasada.
+  // obs = fuerza observada (media de fuerzas implícitas, ponderada por decaimiento);
+  // conf = confianza 0..1 (sube con nº de duelos recientes, baja sola con el tiempo).
+  S.teamRatings = (c) => {
+    const matches = c.matches || [], players = c.players || [];
+    // Firma de invalidación numérica y barata (cambia con marcadores y OVRs).
+    let sig = players.length * 131 + matches.length;
+    for (let i = 0; i < players.length; i++) sig = (sig * 31 + (Number(players[i].ovr) || 0)) % 2147483647;
+    for (let i = 0; i < matches.length; i++) {
+      const m = matches[i];
+      sig = (sig * 33 + (Number(m.homeScore) || 0) * 7 + (Number(m.awayScore) || 0) * 13 + (S.isPlayed(m) ? 1 : 0)) % 2147483647;
+    }
+    const cached = _ratingsCache.get(c);
+    if (cached && cached.sig === sig) return cached.map;
+
+    const curYear = (S.currentSeason(c) || {}).startYear || 0;
+    const yearOf = {};
+    (c.seasons || []).forEach(s => { yearOf[s.id] = s.startYear; });
+    const sU = S.selfStrength(c);
+    const acc = {}; // rival -> { sw, sval }
+    matches.forEach(m => {
+      if (!S.isUserMatch(c, m) || !S.isPlayed(m)) return;
+      const rival = S.opponentOf(c, m); if (!rival) return;
+      const g = S.userGoals(c, m); if (!g) return;
+      const gd = Math.max(-ELO.GD_CAP, Math.min(ELO.GD_CAP, (Number(g.for) || 0) - (Number(g.against) || 0)));
+      const wasHome = m.home === c.clubName;
+      // Fuerza implícita del rival según ESTE resultado: si te gano/empata fuerte,
+      // jugó como un equipo fuerte. La ventaja de campo descuenta lo "esperado".
+      const implied = Math.max(45, Math.min(96,
+        sU - gd * ELO.PTS_PER_GOAL + (wasHome ? ELO.HOME_ADV : -ELO.HOME_ADV)));
+      const sy = yearOf[m.seasonId];
+      const seasonsAgo = (typeof sy === "number" && curYear) ? Math.max(0, curYear - sy) : 0;
+      const w = Math.pow(ELO.DECAY, seasonsAgo); // duelos recientes pesan más
+      const a = acc[rival] || (acc[rival] = { sw: 0, sval: 0 });
+      a.sw += w; a.sval += w * implied;
+    });
+    const map = {};
+    Object.keys(acc).forEach(name => {
+      const a = acc[name];
+      map[name] = { obs: a.sval / a.sw, conf: a.sw / (a.sw + ELO.KCONF) };
+    });
+    _ratingsCache.set(c, { sig, map });
+    return map;
+  };
+
+  S.teamStrength = (c, teamName) => {
+    if (teamName === c.clubName) return S.selfStrength(c);
+    const base = U._findTeam((FC.data || {}).TEAM_STRENGTH, teamName); // null si no catalogado
+    const prior = base != null ? base : 72;
+    const r = S.teamRatings(c)[teamName];
+    // Mezcla prior↔observado ponderada por confianza (sin datos → catálogo puro).
+    const strength = r ? prior * (1 - r.conf) + r.obs * r.conf : prior;
     return Math.max(45, Math.min(96, strength));
   };
 
