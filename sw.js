@@ -1,8 +1,8 @@
-/* Carrera FC — Service Worker
+/* Boardroom — Service Worker
    Estrategia: network-first para index.html (siempre la versión más reciente),
    cache-first para el resto de assets estáticos (manifest, icono).
    Offline: sirve index.html cacheado como fallback. */
-const CACHE_KEY = "carrerafc-v4";
+const CACHE_KEY = "boardroom-v1";
 const ASSETS = ["./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./social.png"];
 
 self.addEventListener("install", e => {

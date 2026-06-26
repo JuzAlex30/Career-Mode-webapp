@@ -40,7 +40,7 @@
     // active nav
     const cur = R.current || "dashboard";
     U.els("#mainNav .nav-item, .nav-bottom .nav-item").forEach(a => a.classList.toggle("active", a.dataset.route === cur));
-    const tt = document.getElementById("topbarTitle"); if (tt) tt.textContent = TITLES[cur] || "Carrera FC";
+    const tt = document.getElementById("topbarTitle"); if (tt) tt.textContent = TITLES[cur] || "Boardroom";
     document.body.classList.remove("nav-open");
     // Modo en vivo: pantalla a pantalla completa (oculta chrome y bloquea scroll de fondo).
     document.body.classList.toggle("live-active", cur === "live");

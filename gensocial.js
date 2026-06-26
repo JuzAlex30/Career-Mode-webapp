@@ -37,6 +37,7 @@ function circle(cx, cy, r, c) {
 
 const GLYPHS = {
   A: ["01110","10001","10001","11111","10001","10001","10001"],
+  B: ["11110","10001","10001","11110","10001","10001","11110"],
   C: ["01110","10001","10000","10000","10000","10001","01110"],
   D: ["11110","10001","10001","10001","10001","10001","11110"],
   E: ["11111","10000","10000","11110","10000","10000","11111"],
@@ -91,8 +92,8 @@ drawChar("F", cfX + 6*unit, cfY, unit, BG);
 // Línea de acento verde
 rect(430, 238, 1150, 242, GREEN);
 
-// Título "CARRERA FC"
-drawText("CARRERA FC", 430, 253, 10, WHITE);
+// Título "BOARDROOM"
+drawText("BOARDROOM", 430, 253, 10, WHITE);
 
 // Tagline "MODO CARRERA COMPANION"
 drawText("MODO CARRERA COMPANION", 430, 360, 5, DIM);

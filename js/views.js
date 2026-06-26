@@ -71,10 +71,10 @@
     const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
     const body = `
       <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">Última actualización: junio de 2026</p>
-      ${h("Qué es Carrera FC")}
-      ${p("Carrera FC es una aplicación web <b>gratuita y de fans</b>, companion del Modo Carrera de EA Sports FC. Funciona en tu navegador y guarda tus datos en este dispositivo; la nube y la comunidad son <b>opcionales</b>.")}
+      ${h("Qué es Boardroom")}
+      ${p("Boardroom es una aplicación web <b>gratuita y de fans</b>, companion del Modo Carrera de EA Sports FC. Funciona en tu navegador y guarda tus datos en este dispositivo; la nube y la comunidad son <b>opcionales</b>.")}
       ${h("Aviso legal — proyecto no oficial")}
-      ${p("Carrera FC es un proyecto <b>no oficial</b> sin afiliación, patrocinio ni licencia de Electronic Arts Inc., EA Sports, EA Sports FC, la FIFA, ni de los clubes, ligas, competiciones o jugadores mencionados. Todas las marcas, nombres y derechos pertenecen a sus respectivos propietarios y se usan solo con fines descriptivos para que registres tu propia carrera.")}
+      ${p("Boardroom es un proyecto <b>no oficial</b> sin afiliación, patrocinio ni licencia de Electronic Arts Inc., EA Sports, EA Sports FC, la FIFA, ni de los clubes, ligas, competiciones o jugadores mencionados. Todas las marcas, nombres y derechos pertenecen a sus respectivos propietarios y se usan solo con fines descriptivos para que registres tu propia carrera.")}
       ${h("Qué datos tratamos y con qué fin")}
       ${p("• <b>Tus carreras</b> (partidos, plantilla, etc.) se guardan en <b>tu navegador</b> (localStorage). No salen de tu dispositivo salvo que tú decidas subirlas a la nube.")}
       ${p("• <b>Email</b>: solo si creas una cuenta. Se usa para enviarte un <b>código de acceso de un solo uso</b> (no usamos contraseñas). Base legal: tu consentimiento.")}
@@ -139,14 +139,14 @@
     ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = 2; rr(PAD / 2, PAD / 2, W - PAD, H - PAD, 40); ctx.stroke();
     const maxW = W - PAD * 2;
     let y = PAD + 36;
-    ctx.fillStyle = ACC; ctx.font = font(30, "bold"); ctx.fillText(String(spec.brand || "Carrera FC").toUpperCase(), PAD, y); y += 80;
+    ctx.fillStyle = ACC; ctx.font = font(30, "bold"); ctx.fillText(String(spec.brand || "Boardroom").toUpperCase(), PAD, y); y += 80;
     ctx.fillStyle = TEXT; wrap(spec.title, maxW, 96, "800").slice(0, 3).forEach(l => { ctx.font = font(96, "800"); ctx.fillText(l, PAD, y); y += 108; });
     if (spec.subtitle) { ctx.fillStyle = DIM; ctx.font = font(42); ctx.fillText(String(spec.subtitle), PAD, y + 4); y += 72; }
     y += 16; ctx.strokeStyle = ACC; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(PAD + 130, y); ctx.stroke(); y += 58;
     if (spec.difficulty) { ctx.fillStyle = DIM; ctx.font = font(28, "bold"); ctx.fillText("DIFICULTAD", PAD, y); ctx.fillStyle = ACC; ctx.font = font(50); ctx.fillText("★".repeat(spec.difficulty) + "☆".repeat(Math.max(0, 5 - spec.difficulty)), PAD + 240, y + 8); y += 80; }
     ctx.fillStyle = TEXT; (spec.lines || []).forEach(line => wrap(line, maxW, 42).forEach(l => { if (y > H - PAD - 110) return; ctx.font = font(42); ctx.fillText(l, PAD, y); y += 58; }));
     if ((spec.chips || []).length) { y += 18; let cx = PAD, cy = y; ctx.font = font(32, "600"); spec.chips.forEach(ch => { const cw = ctx.measureText(ch).width + 48; if (cx + cw > W - PAD) { cx = PAD; cy += 70; } ctx.fillStyle = "rgba(0,225,160,0.14)"; rr(cx, cy - 40, cw, 56, 28); ctx.fill(); ctx.fillStyle = ACC; ctx.font = font(32, "600"); ctx.fillText(ch, cx + 24, cy); cx += cw + 16; }); }
-    ctx.fillStyle = DIM; ctx.font = font(30); ctx.fillText(String(spec.footer || "Mi Modo Carrera · Carrera FC"), PAD, H - PAD + 8);
+    ctx.fillStyle = DIM; ctx.font = font(30); ctx.fillText(String(spec.footer || "Mi Modo Carrera · Boardroom"), PAD, H - PAD + 8);
     const fn = (String(spec.filename || "carrera-fc").replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "carrera-fc") + ".png";
     const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = fn; a.click();
     UI.toast("Imagen descargada", "ok");
@@ -168,7 +168,7 @@
       ${trophies.length ? `<div class="cc-rules">${trophies.map(t=>`<span class="chip gold">🏆 ${U.esc(t.competition||"")}${t.season?" "+U.esc(t.season):""}</span>`).join("")}</div>` : `<p class="faint">Sin títulos todavía.</p>`}
       <div class="section-title">Estrella del club</div>
       <p style="margin:0">⚽ Máximo goleador: <b>${top}</b></p>
-      <p class="faint" style="font-size:12px;margin-top:16px">Carrera compartida desde Carrera FC · solo lectura.</p>`;
+      <p class="faint" style="font-size:12px;margin-top:16px">Carrera compartida desde Boardroom · solo lectura.</p>`;
   };
   UI.openSharedByCode = async (code, cfgOverride) => {
     if (!code) { UI.toast("Indica un código", "err"); return; }
@@ -317,7 +317,7 @@
     // —— Columna de marca (izquierda) ——
     const feat = (icon, title, desc) => `<div class="wl-feat"><span class="wl-feat-ic"><span class="ni-icon" data-icon="${icon}"></span></span><div><b>${title}</b><span>${desc}</span></div></div>`;
     const brand = `<div class="wl-brand">
-      <div class="wl-logo"><div class="brand-mark">CF</div><div><div class="wl-name">Carrera FC</div><div class="wl-tag">Tu Modo Carrera, contado como una historia</div></div></div>
+      <div class="wl-logo"><img src="icon.svg" style="width:50px;height:50px;border-radius:14px;flex:none" alt="Boardroom"><div><div class="wl-name">Boardroom</div><div class="wl-tag">Tu Modo Carrera, contado como una historia</div></div></div>
       <div class="wl-feats">
         ${feat("coin", "Mercado BETMÁXIMA", "Cuotas, tipsters y boleto en vivo de cada partido")}
         ${feat("news", "Prensa y crónicas", "Titulares y crónicas generadas de tu temporada")}
@@ -1037,7 +1037,7 @@
     ctx.beginPath(); ctx.moveTo(40, H-55); ctx.lineTo(W-40, H-55); ctx.stroke();
     ctx.fillStyle = "#00e1a0"; ctx.font = `bold 20px ${FONT}`;
     ctx.textAlign = "right"; ctx.textBaseline = "bottom";
-    ctx.fillText("Carrera FC", W-40, H-16);
+    ctx.fillText("Boardroom", W-40, H-16);
     ctx.fillStyle = "#62748c"; ctx.font = `17px ${FONT}`;
     ctx.textAlign = "left";
     ctx.fillText("Compañero del Modo Carrera · EA Sports FC", 40, H-16);
@@ -3270,7 +3270,7 @@
       + "Objetivo: " + r.objective.text + " en " + r.seasons + " temporadas\n"
       + (r.twists.length ? "Reglas: " + r.twists.map(t => t.label).join(" · ") + "\n" : "")
       + "Dificultad: " + stars + "\n"
-      + "¿Te atreves? #CarreraFC #ModoCarrera";
+      + "¿Te atreves? #Boardroom #ModoCarrera";
   }
   function toolCopy(txt) {
     const done = () => UI.toast("Reto copiado 📋", "ok");
@@ -3326,11 +3326,11 @@
       U.hydrateIcons(box);
       document.getElementById("tool-copy").addEventListener("click", () => toolCopy(rollShareText(r)));
       document.getElementById("tool-img").addEventListener("click", () => UI.downloadCard({
-        brand: r.mode === "rebuild" ? "Carrera FC · Rebuild" : "Carrera FC · Reto",
+        brand: r.mode === "rebuild" ? "Boardroom · Rebuild" : "Boardroom · Reto",
         title: r.club, subtitle: r.league, difficulty: r.difficulty,
         lines: [r.objective.text, "en " + r.seasons + " temporadas"],
         chips: r.twists.map(t => t.label),
-        footer: "¿Te atreves? · #CarreraFC #ModoCarrera", filename: "reto-" + r.club,
+        footer: "¿Te atreves? · #Boardroom #ModoCarrera", filename: "reto-" + r.club,
       }));
       document.getElementById("tool-again").addEventListener("click", reroll);
       document.getElementById("tool-activate").addEventListener("click", () => {
@@ -3595,7 +3595,7 @@
       UI.toast("Nuevo suceso en el vestuario", "ok");
     });
     document.getElementById("story-img").addEventListener("click", () => UI.downloadCard({
-      brand: "Carrera FC · Temporada", title: c.clubName, subtitle: season.label,
+      brand: "Boardroom · Temporada", title: c.clubName, subtitle: season.label,
       lines: [recap], footer: "Mi Modo Carrera", filename: "temporada-" + c.clubName + "-" + season.label,
     }));
   };
@@ -4265,7 +4265,7 @@
       </div>
       <div class="section-title">Privacidad y aviso legal</div>
       <div class="card" style="font-size:13px">
-        <p class="faint" style="margin-top:0">Carrera FC es un proyecto de fans <b>no oficial</b>, sin afiliación con EA Sports / EA Sports FC, la FIFA ni los clubes o competiciones mencionados.</p>
+        <p class="faint" style="margin-top:0">Boardroom es un proyecto de fans <b>no oficial</b>, sin afiliación con EA Sports / EA Sports FC, la FIFA ni los clubes o competiciones mencionados.</p>
         <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad y aviso legal</button>
       </div>
     `);

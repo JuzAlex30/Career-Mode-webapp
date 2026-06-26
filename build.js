@@ -19,9 +19,9 @@ const BODY = `
   <div id="app" class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <div class="brand-mark">CF</div>
+        <img src="icon.svg" width="40" height="40" style="border-radius:11px;flex:none" alt="Boardroom">
         <div class="brand-text">
-          <strong>Carrera FC</strong>
+          <strong>Boardroom</strong>
           <span>Modo Carrera Companion</span>
         </div>
       </div>
@@ -68,17 +68,17 @@ const out = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Carrera FC · Compañero del Modo Carrera</title>
+  <title>Boardroom · Compañero del Modo Carrera</title>
   <meta name="description" content="El compañero definitivo del Modo Carrera de EA Sports FC: tracking, clasificaciones, retos y la historia de tu club." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://juzalex30.github.io/Career-Mode-webapp/" />
-  <meta property="og:title" content="Carrera FC · Compañero del Modo Carrera" />
+  <meta property="og:title" content="Boardroom · Compañero del Modo Carrera" />
   <meta property="og:description" content="Lleva tu Modo Carrera al siguiente nivel: plantilla, partidos, estadísticas, retos y comunidad." />
   <meta property="og:image" content="https://juzalex30.github.io/Career-Mode-webapp/social.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Carrera FC · Compañero del Modo Carrera" />
+  <meta name="twitter:title" content="Boardroom · Compañero del Modo Carrera" />
   <meta name="twitter:description" content="Lleva tu Modo Carrera al siguiente nivel: plantilla, partidos, estadísticas, retos y comunidad." />
   <meta name="twitter:image" content="https://juzalex30.github.io/Career-Mode-webapp/social.png" />
   <link rel="manifest" href="manifest.json" />
