@@ -185,14 +185,17 @@
   C.profileLink = (ownerId) => { const cfg = C.config(); const b = btoa(JSON.stringify({ o: ownerId, u: cfg.url, k: cfg.anonKey })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); return location.origin + location.pathname + "#profile=" + b; };
 
   /* ---------- comentarios en carreras compartidas (públicos en lectura; escribir requiere sesión) ---------- */
+  let lastCommentAt = 0; // cooldown de cliente (UX); el rate-limit real es el trigger del servidor
   C.getComments = (shareId, cfgOverride) => apiWith(cfgOverride || C.config(), "/rest/v1/shared_comments?select=id,author,body,created_at,author_id&share_id=eq." + encodeURIComponent(String(shareId || "").trim()) + "&order=created_at.asc", { method: "GET" });
   C.addComment = async (shareId, body) => {
     if (!(await ensureFresh())) throw new Error("Inicia sesión primero");
     const text = String(body || "").trim().slice(0, 500);
-    if (!text) throw new Error("Escribe un comentario");
+    if (text.length < 2) throw new Error("Escribe un comentario un poco más largo");
+    if (Date.now() - lastCommentAt < 8000) throw new Error("Espera unos segundos antes de comentar de nuevo");
     const author = (((C.user() || {}).email) || "Anónimo").split("@")[0];
     // author_id explícito (mismo patrón probado que C.publish con owner_id) para no depender solo del default RLS.
     await api("/rest/v1/shared_comments", { method: "POST", auth: true, headers: { Prefer: "return=minimal" }, body: [{ share_id: String(shareId || "").trim(), author_id: session.user.id, author, body: text }] });
+    lastCommentAt = Date.now();
     return { ok: true };
   };
   C.deleteComment = async (id) => {
@@ -281,6 +284,35 @@
     "grant insert, update, delete on public.shared_careers to authenticated;",
     "grant select on public.shared_comments to anon, authenticated;",
     "grant insert, delete on public.shared_comments to authenticated;",
+    "",
+    "-- 5) Anti-spam: limites de frecuencia por usuario (rate limiting en servidor).",
+    "create or replace function public.check_comment_rate() returns trigger",
+    "language plpgsql as $$",
+    "declare per_min int; per_hour int;",
+    "begin",
+    "  select count(*) into per_min from public.shared_comments",
+    "    where author_id = new.author_id and created_at > now() - interval '1 minute';",
+    "  if per_min >= 5 then raise exception 'Vas muy rapido: espera un momento antes de comentar de nuevo.'; end if;",
+    "  select count(*) into per_hour from public.shared_comments",
+    "    where author_id = new.author_id and created_at > now() - interval '1 hour';",
+    "  if per_hour >= 60 then raise exception 'Has comentado demasiado en la ultima hora. Intentalo mas tarde.'; end if;",
+    "  return new;",
+    "end; $$;",
+    "drop trigger if exists trg_comment_rate on public.shared_comments;",
+    "create trigger trg_comment_rate before insert on public.shared_comments",
+    "  for each row execute function public.check_comment_rate();",
+    "create or replace function public.check_share_limit() returns trigger",
+    "language plpgsql as $$",
+    "declare total int;",
+    "begin",
+    "  if exists (select 1 from public.shared_careers where share_id = new.share_id) then return new; end if;",
+    "  select count(*) into total from public.shared_careers where owner_id = new.owner_id;",
+    "  if total >= 25 then raise exception 'Has alcanzado el maximo de carreras publicadas.'; end if;",
+    "  return new;",
+    "end; $$;",
+    "drop trigger if exists trg_share_limit on public.shared_careers;",
+    "create trigger trg_share_limit before insert on public.shared_careers",
+    "  for each row execute function public.check_share_limit();",
   ].join("\n");
 
   loadSession();
