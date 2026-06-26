@@ -902,7 +902,7 @@
         ratings: ratings.length ? ratings : undefined,
         formation,
         lineup,
-        tag: (document.querySelector("#m-tag-seg button.active") || {}).dataset.tag || undefined,
+        tag: document.querySelector("#m-tag-seg button.active")?.dataset?.tag || undefined,
       });
       // crónica automática: flash de portada para el dashboard
       const _isUser = data.home === c.clubName || data.away === c.clubName;
@@ -4308,8 +4308,9 @@
       r.onload = () => {
         try {
           const data = JSON.parse(r.result);
-          if (!data.careers) throw new Error("formato");
-          UI.confirm("Importar reemplazará tus datos actuales. ¿Continuar?", () => {
+          if (!data.careers || typeof data.careers !== "object") throw new Error("formato");
+          const vMsg = (data.version && data.version !== 1) ? `\n\nEl archivo es de una versión diferente (${data.version}). Los datos se normalizarán automáticamente.` : "";
+          UI.confirm("Importar reemplazará tus datos actuales. ¿Continuar?" + vMsg, () => {
             localStorage.setItem("carrerafc:db:v1", JSON.stringify(data));
             S.load(); FC.app.boot(); UI.toast("Datos importados", "ok");
           });
@@ -4350,6 +4351,7 @@
   let cloudFeedRows = null, cloudFeedLoading = false; // caché del feed (módulo: sobrevive a los re-render de S.emit)
   FC.views.cloud = function () {
     const CL = FC.cloud, cfg = CL.config(), configured = CL.isConfigured(), logged = CL.isLoggedIn();
+    if (!logged) cloudFeedRows = null;
     const rerender = () => FC.views.cloud();
     const fmtBackup = cfg.lastBackup ? U.fmtDate(cfg.lastBackup) : "nunca";
     let body;
