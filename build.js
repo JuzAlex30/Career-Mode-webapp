@@ -19,7 +19,7 @@ const BODY = `
   <div id="app" class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <img src="icon.svg" width="40" height="40" style="border-radius:11px;flex:none" alt="Boardroom">
+        <img src="logo.png" width="40" height="40" style="border-radius:11px;flex:none" alt="Boardroom">
         <div class="brand-text">
           <strong>Boardroom</strong>
           <span>Modo Carrera Companion</span>
