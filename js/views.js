@@ -1080,7 +1080,7 @@
     const ms = S.userMatches(c, season.id).slice().sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
     const last5 = ms.slice(0, 5).map(m => S.userResult(c, m)).reverse();
     // cumulative points sparkline
-    const ordered = S.userMatches(c, season.id).filter(m => /liga/i.test(m.competition||"")).sort((a,b)=> new Date(a.date||0)-new Date(b.date||0));
+    const ordered = S.userMatches(c, season.id).filter(m => /liga(?!\s+de\s+campe)/i.test(m.competition||"")).sort((a,b)=> new Date(a.date||0)-new Date(b.date||0));
     let cum = 0; const pointsSeries = ordered.map(m => { const r = S.userResult(c, m); cum += r === "W" ? 3 : r === "D" ? 1 : 0; return cum; });
 
     const objs = season.boardObjectives || [];

@@ -965,7 +965,7 @@
   S.nextMatch = (c, seasonId) => S.upcomingMatches(c, seasonId)[0] || null;
 
   S.computeStandings = (c, seasonId) => {
-    const league = (c.matches || []).filter(m => m.seasonId === seasonId && /liga/i.test(m.competition || ""));
+    const league = (c.matches || []).filter(m => m.seasonId === seasonId && /liga(?!\s+de\s+campe)/i.test(m.competition || ""));
     const season = S.getSeason(c, seasonId);
     const tbl = {};
     const ensure = (name) => (tbl[name] || (tbl[name] = { team: name, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 }));
@@ -1174,8 +1174,10 @@
      Ambos canales comparten la firma de invalidación y el WeakMap → cero coste extra. */
   S.teamRatings = (c) => {
     const matches = c.matches || [], players = c.players || [];
-    // Firma de invalidación numérica y barata.
-    let sig = players.length * 131 + matches.length;
+    // Firma de invalidación numérica y barata (incluye startYear para detectar edición de temporadas).
+    const seasons = c.seasons || [];
+    let sig = players.length * 131 + matches.length + seasons.length * 17;
+    for (let i = 0; i < seasons.length; i++) sig = (sig * 17 + ((seasons[i].startYear) || 0) * 7) % 2147483647;
     for (let i = 0; i < players.length; i++) sig = (sig * 31 + (Number(players[i].ovr) || 0)) % 2147483647;
     for (let i = 0; i < matches.length; i++) {
       const m = matches[i];
@@ -1412,11 +1414,11 @@
     ms.forEach(m => { const g = S.userGoals(c, m); const r = S.userResult(c, m);
       if (!g) return; gf += g.for; ga += g.against; if (g.against === 0) cs++;
       if (r === "W") w++; else if (r === "D") d++; else l++; });
-    const league = ms.filter(m => /liga/i.test(m.competition || ""));
+    const league = ms.filter(m => /liga(?!\s+de\s+campe)/i.test(m.competition || ""));
     let lw=0,ld=0,ll=0;
     league.forEach(m => { const r = S.userResult(c, m); if (r==="W") lw++; else if (r==="D") ld++; else ll++; });
     const trophies = (c.trophies || []).filter(t => t.seasonId === sid && t.result === "winner");
-    const wonLeague = trophies.some(t => /liga/i.test(t.competition || ""));
+    const wonLeague = trophies.some(t => /liga(?!\s+de\s+campe)/i.test(t.competition || ""));
     const wonCup = trophies.some(t => FC.data.isDomesticCup(t.competition));
     const wonContinental = trophies.some(t => FC.data.isContinental(t.competition));
     const played = w+d+l;

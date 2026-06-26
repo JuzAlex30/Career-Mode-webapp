@@ -1188,8 +1188,8 @@ body.trip-open { overflow: hidden; }
   // Lista plana (compatibilidad / datalists). Genérica, sin país.
   D.COMPETITIONS = D.compGroupsFor(null).reduce((a, g) => a.concat(g.items), []);
   // Clasificadores de competición (compartidos por logros, palmarés y viajes).
-  D.isContinental = (comp) => { comp = String(comp || ""); return D.CONTINENTAL.some(cc => comp.includes(cc)); };
-  D.isInternational = (comp) => { comp = String(comp || ""); return D.INTERNATIONAL.some(cc => comp.includes(cc)); };
+  D.isContinental = (comp) => { const lc = String(comp || "").toLowerCase(); return D.CONTINENTAL.some(cc => lc.includes(cc.toLowerCase())); };
+  D.isInternational = (comp) => { const lc = String(comp || "").toLowerCase(); return D.INTERNATIONAL.some(cc => lc.includes(cc.toLowerCase())); };
   D._cupWord = /(copa|coppa|coupe|pokal|beker|taça|taca|supercup|schaal|\bcup\b)/i;
   D.isDomesticCup = (comp) => { comp = String(comp || ""); return D._cupWord.test(comp) && !D.isContinental(comp) && !D.isInternational(comp); };
 
@@ -4975,7 +4975,7 @@ body.trip-open { overflow: hidden; }
   S.nextMatch = (c, seasonId) => S.upcomingMatches(c, seasonId)[0] || null;
 
   S.computeStandings = (c, seasonId) => {
-    const league = (c.matches || []).filter(m => m.seasonId === seasonId && /liga/i.test(m.competition || ""));
+    const league = (c.matches || []).filter(m => m.seasonId === seasonId && /liga(?!\s+de\s+campe)/i.test(m.competition || ""));
     const season = S.getSeason(c, seasonId);
     const tbl = {};
     const ensure = (name) => (tbl[name] || (tbl[name] = { team: name, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 }));
@@ -5184,8 +5184,10 @@ body.trip-open { overflow: hidden; }
      Ambos canales comparten la firma de invalidación y el WeakMap → cero coste extra. */
   S.teamRatings = (c) => {
     const matches = c.matches || [], players = c.players || [];
-    // Firma de invalidación numérica y barata.
-    let sig = players.length * 131 + matches.length;
+    // Firma de invalidación numérica y barata (incluye startYear para detectar edición de temporadas).
+    const seasons = c.seasons || [];
+    let sig = players.length * 131 + matches.length + seasons.length * 17;
+    for (let i = 0; i < seasons.length; i++) sig = (sig * 17 + ((seasons[i].startYear) || 0) * 7) % 2147483647;
     for (let i = 0; i < players.length; i++) sig = (sig * 31 + (Number(players[i].ovr) || 0)) % 2147483647;
     for (let i = 0; i < matches.length; i++) {
       const m = matches[i];
@@ -5422,11 +5424,11 @@ body.trip-open { overflow: hidden; }
     ms.forEach(m => { const g = S.userGoals(c, m); const r = S.userResult(c, m);
       if (!g) return; gf += g.for; ga += g.against; if (g.against === 0) cs++;
       if (r === "W") w++; else if (r === "D") d++; else l++; });
-    const league = ms.filter(m => /liga/i.test(m.competition || ""));
+    const league = ms.filter(m => /liga(?!\s+de\s+campe)/i.test(m.competition || ""));
     let lw=0,ld=0,ll=0;
     league.forEach(m => { const r = S.userResult(c, m); if (r==="W") lw++; else if (r==="D") ld++; else ll++; });
     const trophies = (c.trophies || []).filter(t => t.seasonId === sid && t.result === "winner");
-    const wonLeague = trophies.some(t => /liga/i.test(t.competition || ""));
+    const wonLeague = trophies.some(t => /liga(?!\s+de\s+campe)/i.test(t.competition || ""));
     const wonCup = trophies.some(t => FC.data.isDomesticCup(t.competition));
     const wonContinental = trophies.some(t => FC.data.isContinental(t.competition));
     const played = w+d+l;
@@ -8455,7 +8457,7 @@ body.trip-open { overflow: hidden; }
     const ms = S.userMatches(c, season.id).slice().sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
     const last5 = ms.slice(0, 5).map(m => S.userResult(c, m)).reverse();
     // cumulative points sparkline
-    const ordered = S.userMatches(c, season.id).filter(m => /liga/i.test(m.competition||"")).sort((a,b)=> new Date(a.date||0)-new Date(b.date||0));
+    const ordered = S.userMatches(c, season.id).filter(m => /liga(?!\s+de\s+campe)/i.test(m.competition||"")).sort((a,b)=> new Date(a.date||0)-new Date(b.date||0));
     let cum = 0; const pointsSeries = ordered.map(m => { const r = S.userResult(c, m); cum += r === "W" ? 3 : r === "D" ? 1 : 0; return cum; });
 
     const objs = season.boardObjectives || [];

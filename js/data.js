@@ -352,8 +352,8 @@
   // Lista plana (compatibilidad / datalists). Genérica, sin país.
   D.COMPETITIONS = D.compGroupsFor(null).reduce((a, g) => a.concat(g.items), []);
   // Clasificadores de competición (compartidos por logros, palmarés y viajes).
-  D.isContinental = (comp) => { comp = String(comp || ""); return D.CONTINENTAL.some(cc => comp.includes(cc)); };
-  D.isInternational = (comp) => { comp = String(comp || ""); return D.INTERNATIONAL.some(cc => comp.includes(cc)); };
+  D.isContinental = (comp) => { const lc = String(comp || "").toLowerCase(); return D.CONTINENTAL.some(cc => lc.includes(cc.toLowerCase())); };
+  D.isInternational = (comp) => { const lc = String(comp || "").toLowerCase(); return D.INTERNATIONAL.some(cc => lc.includes(cc.toLowerCase())); };
   D._cupWord = /(copa|coppa|coupe|pokal|beker|taça|taca|supercup|schaal|\bcup\b)/i;
   D.isDomesticCup = (comp) => { comp = String(comp || ""); return D._cupWord.test(comp) && !D.isContinental(comp) && !D.isInternational(comp); };
 
