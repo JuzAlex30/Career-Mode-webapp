@@ -65,7 +65,7 @@
 
   // Política de privacidad + aviso legal (RGPD). Contacto: cambia CONTACT_EMAIL
   // si quieres mostrar un correo de contacto público (déjalo vacío para ocultarlo).
-  const CONTACT_EMAIL = "";
+  const CONTACT_EMAIL = "nighlife.appdevelopments@gmail.com";
   UI.openPrivacy = () => {
     const h = (t) => `<h4 style="margin:18px 0 6px;font-size:15px">${t}</h4>`;
     const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
@@ -4516,6 +4516,17 @@
       if ($("cl-privacy")) $("cl-privacy").addEventListener("click", () => UI.openPrivacy());
       if ($("cl-delete-account")) $("cl-delete-account").addEventListener("click", () => UI.confirmDeleteAccount(() => { FC.app.refreshChrome(); rerender(); }));
     }
+    const showPausedBanner = () => {
+      if (document.getElementById("cl-paused-banner")) return;
+      const banner = document.createElement("div");
+      banner.id = "cl-paused-banner";
+      banner.className = "cloud-paused-banner";
+      banner.innerHTML = `<span class="ni-icon" data-icon="bell"></span><div><b>Servidor de comunidad en pausa</b><span>El proyecto de Supabase lleva más de 7 días sin actividad y se ha pausado. Tus datos locales siguen funcionando con normalidad. Para reactivar, visita el <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">dashboard de Supabase</a> y pulsa «Restore project».</span></div><button class="btn btn-ghost btn-sm" id="cl-retry-paused">Reintentar</button>`;
+      U.hydrateIcons(banner);
+      const head = document.querySelector(".page-head");
+      if (head) head.insertAdjacentElement("afterend", banner);
+      document.getElementById("cl-retry-paused").addEventListener("click", () => { banner.remove(); if (typeof loadFeed === "function") { cloudFeedRows = null; loadFeed(); } });
+    };
     if (configured && $("cl-lb-load")) {
       let lbRows = [];
       $("cl-lb-load").addEventListener("click", async () => {
@@ -4532,7 +4543,10 @@
             : `<p class="faint">Aún no hay carreras publicadas. ¡Publica la tuya y estrena el ranking!</p>`;
           box.querySelectorAll("[data-lb]").forEach(tr => tr.addEventListener("click", () => UI.openSharedModal(lbRows[+tr.dataset.lb], null)));
           btn.disabled = false;
-        } catch (e) { UI.toast(e.message || "Error al cargar", "err"); btn.disabled = false; }
+        } catch (e) {
+          if (e.code === "SUPABASE_PAUSED") showPausedBanner && showPausedBanner();
+          UI.toast(e.message || "Error al cargar", "err"); btn.disabled = false;
+        }
       });
     }
     if (configured && $("cl-feed")) {
@@ -4550,7 +4564,10 @@
         cloudFeedLoading = true;
         const box = $("cl-feed"); if (box && !cloudFeedRows) box.innerHTML = `<p class="faint">Cargando…</p>`;
         try { cloudFeedRows = (await CL.activityFeed(30)) || []; }
-        catch (e) { if (!cloudFeedRows) { const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar la actividad.</p>`; } }
+        catch (e) {
+          if (e.code === "SUPABASE_PAUSED") { showPausedBanner(); const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">No disponible mientras el servidor esté pausado.</p>`; }
+          else if (!cloudFeedRows) { const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar la actividad.</p>`; }
+        }
         finally { cloudFeedLoading = false; if (cloudFeedRows) renderFeed(); }
       };
       if (cloudFeedRows) renderFeed(); else loadFeed();

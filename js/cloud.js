@@ -52,6 +52,7 @@
     catch (e) { throw new Error("Sin conexión con la nube (¿url correcta? ¿CORS?)"); }
     const txt = await res.text();
     let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
+    if (res.status === 503) { const err = new Error("El servidor de comunidad está pausado por inactividad. Tus datos locales funcionan con normalidad."); err.code = "SUPABASE_PAUSED"; throw err; }
     if (!res.ok) throw new Error((data && (data.msg || data.error_description || data.message || data.error)) || ("Error " + res.status));
     return data;
   }

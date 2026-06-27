@@ -783,6 +783,19 @@ body.trip-open { overflow: hidden; }
 .bm-tip-bar-fill { height: 100%; border-radius: 2px; }
 .bm-tip-text { font-size: 11.5px; color: var(--bm-dim); font-style: italic; line-height: 1.4; }
 
+/* Banner de servidor pausado (Supabase free tier inactivity) */
+.cloud-paused-banner {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: color-mix(in srgb, var(--warn, #f59e0b) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn, #f59e0b) 35%, transparent);
+  border-radius: 12px; padding: 14px 16px; margin: 0 0 16px;
+  font-size: 13px; line-height: 1.5; color: var(--text);
+}
+.cloud-paused-banner .ni-icon { color: var(--warn, #f59e0b); flex: none; font-size: 18px; margin-top: 1px; }
+.cloud-paused-banner > div { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.cloud-paused-banner b { font-size: 13.5px; }
+.cloud-paused-banner span { color: var(--text-dim); font-size: 12.5px; }
+
   </style>
 </head>
 <body data-theme="dark">
@@ -7109,6 +7122,7 @@ body.trip-open { overflow: hidden; }
     catch (e) { throw new Error("Sin conexión con la nube (¿url correcta? ¿CORS?)"); }
     const txt = await res.text();
     let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
+    if (res.status === 503) { const err = new Error("El servidor de comunidad está pausado por inactividad. Tus datos locales funcionan con normalidad."); err.code = "SUPABASE_PAUSED"; throw err; }
     if (!res.ok) throw new Error((data && (data.msg || data.error_description || data.message || data.error)) || ("Error " + res.status));
     return data;
   }
@@ -7447,7 +7461,7 @@ body.trip-open { overflow: hidden; }
 
   // Política de privacidad + aviso legal (RGPD). Contacto: cambia CONTACT_EMAIL
   // si quieres mostrar un correo de contacto público (déjalo vacío para ocultarlo).
-  const CONTACT_EMAIL = "";
+  const CONTACT_EMAIL = "nighlife.appdevelopments@gmail.com";
   UI.openPrivacy = () => {
     const h = (t) => `<h4 style="margin:18px 0 6px;font-size:15px">${t}</h4>`;
     const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
@@ -11898,6 +11912,17 @@ body.trip-open { overflow: hidden; }
       if ($("cl-privacy")) $("cl-privacy").addEventListener("click", () => UI.openPrivacy());
       if ($("cl-delete-account")) $("cl-delete-account").addEventListener("click", () => UI.confirmDeleteAccount(() => { FC.app.refreshChrome(); rerender(); }));
     }
+    const showPausedBanner = () => {
+      if (document.getElementById("cl-paused-banner")) return;
+      const banner = document.createElement("div");
+      banner.id = "cl-paused-banner";
+      banner.className = "cloud-paused-banner";
+      banner.innerHTML = `<span class="ni-icon" data-icon="bell"></span><div><b>Servidor de comunidad en pausa</b><span>El proyecto de Supabase lleva más de 7 días sin actividad y se ha pausado. Tus datos locales siguen funcionando con normalidad. Para reactivar, visita el <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">dashboard de Supabase</a> y pulsa «Restore project».</span></div><button class="btn btn-ghost btn-sm" id="cl-retry-paused">Reintentar</button>`;
+      U.hydrateIcons(banner);
+      const head = document.querySelector(".page-head");
+      if (head) head.insertAdjacentElement("afterend", banner);
+      document.getElementById("cl-retry-paused").addEventListener("click", () => { banner.remove(); if (typeof loadFeed === "function") { cloudFeedRows = null; loadFeed(); } });
+    };
     if (configured && $("cl-lb-load")) {
       let lbRows = [];
       $("cl-lb-load").addEventListener("click", async () => {
@@ -11914,7 +11939,10 @@ body.trip-open { overflow: hidden; }
             : `<p class="faint">Aún no hay carreras publicadas. ¡Publica la tuya y estrena el ranking!</p>`;
           box.querySelectorAll("[data-lb]").forEach(tr => tr.addEventListener("click", () => UI.openSharedModal(lbRows[+tr.dataset.lb], null)));
           btn.disabled = false;
-        } catch (e) { UI.toast(e.message || "Error al cargar", "err"); btn.disabled = false; }
+        } catch (e) {
+          if (e.code === "SUPABASE_PAUSED") showPausedBanner && showPausedBanner();
+          UI.toast(e.message || "Error al cargar", "err"); btn.disabled = false;
+        }
       });
     }
     if (configured && $("cl-feed")) {
@@ -11932,7 +11960,10 @@ body.trip-open { overflow: hidden; }
         cloudFeedLoading = true;
         const box = $("cl-feed"); if (box && !cloudFeedRows) box.innerHTML = `<p class="faint">Cargando…</p>`;
         try { cloudFeedRows = (await CL.activityFeed(30)) || []; }
-        catch (e) { if (!cloudFeedRows) { const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar la actividad.</p>`; } }
+        catch (e) {
+          if (e.code === "SUPABASE_PAUSED") { showPausedBanner(); const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">No disponible mientras el servidor esté pausado.</p>`; }
+          else if (!cloudFeedRows) { const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar la actividad.</p>`; }
+        }
         finally { cloudFeedLoading = false; if (cloudFeedRows) renderFeed(); }
       };
       if (cloudFeedRows) renderFeed(); else loadFeed();
