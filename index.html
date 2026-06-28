@@ -7489,6 +7489,35 @@ body.trip-open { overflow: hidden; }
     UI.openModal("Privacidad y aviso legal", body, `<button class="btn btn-primary" data-close>Entendido</button>`, { lg: true });
   };
 
+  // Términos de uso (escudo legal para la comunidad + contenido de usuarios).
+  UI.openTerms = () => {
+    const h = (t) => `<h4 style="margin:18px 0 6px;font-size:15px">${t}</h4>`;
+    const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
+    const body = `
+      <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">Última actualización: junio de 2026</p>
+      ${h("1. Aceptación")}
+      ${p("Al usar Boardroom aceptas estos términos. Si no estás de acuerdo, no uses la aplicación. El uso de las funciones de <b>cuenta</b> y <b>comunidad</b> requiere además aceptar estos términos y la Política de privacidad.")}
+      ${h("2. Qué es Boardroom")}
+      ${p("Boardroom es una herramienta <b>gratuita y de fans</b> para registrar tu Modo Carrera. Es un proyecto <b>no oficial</b>, sin afiliación ni licencia de Electronic Arts, EA Sports, EA Sports FC, la FIFA ni de los clubes, ligas o jugadores mencionados. El «mercado» y las cuotas son una <b>simulación sin dinero real</b> con fines de entretenimiento.")}
+      ${h("3. Uso aceptable")}
+      ${p("Te comprometes a <b>no</b>: publicar contenido ilegal, ofensivo, difamatorio, que incite al odio o vulnere derechos de terceros; suplantar a otras personas; enviar spam o publicidad; intentar vulnerar la seguridad del servicio o de otros usuarios; ni usar la app de forma que la dañe o interrumpa.")}
+      ${h("4. Tu contenido")}
+      ${p("Eres el <b>único responsable</b> de lo que publicas (carreras compartidas, nombre de mánager, comentarios). Conservas tus derechos sobre tu contenido, pero al publicarlo nos concedes una licencia <b>no exclusiva y gratuita</b> para alojarlo y mostrarlo dentro de la comunidad con el fin de operar el servicio. Puedes retirar tu contenido en cualquier momento desde la app.")}
+      ${h("5. Moderación")}
+      ${p("Podemos <b>retirar contenido o suspender el acceso</b>, sin previo aviso, si incumple estos términos o perjudica a la comunidad. Disponemos de límites automáticos anti-spam.")}
+      ${h("6. Disponibilidad del servicio")}
+      ${p("El servicio se ofrece «<b>tal cual</b>» y «según disponibilidad». La nube y la comunidad funcionan sobre infraestructura gratuita y <b>pueden pausarse, fallar o discontinuarse</b> en cualquier momento. Tus datos guardados en este dispositivo no dependen de la nube y siguen siendo tuyos (puedes exportarlos desde Ajustes).")}
+      ${h("7. Limitación de responsabilidad")}
+      ${p("En la medida que permita la ley, Boardroom y sus responsables <b>no se hacen responsables</b> de daños derivados del uso o de la imposibilidad de uso, ni de la pérdida de datos, ni del contenido publicado por otros usuarios. No ofrecemos ninguna garantía sobre la exactitud de cuotas, estadísticas o predicciones simuladas.")}
+      ${h("8. Propiedad intelectual")}
+      ${p("Las marcas, nombres de clubes, ligas, competiciones y jugadores pertenecen a sus respectivos titulares y se usan solo con fines descriptivos. Boardroom no reclama ningún derecho sobre ellos.")}
+      ${h("9. Cambios")}
+      ${p("Podemos actualizar estos términos. Los cambios relevantes se reflejarán en esta página con su fecha. El uso continuado tras un cambio implica su aceptación.")}
+      ${h("10. Ley aplicable")}
+      ${p("Estos términos se rigen por la <b>legislación española</b> y la normativa de la Unión Europea aplicable." + (CONTACT_EMAIL ? ` Para cualquier cuestión, escríbenos a <b>${U.esc(CONTACT_EMAIL)}</b>.` : "") + "")}`;
+    UI.openModal("Términos de uso", body, `<button class="btn btn-primary" data-close>Entendido</button>`, { lg: true });
+  };
+
   // Confirmación fuerte e irreversible para el borrado de cuenta (RGPD).
   UI.confirmDeleteAccount = (after) => {
     const body = `
@@ -7721,7 +7750,7 @@ body.trip-open { overflow: hidden; }
         ${feat("cloud", "Comunidad y nube", "Guarda en la nube, comparte y compite en el ranking")}
       </div>
       <div class="wl-foot">Proyecto de fans no oficial · sin afiliación con EA Sports / FIFA · sin dinero real
-        <div style="margin-top:6px"><button type="button" class="wl-link" id="wl-privacy-foot" style="display:inline">Privacidad y aviso legal</button></div>
+        <div style="margin-top:6px"><button type="button" class="wl-link" id="wl-terms-foot" style="display:inline">Términos de uso</button> · <button type="button" class="wl-link" id="wl-privacy-foot" style="display:inline">Privacidad y aviso legal</button></div>
       </div>
     </div>`;
 
@@ -7742,7 +7771,7 @@ body.trip-open { overflow: hidden; }
         ${!obCodeSent
           ? `<p class="wl-sub">Te enviaremos un código de acceso de un solo uso. Si ya tienes cuenta, recuperarás tus carreras.</p>
              <div class="field"><label>Email</label><input type="email" id="wl-email" value="${U.esc(obEmail)}" placeholder="tu@email.com" autocomplete="email" autofocus /></div>
-             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 14px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="wl-consent" style="margin-top:2px;flex:none" /> <span>He leído y acepto la <button type="button" class="wl-link" id="wl-privacy-link" style="display:inline">Política de privacidad</button> y el uso de mi email para el acceso.</span></label>
+             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 14px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="wl-consent" style="margin-top:2px;flex:none" /> <span>He leído y acepto los <button type="button" class="wl-link" id="wl-terms-link" style="display:inline">Términos de uso</button> y la <button type="button" class="wl-link" id="wl-privacy-link" style="display:inline">Política de privacidad</button>, y el uso de mi email para el acceso.</span></label>
              <button class="btn btn-primary btn-lg btn-block" id="wl-send"><span class="ni-icon" data-icon="bell"></span> Enviar código</button>`
           : `<p class="wl-sub">Hemos enviado un código a <b>${U.esc(obEmail)}</b>. Pégalo aquí (o pulsa el enlace del email).</p>
              <div class="field"><label>Código de 6 dígitos</label><input type="text" id="wl-code" inputmode="numeric" maxlength="8" placeholder="000000" class="wl-otp" autofocus /></div>
@@ -7796,6 +7825,7 @@ body.trip-open { overflow: hidden; }
     const $ = (id) => host.querySelector("#" + id);
     const setBusy = (id, on) => { const el = $(id); if (el) el.disabled = on; obBusy = on; };
     if ($("wl-privacy-foot")) $("wl-privacy-foot").addEventListener("click", () => UI.openPrivacy());
+    if ($("wl-terms-foot")) $("wl-terms-foot").addEventListener("click", () => UI.openTerms());
 
     // —— wiring por paso ——
     if (obStep === "home") {
@@ -7805,10 +7835,11 @@ body.trip-open { overflow: hidden; }
       $("wl-back").addEventListener("click", () => { obCodeSent = false; go("home"); });
       $("wl-go-guest").addEventListener("click", () => go("create"));
       if ($("wl-privacy-link")) $("wl-privacy-link").addEventListener("click", () => UI.openPrivacy());
+      if ($("wl-terms-link")) $("wl-terms-link").addEventListener("click", () => UI.openTerms());
       if ($("wl-send")) $("wl-send").addEventListener("click", async () => {
         const email = ($("wl-email").value || "").trim();
         if (!/.+@.+\..+/.test(email)) { UI.toast("Escribe un email válido", "err"); return; }
-        if (!$("wl-consent") || !$("wl-consent").checked) { UI.toast("Debes aceptar la política de privacidad", "err"); return; }
+        if (!$("wl-consent") || !$("wl-consent").checked) { UI.toast("Debes aceptar los términos de uso y la política de privacidad", "err"); return; }
         if (obBusy) return; setBusy("wl-send", true);
         try { await CL.sendCode(email); obEmail = email; obCodeSent = true; UI.toast("¡Código enviado! Revisa tu email.", "ok"); go("auth"); }
         catch (e) { UI.toast(e.message || "No se pudo enviar el código", "err"); setBusy("wl-send", false); }
@@ -11662,7 +11693,10 @@ body.trip-open { overflow: hidden; }
       <div class="section-title">Privacidad y aviso legal</div>
       <div class="card" style="font-size:13px">
         <p class="faint" style="margin-top:0">Boardroom es un proyecto de fans <b>no oficial</b>, sin afiliación con EA Sports / EA Sports FC, la FIFA ni los clubes o competiciones mencionados.</p>
-        <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad y aviso legal</button>
+        <div class="flex gap wrap">
+          <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad</button>
+          <button class="btn btn-ghost btn-sm" id="se-terms"><span class="ni-icon" data-icon="news"></span> Términos de uso</button>
+        </div>
       </div>
     `);
     document.getElementById("se-displayname-save").addEventListener("click", () => {
@@ -11676,6 +11710,7 @@ body.trip-open { overflow: hidden; }
       UI.toast("Cambios guardados", "ok");
     });
     document.getElementById("se-privacy").addEventListener("click", () => UI.openPrivacy());
+    document.getElementById("se-terms").addEventListener("click", () => UI.openTerms());
     document.getElementById("se-newseason").addEventListener("click", () => {
       const cur = S.currentSeason(c);
       // Si la temporada en curso tiene partidos, la junta emite su informe antes de avanzar.
@@ -11778,7 +11813,7 @@ body.trip-open { overflow: hidden; }
         <p class="muted">Acceso sin contraseña: te enviamos un <b>enlace mágico</b> a tu email. Haz clic en él y volverás aquí con la sesión iniciada.</p>
         ${!cloudCodeSent
           ? `<div class="field"><label>Email</label><input type="email" id="cl-email" value="${U.esc(cloudPendingEmail)}" placeholder="tu@email.com"/></div>
-             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 12px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="cl-consent" style="margin-top:2px;flex:none" /> <span>He leído y acepto la <button type="button" class="btn-link" id="cl-privacy-link" style="display:inline;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline">Política de privacidad</button> y el uso de mi email para el acceso.</span></label>
+             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 12px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="cl-consent" style="margin-top:2px;flex:none" /> <span>He leído y acepto los <button type="button" class="btn-link" id="cl-terms-link" style="display:inline;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline">Términos de uso</button> y la <button type="button" class="btn-link" id="cl-privacy-link" style="display:inline;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline">Política de privacidad</button>, y el uso de mi email para el acceso.</span></label>
              <button class="btn btn-primary" id="cl-send"><span class="ni-icon" data-icon="bell"></span> Enviar enlace</button>`
           : `<div style="background:var(--card-alt,rgba(255,255,255,.06));border-radius:10px;padding:16px;text-align:center">
                <div style="font-size:28px;margin-bottom:8px">📬</div>
@@ -11833,6 +11868,7 @@ body.trip-open { overflow: hidden; }
         <p class="faint" style="font-size:12px;margin-top:0">Consulta cómo tratamos tus datos y ejerce tus derechos (RGPD).</p>
         <div class="flex gap wrap">
           <button class="btn btn-ghost btn-sm" id="cl-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad</button>
+          <button class="btn btn-ghost btn-sm" id="cl-terms"><span class="ni-icon" data-icon="news"></span> Términos de uso</button>
           <button class="btn btn-danger btn-sm" id="cl-delete-account"><span class="ni-icon" data-icon="trash"></span> Eliminar mi cuenta y datos</button>
         </div>
       </div>`;
@@ -11863,9 +11899,10 @@ body.trip-open { overflow: hidden; }
       });
     } else if (!logged) {
       if ($("cl-privacy-link")) $("cl-privacy-link").addEventListener("click", () => UI.openPrivacy());
+      if ($("cl-terms-link")) $("cl-terms-link").addEventListener("click", () => UI.openTerms());
       if ($("cl-send")) $("cl-send").addEventListener("click", busy("cl-send", async () => {
         const email = $("cl-email").value.trim(); if (!email) { UI.toast("Escribe tu email", "err"); return; }
-        if (!$("cl-consent") || !$("cl-consent").checked) { UI.toast("Debes aceptar la política de privacidad", "err"); return; }
+        if (!$("cl-consent") || !$("cl-consent").checked) { UI.toast("Debes aceptar los términos de uso y la política de privacidad", "err"); return; }
         await CL.sendCode(email); cloudPendingEmail = email; cloudCodeSent = true; UI.toast("¡Enlace enviado! Revisa tu email.", "ok"); rerender();
       }));
       if ($("cl-back")) $("cl-back").addEventListener("click", () => { cloudCodeSent = false; rerender(); });
@@ -11910,6 +11947,7 @@ body.trip-open { overflow: hidden; }
       });
       $("cl-disconnect").addEventListener("click", () => UI.confirm("¿Desconectar la nube de este navegador? (no borra nada de la nube)", () => { CL.disconnect(); UI.toast("Nube desconectada"); rerender(); }, true));
       if ($("cl-privacy")) $("cl-privacy").addEventListener("click", () => UI.openPrivacy());
+      if ($("cl-terms")) $("cl-terms").addEventListener("click", () => UI.openTerms());
       if ($("cl-delete-account")) $("cl-delete-account").addEventListener("click", () => UI.confirmDeleteAccount(() => { FC.app.refreshChrome(); rerender(); }));
     }
     const showPausedBanner = () => {
