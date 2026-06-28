@@ -5,7 +5,6 @@
   const { util: U, store: S, router: R, views: V, ui: UI } = FC;
   const App = {};
   const ROUTES = ["dashboard","matches","standings","rivales","squad","development","youth","finance","challenges","story","viajes","history","hall","scouting","tools","cloud","settings","live"];
-  const TITLES = { dashboard:"Panel", matches:"Partidos", standings:"Clasificación", rivales:"Rivales", squad:"Plantilla", development:"Desarrollo", youth:"Academia", finance:"Finanzas", challenges:"Retos y logros", story:"Narrativa", viajes:"Viajes", history:"Historia", hall:"Salón de la fama", scouting:"Scouting", tools:"Generador", cloud:"Comunidad", settings:"Ajustes", live:"Modo en vivo" };
 
   // register routes (guard: require active career)
   ROUTES.forEach(name => R.register(name, () => {
@@ -40,7 +39,7 @@
     // active nav
     const cur = R.current || "dashboard";
     U.els("#mainNav .nav-item, .nav-bottom .nav-item").forEach(a => a.classList.toggle("active", a.dataset.route === cur));
-    const tt = document.getElementById("topbarTitle"); if (tt) tt.textContent = TITLES[cur] || "Boardroom";
+    const tt = document.getElementById("topbarTitle"); if (tt) tt.textContent = FC.t("title." + cur);
     document.body.classList.remove("nav-open");
     // Modo en vivo: pantalla a pantalla completa (oculta chrome y bloquea scroll de fondo).
     document.body.classList.toggle("live-active", cur === "live");
@@ -114,9 +113,27 @@
     return handled;
   }
 
+  // Idioma: aplica al store + DOM estático + re-render (onboarding o vista activa).
+  function applyLangChrome() {
+    if (FC.i18n) FC.i18n.applyDom(document);
+    const sw = document.getElementById("langSwitch");
+    if (sw) sw.querySelectorAll("button[data-lang]").forEach(b => b.classList.toggle("active", b.dataset.lang === FC.i18n.get()));
+  }
+  App.setLang = (l) => {
+    if (!FC.i18n || !FC.i18n.LANGS.includes(l)) return;
+    S.settings().lang = l; S.save();
+    FC.i18n.set(l);
+    applyLangChrome();
+    // Re-render lo que esté en pantalla: onboarding o la vista activa.
+    if (document.getElementById("onboardHost")) V.onboarding();
+    else if (S.getActiveCareer()) { R.render(); App.refreshChrome(); }
+  };
+
   App.boot = async () => {
     S.load();
+    if (FC.i18n) FC.i18n.set(S.settings().lang || "es");
     applyTheme(S.settings().theme || "dark");
+    applyLangChrome();
     App.applyAccent(S.settings().accent);
     const onboardHost = document.getElementById("onboardHost");
     if (onboardHost) onboardHost.remove();
@@ -154,6 +171,9 @@
       const t = document.body.dataset.theme === "dark" ? "light" : "dark";
       S.settings().theme = t; S.save(); applyTheme(t);
     });
+    // idioma
+    const langSw = document.getElementById("langSwitch");
+    if (langSw) langSw.querySelectorAll("button[data-lang]").forEach(b => b.addEventListener("click", () => App.setLang(b.dataset.lang)));
     // mobile
     document.getElementById("menuBtn").addEventListener("click", () => document.body.classList.toggle("nav-open"));
     document.getElementById("topbarAddMatch").addEventListener("click", () => {

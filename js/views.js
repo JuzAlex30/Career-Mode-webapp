@@ -344,17 +344,23 @@
     const finish = () => { obStep = null; obCodeSent = false; obBusy = false; host.remove(); document.getElementById("app").style.display = ""; FC.app.refreshChrome(); FC.router.go("dashboard"); };
 
     // —— Columna de marca (izquierda) ——
+    const t = FC.t;
+    const curLang = FC.i18n ? FC.i18n.get() : "es";
+    const langSwitch = `<div class="lang-switch wl-lang" id="wlLangSwitch">
+      <button type="button" data-lang="es"${curLang === "es" ? ' class="active"' : ''}>ES</button>
+      <button type="button" data-lang="en"${curLang === "en" ? ' class="active"' : ''}>EN</button></div>`;
     const feat = (icon, title, desc) => `<div class="wl-feat"><span class="wl-feat-ic"><span class="ni-icon" data-icon="${icon}"></span></span><div><b>${title}</b><span>${desc}</span></div></div>`;
     const brand = `<div class="wl-brand">
-      <div class="wl-logo"><img src="logo.png" style="width:50px;height:50px;border-radius:14px;flex:none" alt="Boardroom"><div><div class="wl-name">Boardroom</div><div class="wl-tag">Tu Modo Carrera, contado como una historia</div></div></div>
+      ${langSwitch}
+      <div class="wl-logo"><img src="logo.png" style="width:50px;height:50px;border-radius:14px;flex:none" alt="Boardroom"><div><div class="wl-name">Boardroom</div><div class="wl-tag">${t("ob.tagline")}</div></div></div>
       <div class="wl-feats">
-        ${feat("coin", "Mercado BETMÁXIMA", "Cuotas, tipsters y boleto en vivo de cada partido")}
-        ${feat("news", "Prensa y crónicas", "Titulares y crónicas generadas de tu temporada")}
-        ${feat("trophy", "Tu legado", "Palmarés, récords y línea de tiempo de la carrera")}
-        ${feat("cloud", "Comunidad y nube", "Guarda en la nube, comparte y compite en el ranking")}
+        ${feat("coin", t("feat.market.t"), t("feat.market.d"))}
+        ${feat("news", t("feat.press.t"), t("feat.press.d"))}
+        ${feat("trophy", t("feat.legacy.t"), t("feat.legacy.d"))}
+        ${feat("cloud", t("feat.community.t"), t("feat.community.d"))}
       </div>
-      <div class="wl-foot">Proyecto de fans no oficial · sin afiliación con EA Sports / FIFA · sin dinero real
-        <div style="margin-top:6px"><button type="button" class="wl-link" id="wl-terms-foot" style="display:inline">Términos de uso</button> · <button type="button" class="wl-link" id="wl-privacy-foot" style="display:inline">Privacidad y aviso legal</button></div>
+      <div class="wl-foot">${t("ob.foot.disclaimer")}
+        <div style="margin-top:6px"><button type="button" class="wl-link" id="wl-terms-foot" style="display:inline">${t("legal.terms")}</button> · <button type="button" class="wl-link" id="wl-privacy-foot" style="display:inline">${t("legal.privacy")}</button></div>
       </div>
     </div>`;
 
@@ -362,65 +368,65 @@
     let panel = "";
     if (obStep === "home") {
       panel = `<div class="wl-panel">
-        <div class="wl-h">Bienvenido</div>
-        <p class="wl-sub">Crea una cuenta para guardar tus carreras en la nube y competir en la comunidad, o entra directo y juega en este dispositivo.</p>
-        <button class="btn btn-primary btn-lg btn-block" id="wl-go-auth"><span class="ni-icon" data-icon="cloud"></span> Crear cuenta / Iniciar sesión</button>
-        <button class="btn btn-block wl-mt" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> Continuar sin cuenta</button>
-        <p class="wl-note">Sin contraseñas: te enviamos un código a tu email. Continuar sin cuenta guarda todo en este navegador.</p>
+        <div class="wl-h">${t("ob.welcome")}</div>
+        <p class="wl-sub">${t("ob.welcome.sub")}</p>
+        <button class="btn btn-primary btn-lg btn-block" id="wl-go-auth"><span class="ni-icon" data-icon="cloud"></span> ${t("ob.createAccount")}</button>
+        <button class="btn btn-block wl-mt" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> ${t("ob.continueGuest")}</button>
+        <p class="wl-note">${t("ob.home.note")}</p>
       </div>`;
     } else if (obStep === "auth") {
       panel = `<div class="wl-panel">
-        <button class="wl-back" id="wl-back"><span class="ni-icon" data-icon="chevron"></span> Volver</button>
-        <div class="wl-h">${obCodeSent ? "Introduce tu código" : "Entra con tu email"}</div>
+        <button class="wl-back" id="wl-back"><span class="ni-icon" data-icon="chevron"></span> ${t("common.back")}</button>
+        <div class="wl-h">${obCodeSent ? t("ob.auth.enterCode") : t("ob.auth.enterEmail")}</div>
         ${!obCodeSent
-          ? `<p class="wl-sub">Te enviaremos un código de acceso de un solo uso. Si ya tienes cuenta, recuperarás tus carreras.</p>
-             <div class="field"><label>Email</label><input type="email" id="wl-email" value="${U.esc(obEmail)}" placeholder="tu@email.com" autocomplete="email" autofocus /></div>
-             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 14px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="wl-consent" style="margin-top:2px;flex:none" /> <span>He leído y acepto los <button type="button" class="wl-link" id="wl-terms-link" style="display:inline">Términos de uso</button> y la <button type="button" class="wl-link" id="wl-privacy-link" style="display:inline">Política de privacidad</button>, y el uso de mi email para el acceso.</span></label>
-             <button class="btn btn-primary btn-lg btn-block" id="wl-send"><span class="ni-icon" data-icon="bell"></span> Enviar código</button>`
-          : `<p class="wl-sub">Hemos enviado un código a <b>${U.esc(obEmail)}</b>. Pégalo aquí (o pulsa el enlace del email).</p>
-             <div class="field"><label>Código de 6 dígitos</label><input type="text" id="wl-code" inputmode="numeric" maxlength="8" placeholder="000000" class="wl-otp" autofocus /></div>
-             <button class="btn btn-primary btn-lg btn-block" id="wl-verify"><span class="ni-icon" data-icon="check"></span> Entrar</button>
-             <div class="wl-row"><button class="wl-link" id="wl-resend">Reenviar código</button><button class="wl-link" id="wl-changeemail">Cambiar email</button></div>`}
-        <div class="wl-or"><span>o</span></div>
-        <button class="btn btn-block" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> Continuar sin cuenta</button>
+          ? `<p class="wl-sub">${t("ob.auth.sub")}</p>
+             <div class="field"><label>${t("common.email")}</label><input type="email" id="wl-email" value="${U.esc(obEmail)}" placeholder="email@example.com" autocomplete="email" autofocus /></div>
+             <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 14px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="wl-consent" style="margin-top:2px;flex:none" /> <span>${t("ob.consent.pre")}<button type="button" class="wl-link" id="wl-terms-link" style="display:inline">${t("legal.terms")}</button>${t("ob.consent.mid")}<button type="button" class="wl-link" id="wl-privacy-link" style="display:inline">${t("legal.privacy")}</button>${t("ob.consent.post")}</span></label>
+             <button class="btn btn-primary btn-lg btn-block" id="wl-send"><span class="ni-icon" data-icon="bell"></span> ${t("ob.sendCode")}</button>`
+          : `<p class="wl-sub">${t("ob.auth.sent", { email: "<b>" + U.esc(obEmail) + "</b>" })}</p>
+             <div class="field"><label>${t("ob.code6")}</label><input type="text" id="wl-code" inputmode="numeric" maxlength="8" placeholder="000000" class="wl-otp" autofocus /></div>
+             <button class="btn btn-primary btn-lg btn-block" id="wl-verify"><span class="ni-icon" data-icon="check"></span> ${t("ob.enter")}</button>
+             <div class="wl-row"><button class="wl-link" id="wl-resend">${t("ob.resend")}</button><button class="wl-link" id="wl-changeemail">${t("ob.changeEmail")}</button></div>`}
+        <div class="wl-or"><span>${t("common.or")}</span></div>
+        <button class="btn btn-block" id="wl-go-guest"><span class="ni-icon" data-icon="play"></span> ${t("ob.continueGuest")}</button>
       </div>`;
     } else if (obStep === "restore") {
       const email = (CL.user() || {}).email || obEmail || "";
       panel = `<div class="wl-panel">
-        <div class="wl-badge-ok"><span class="ni-icon" data-icon="check"></span> Sesión iniciada${email ? " · " + U.esc(email) : ""}</div>
-        <div class="wl-h">¿Recuperar tus carreras?</div>
-        <p class="wl-sub">Trae tus carreras guardadas en la nube a este dispositivo, o empieza una nueva.</p>
-        <button class="btn btn-primary btn-lg btn-block" id="wl-restore"><span class="ni-icon" data-icon="download"></span> Traer mis carreras de la nube</button>
-        <button class="btn btn-block wl-mt" id="wl-new"><span class="ni-icon" data-icon="plus"></span> Empezar una carrera nueva</button>
-        <button class="wl-link wl-center" id="wl-logout">Cerrar sesión</button>
+        <div class="wl-badge-ok"><span class="ni-icon" data-icon="check"></span> ${t("ob.restore.signedIn")}${email ? " · " + U.esc(email) : ""}</div>
+        <div class="wl-h">${t("ob.restore.q")}</div>
+        <p class="wl-sub">${t("ob.restore.sub")}</p>
+        <button class="btn btn-primary btn-lg btn-block" id="wl-restore"><span class="ni-icon" data-icon="download"></span> ${t("ob.restore.bring")}</button>
+        <button class="btn btn-block wl-mt" id="wl-new"><span class="ni-icon" data-icon="plus"></span> ${t("ob.restore.new")}</button>
+        <button class="wl-link wl-center" id="wl-logout">${t("ob.logout")}</button>
       </div>`;
     } else { // create
       const logged = CL && CL.isLoggedIn();
       panel = `<div class="wl-panel">
-        <button class="wl-back" id="wl-back-create"><span class="ni-icon" data-icon="chevron"></span> Volver</button>
-        <div class="wl-h">Crea tu carrera</div>
-        <p class="wl-sub">Elige si entrenas un club o diriges una selección nacional.</p>
+        <button class="wl-back" id="wl-back-create"><span class="ni-icon" data-icon="chevron"></span> ${t("common.back")}</button>
+        <div class="wl-h">${t("ob.create.title")}</div>
+        <p class="wl-sub">${t("ob.create.sub")}</p>
         <div class="seg" id="ob-type-seg" style="margin-bottom:16px">
-          <button type="button" class="active" data-type="club">⚽ Club</button>
-          <button type="button" data-type="national">🌍 Selección</button>
+          <button type="button" class="active" data-type="club">${t("ob.type.club")}</button>
+          <button type="button" data-type="national">${t("ob.type.national")}</button>
         </div>
         <div id="ob-club-fields">
-          <div class="field"><label>Nombre del club <span class="faint">(tu equipo)</span></label>
-            <input type="text" id="ob-club" placeholder="p.ej. Real Oviedo" autofocus /></div>
-          <div class="field"><label>Liga</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
+          <div class="field"><label>${t("ob.club.name")} <span class="faint">${t("ob.club.nameHint")}</span></label>
+            <input type="text" id="ob-club" placeholder="${t("ob.clubPh")}" autofocus /></div>
+          <div class="field"><label>${t("ob.league")}</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
           <div class="field" id="ob-custom-wrap" hidden>
-            <label>Equipos de tu liga <span class="faint">(separa por comas)</span></label>
-            <textarea id="ob-teams" placeholder="Equipo 1, Equipo 2, Equipo 3..."></textarea></div>
+            <label>${t("ob.customTeams")} <span class="faint">${t("ob.customTeamsHint")}</span></label>
+            <textarea id="ob-teams" placeholder="${t("ob.customTeamsPh")}"></textarea></div>
         </div>
         <div id="ob-national-fields" hidden>
-          <div class="field"><label>Selección nacional</label><select id="ob-national-team">${nationalTeamOptions()}</select></div>
+          <div class="field"><label>${t("ob.national.team")}</label><select id="ob-national-team">${nationalTeamOptions()}</select></div>
         </div>
         <div class="field-row" style="margin-top:4px">
-          <div class="field"><label>Temporada inicial</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
-          <div class="field"><label>Nombre de mánager <span class="faint">(opcional)</span></label><input type="text" id="ob-manager" placeholder="Mánager" /></div>
+          <div class="field"><label>${t("ob.startSeason")}</label><input type="number" id="ob-year" value="${thisYear}" min="2000" max="2100" /></div>
+          <div class="field"><label>${t("ob.managerName")} <span class="faint">${t("ob.managerNameHint")}</span></label><input type="text" id="ob-manager" placeholder="${t("ob.managerPh")}" /></div>
         </div>
-        <button class="btn btn-primary btn-lg btn-block" id="ob-create"><span class="ni-icon" data-icon="ball"></span> Empezar carrera</button>
-        <p class="wl-note">${logged ? "Tu carrera se guardará también en la nube." : "Tus datos se guardan en este navegador. Podrás exportarlos cuando quieras."}</p>
+        <button class="btn btn-primary btn-lg btn-block" id="ob-create"><span class="ni-icon" data-icon="ball"></span> ${t("ob.startCareer")}</button>
+        <p class="wl-note">${logged ? t("ob.create.noteLogged") : t("ob.create.noteGuest")}</p>
       </div>`;
     }
 
@@ -430,6 +436,8 @@
     const setBusy = (id, on) => { const el = $(id); if (el) el.disabled = on; obBusy = on; };
     if ($("wl-privacy-foot")) $("wl-privacy-foot").addEventListener("click", () => UI.openPrivacy());
     if ($("wl-terms-foot")) $("wl-terms-foot").addEventListener("click", () => UI.openTerms());
+    const wlLang = $("wlLangSwitch");
+    if (wlLang) wlLang.querySelectorAll("button[data-lang]").forEach(b => b.addEventListener("click", () => FC.app.setLang(b.dataset.lang)));
 
     // —— wiring por paso ——
     if (obStep === "home") {
@@ -442,23 +450,23 @@
       if ($("wl-terms-link")) $("wl-terms-link").addEventListener("click", () => UI.openTerms());
       if ($("wl-send")) $("wl-send").addEventListener("click", async () => {
         const email = ($("wl-email").value || "").trim();
-        if (!/.+@.+\..+/.test(email)) { UI.toast("Escribe un email válido", "err"); return; }
-        if (!$("wl-consent") || !$("wl-consent").checked) { UI.toast("Debes aceptar los términos de uso y la política de privacidad", "err"); return; }
+        if (!/.+@.+\..+/.test(email)) { UI.toast(t("ob.toast.emailInvalid"), "err"); return; }
+        if (!$("wl-consent") || !$("wl-consent").checked) { UI.toast(t("ob.toast.mustAccept"), "err"); return; }
         if (obBusy) return; setBusy("wl-send", true);
-        try { await CL.sendCode(email); obEmail = email; obCodeSent = true; UI.toast("¡Código enviado! Revisa tu email.", "ok"); go("auth"); }
-        catch (e) { UI.toast(e.message || "No se pudo enviar el código", "err"); setBusy("wl-send", false); }
+        try { await CL.sendCode(email); obEmail = email; obCodeSent = true; UI.toast(t("ob.toast.codeSent"), "ok"); go("auth"); }
+        catch (e) { UI.toast(e.message || t("ob.toast.codeError"), "err"); setBusy("wl-send", false); }
       });
       if ($("wl-verify")) {
         const doVerify = async () => {
           const code = ($("wl-code").value || "").trim();
-          if (code.length < 4) { UI.toast("Introduce el código del email", "err"); return; }
+          if (code.length < 4) { UI.toast(t("ob.toast.codePrompt"), "err"); return; }
           if (obBusy) return; setBusy("wl-verify", true);
-          try { await CL.verifyCode(obEmail, code); UI.toast("¡Sesión iniciada!", "ok"); go("restore"); }
-          catch (e) { UI.toast(e.message || "Código no válido", "err"); setBusy("wl-verify", false); }
+          try { await CL.verifyCode(obEmail, code); UI.toast(t("ob.toast.signedIn"), "ok"); go("restore"); }
+          catch (e) { UI.toast(e.message || t("ob.toast.codeInvalid"), "err"); setBusy("wl-verify", false); }
         };
         $("wl-verify").addEventListener("click", doVerify);
         $("wl-code").addEventListener("keydown", (e) => { if (e.key === "Enter") doVerify(); });
-        $("wl-resend").addEventListener("click", async () => { try { await CL.sendCode(obEmail); UI.toast("Código reenviado", "ok"); } catch (e) { UI.toast(e.message || "Error", "err"); } });
+        $("wl-resend").addEventListener("click", async () => { try { await CL.sendCode(obEmail); UI.toast(t("ob.toast.codeResent"), "ok"); } catch (e) { UI.toast(e.message || t("common.error"), "err"); } });
         $("wl-changeemail").addEventListener("click", () => { obCodeSent = false; go("auth"); });
       }
     } else if (obStep === "restore") {
@@ -466,12 +474,12 @@
         if (obBusy) return; setBusy("wl-restore", true);
         try {
           const r = await CL.pull();
-          if (r.pulled > 0) { UI.toast("Restauradas " + r.pulled + " carrera(s)", "ok"); finish(); }
-          else { UI.toast("No tienes carreras en la nube todavía", "warn"); go("create"); }
-        } catch (e) { UI.toast(e.message || "No se pudo restaurar", "err"); setBusy("wl-restore", false); }
+          if (r.pulled > 0) { UI.toast(t("ob.toast.restored", { n: r.pulled }), "ok"); finish(); }
+          else { UI.toast(t("ob.toast.noCloud"), "warn"); go("create"); }
+        } catch (e) { UI.toast(e.message || t("ob.toast.restoreError"), "err"); setBusy("wl-restore", false); }
       });
       $("wl-new").addEventListener("click", () => go("create"));
-      $("wl-logout").addEventListener("click", () => { CL.logout(); obCodeSent = false; UI.toast("Sesión cerrada"); go("home"); });
+      $("wl-logout").addEventListener("click", () => { CL.logout(); obCodeSent = false; UI.toast(t("ob.toast.loggedOut")); go("home"); });
     } else { // create
       const backTo = (CL && CL.isLoggedIn()) ? "restore" : "home";
       $("wl-back-create").addEventListener("click", () => go(backTo));
@@ -499,30 +507,30 @@
         const managerName = ($("ob-manager").value || "").trim();
         if (careerType === "national") {
           const natSel = $("ob-national-team");
-          const natTeam = D.NATIONAL_TEAMS.find(t => t.id === natSel.value);
-          if (!natTeam) { UI.toast("Elige una selección", "err"); return; }
-          const rivals = D.NATIONAL_TEAMS.filter(t => t.id !== natTeam.id).map(t => t.name);
+          const natTeam = D.NATIONAL_TEAMS.find(nt => nt.id === natSel.value);
+          if (!natTeam) { UI.toast(t("ob.toast.pickNational"), "err"); return; }
+          const rivals = D.NATIONAL_TEAMS.filter(nt => nt.id !== natTeam.id).map(nt => nt.name);
           createData = {
             name: natTeam.name, clubName: natTeam.name,
-            leagueId: "national", leagueName: natTeam.confederation + " · Selecciones",
+            leagueId: "national", leagueName: t("ob.fallback.national", { conf: natTeam.confederation }),
             country: natTeam.country, teams: [natTeam.name, ...rivals],
             managerName, startYear, isNational: true,
           };
         } else {
           const club = ($("ob-club").value || "").trim();
-          if (!club) { UI.toast("Escribe el nombre de tu club", "err"); return; }
+          if (!club) { UI.toast(t("ob.toast.clubName"), "err"); return; }
           const lid = leagueSel.value;
           const league = D.LEAGUES.find(l => l.id === lid);
           let teams = league ? league.teams.slice() : [];
           if (lid === "custom") teams = $("ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
           if (!teams.includes(club)) teams.unshift(club);
           createData = {
-            name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : "Liga",
+            name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : t("ob.fallback.league"),
             country: league ? league.country : "", teams, managerName, startYear,
           };
         }
         S.createCareer(createData);
-        UI.toast("¡Carrera creada! A por la gloria ⚽", "ok");
+        UI.toast(t("ob.toast.created"), "ok");
         if (CL && CL.isLoggedIn()) { try { await CL.push(); } catch (e) { /* la nube es best-effort */ } }
         finish();
       });

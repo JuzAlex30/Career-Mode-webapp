@@ -10,7 +10,7 @@ const here = __dirname;
 const read = (f) => fs.readFileSync(path.join(here, f), "utf8");
 
 const css = read("styles.css");
-const js = ["js/data.js", "js/rosters.js", "js/core.js", "js/cloud.js", "js/views.js", "js/app.js"].map(read).join("\n\n/* ───────── */\n\n");
+const js = ["js/i18n.js", "js/data.js", "js/rosters.js", "js/core.js", "js/cloud.js", "js/views.js", "js/app.js"].map(read).join("\n\n/* ───────── */\n\n");
 
 // Seguridad: un cierre </script> dentro del JS rompería el bloque inline.
 const safeJs = js.replace(/<\/script>/gi, "<\\/script>");
@@ -22,39 +22,43 @@ const BODY = `
         <img src="logo.png" width="40" height="40" style="border-radius:11px;flex:none" alt="Boardroom">
         <div class="brand-text">
           <strong>Boardroom</strong>
-          <span>Modo Carrera Companion</span>
+          <span data-i18n="brand.tagline">Modo Carrera Companion</span>
         </div>
       </div>
       <div class="career-switch" id="careerSwitch"></div>
       <nav class="nav" id="mainNav">
-        <a class="nav-item" data-route="dashboard"><span class="ni-icon" data-icon="home"></span><span>Panel</span></a>
-        <a class="nav-item" data-route="matches"><span class="ni-icon" data-icon="ball"></span><span>Partidos</span></a>
-        <a class="nav-item" data-route="standings"><span class="ni-icon" data-icon="table"></span><span>Clasificación</span></a>
-        <a class="nav-item" data-route="rivales"><span class="ni-icon" data-icon="shield"></span><span>Rivales</span></a>
-        <div class="nav-label">Club</div>
-        <a class="nav-item" data-route="squad"><span class="ni-icon" data-icon="shirt"></span><span>Plantilla</span></a>
-        <a class="nav-item" data-route="youth"><span class="ni-icon" data-icon="sprout"></span><span>Academia</span></a>
-        <a class="nav-item" data-route="finance"><span class="ni-icon" data-icon="coin"></span><span>Finanzas</span></a>
-        <div class="nav-label">Carrera</div>
-        <a class="nav-item" data-route="challenges"><span class="ni-icon" data-icon="target"></span><span>Retos</span></a>
-        <a class="nav-item" data-route="story"><span class="ni-icon" data-icon="news"></span><span>Narrativa</span></a>
-        <a class="nav-item" data-route="viajes"><span class="ni-icon" data-icon="plane"></span><span>Viajes</span></a>
-        <a class="nav-item" data-route="history"><span class="ni-icon" data-icon="trophy"></span><span>Historia</span></a>
-        <div class="nav-label">Herramientas</div>
-        <a class="nav-item" data-route="scouting"><span class="ni-icon" data-icon="search"></span><span>Scouting</span></a>
-        <a class="nav-item" data-route="tools"><span class="ni-icon" data-icon="dice"></span><span>Generador</span></a>
+        <a class="nav-item" data-route="dashboard"><span class="ni-icon" data-icon="home"></span><span data-i18n="nav.dashboard">Panel</span></a>
+        <a class="nav-item" data-route="matches"><span class="ni-icon" data-icon="ball"></span><span data-i18n="nav.matches">Partidos</span></a>
+        <a class="nav-item" data-route="standings"><span class="ni-icon" data-icon="table"></span><span data-i18n="nav.standings">Clasificación</span></a>
+        <a class="nav-item" data-route="rivales"><span class="ni-icon" data-icon="shield"></span><span data-i18n="nav.rivals">Rivales</span></a>
+        <div class="nav-label" data-i18n="navlabel.club">Club</div>
+        <a class="nav-item" data-route="squad"><span class="ni-icon" data-icon="shirt"></span><span data-i18n="nav.squad">Plantilla</span></a>
+        <a class="nav-item" data-route="youth"><span class="ni-icon" data-icon="sprout"></span><span data-i18n="nav.youth">Academia</span></a>
+        <a class="nav-item" data-route="finance"><span class="ni-icon" data-icon="coin"></span><span data-i18n="nav.finance">Finanzas</span></a>
+        <div class="nav-label" data-i18n="navlabel.career">Carrera</div>
+        <a class="nav-item" data-route="challenges"><span class="ni-icon" data-icon="target"></span><span data-i18n="nav.challenges">Retos</span></a>
+        <a class="nav-item" data-route="story"><span class="ni-icon" data-icon="news"></span><span data-i18n="nav.story">Narrativa</span></a>
+        <a class="nav-item" data-route="viajes"><span class="ni-icon" data-icon="plane"></span><span data-i18n="nav.travel">Viajes</span></a>
+        <a class="nav-item" data-route="history"><span class="ni-icon" data-icon="trophy"></span><span data-i18n="nav.history">Historia</span></a>
+        <div class="nav-label" data-i18n="navlabel.tools">Herramientas</div>
+        <a class="nav-item" data-route="scouting"><span class="ni-icon" data-icon="search"></span><span data-i18n="nav.scouting">Scouting</span></a>
+        <a class="nav-item" data-route="tools"><span class="ni-icon" data-icon="dice"></span><span data-i18n="nav.tools">Generador</span></a>
       </nav>
       <div class="nav-bottom">
-        <a class="nav-item" data-route="cloud"><span class="ni-icon" data-icon="cloud"></span><span>Comunidad</span></a>
-        <a class="nav-item" data-route="settings"><span class="ni-icon" data-icon="gear"></span><span>Ajustes y datos</span></a>
-        <button class="theme-toggle" id="themeToggle" title="Cambiar tema"><span class="ni-icon" data-icon="moon"></span></button>
-        <div class="nav-legal">Proyecto de fans no oficial · sin relación con EA Sports, EA Sports FC ni la FIFA</div>
+        <a class="nav-item" data-route="cloud"><span class="ni-icon" data-icon="cloud"></span><span data-i18n="nav.community">Comunidad</span></a>
+        <a class="nav-item" data-route="settings"><span class="ni-icon" data-icon="gear"></span><span data-i18n="nav.settings">Ajustes y datos</span></a>
+        <div class="lang-switch" id="langSwitch">
+          <button type="button" data-lang="es">ES</button>
+          <button type="button" data-lang="en">EN</button>
+        </div>
+        <button class="theme-toggle" id="themeToggle" data-i18n-title="chrome.themeToggle" title="Cambiar tema"><span class="ni-icon" data-icon="moon"></span></button>
+        <div class="nav-legal" data-i18n="navlabel.legal">Proyecto de fans no oficial · sin relación con EA Sports, EA Sports FC ni la FIFA</div>
       </div>
     </aside>
     <header class="topbar">
-      <button class="icon-btn" id="menuBtn" aria-label="Menú"><span class="ni-icon" data-icon="menu"></span></button>
+      <button class="icon-btn" id="menuBtn" data-i18n-aria="chrome.menu" aria-label="Menú"><span class="ni-icon" data-icon="menu"></span></button>
       <div class="topbar-title" id="topbarTitle">Panel</div>
-      <button class="btn btn-primary btn-sm" id="topbarAddMatch"><span class="ni-icon" data-icon="plus"></span> Partido</button>
+      <button class="btn btn-primary btn-sm" id="topbarAddMatch"><span class="ni-icon" data-icon="plus"></span> <span data-i18n="chrome.addMatch">Partido</span></button>
     </header>
     <main class="content" id="content" tabindex="-1"></main>
   </div>
