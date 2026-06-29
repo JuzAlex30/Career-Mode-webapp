@@ -1079,7 +1079,7 @@
     ctx.fillText("Boardroom", W-40, H-16);
     ctx.fillStyle = "#62748c"; ctx.font = `17px ${FONT}`;
     ctx.textAlign = "left";
-    ctx.fillText("Compañero del Modo Carrera · EA Sports FC", 40, H-16);
+    ctx.fillText(FC.t("card.tagline"), 40, H-16);
 
     return cv;
   }
@@ -1091,10 +1091,10 @@
     const cv = generateSeasonCard(c, season, pos, sum, agg);
     const body = `<div style="text-align:center">
       <canvas id="share-cv" style="max-width:100%;border-radius:10px;display:block;margin:0 auto"></canvas>
-      <p style="color:var(--text-dim);font-size:13px;margin:10px 0 0">Descarga la imagen y compártela donde quieras.</p>
+      <p style="color:var(--text-dim);font-size:13px;margin:10px 0 0">${FC.t("share.cardHint")}</p>
     </div>`;
-    UI.openModal("Compartir · Temporada " + U.esc(season.label), body,
-      `<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="share-dl"><span class="ni-icon" data-icon="download"></span> Descargar PNG</button>`, { lg: true });
+    UI.openModal(FC.t("share.title", { label: U.esc(season.label) }), body,
+      `<button class="btn btn-ghost" data-close>${FC.t("common.close")}</button><button class="btn btn-primary" id="share-dl"><span class="ni-icon" data-icon="download"></span> ${FC.t("share.downloadPng")}</button>`, { lg: true });
     const mc = document.getElementById("share-cv");
     mc.width = cv.width; mc.height = cv.height;
     mc.getContext("2d").drawImage(cv, 0, 0);
@@ -1112,6 +1112,7 @@
      DASHBOARD
      ============================================================ */
   FC.views.dashboard = function () {
+    const T = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const sum = S.seasonSummary(c, season);
@@ -1157,44 +1158,44 @@
     const foQ = (x) => x >= 10 ? x.toFixed(1).replace(".",",") : x.toFixed(2).replace(".",",");
     const finAlert = fin.hasBudget
       ? (fin.remaining < 0
-          ? alertRow("coin", "Presupuesto excedido en " + U.money(-fin.remaining), "danger", "finance")
+          ? alertRow("coin", T("dash.alert.budgetOver", { amount: U.money(-fin.remaining) }), "danger", "finance")
           : fin.remaining < fin.budget * 0.1
-            ? alertRow("coin", "Te queda " + U.money(fin.remaining) + " de presupuesto", "warn", "finance")
-            : alertRow("coin", U.money(fin.remaining) + " de presupuesto disponible", "ok", "finance"))
+            ? alertRow("coin", T("dash.alert.budgetLow", { amount: U.money(fin.remaining) }), "warn", "finance")
+            : alertRow("coin", T("dash.alert.budgetOk", { amount: U.money(fin.remaining) }), "ok", "finance"))
       : "";
 
     UI.mount(`
       <div class="page-head">
         <div>
           <h1>${U.esc(c.clubName)}</h1>
-          <div class="sub">${c.isNational ? "🌍 Selección Nacional" : U.esc(c.leagueName)} · Temporada ${U.esc(season.label)}${c.managerName ? " · " + U.esc(c.managerName) : ""}</div>
+          <div class="sub">${c.isNational ? T("dash.national") : U.esc(c.leagueName)} · ${T("dash.season", { label: U.esc(season.label) })}${c.managerName ? " · " + U.esc(c.managerName) : ""}</div>
         </div>
         <div class="flex gap center wrap">
           ${seasonSelect(c)}
-          <button class="btn btn-ghost" id="dash-live"><span class="ni-icon" data-icon="play"></span> Modo en vivo</button>
-          ${sum.played > 0 ? `<button class="btn btn-ghost btn-sm" id="dash-share" title="Compartir temporada"><span class="ni-icon" data-icon="star"></span></button>` : ""}
-          <button class="btn btn-primary" id="dash-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button>
+          <button class="btn btn-ghost" id="dash-live"><span class="ni-icon" data-icon="play"></span> ${T("dash.liveMode")}</button>
+          ${sum.played > 0 ? `<button class="btn btn-ghost btn-sm" id="dash-share" title="${T("dash.shareSeason")}"><span class="ni-icon" data-icon="star"></span></button>` : ""}
+          <button class="btn btn-primary" id="dash-add"><span class="ni-icon" data-icon="plus"></span> ${T("dash.registerMatch")}</button>
         </div>
       </div>
 
       ${nextM ? `<div class="card next-match" id="dash-next" style="cursor:pointer">
         <div class="nm-left"><span class="ni-icon" data-icon="calendar"></span>
-          <div><div class="nm-label">Próximo partido${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
-          <div class="nm-teams">${teamDot(nextM.home||"")}${U.esc(nextM.home||"—")} <span class="nm-vs">vs</span> ${teamDot(nextM.away||"")}${U.esc(nextM.away||"—")}</div>
+          <div><div class="nm-label">${T("dash.nextMatch")}${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
+          <div class="nm-teams">${teamDot(nextM.home||"")}${U.esc(nextM.home||"—")} <span class="nm-vs">${T("common.vs")}</span> ${teamDot(nextM.away||"")}${U.esc(nextM.away||"—")}</div>
           ${nextOdds ? `<div class="nm-odds-strip"><span class="nmos-bm"><span class="nmos-bm-mark">B</span>BETMÁX</span><span class="nmos ok">${foQ(nextOdds.best.home)}</span><span class="nmos-sep">·</span><span class="nmos dim">${foQ(nextOdds.best.draw)}</span><span class="nmos-sep">·</span><span class="nmos bl">${foQ(nextOdds.best.away)}</span></div>` : ""}
           </div></div>
         </div>
         <div class="flex gap center">
-          ${canScout ? `<button class="btn btn-ghost btn-sm" id="dash-next-scout"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
-          <button class="btn btn-ghost btn-sm" id="dash-next-odds"><span class="ni-icon" data-icon="coin"></span> Cuotas</button>
-          ${nextM.away === c.clubName ? `<button class="btn btn-ghost btn-sm" id="dash-next-trip"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
-          <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> Registrar resultado</button>
+          ${canScout ? `<button class="btn btn-ghost btn-sm" id="dash-next-scout"><span class="ni-icon" data-icon="shield"></span> ${T("dash.analyze")}</button>` : ""}
+          <button class="btn btn-ghost btn-sm" id="dash-next-odds"><span class="ni-icon" data-icon="coin"></span> ${T("dash.odds")}</button>
+          ${nextM.away === c.clubName ? `<button class="btn btn-ghost btn-sm" id="dash-next-trip"><span class="ni-icon" data-icon="plane"></span> ${T("dash.trip")}</button>` : ""}
+          <button class="btn btn-primary btn-sm" id="dash-next-play"><span class="ni-icon" data-icon="ball"></span> ${T("dash.registerResult")}</button>
         </div>
       </div>` : ""}
       ${lastMatchCronica ? `<div class="card" id="dash-cronica-flash" style="margin:10px 0 0;border-left:3px solid ${lastMatchCronica.color};padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer">
         <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
           <span style="font:700 10px var(--font-sans);letter-spacing:.12em;color:${lastMatchCronica.color}">${U.esc(lastMatchCronica.outlet)}</span>
-          <span style="font:600 9px var(--font-sans);letter-spacing:.08em;color:${lastMatchCronica.color};background:${lastMatchCronica.color}22;padding:1px 5px;border-radius:2px">NUEVA PORTADA</span>
+          <span style="font:600 9px var(--font-sans);letter-spacing:.08em;color:${lastMatchCronica.color};background:${lastMatchCronica.color}22;padding:1px 5px;border-radius:2px">${T("dash.newCover")}</span>
         </div>
         <span style="font:500 14px var(--font-serif);line-height:1.2;flex:1">${U.esc(lastMatchCronica.titular)}</span>
         <span class="ni-icon" data-icon="chevron-right" style="flex-shrink:0;color:var(--text-dim)"></span>
@@ -1205,20 +1206,20 @@
       </div>` : ""}
 
       <div class="grid cols-4 keep-2">
-        ${statTile("Posición liga", pos ? pos.pos + "º" : "—", pos ? "de " + pos.total : "Registra partidos")}
-        ${statTile("Puntos", sum.points, sum.played + " partidos")}
-        ${statTile("% Victorias", sum.winPct + "%", sum.w + "V " + sum.d + "E " + sum.l + "D")}
-        ${statTile("Goles", sum.gf + ":" + sum.ga, "Dif " + (sum.gd >= 0 ? "+" : "") + sum.gd)}
+        ${statTile(T("dash.stat.position"), pos ? pos.pos + "º" : "—", pos ? T("dash.stat.positionOf", { total: pos.total }) : T("dash.stat.positionEmpty"))}
+        ${statTile(T("dash.stat.points"), sum.points, T("dash.stat.matchesN", { n: sum.played }))}
+        ${statTile(T("dash.stat.winPct"), sum.winPct + "%", T("dash.stat.wdl", { w: sum.w, d: sum.d, l: sum.l }))}
+        ${statTile(T("dash.stat.goals"), sum.gf + ":" + sum.ga, T("dash.stat.diff", { gd: (sum.gd >= 0 ? "+" : "") + sum.gd }))}
       </div>
 
       <div class="grid cols-2" style="margin-top:16px">
         <div class="card">
-          <div class="card-head"><h3><span class="ni-icon" data-icon="ball"></span> Últimos partidos</h3>
+          <div class="card-head"><h3><span class="ni-icon" data-icon="ball"></span> ${T("dash.lastMatches")}</h3>
             <div class="flex gap center">${CH.formBar(last5)}</div></div>
           <div id="dash-fixtures"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h3><span class="ni-icon" data-icon="target"></span> Objetivos de la junta</h3>
+          <div class="card-head"><h3><span class="ni-icon" data-icon="target"></span> ${T("dash.boardObjectives")}</h3>
             <button class="btn btn-ghost btn-sm" id="dash-add-obj"><span class="ni-icon" data-icon="plus"></span></button></div>
           <div id="dash-objs"></div>
         </div>
@@ -1226,45 +1227,45 @@
 
       <div class="grid cols-3 keep-2" style="margin-top:16px">
         <div class="card">
-          <div class="card-head"><h3><span class="ni-icon" data-icon="table"></span> Evolución en liga</h3></div>
-          ${pointsSeries.length > 1 ? CH.line(pointsSeries, { h: 96 }) : `<p class="faint">Registra partidos de liga para ver tu progresión.</p>`}
-          <div class="faint" style="font-size:12px;margin-top:6px">Puntos acumulados</div>
+          <div class="card-head"><h3><span class="ni-icon" data-icon="table"></span> ${T("dash.leagueProgress")}</h3></div>
+          ${pointsSeries.length > 1 ? CH.line(pointsSeries, { h: 96 }) : `<p class="faint">${T("dash.leagueProgressEmpty")}</p>`}
+          <div class="faint" style="font-size:12px;margin-top:6px">${T("dash.cumPoints")}</div>
         </div>
         ${miniStandingsHtml ? `<div class="card tight" id="dash-mini-st" style="cursor:pointer">
-          <div class="card-head"><h3><span class="ni-icon" data-icon="trophy"></span> Clasificación</h3></div>
+          <div class="card-head"><h3><span class="ni-icon" data-icon="trophy"></span> ${T("dash.standings")}</h3></div>
           <div class="table-wrap"><table class="tbl"><tbody>${miniStandingsHtml}</tbody></table></div>
         </div>` : ""}
         <div class="card">
-          <div class="card-head"><h3><span class="ni-icon" data-icon="bell"></span> Alertas</h3></div>
+          <div class="card-head"><h3><span class="ni-icon" data-icon="bell"></span> ${T("dash.alerts")}</h3></div>
           <div class="list">
-            ${luck ? alertRow("growth", luck.diff >= 2 ? ("Rindes +" + f1(luck.diff) + " pts sobre tu xG — puede corregirse") : luck.diff <= -2 ? ("Mereces " + f1(-luck.diff) + " pts más según tu xG — mala suerte") : ("Resultados acordes a tu xG (xPts " + f1(luck.xpts) + ")"), Math.abs(luck.diff) >= 2 ? "warn" : "ok", "matches") : ""}
-            ${alertRow("flag", violations ? violations + " infracción(es) de reto activas" : "Sin infracciones de reto", violations ? "danger" : "ok", "challenges")}
-            ${alertRow("coin", expiring.length ? expiring.length + " contrato(s) a vencer" : "Sin contratos urgentes", expiring.length ? "warn" : "ok", "squad")}
+            ${luck ? alertRow("growth", luck.diff >= 2 ? T("dash.luck.over", { n: f1(luck.diff) }) : luck.diff <= -2 ? T("dash.luck.under", { n: f1(-luck.diff) }) : T("dash.luck.par", { x: f1(luck.xpts) }), Math.abs(luck.diff) >= 2 ? "warn" : "ok", "matches") : ""}
+            ${alertRow("flag", violations ? T("dash.alert.violations", { n: violations }) : T("dash.alert.noViolations"), violations ? "danger" : "ok", "challenges")}
+            ${alertRow("coin", expiring.length ? T("dash.alert.expiring", { n: expiring.length }) : T("dash.alert.noExpiring"), expiring.length ? "warn" : "ok", "squad")}
             ${finAlert}
-            ${alertRow("trophy", (c.trophies||[]).filter(t=>t.seasonId===season.id&&t.result==="winner").length + " título(s) esta temporada", "ok", "history")}
-            ${injuries.length ? alertRow("bandage", injuries.length + " jugador" + (injuries.length > 1 ? "es" : "") + " lesionado" + (injuries.length > 1 ? "s" : ""), "danger", "squad") : ""}
-            ${pol && pol.tension >= 25 ? alertRow("shield", pol.level + " política: " + (pol.events[0] ? pol.events[0].text : "Tensión en el vestuario"), pol.levelTone, "squad") : ""}
+            ${alertRow("trophy", T("dash.alert.titles", { n: (c.trophies||[]).filter(tr=>tr.seasonId===season.id&&tr.result==="winner").length }), "ok", "history")}
+            ${injuries.length ? alertRow("bandage", T("dash.alert.injuries", { n: injuries.length }), "danger", "squad") : ""}
+            ${pol && pol.tension >= 25 ? alertRow("shield", T("dash.alert.politics", { level: pol.level, text: (pol.events[0] ? pol.events[0].text : T("dash.alert.politicsDefault")) }), pol.levelTone, "squad") : ""}
           </div>
         </div>
       </div>
 
       ${(!ms.length && !(c.players||[]).length) ? `
       <div class="card" style="margin-top:16px">
-        <div class="card-head"><h3><span class="ni-icon" data-icon="star"></span> Primeros pasos</h3></div>
+        <div class="card-head"><h3><span class="ni-icon" data-icon="star"></span> ${T("dash.firstSteps")}</h3></div>
         <div class="list">
           <div class="list-row" data-goto="squad" style="cursor:pointer">
             <span class="ni-icon" data-icon="shirt" style="color:var(--accent)"></span>
-            <div class="lr-main"><b>Añade tu plantilla</b><small class="faint">Registra tus jugadores para seguir sus stats y desarrollo</small></div>
+            <div class="lr-main"><b>${T("dash.fs.squad.t")}</b><small class="faint">${T("dash.fs.squad.d")}</small></div>
             <span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>
           </div>
           <div class="list-row" id="dash-first-match" style="cursor:pointer">
             <span class="ni-icon" data-icon="ball" style="color:var(--accent)"></span>
-            <div class="lr-main"><b>Registra tu primer partido</b><small class="faint">El Panel, la Clasificación y la Narrativa se alimentan de tus resultados</small></div>
+            <div class="lr-main"><b>${T("dash.fs.match.t")}</b><small class="faint">${T("dash.fs.match.d")}</small></div>
             <span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>
           </div>
           <div class="list-row" data-goto="challenges" style="cursor:pointer">
             <span class="ni-icon" data-icon="target" style="color:var(--accent)"></span>
-            <div class="lr-main"><b>Activa un reto o logro</b><small class="faint">Pon reglas a tu carrera para hacerla más desafiante</small></div>
+            <div class="lr-main"><b>${T("dash.fs.challenge.t")}</b><small class="faint">${T("dash.fs.challenge.d")}</small></div>
             <span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>
           </div>
         </div>
@@ -1273,7 +1274,7 @@
 
     // fixtures
     const fx = document.getElementById("dash-fixtures");
-    if (!ms.length) fx.innerHTML = `<p class="faint">Aún no has registrado partidos. Pulsa “Registrar partido”.</p>`;
+    if (!ms.length) fx.innerHTML = `<p class="faint">${T("dash.fixturesEmpty")}</p>`;
     else fx.innerHTML = ms.slice(0, 6).map(m => fixtureRow(c, m)).join("");
 
     // objectives
@@ -1313,7 +1314,7 @@
   function renderObjectives(c, season) {
     const box = document.getElementById("dash-objs");
     const objs = season.boardObjectives || [];
-    if (!objs.length) { box.innerHTML = `<p class="faint">Añade los objetivos que te marcó el club esta temporada.</p>`; return; }
+    if (!objs.length) { box.innerHTML = `<p class="faint">${FC.t("dash.objsEmpty")}</p>`; return; }
     box.innerHTML = objs.map(o => {
       const pct = o.target ? U.clamp(Math.round((Number(o.current) / Number(o.target)) * 100), 0, 100) : (o.current ? 100 : 0);
       return `<div class="obj-row">
@@ -4662,11 +4663,11 @@
     const g = S.userGoals(c, m); const r = S.userResult(c, m);
     const cls = r === "W" ? "win" : r === "L" ? "loss" : "";
     return `<div class="fixture" data-match="${m.id}" style="cursor:pointer">
-      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}${m.formation ? ` <span class="chip" style="font-size:10px;padding:1px 5px;opacity:.75">${U.esc(m.formation)}</span>` : ""}${m.tag ? ` <span class="chip ${U.esc(m.tag)}" style="font-size:10px;padding:1px 6px">${m.tag==="derbi"?"🔥 Derbi":m.tag==="final"?"🏆 Final":"⭐ Clásico"}</span>` : ""}</span>
+      <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}${m.stats ? ` <span class="ni-icon" data-icon="growth" style="width:12px;height:12px;vertical-align:-1px;color:var(--accent)"></span>` : ""}${m.formation ? ` <span class="chip" style="font-size:10px;padding:1px 5px;opacity:.75">${U.esc(m.formation)}</span>` : ""}${m.tag ? ` <span class="chip ${U.esc(m.tag)}" style="font-size:10px;padding:1px 6px">${m.tag==="derbi"?FC.t("fx.derby"):m.tag==="final"?FC.t("fx.final"):FC.t("fx.classic")}</span>` : ""}</span>
       <div class="fx-teams"><span class="t" style="${m.home===c.clubName?"font-weight:700":""}">${teamDot(m.home)}${U.esc(m.home)}</span>
         <span class="fx-score ${cls}">${m.homeScore}-${m.awayScore}</span>
         <span class="t away" style="${m.away===c.clubName?"font-weight:700":""}">${teamDot(m.away)}${U.esc(m.away)}</span></div>
-      <button class="icon-btn sm" data-cronica="${m.id}" title="Crónica del partido" style="flex-shrink:0"><span class="ni-icon" data-icon="book"></span></button>
+      <button class="icon-btn sm" data-cronica="${m.id}" title="${FC.t("fx.cronicaTitle")}" style="flex-shrink:0"><span class="ni-icon" data-icon="book"></span></button>
       ${withDelete ? `<button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>` : `<span class="faint" style="font-size:11px;width:60px;text-align:right">${U.fmtDate(m.date)}</span>`}</div>`;
   }
   function upcomingRow(c, m) {
