@@ -1070,52 +1070,53 @@
     const h = S.rivalHistory(c, rival);
     if (!h) return null;
     const a = h.all, st = h.stats;
-    const f1 = (n) => (Math.round(n * 10) / 10).toFixed(1).replace(".", ",");
+    const _isEN = FC.i18n && FC.i18n.get() === "en";
+    const f1 = (n) => _isEN ? (Math.round(n * 10) / 10).toFixed(1) : (Math.round(n * 10) / 10).toFixed(1).replace(".", ",");
     const gfpg = a.pj ? a.gf / a.pj : 0, gapg = a.pj ? a.ga / a.pj : 0;
     const insights = [];
     const add = (tone, icon, title, text) => insights.push({ tone, icon, title, text });
 
     // Veredicto general.
     let verdict;
-    if (a.pj >= 2 && a.ppg >= 2.0) verdict = { tone: "good", title: "Rival propicio", text: `Dominas el cara a cara: ${a.w}V-${a.d}E-${a.l}D y ${f1(a.ppg)} pts por partido. Sal a por ellos con tu plan habitual.` };
-    else if (a.pj >= 2 && a.ppg <= 1.0) verdict = { tone: "bad", title: "Bestia negra", text: `Se te atraganta: solo ${f1(a.ppg)} pts por partido (${a.w}V-${a.d}E-${a.l}D). Toca plantear el duelo con cabeza.` };
-    else if (a.pj >= 2) verdict = { tone: "neutral", title: "Duelo igualado", text: `Enfrentamiento parejo: ${a.w}V-${a.d}E-${a.l}D, ${f1(a.ppg)} pts/partido. Los detalles deciden.` };
-    else verdict = { tone: "neutral", title: "Primer análisis", text: `Solo os habéis enfrentado ${a.pj} vez. El análisis táctico se afinará con más duelos.` };
+    if (a.pj >= 2 && a.ppg >= 2.0) verdict = { tone: "good", title: _isEN ? "Favourable matchup" : "Rival propicio", text: _isEN ? `You dominate head-to-head: ${a.w}W-${a.d}D-${a.l}L and ${f1(a.ppg)} pts per game. Go out with your usual plan and impose yourself.` : `Dominas el cara a cara: ${a.w}V-${a.d}E-${a.l}D y ${f1(a.ppg)} pts por partido. Sal a por ellos con tu plan habitual.` };
+    else if (a.pj >= 2 && a.ppg <= 1.0) verdict = { tone: "bad", title: _isEN ? "Bogey side" : "Bestia negra", text: _isEN ? `They give you trouble: only ${f1(a.ppg)} pts per game (${a.w}W-${a.d}D-${a.l}L). Think carefully before setting up against them.` : `Se te atraganta: solo ${f1(a.ppg)} pts por partido (${a.w}V-${a.d}E-${a.l}D). Toca plantear el duelo con cabeza.` };
+    else if (a.pj >= 2) verdict = { tone: "neutral", title: _isEN ? "Evenly matched" : "Duelo igualado", text: _isEN ? `A balanced rivalry: ${a.w}W-${a.d}D-${a.l}L, ${f1(a.ppg)} pts/game. The fine margins will decide it.` : `Enfrentamiento parejo: ${a.w}V-${a.d}E-${a.l}D, ${f1(a.ppg)} pts/partido. Los detalles deciden.` };
+    else verdict = { tone: "neutral", title: _isEN ? "Early days" : "Primer análisis", text: _isEN ? `You've only faced them ${a.pj} time. The tactical picture will sharpen with more meetings.` : `Solo os habéis enfrentado ${a.pj} vez. El análisis táctico se afinará con más duelos.` };
 
     // Localía.
     if (h.home.pj >= 2 && h.away.pj >= 2) {
-      if (h.home.ppg - h.away.ppg >= 0.7) add("bad", "plane", "Sufres a domicilio", `En su campo promedias ${f1(h.away.ppg)} pts (${h.away.w}V-${h.away.d}E-${h.away.l}D) frente a ${f1(h.home.ppg)} en casa. Plantea la visita con prudencia: no encajar primero y atacar las transiciones.`);
-      else if (h.away.ppg - h.home.ppg >= 0.7) add("good", "plane", "Mejor en su campo", `Curiosamente rindes más fuera (${f1(h.away.ppg)} pts) que en casa (${f1(h.home.ppg)}). Cuando ellos te visiten, no te confíes.`);
+      if (h.home.ppg - h.away.ppg >= 0.7) add("bad", "plane", _isEN ? "Struggle away" : "Sufres a domicilio", _isEN ? `At their ground you average ${f1(h.away.ppg)} pts (${h.away.w}W-${h.away.d}D-${h.away.l}L) vs ${f1(h.home.ppg)} at home. Approach the trip with caution — don't concede first and look to exploit transitions.` : `En su campo promedias ${f1(h.away.ppg)} pts (${h.away.w}V-${h.away.d}E-${h.away.l}D) frente a ${f1(h.home.ppg)} en casa. Plantea la visita con prudencia: no encajar primero y atacar las transiciones.`);
+      else if (h.away.ppg - h.home.ppg >= 0.7) add("good", "plane", _isEN ? "Better away" : "Mejor en su campo", _isEN ? `Interestingly you perform better on the road (${f1(h.away.ppg)} pts) than at home (${f1(h.home.ppg)}). Don't get complacent when they visit you.` : `Curiosamente rindes más fuera (${f1(h.away.ppg)} pts) que en casa (${f1(h.home.ppg)}). Cuando ellos te visiten, no te confíes.`);
     }
     // Defensa.
-    if (a.pj >= 3 && gapg >= 2) add("bad", "flame", "Defensa vulnerable", `Les encajas ${f1(gapg)} goles por partido. Refuerza el centro con un pivote extra y vigila las espaldas de tus laterales.`);
-    if (a.pj >= 3 && h.cleanSheets / a.pj >= 0.5) add("good", "check", "Muro defensivo", `Dejas la portería a cero en ${h.cleanSheets} de ${a.pj} duelos. Tu bloque les anula: mantén la solidez.`);
+    if (a.pj >= 3 && gapg >= 2) add("bad", "flame", _isEN ? "Leaky defence" : "Defensa vulnerable", _isEN ? `You concede ${f1(gapg)} goals per game against them. Add an extra holding midfielder and keep a close eye on the space in behind your fullbacks.` : `Les encajas ${f1(gapg)} goles por partido. Refuerza el centro con un pivote extra y vigila las espaldas de tus laterales.`);
+    if (a.pj >= 3 && h.cleanSheets / a.pj >= 0.5) add("good", "check", _isEN ? "Defensive wall" : "Muro defensivo", _isEN ? `You've kept ${h.cleanSheets} clean sheets in ${a.pj} games against them. Your defensive shape nullifies them — keep it.` : `Dejas la portería a cero en ${h.cleanSheets} de ${a.pj} duelos. Tu bloque les anula: mantén la solidez.`);
     // Ataque.
-    if (a.pj >= 3 && gfpg < 1) add("bad", "target", "Te cuesta crear", `Solo marcas ${f1(gfpg)} goles por partido${h.failedToScore ? ` y te quedaste a cero en ${h.failedToScore}` : ""}. Busca amplitud con extremos y aprieta el balón parado.`);
-    if (a.pj >= 3 && gfpg >= 2.2) add("good", "flame", "Les haces daño", `Promedias ${f1(gfpg)} goles por partido. Tu ataque les funciona: mantén la verticalidad y la presión alta.`);
+    if (a.pj >= 3 && gfpg < 1) add("bad", "target", _isEN ? "Hard to break down" : "Te cuesta crear", _isEN ? `You're only scoring ${f1(gfpg)} goals per game${h.failedToScore ? ` and failed to score in ${h.failedToScore} meetings` : ""}. Look to stretch them with wide play and press set pieces hard.` : `Solo marcas ${f1(gfpg)} goles por partido${h.failedToScore ? ` y te quedaste a cero en ${h.failedToScore}` : ""}. Busca amplitud con extremos y aprieta el balón parado.`);
+    if (a.pj >= 3 && gfpg >= 2.2) add("good", "flame", _isEN ? "Attacking threat" : "Les haces daño", _isEN ? `You average ${f1(gfpg)} goals per game against them. Your attack works well here — maintain the vertical pace and a high press.` : `Promedias ${f1(gfpg)} goles por partido. Tu ataque les funciona: mantén la verticalidad y la presión alta.`);
     // Racha reciente.
-    if (h.streak.unbeaten >= 3) add("good", "growth", "Racha a favor", `Llevas ${h.streak.unbeaten} partidos sin perderles. Llegas con la moral alta.`);
-    else if (h.streak.winless >= 3) add("bad", "growth", "Racha en contra", `Acumulas ${h.streak.winless} duelos sin ganarles. Cambia algo del plan que venías usando.`);
-    // Stats avanzadas (si hay datos registrados en esos partidos).
+    if (h.streak.unbeaten >= 3) add("good", "growth", _isEN ? "Unbeaten run" : "Racha a favor", _isEN ? `You've gone ${h.streak.unbeaten} games unbeaten against them. Arrive in high spirits.` : `Llevas ${h.streak.unbeaten} partidos sin perderles. Llegas con la moral alta.`);
+    else if (h.streak.winless >= 3) add("bad", "growth", _isEN ? "Winless run" : "Racha en contra", _isEN ? `You've gone ${h.streak.winless} games without beating them. Change something in your approach.` : `Acumulas ${h.streak.winless} duelos sin ganarles. Cambia algo del plan que venías usando.`);
+    // Stats avanzadas.
     if (st) {
       if (st.possession) {
-        if (st.possession.f < 45) add("neutral", "ball", "Te quitan el balón", `Solo tienes el ${f1(st.possession.f)}% de posesión de media. Asume un bloque medio y sal rápido al contraataque en vez de forzar la posesión.`);
-        else if (st.possession.f > 58) add("neutral", "ball", "Dominas el balón", `Acaparas el ${f1(st.possession.f)}% de posesión. Cuidado con dejar espacios a la espalda cuando subas líneas.`);
+        if (st.possession.f < 45) add("neutral", "ball", _isEN ? "Outpossessed" : "Te quitan el balón", _isEN ? `You average only ${f1(st.possession.f)}% possession. Accept a mid-block and look to exploit transitions rather than forcing the ball.` : `Solo tienes el ${f1(st.possession.f)}% de posesión de media. Asume un bloque medio y sal rápido al contraataque en vez de forzar la posesión.`);
+        else if (st.possession.f > 58) add("neutral", "ball", _isEN ? "Ball dominant" : "Dominas el balón", _isEN ? `You hold ${f1(st.possession.f)}% possession on average. Be careful not to leave space in behind when you push lines forward.` : `Acaparas el ${f1(st.possession.f)}% de posesión. Cuidado con dejar espacios a la espalda cuando subas líneas.`);
       }
-      if (st.shots && st.shots.a - st.shots.f >= 3) add("bad", "target", "Te rematan más", `Reciben ${f1(st.shots.a)} remates de media por ${f1(st.shots.f)} tuyos. Ajusta el repliegue y cierra el centro del área.`);
-      if (st.xg && st.xg.a > st.xg.f + 0.3) add("bad", "growth", "Generan más peligro", `Su xG medio (${f1(st.xg.a)}) supera al tuyo (${f1(st.xg.f)}). Concedes ocasiones más claras de las que creas.`);
-      if (st.corners && st.corners.a - st.corners.f >= 3) add("neutral", "flag", "Peligro a balón parado", `Te sacan ${f1(st.corners.a)} córners de media. Refuerza el marcaje en estrategia defensiva.`);
+      if (st.shots && st.shots.a - st.shots.f >= 3) add("bad", "target", _isEN ? "Outshot" : "Te rematan más", _isEN ? `They get ${f1(st.shots.a)} shots per game to your ${f1(st.shots.f)}. Tighten the defensive mid-block and close the central channel.` : `Reciben ${f1(st.shots.a)} remates de media por ${f1(st.shots.f)} tuyos. Ajusta el repliegue y cierra el centro del área.`);
+      if (st.xg && st.xg.a > st.xg.f + 0.3) add("bad", "growth", _isEN ? "Generating more danger" : "Generan más peligro", _isEN ? `Their average xG (${f1(st.xg.a)}) exceeds yours (${f1(st.xg.f)}). You're conceding clearer chances than you're creating.` : `Su xG medio (${f1(st.xg.a)}) supera al tuyo (${f1(st.xg.f)}). Concedes ocasiones más claras de las que creas.`);
+      if (st.corners && st.corners.a - st.corners.f >= 3) add("neutral", "flag", _isEN ? "Set-piece danger" : "Peligro a balón parado", _isEN ? `They earn ${f1(st.corners.a)} corners per game on average. Tighten up your defensive set-piece marking.` : `Te sacan ${f1(st.corners.a)} córners de media. Refuerza el marcaje en estrategia defensiva.`);
       const reds = st.red ? (Number(st.red.f) || 0) + (Number(st.red.a) || 0) : 0;
-      if (reds > 0 || (st.fouls && st.fouls.f >= 14)) add("neutral", "flag", "Partidos calientes", `Son duelos intensos${reds > 0 ? " (ya ha habido expulsiones)" : ""}. Gestiona las entradas y evita amonestaciones tempranas.`);
+      if (reds > 0 || (st.fouls && st.fouls.f >= 14)) add("neutral", "flag", _isEN ? "Heated encounters" : "Partidos calientes", _isEN ? `These are intense affairs${reds > 0 ? " — there have already been red cards" : ""}. Manage your tackles carefully and avoid early bookings.` : `Son duelos intensos${reds > 0 ? " (ya ha habido expulsiones)" : ""}. Gestiona las entradas y evita amonestaciones tempranas.`);
     }
     // Formación más fiable / a evitar.
     const forms = Object.values(h.formations).filter(f => f.pj >= 2);
     let bestFormation = null;
     if (forms.length) {
       bestFormation = forms.slice().sort((x, y) => y.ppg - x.ppg || y.pj - x.pj)[0];
-      if (forms.length > 1 || bestFormation.ppg >= 1.5) add("good", "shirt", "Tu mejor sistema", `Con el ${bestFormation.name} promedias ${f1(bestFormation.ppg)} pts en ${bestFormation.pj} partidos contra ellos. Es tu apuesta más fiable.`);
+      if (forms.length > 1 || bestFormation.ppg >= 1.5) add("good", "shirt", _isEN ? "Best system" : "Tu mejor sistema", _isEN ? `With the ${bestFormation.name} you average ${f1(bestFormation.ppg)} pts in ${bestFormation.pj} games against them. Your most reliable bet.` : `Con el ${bestFormation.name} promedias ${f1(bestFormation.ppg)} pts en ${bestFormation.pj} partidos contra ellos. Es tu apuesta más fiable.`);
       const worst = forms.slice().sort((x, y) => x.ppg - y.ppg)[0];
-      if (forms.length >= 2 && worst.ppg <= 0.75 && worst.name !== bestFormation.name) add("bad", "shirt", "Sistema a evitar", `El ${worst.name} no te ha funcionado (${f1(worst.ppg)} pts en ${worst.pj}). Plantéate otro dibujo.`);
+      if (forms.length >= 2 && worst.ppg <= 0.75 && worst.name !== bestFormation.name) add("bad", "shirt", _isEN ? "System to avoid" : "Sistema a evitar", _isEN ? `The ${worst.name} hasn't worked (${f1(worst.ppg)} pts in ${worst.pj} games). Consider a different shape.` : `El ${worst.name} no te ha funcionado (${f1(worst.ppg)} pts en ${worst.pj}). Plantéate otro dibujo.`);
     }
     return { rival, verdict, insights, bestFormation, sample: a.pj, history: h };
   };
@@ -1346,11 +1347,11 @@
     // Cuota mejorada (incentivo): potencia la mejor cuota del favorito.
     const favKey = fav.even ? "home" : fav.side;
     const fromOdd = best[favKey];
-    const boost = { sel: favKey, label: favKey === "draw" ? "Empate" : (favKey === "home" ? home : away), from: fromOdd, to: snap(fromOdd * (1.12 + rng("boost", 0, 0.13))) };
+    const boost = { sel: favKey, label: favKey === "draw" ? FC.t("betting.drawLabel") : (favKey === "home" ? home : away), from: fromOdd, to: snap(fromOdd * (1.12 + rng("boost", 0, 0.13))) };
     // Combinada sugerida del día (2 patas).
     const combo = { legs: [
-      { sel: favKey, text: "Gana " + (fav.even ? home : fav.name), odd: consensus[favKey] },
-      { sel: "over15", text: "Más de 1.5 goles", odd: extras.over15 },
+      { sel: favKey, text: FC.t("betting.winLabel") + " " + (fav.even ? home : fav.name), odd: consensus[favKey] },
+      { sel: "over15", text: FC.t("betting.over15"), odd: extras.over15 },
     ] };
     combo.odd = snap(combo.legs[0].odd * combo.legs[1].odd);
 
@@ -1366,7 +1367,27 @@
     // 8) Panel de tipsters (4 del pool rotativo, picks deterministas con varianza).
     const tipPool = (DD.TIPSTERS || []).slice();
     const tipsters = [], usedT = {};
-    const tipTexts = {
+    const _isEN = FC.i18n && FC.i18n.get() === "en";
+    const tipTexts = _isEN ? {
+      home: [
+        home + " at home is a different team. Not going against them.",
+        "The numbers add up for the home side. Backing " + home + ".",
+        "Home advantage is the key factor today. My money is on " + home + ".",
+        "The hosts have been in good shape over recent matchdays.",
+      ],
+      draw: [
+        "Very evenly matched. The draw has real value here.",
+        "I can't see either side winning this. Tactical play: the X.",
+        "Evenly balanced forces. In games like this, the draw always lurks.",
+        "Draw odds look interesting given the context of this match.",
+      ],
+      away: [
+        away + " arrive in better form. I'm going with them.",
+        "The away price carries genuine value according to my models.",
+        away + "'s performances on the road have me convinced.",
+        away + "'s recent away record is rock solid. Hard to ignore.",
+      ],
+    } : {
       home: [
         home + " en casa es otro equipo. No me la juego en contra.",
         "Los números me cuadran para el local. Con el " + home + ".",
@@ -1504,11 +1525,11 @@
     else score += 5;
     score = Math.max(0, Math.min(100, Math.round(score)));
     const grade =
-      score >= 80 ? { label: "Sobresaliente", tone: "good",    emoji: "🏆", letter: "A" } :
-      score >= 65 ? { label: "Notable",        tone: "good",    emoji: "👏", letter: "B" } :
-      score >= 50 ? { label: "Aprobado",        tone: "neutral", emoji: "🙂", letter: "C" } :
-      score >= 35 ? { label: "Insuficiente",    tone: "warn",    emoji: "😕", letter: "D" } :
-                    { label: "Decepcionante",   tone: "bad",     emoji: "💢", letter: "E" };
+      score >= 80 ? { label: FC.t("season.grade.A"), tone: "good",    emoji: "🏆", letter: "A" } :
+      score >= 65 ? { label: FC.t("season.grade.B"), tone: "good",    emoji: "👏", letter: "B" } :
+      score >= 50 ? { label: FC.t("season.grade.C"), tone: "neutral", emoji: "🙂", letter: "C" } :
+      score >= 35 ? { label: FC.t("season.grade.D"), tone: "warn",    emoji: "😕", letter: "D" } :
+                    { label: FC.t("season.grade.E"), tone: "bad",     emoji: "💢", letter: "E" };
 
     // Comparación con la temporada anterior.
     const deltas = prevSm ? {
@@ -1520,55 +1541,72 @@
     } : null;
 
     // Veredicto redactado de la junta (referencia datos reales).
-    const posStr = pos ? pos.pos + "º de " + pos.total : null;
-    const trophyStr = sm.trophies > 0 ? (sm.trophies === 1 ? "un título" : sm.trophies + " títulos") : null;
-    const objStr = objTotal ? objMet + " de " + objTotal + " objetivos" : null;
+    const _isEN = FC.i18n && FC.i18n.get() === "en";
+    const _numFmt = (n) => _isEN ? (Math.round(n * 10) / 10).toString() : (Math.round(n * 10) / 10).toString().replace(".", ",");
+    const posStr = pos ? (_isEN ? pos.pos + " / " + pos.total : pos.pos + "º de " + pos.total) : null;
+    const trophyStr = sm.trophies > 0 ? (_isEN ? (sm.trophies === 1 ? "a title" : sm.trophies + " titles") : (sm.trophies === 1 ? "un título" : sm.trophies + " títulos")) : null;
+    const objStr = objTotal ? (_isEN ? objMet + " of " + objTotal + " objectives" : objMet + " de " + objTotal + " objetivos") : null;
     let verdictTitle, verdictText;
-    const base = "La junta directiva ha analizado la temporada " + season.label + ". ";
-    if (grade.tone === "good" && sm.trophies > 0) {
-      verdictTitle = "Temporada para enmarcar";
-      verdictText = base + "El balance de " + sm.w + "V-" + sm.d + "E-" + sm.l + "D" + (posStr ? ", el " + posStr + " en liga" : "") + " y " + trophyStr + " confirman un curso brillante. El club está orgulloso del trabajo realizado y espera que esta exigencia se mantenga.";
-    } else if (grade.tone === "good") {
-      verdictTitle = "Curso muy satisfactorio";
-      verdictText = base + "Con " + sm.points + " puntos" + (posStr ? " y un " + posStr : "") + ", el equipo ha competido a gran nivel" + (objStr ? " (" + objStr + " cumplidos)" : "") + ". La dirección valora la solidez mostrada y confía en dar el siguiente paso.";
-    } else if (grade.tone === "neutral") {
-      verdictTitle = "Balance aceptable, con margen de mejora";
-      verdictText = base + "El " + sm.winPct + "% de victorias" + (posStr ? " y el " + posStr : "") + " dejan una sensación agridulce" + (objStr ? ": " + objStr + " cumplidos" : "") + ". La junta espera un salto de competitividad la próxima campaña.";
-    } else if (grade.tone === "warn") {
-      verdictTitle = "Temporada por debajo de las expectativas";
-      verdictText = base + "Los números — " + sm.w + "V-" + sm.d + "E-" + sm.l + "D" + (posStr ? ", " + posStr : "") + " — se quedan cortos para las aspiraciones del club" + (objStr && objMet < objTotal ? " (solo " + objStr + " cumplidos)" : "") + ". Se exige una reacción clara y un proyecto más sólido.";
+    const _SRE = FC.data.SEASON_REVIEW_EN;
+    const _srFill = (tpl, vars) => tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] != null ? vars[k] : "");
+    const _srVars = { season: season.label, w: sm.w, d: sm.d, l: sm.l, posStr: posStr || "", trophyStr: trophyStr || "", points: sm.points, objStr: objStr || "", winPct: sm.winPct };
+    const _gradeKey = grade.letter;
+    if (_isEN && _SRE) {
+      verdictTitle = _SRE.verdict[_gradeKey].title;
+      verdictText = _srFill(_SRE.verdict[_gradeKey].text, _srVars);
     } else {
-      verdictTitle = "La dirección exige un cambio de rumbo";
-      verdictText = base + "Con apenas " + sm.points + " puntos" + (posStr ? " y un preocupante " + posStr : "") + ", la temporada no ha estado a la altura. La junta reclama medidas inmediatas para enderezar el proyecto deportivo.";
+      const base = "La junta directiva ha analizado la temporada " + season.label + ". ";
+      if (grade.tone === "good" && sm.trophies > 0) {
+        verdictTitle = "Temporada para enmarcar";
+        verdictText = base + "El balance de " + sm.w + "V-" + sm.d + "E-" + sm.l + "D" + (posStr ? ", el " + posStr + " en liga" : "") + " y " + trophyStr + " confirman un curso brillante. El club está orgulloso del trabajo realizado y espera que esta exigencia se mantenga.";
+      } else if (grade.tone === "good") {
+        verdictTitle = "Curso muy satisfactorio";
+        verdictText = base + "Con " + sm.points + " puntos" + (posStr ? " y un " + posStr : "") + ", el equipo ha competido a gran nivel" + (objStr ? " (" + objStr + " cumplidos)" : "") + ". La dirección valora la solidez mostrada y confía en dar el siguiente paso.";
+      } else if (grade.tone === "neutral") {
+        verdictTitle = "Balance aceptable, con margen de mejora";
+        verdictText = base + "El " + sm.winPct + "% de victorias" + (posStr ? " y el " + posStr : "") + " dejan una sensación agridulce" + (objStr ? ": " + objStr + " cumplidos" : "") + ". La junta espera un salto de competitividad la próxima campaña.";
+      } else if (grade.tone === "warn") {
+        verdictTitle = "Temporada por debajo de las expectativas";
+        verdictText = base + "Los números — " + sm.w + "V-" + sm.d + "E-" + sm.l + "D" + (posStr ? ", " + posStr : "") + " — se quedan cortos para las aspiraciones del club" + (objStr && objMet < objTotal ? " (solo " + objStr + " cumplidos)" : "") + ". Se exige una reacción clara y un proyecto más sólido.";
+      } else {
+        verdictTitle = "La dirección exige un cambio de rumbo";
+        verdictText = base + "Con apenas " + sm.points + " puntos" + (posStr ? " y un preocupante " + posStr : "") + ", la temporada no ha estado a la altura. La junta reclama medidas inmediatas para enderezar el proyecto deportivo.";
+      }
     }
 
     // Luces, sombras y consejos (derivados de los datos).
     const highlights = [], concerns = [], advice = [];
     const totalGoals = sm.gf;
-    if (sm.wonLeague)       highlights.push({ icon: "trophy", text: "Campeones de liga: el mayor de los éxitos." });
-    if (sm.wonContinental)  highlights.push({ icon: "trophy", text: "Gloria continental para las vitrinas del club." });
-    if (sm.wonCup)          highlights.push({ icon: "trophy", text: "Título de copa que engrandece la temporada." });
-    if (sm.cleanSheets >= Math.max(5, Math.round(sm.played * 0.35))) highlights.push({ icon: "shield", text: sm.cleanSheets + " porterías a cero: la solidez defensiva fue una seña de identidad." });
-    if (gpg >= 2)           highlights.push({ icon: "ball", text: "Ataque demoledor: " + (Math.round(gpg * 10) / 10).toString().replace(".", ",") + " goles por partido de media." });
-    if (sp && sp.bestScoringStreak >= 5) highlights.push({ icon: "growth", text: "Una racha de " + sp.bestScoringStreak + " partidos seguidos marcando." });
-    if (topScorer)          highlights.push({ icon: "star", text: topScorer.name + " brilló con " + topScorer.goals + " goles esta temporada." });
-    if (deltas && deltas.pos != null && deltas.pos >= 2) highlights.push({ icon: "growth", text: "El equipo ha escalado " + deltas.pos + " puestos respecto a la temporada anterior." });
+    const _sre_h = (_isEN && _SRE) ? _SRE.highlights : null;
+    const _sre_c = (_isEN && _SRE) ? _SRE.concerns : null;
+    const _sre_a = (_isEN && _SRE) ? _SRE.advice : null;
+    const _hi = (icon, key, esText, vars) => highlights.push({ icon, text: _sre_h ? _srFill(_sre_h[key] || esText, vars || {}) : esText });
+    const _co = (icon, key, esText, vars) => concerns.push({ icon, text: _sre_c ? _srFill(_sre_c[key] || esText, vars || {}) : esText });
+    const _ad = (icon, akey, esTitle, esText, vars) => { const t = _sre_a ? _sre_a[akey] : null; advice.push({ icon, title: t ? t.title : esTitle, text: t ? _srFill(t.text, vars || {}) : esText }); };
+    if (sm.wonLeague)       _hi("trophy", "wonLeague", "Campeones de liga: el mayor de los éxitos.");
+    if (sm.wonContinental)  _hi("trophy", "wonContinental", "Gloria continental para las vitrinas del club.");
+    if (sm.wonCup)          _hi("trophy", "wonCup", "Título de copa que engrandece la temporada.");
+    if (sm.cleanSheets >= Math.max(5, Math.round(sm.played * 0.35))) _hi("shield", "cleanSheets", sm.cleanSheets + " porterías a cero: la solidez defensiva fue una seña de identidad.", { cleanSheets: sm.cleanSheets });
+    if (gpg >= 2)           _hi("ball", "attackingGoals", "Ataque demoledor: " + _numFmt(gpg) + " goles por partido de media.", { gpg: _numFmt(gpg) });
+    if (sp && sp.bestScoringStreak >= 5) _hi("growth", "scoringStreak", "Una racha de " + sp.bestScoringStreak + " partidos seguidos marcando.", { bestStreakN: sp.bestScoringStreak });
+    if (topScorer)          _hi("star", "topScorer", topScorer.name + " brilló con " + topScorer.goals + " goles esta temporada.", { topScorerName: topScorer.name, topScorerGoals: topScorer.goals });
+    if (deltas && deltas.pos != null && deltas.pos >= 2) _hi("growth", "posImproved", "El equipo ha escalado " + deltas.pos + " puestos respecto a la temporada anterior.", { deltaPos: deltas.pos });
 
-    if (gapg >= 1.5)        concerns.push({ icon: "flame", text: "Defensa frágil: " + (Math.round(gapg * 10) / 10).toString().replace(".", ",") + " goles encajados por partido." });
-    if (gpg < 1)            concerns.push({ icon: "target", text: "Pegada escasa: menos de un gol por partido de media." });
-    if (sp && sp.longestDrought >= 4) concerns.push({ icon: "target", text: "Una sequía de " + sp.longestDrought + " partidos sin marcar lastró al equipo." });
-    if (objTotal && objMet < objTotal) concerns.push({ icon: "flag", text: (objTotal - objMet) + " de " + objTotal + " objetivos de la junta quedaron sin cumplir." });
-    if (sm.l > sm.w)        concerns.push({ icon: "growth", text: "Más derrotas (" + sm.l + ") que victorias (" + sm.w + "): falta regularidad." });
-    if (deltas && deltas.pos != null && deltas.pos <= -2) concerns.push({ icon: "growth", text: "El equipo ha caído " + Math.abs(deltas.pos) + " puestos respecto al curso anterior." });
+    if (gapg >= 1.5)        _co("flame", "defense", "Defensa frágil: " + _numFmt(gapg) + " goles encajados por partido.", { gapg: _numFmt(gapg) });
+    if (gpg < 1)            _co("target", "attack", "Pegada escasa: menos de un gol por partido de media.");
+    if (sp && sp.longestDrought >= 4) _co("target", "drought", "Una sequía de " + sp.longestDrought + " partidos sin marcar lastró al equipo.", { droughtN: sp.longestDrought });
+    if (objTotal && objMet < objTotal) _co("flag", "objectives", (objTotal - objMet) + " de " + objTotal + " objetivos de la junta quedaron sin cumplir.", { unmetObj: objTotal - objMet, objTotal });
+    if (sm.l > sm.w)        _co("growth", "moreL", "Más derrotas (" + sm.l + ") que victorias (" + sm.w + "): falta regularidad.", { l: sm.l, w: sm.w });
+    if (deltas && deltas.pos != null && deltas.pos <= -2) _co("growth", "posDropped", "El equipo ha caído " + Math.abs(deltas.pos) + " puestos respecto al curso anterior.", { absDeltaPos: Math.abs(deltas.pos) });
 
     // Consejos concretos para la próxima temporada.
-    if (gapg >= 1.4)        advice.push({ icon: "shield", title: "Reforzad la defensa", text: "Encajáis " + (Math.round(gapg * 10) / 10).toString().replace(".", ",") + " goles por partido. Un central de garantías o un pivote defensivo cambiarían la cara del equipo." });
-    if (gpg < 1.2)          advice.push({ icon: "target", title: "Buscad más pegada", text: "El ataque se queda en " + (Math.round(gpg * 10) / 10).toString().replace(".", ",") + " goles por partido. Hace falta un delantero diferencial que resuelva los partidos cerrados." });
-    if (topScorer && totalGoals > 0 && (topScorer.goals / totalGoals) >= 0.4) advice.push({ icon: "growth", title: "Repartid el gol", text: "El " + Math.round(topScorer.goals / totalGoals * 100) + "% de los goles los firmó " + topScorer.name + ". Si se lesiona o baja su nivel, el equipo se resiente. Distribuid la responsabilidad goleadora." });
-    if (venueGap >= 0.8) advice.push({ icon: "plane", title: "Mejorad lejos de casa", text: "Sumáis " + (Math.round(homePpg * 10) / 10).toString().replace(".", ",") + " pts por partido como local frente a " + (Math.round(awayPpg * 10) / 10).toString().replace(".", ",") + " a domicilio. Trabajad un plan específico para fuera: ahí se escapan muchos puntos." });
-    if (objTotal && objMet < objTotal) advice.push({ icon: "flag", title: "Cumplid los objetivos marcados", text: "La junta fijó metas que no se alcanzaron. La próxima temporada se evaluará con la misma vara: planificad el plantel para llegar a ellas." });
-    if (workhorse && workhorse.apps >= sm.played * 0.95 && sm.played >= 10) advice.push({ icon: "bandage", title: "Dad profundidad a la plantilla", text: workhorse.name + " ha jugado casi todo. Un plantel corto se desgasta en el tramo final: incorporad relevos de garantías." });
-    if (!advice.length) advice.push({ icon: "growth", title: "Mantened el rumbo", text: "El proyecto funciona. Conservad el bloque, haced retoques quirúrgicos y aspirad a un poco más sin romper lo que ya da resultados." });
+    if (gapg >= 1.4)        _ad("shield", "defense", "Reforzad la defensa", "Encajáis " + _numFmt(gapg) + " goles por partido. Un central de garantías o un pivote defensivo cambiarían la cara del equipo.", { gapg: _numFmt(gapg) });
+    if (gpg < 1.2)          _ad("target", "attack", "Buscad más pegada", "El ataque se queda en " + _numFmt(gpg) + " goles por partido. Hace falta un delantero diferencial que resuelva los partidos cerrados.", { gpg: _numFmt(gpg) });
+    if (topScorer && totalGoals > 0 && (topScorer.goals / totalGoals) >= 0.4) _ad("growth", "goals", "Repartid el gol", "El " + Math.round(topScorer.goals / totalGoals * 100) + "% de los goles los firmó " + topScorer.name + ". Si se lesiona o baja su nivel, el equipo se resiente. Distribuid la responsabilidad goleadora.", { topScorerName: topScorer.name, pct: Math.round(topScorer.goals / totalGoals * 100) });
+    if (venueGap >= 0.8) _ad("plane", "away", "Mejorad lejos de casa", "Sumáis " + _numFmt(homePpg) + " pts por partido como local frente a " + _numFmt(awayPpg) + " a domicilio. Trabajad un plan específico para fuera: ahí se escapan muchos puntos.", { homePpg: _numFmt(homePpg), awayPpg: _numFmt(awayPpg) });
+    if (objTotal && objMet < objTotal) _ad("flag", "objectives", "Cumplid los objetivos marcados", "La junta fijó metas que no se alcanzaron. La próxima temporada se evaluará con la misma vara: planificad el plantel para llegar a ellas.");
+    if (workhorse && workhorse.apps >= sm.played * 0.95 && sm.played >= 10) _ad("bandage", "depth", "Dad profundidad a la plantilla", workhorse.name + " ha jugado casi todo. Un plantel corto se desgasta en el tramo final: incorporad relevos de garantías.", { workhorseN: workhorse.name });
+    if (!advice.length) _ad("growth", "default", "Mantened el rumbo", "El proyecto funciona. Conservad el bloque, haced retoques quirúrgicos y aspirad a un poco más sin romper lo que ya da resultados.");
 
     return {
       season, summary: sm, pos, isCurrent,
@@ -1595,17 +1633,17 @@
       const awards = (c.awards || []).filter(a => a.season === s.label);
       const badges = trophies.map(t => t.result === "winner" ? "🏆" : t.result === "promotion" ? "⬆️" : "🥈").concat(awards.map(a => a.icon || "🏅"));
       let icon = "calendar", tone = "neutral", title;
-      if (sm.wonLeague)               { title = "Campeones de liga"; icon = "trophy"; tone = "good"; }
-      else if (sm.wonContinental)     { title = "Gloria continental"; icon = "trophy"; tone = "good"; }
-      else if (trophies.some(t => t.result === "promotion")) { title = "Ascenso de categoría"; icon = "growth"; tone = "good"; }
-      else if (sm.wonCup)             { title = "Título de copa"; icon = "trophy"; tone = "good"; }
-      else if (trophies.some(t => t.result === "runnerup")) { title = "Subcampeonato"; icon = "star"; tone = "neutral"; }
-      else if (pos && pos.pos <= 3)   { title = "Temporada en el podio"; icon = "growth"; tone = "good"; }
-      else if (pos && pos.total > 4 && pos.pos > pos.total - 3) { title = "Lucha por la permanencia"; icon = "flame"; tone = "bad"; }
-      else if (pos && pos.total > 1 && pos.pos <= Math.ceil(pos.total / 2)) { title = "Campaña en la zona alta"; icon = "shield"; tone = "neutral"; }
-      else if (idx === 0)             { title = "Inicio de la andadura"; icon = "flag"; tone = "neutral"; }
-      else                            { title = "Temporada de transición"; icon = "calendar"; tone = "neutral"; }
-      const sub = (pos ? pos.pos + "º · " : "") + sm.points + " pts · " + sm.w + "V-" + sm.d + "E-" + sm.l + "D · " + sm.gf + ":" + sm.ga + (awards.length ? " · " + awards.length + " premio" + (awards.length > 1 ? "s" : "") : "");
+      if (sm.wonLeague)               { title = FC.t("hist.timeline.leagueTitle"); icon = "trophy"; tone = "good"; }
+      else if (sm.wonContinental)     { title = FC.t("hist.timeline.continental"); icon = "trophy"; tone = "good"; }
+      else if (trophies.some(t => t.result === "promotion")) { title = FC.t("hist.timeline.promotion"); icon = "growth"; tone = "good"; }
+      else if (sm.wonCup)             { title = FC.t("hist.timeline.cup"); icon = "trophy"; tone = "good"; }
+      else if (trophies.some(t => t.result === "runnerup")) { title = FC.t("hist.timeline.runnerup"); icon = "star"; tone = "neutral"; }
+      else if (pos && pos.pos <= 3)   { title = FC.t("hist.timeline.podium"); icon = "growth"; tone = "good"; }
+      else if (pos && pos.total > 4 && pos.pos > pos.total - 3) { title = FC.t("hist.timeline.relegation"); icon = "flame"; tone = "bad"; }
+      else if (pos && pos.total > 1 && pos.pos <= Math.ceil(pos.total / 2)) { title = FC.t("hist.timeline.topHalf"); icon = "shield"; tone = "neutral"; }
+      else if (idx === 0)             { title = FC.t("hist.timeline.first"); icon = "flag"; tone = "neutral"; }
+      else                            { title = FC.t("hist.timeline.transition"); icon = "calendar"; tone = "neutral"; }
+      const sub = (pos ? pos.pos + "º · " : "") + sm.points + " pts · " + sm.w + "V-" + sm.d + "E-" + sm.l + "D · " + sm.gf + ":" + sm.ga + (awards.length ? " · " + awards.length + " " + FC.t(awards.length > 1 ? "hist.timeline.awards.other" : "hist.timeline.awards.one") : "");
       return { seasonId: s.id, label: s.label, startYear: s.startYear, icon, tone, title, sub, badges, isCurrent: s.id === c.currentSeasonId };
     });
   };
@@ -1829,12 +1867,14 @@
     const mode = opts.mode === "rebuild" ? "rebuild" : "random";
     const twists = [];
     const addTwist = (t) => { if (t && !twists.some(x => x.label === t.label)) twists.push({ label: t.label, emoji: t.emoji, ruleId: t.ruleId || null, params: Object.assign({}, t.params || {}) }); };
-    if (mode === "rebuild") addTwist(rnd(D.GEN_TWISTS.filter(t => t.ruleId === "youth-only" || t.ruleId === "max-age")));
+    const GEN_TW = D.langPool ? D.langPool("GEN_TWISTS") : D.GEN_TWISTS;
+    const GEN_OBJ = D.langPool ? D.langPool("GEN_OBJECTIVES") : D.GEN_OBJECTIVES;
+    if (mode === "rebuild") addTwist(rnd(GEN_TW.filter(t => t.ruleId === "youth-only" || t.ruleId === "max-age")));
     const target = mode === "rebuild" ? 2 : 1 + Math.floor(Math.random() * 2);
     let guard = 0;
-    while (twists.length < target && guard++ < 30) addTwist(rnd(D.GEN_TWISTS));
+    while (twists.length < target && guard++ < 30) addTwist(rnd(GEN_TW));
     twists.forEach(t => { if (t.ruleId === "one-nationality") t.params.nationality = rnd(D.YOUTH_NATIONS); });
-    const objective = mode === "rebuild" ? rnd(D.GEN_OBJECTIVES.filter(o => o.diff >= 3)) : rnd(D.GEN_OBJECTIVES);
+    const objective = mode === "rebuild" ? rnd(GEN_OBJ.filter(o => o.diff >= 3)) : rnd(GEN_OBJ);
     const seasons = (mode === "rebuild" ? 4 : 2) + Math.floor(Math.random() * 5);
     const difficulty = U.clamp(Math.round(objective.diff + twists.length * 0.8), 1, 5);
     return { mode, club, league: league.name, leagueId: league.id, objective, twists, seasons, difficulty };
@@ -2140,6 +2180,93 @@
     const mvpName = ratings[0] ? ratings[0].name : null;
     const comp  = lastM.competition || "la competición";
     const seed  = h((lastM.id || "x") + (rival || ""));
+
+    /* ---- EN path: generate from D.PRESS_EN pools and return early ---- */
+    if (FC.i18n && FC.i18n.get() === "en" && FC.data.PRESS_EN) {
+      const PE = FC.data.PRESS_EN;
+      const loc = isHome ? "at home" : "away";
+      const pfill = (s, xv) => {
+        const v = Object.assign({ club, rival, mvp: mvpName || "", score: score || "", loc, comp, capStr: captain || "the captain" }, xv || {});
+        return typeof s === "string" ? s.replace(/\{(\w+)\}/g, function(_, k) { return v[k] != null ? v[k] : ""; }) : s;
+      };
+      const pfillArr = (arr, xv) => (arr || []).map(function(s) { return pfill(s, xv); });
+      const pfillOps = (ops, xv) => (ops || []).map(function(pair) { return [pair[0], pfill(pair[1], xv)]; });
+      const enArticles = [];
+      const mkStatsEN = function() { return gls ? { gf: gls.for, ga: gls.against, rival, locacion: loc, mvp: mvpName, comp } : null; };
+
+      if (res) {
+        const goleada = gls && res === "W" && (gls.for - gls.against) >= 3;
+        const golazo  = gls && res === "L" && (gls.against - gls.for) >= 3;
+        // DIANA cronica
+        const DC = PE.DIANA.cronica;
+        const dTit = pfill(pick(res==="W" ? (goleada?DC.titW_goleada:DC.titW) : res==="D" ? DC.titD : (golazo?DC.titL_golazo:DC.titL), seed));
+        const dSub = pfill(pick(res==="W" ? DC.subW : res==="D" ? DC.subD : DC.subL, seed+11));
+        const dBody = pfillArr(pick(res==="W" ? DC.bodyW : res==="D" ? DC.bodyD : DC.bodyL, seed+22));
+        enArticles.push({ medio:"DIANA", sesgo:"sensacionalista", tipo:"cronica", resultado:res, titular:dTit, entradilla:dSub, cuerpo:dBody, firma:pick(["DIANA Staff","J. Blanes · DIANA","M. Ortega · DIANA","F. Sánchez · DIANA","Sport desk · DIANA"], seed+33), recuadroStats:mkStatsEN() });
+        // Crónica
+        const CC = PE.Cronica.cronica;
+        const cTit = pfill(pick(res==="W" ? CC.titW : res==="D" ? CC.titD : CC.titL, seed+110));
+        const cEnt = pfill(pick(res==="W" ? CC.entW : res==="D" ? CC.entD : CC.entL, seed+120));
+        const cBody = pfillArr(pick(res==="W" ? CC.bodyW : res==="D" ? CC.bodyD : CC.bodyL, seed+122));
+        enArticles.push({ medio:"Crónica", sesgo:"analítico", tipo:"cronica", resultado:res, titular:cTit, entradilla:cEnt, cuerpo:cBody, firma:pick(["A. Serrano · Chronicle","P. Llorente · Chronicle","Sports desk","I. Mayoral · Chronicle","C. Fuentes · Chronicle"], seed+133), recuadroStats:mkStatsEN() });
+        // GolDirecto
+        const GC = PE.GolDirecto.cronica;
+        const gTit = pfill(pick(res==="W" ? GC.titW : res==="D" ? GC.titD : GC.titL, seed+220));
+        const gEnt = pfill(pick(res==="W" ? GC.entW : res==="D" ? GC.entD : GC.entL, seed+230));
+        enArticles.push({ medio:"GolDirecto", sesgo:"digital", tipo:"cronica", resultado:res, titular:gTit, entradilla:gEnt, cuerpo:[], firma:pick(["GD Newsroom","GoalDirect","M.G. · GoalDirect","Editorial · GD.com","Staff GD"], seed+243), recuadroStats:mkStatsEN() });
+        // DXT24
+        const DXT = PE.DXT24.cronica;
+        const dxtCh = pfill(pick(res==="W" ? DXT.chyronW : res==="D" ? DXT.chyronD : DXT.chyronL, seed+300));
+        const dxtTick = pfill(pick(res==="W" ? DXT.tickerW : res==="D" ? DXT.tickerD : DXT.tickerL, seed+310));
+        enArticles.push({ medio:"DXT24", sesgo:"neutro", tipo:"cronica", resultado:res, titular:dxtCh, entradilla:"", cuerpo:[], firma:"DXT24 · Sport", recuadroStats:mkStatsEN(), ticker:dxtTick });
+        // ZonaMixta
+        const ZM = PE.ZonaMixta.cronica;
+        const zmPreg = pfill(pick(res==="W" ? ZM.pregW : res==="D" ? ZM.pregD : ZM.pregL, seed+400));
+        const zmOpsRaw = pick(res==="W" ? ZM.opsW : res==="D" ? ZM.opsD : ZM.opsL, seed+410);
+        const zmOps = (zmOpsRaw||[]).map(function(pair) { return [pair[0], pfill(pair[1])]; });
+        enArticles.push({ medio:"Zona Mixta", sesgo:"debate", tipo:"cronica", resultado:res, titular:zmPreg, entradilla:"", cuerpo:[], firma:"Zona Mixta · Channel 5", recuadroStats:null, pollSi:45+(h("poll:"+lastM.id)%40), opiniones:zmOps });
+      }
+
+      if (pol && pol.tension >= 25) {
+        const s2 = h("pol:"+(captain||"x")+pol.level);
+        const crisis = pol.tension >= 60;
+        const evt0text = pol.events[0] ? pol.events[0].text : "Minutes allocation is causing internal friction.";
+        const vx = { evt0: evt0text };
+        // DIANA vestuario
+        const DV = PE.DIANA.vestuario;
+        enArticles.push({ medio:"DIANA", sesgo:"sensacionalista", tipo:"vestuario", titular:pfill(pick(crisis?DV.titC:DV.titN, s2), vx), entradilla:pfill(pick(crisis?DV.entC:DV.entN, s2+5), vx), cuerpo:pfillArr(pick(crisis?DV.bodyC:DV.bodyN, s2+15), vx), firma:pick(["J. Blanes · DIANA","DIANA Staff","M. Ortega · DIANA","Exclusive · DIANA"], s2+1), recuadroStats:null });
+        // Crónica vestuario
+        const CV = PE.Cronica.vestuario;
+        enArticles.push({ medio:"Crónica", sesgo:"analítico", tipo:"vestuario", titular:pfill(pick(crisis?CV.titC:CV.titN, s2+50), vx), entradilla:pfill(pick(crisis?CV.entC:CV.entN, s2+55), vx), cuerpo:pfillArr(pick(crisis?CV.bodyC:CV.bodyN, s2+60), vx), firma:pick(["A. Serrano · Chronicle","P. Llorente · Chronicle","Sports desk","C. Fuentes · Chronicle"], s2+2), recuadroStats:null });
+        // GolDirecto vestuario
+        const GV = PE.GolDirecto.vestuario;
+        enArticles.push({ medio:"GolDirecto", sesgo:"digital", tipo:"vestuario", titular:pfill(pick(crisis?GV.titC:GV.titN, s2+80), vx), entradilla:pfill(pick(crisis?GV.entC:GV.entN, s2+85), vx), cuerpo:[], firma:pick(["GD Staff","GolDirecto","M.G. · GoalDirect","Staff GD"], s2+3), recuadroStats:null });
+        // DXT24 vestuario
+        const DXTV = PE.DXT24.vestuario;
+        enArticles.push({ medio:"DXT24", sesgo:"neutro", tipo:"vestuario", titular:pfill(pick(crisis?DXTV.titC:DXTV.titN, s2+100), vx), entradilla:"", cuerpo:[], firma:"DXT24 · Sport", recuadroStats:null, ticker:pfill(pick(DXTV.ticker, s2+110), vx) });
+        // ZonaMixta vestuario
+        const ZMV = PE.ZonaMixta.vestuario;
+        const zmPregV = pfill(pick(crisis?ZMV.pregC:ZMV.pregN, s2+5), vx);
+        const zmOpsVraw = pick(crisis?ZMV.opsC:ZMV.opsN, s2+20);
+        const zmOpsV = (zmOpsVraw||[]).map(function(pair) { return [pair[0], pfill(pair[1], vx)]; });
+        enArticles.push({ medio:"Zona Mixta", sesgo:"debate", tipo:"vestuario", titular:zmPregV, entradilla:"", cuerpo:[], firma:"Zona Mixta · Channel 5", recuadroStats:null, pollSi:38+(h("pollv:"+(captain||"x"))%44), opiniones:zmOpsV });
+      }
+
+      if (sp && sp.currentDrought >= 2) {
+        const n = sp.currentDrought, s3 = h("drought:"+n+club);
+        const DR = PE.DIANA.racha, GR = PE.GolDirecto.racha;
+        enArticles.push({ medio:"DIANA", sesgo:"sensacionalista", tipo:"racha", titular:pfill(pick(n>=4?DR.tit_drought_bad:DR.tit_drought_mild, s3),{n}), entradilla:pfill(pick(DR.ent_drought, s3+10),{n}), cuerpo:pfillArr(pick(DR.body_drought, s3+20),{n}), firma:pick(["DIANA Staff","J. Blanes · DIANA","M. Ortega · DIANA","F. Sánchez · DIANA"], s3+30), recuadroStats:null });
+        enArticles.push({ medio:"GolDirecto", sesgo:"digital", tipo:"racha", titular:pfill(pick(GR.tit_drought, s3+40),{n}), entradilla:pfill(pick(GR.ent_drought, s3+50),{n}), cuerpo:[], firma:pick(["GD Newsroom","GolDirecto","M.G. · GoalDirect","Staff GD"], s3+60), recuadroStats:null });
+      } else if (sp && sp.currentScoringStreak >= 3) {
+        const n = sp.currentScoringStreak, s3 = h("streak:"+n+club);
+        const SR = PE.DIANA.racha;
+        enArticles.push({ medio:"DIANA", sesgo:"sensacionalista", tipo:"racha", titular:pfill(pick(n>=5?SR.tit_streak_great:SR.tit_streak_good, s3),{n}), entradilla:pfill(pick(SR.ent_streak, s3+10),{n}), cuerpo:pfillArr(pick(SR.body_streak, s3+20),{n}), firma:pick(["DIANA Staff","J. Blanes · DIANA","M. Ortega · DIANA","F. Sánchez · DIANA"], s3+30), recuadroStats:null });
+      }
+
+      if (!enArticles.length) return null;
+      return { articles: enArticles, club, season: season.label };
+    }
+    /* ---- END EN path ---- */
 
     if (res) {
       const mkStats = () => gls ? { gf: gls.for, ga: gls.against, rival, locacion, mvp: mvpName, comp } : null;
@@ -2780,7 +2907,7 @@
   // Tono cinematográfico: hasta 2 beats memorables + stake + atmósfera + ~25% raro.
   TRIPS.beats = (ctx, c) => {
     if (!ctx || !ctx.isAway) return [];
-    const m = ctx.m, T = ctx.club, rival = ctx.rival, P = FC.data.TRIP || {};
+    const m = ctx.m, T = ctx.club, rival = ctx.rival, P = FC.data.langPool ? FC.data.langPool("TRIP") : FC.data.TRIP || {};
     // Ventana anti-repetición: el ordinal cronológico del viaje entre los
     // partidos fuera descorrelaciona viajes consecutivos; re-roll determinista
     // si la plantilla coincide con la de los últimos viajes. Sin estado.
@@ -2884,7 +3011,7 @@
   // Buckets por resultado y margen: win_big/win/draw/loss/loss_big.
   TRIPS.returnBeats = (ctx, c) => {
     if (!ctx || !ctx.isAway) return [];
-    const m = ctx.m, T = ctx.club, rival = ctx.rival, V = (FC.data.TRIP || {}).vuelta || {};
+    const m = ctx.m, T = ctx.club, rival = ctx.rival, V = (FC.data.langPool ? FC.data.langPool("TRIP") : FC.data.TRIP || {}).vuelta || {};
     const res = S.userResult(c, m);
     if (!res) return [];
     const g = S.userGoals(c, m) || { for: 0, against: 0 };
@@ -2932,7 +3059,7 @@
     const vars = { team, rival, score: gf + "-" + ga, gf, ga, comp: m.competition || "" };
     const allPlayed = S.userMatches(c).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
     const ord = Math.max(0, allPlayed.findIndex(x => x.id === m.id));
-    const Cr = FC.data.CRONICA || {};
+    const Cr = FC.data.langPool ? FC.data.langPool("CRONICA") : FC.data.CRONICA || {};
     const ap = _fillT((Cr.apertura || {})[bucket], "cra:" + bucket, vars, ord);
     const scorers = (m.events || []).filter(e => e.type === "goal");
     vars.player = scorers.length ? _esc(scorers[0].player || "") : "";
@@ -2956,17 +3083,17 @@
     // need: nº de jugadores que requiere · pick: criterio de selección ·
     // club: usa un club externo (rumor de mercado) · tone/icon/label: UI.
     const CATS = [
-      { key: "conflicto",     need: 2, tone: "bad",     icon: "flame",  label: "Tensión en el vestuario" },
-      { key: "bajon_minutos", need: 1, tone: "bad",     icon: "cloud",  label: "Malestar", pick: "suplente" },
-      { key: "liderazgo",     need: 1, tone: "good",    icon: "medal",  label: "Liderazgo", pick: "veterano" },
-      { key: "promesa",       need: 1, tone: "good",    icon: "sprout", label: "Cantera", pick: "joven" },
-      { key: "interes",       need: 1, tone: "neutral", icon: "swap",   label: "Mercado", pick: "estrella", club: true },
-      { key: "vinculo",       need: 2, tone: "good",    icon: "star",   label: "Vestuario" },
-      { key: "disciplina",    need: 1, tone: "bad",     icon: "flag",   label: "Disciplina" },
-      { key: "prensa",        need: 1, tone: "neutral", icon: "news",   label: "Prensa" },
-      { key: "ambiente",      need: 0, tone: "good",    icon: "target", label: "Ambiente" },
-      { key: "racha_forma",   need: 1, tone: "good",    icon: "flame",  label: "Estado de forma", pick: "estrella" },
-      { key: "renovacion",    need: 1, tone: "good",    icon: "check",  label: "Renovación" },
+      { key: "conflicto",     need: 2, tone: "bad",     icon: "flame",  get label() { return FC.t("incidents.label.conflicto"); } },
+      { key: "bajon_minutos", need: 1, tone: "bad",     icon: "cloud",  get label() { return FC.t("incidents.label.bajon_minutos"); }, pick: "suplente" },
+      { key: "liderazgo",     need: 1, tone: "good",    icon: "medal",  get label() { return FC.t("incidents.label.liderazgo"); }, pick: "veterano" },
+      { key: "promesa",       need: 1, tone: "good",    icon: "sprout", get label() { return FC.t("incidents.label.promesa"); }, pick: "joven" },
+      { key: "interes",       need: 1, tone: "neutral", icon: "swap",   get label() { return FC.t("incidents.label.interes"); }, pick: "estrella", club: true },
+      { key: "vinculo",       need: 2, tone: "good",    icon: "star",   get label() { return FC.t("incidents.label.vinculo"); } },
+      { key: "disciplina",    need: 1, tone: "bad",     icon: "flag",   get label() { return FC.t("incidents.label.disciplina"); } },
+      { key: "prensa",        need: 1, tone: "neutral", icon: "news",   get label() { return FC.t("incidents.label.prensa"); } },
+      { key: "ambiente",      need: 0, tone: "good",    icon: "target", get label() { return FC.t("incidents.label.ambiente"); } },
+      { key: "racha_forma",   need: 1, tone: "good",    icon: "flame",  get label() { return FC.t("incidents.label.racha_forma"); }, pick: "estrella" },
+      { key: "renovacion",    need: 1, tone: "good",    icon: "check",  get label() { return FC.t("incidents.label.renovacion"); } },
     ];
     const num = (x) => Number(x) || 0;
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];

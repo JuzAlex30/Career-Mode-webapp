@@ -9,7 +9,7 @@
   // register routes (guard: require active career)
   ROUTES.forEach(name => R.register(name, () => {
     if (!S.getActiveCareer()) { V.onboarding(); return; }
-    try { V[name](); } catch (e) { console.error(e); FC.ui.toast("Error al renderizar la vista", "err"); }
+    try { V[name](); } catch (e) { console.error(e); FC.ui.toast(FC.t("app.renderError"), "err"); }
     App.refreshChrome();
     window.scrollTo(0, 0);
   }));
@@ -48,12 +48,12 @@
   function careerSwitcher() {
     const c = S.getActiveCareer();
     const list = S.careersList();
-    UI.openModal("Cambiar de carrera", `
+    UI.openModal(FC.t("app.careerSwitcher.title"), `
       <div class="list">${list.map(cc => `<button class="list-row" data-pick="${cc.id}" style="width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer">
         ${cc.badgeColor ? `<span class="career-badge" style="background:${U.safeColor(cc.badgeColor, U.colorFor(cc.clubName))}">${U.initials(cc.clubName)}</span>` : U.teamCrest(cc.clubName, 32)}
-        <span class="lr-main"><b>${U.esc(cc.clubName)}</b><small>${U.esc(cc.leagueName)} · ${(cc.seasons||[]).length} temp.</small></span>
-        ${cc.id === c.id ? '<span class="chip accent">Activa</span>' : ''}</button>`).join("")}</div>`,
-      `<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="cs-new"><span class="ni-icon" data-icon="plus"></span> Nueva carrera</button>`);
+        <span class="lr-main"><b>${U.esc(cc.clubName)}</b><small>${U.esc(cc.leagueName)} · ${(cc.seasons||[]).length} ${FC.t("app.careerSwitcher.seasons")}</small></span>
+        ${cc.id === c.id ? `<span class="chip accent">${FC.t("app.careerSwitcher.active")}</span>` : ''}</button>`).join("")}</div>`,
+      `<button class="btn btn-ghost" data-close>${FC.t("app.careerSwitcher.close")}</button><button class="btn btn-primary" id="cs-new"><span class="ni-icon" data-icon="plus"></span> ${FC.t("app.careerSwitcher.new")}</button>`);
     document.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => {
       S.setActiveCareer(b.dataset.pick); UI.closeModal(); R.go("dashboard"); App.refreshChrome();
     }));
@@ -144,7 +144,7 @@
       V.onboarding();
       openShare(share);
       openProfile(profile);
-      if (magicLink) FC.ui.toast("¡Sesión iniciada! Ve a Comunidad.", "ok");
+      if (magicLink) FC.ui.toast(FC.t("app.sessionStarted"), "ok");
       return;
     }
     document.getElementById("app").style.display = "";
@@ -152,7 +152,7 @@
     R.render();
     openShare(share);
     openProfile(profile);
-    if (magicLink) FC.ui.toast("¡Sesión iniciada! Ve a Comunidad.", "ok");
+    if (magicLink) FC.ui.toast(FC.t("app.sessionStarted"), "ok");
   };
 
   // ---- wiring (once) ----

@@ -26,7 +26,7 @@
   UI.achievementToast = function(a) {
     const TIER_COLOR = { bronze: "#cd7f32", silver: "#a0aec0", gold: "#ffd02e", legend: "#a855f7" };
     const color = TIER_COLOR[a.tier] || "var(--accent)";
-    const tierLabel = (FC.data && FC.data.TIER_LABEL || {})[a.tier] || (a.tier || "");
+    const tierLabel = ((FC.data && FC.data.langPool ? FC.data.langPool("TIER_LABEL") : (FC.data && FC.data.TIER_LABEL)) || {})[a.tier] || (FC.data && FC.data.TIER_LABEL || {})[a.tier] || (a.tier || "");
     let wrap = document.getElementById("achToastWrap");
     if (!wrap) { wrap = document.createElement("div"); wrap.id = "achToastWrap"; wrap.className = "ach-toast-wrap"; document.body.appendChild(wrap); }
     const t = document.createElement("div");
@@ -3406,15 +3406,16 @@
     const byMedio = (m) => pr.articles.filter(a => a.medio === m);
     const MEDIOS = ["DIANA", "Crónica", "GolDirecto", "DXT24", "Zona Mixta"];
     const tabBtn = (m) => `<button type="button" class="seg-btn${pressTab === m ? " active" : ""}" data-pm="${U.esc(m)}">${U.esc(m)}</button>`;
-    const tipoLabel = (t) => t === "cronica" ? "CRÓNICA" : t === "vestuario" ? "VESTUARIO" : "RACHA";
+    const tr = FC.t;
+    const tipoLabel = (t) => t === "cronica" ? tr("story.press.tipo.cronica") : t === "vestuario" ? tr("story.press.tipo.vestuario") : tr("story.press.tipo.racha");
     const statsBoxDiana = (rs) => rs ? `<div style="display:flex;gap:0;margin-top:10px;border:1px solid #1a1a1a;font-family:var(--font-sans)">
       <div style="flex:1;text-align:center;padding:5px 0;border-right:1px solid #1a1a1a"><div style="font-size:15px;font-weight:700">${rs.gf}-${rs.ga}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">GOL</div></div>
       <div style="flex:2;text-align:center;padding:5px 0;border-right:1px solid #1a1a1a"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(rs.rival || "")}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">RIVAL</div></div>
       ${rs.mvp ? `<div style="flex:2;text-align:center;padding:5px 0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${U.esc(rs.mvp)}</div><div style="font-size:10px;letter-spacing:.05em;color:#555">MVP</div></div>` : ""}
     </div>` : "";
     const statsBoxCronica = (rs) => rs ? `<div style="border-left:2px solid #9a9178;padding:6px 10px;margin-top:8px;font-family:var(--font-sans);font-size:11px;color:#5b5546">
-      <b style="display:block;margin-bottom:2px">Estadísticas</b>
-      ${rs.rival ? "Rival: " + U.esc(rs.rival) + "  · " : ""}Marcador: ${rs.gf}-${rs.ga}${rs.mvp ? "  · Destacado: " + U.esc(rs.mvp) : ""}
+      <b style="display:block;margin-bottom:2px">${tr("story.press.stats")}</b>
+      ${rs.rival ? tr("story.press.rival") + " " + U.esc(rs.rival) + "  · " : ""}${tr("story.press.score")} ${rs.gf}-${rs.ga}${rs.mvp ? "  · " + tr("story.press.mvp") + " " + U.esc(rs.mvp) : ""}
     </div>` : "";
 
     const articleDiana = byMedio("DIANA")[0];
@@ -3448,7 +3449,7 @@
     const htmlGD = articleGD ? `<div style="border-radius:7px;overflow:hidden;font-family:var(--font-sans);border:1px solid var(--line)">
       <div style="background:#d11a1a;padding:8px 12px;font-size:15px;font-weight:700;letter-spacing:-.01em;color:#fff">GolDirecto</div>
       <div style="padding:12px 14px;background:#fff;color:#15171a">
-        <div style="font:500 10.5px var(--font-sans);letter-spacing:.07em;color:#d11a1a;margin-bottom:5px">${tipoLabel(articleGD.tipo)} · ÚLTIMA HORA</div>
+        <div style="font:500 10.5px var(--font-sans);letter-spacing:.07em;color:#d11a1a;margin-bottom:5px">${tipoLabel(articleGD.tipo)} · ${tr("story.press.breaking")}</div>
         <div style="font-size:17px;font-weight:500;line-height:1.2;margin-bottom:7px">${U.esc(articleGD.titular)}</div>
         <div style="font-size:13px;color:#444;line-height:1.45">${U.esc(articleGD.entradilla)}</div>
         <div style="margin-top:10px;font-size:11px;color:#888">${U.esc(articleGD.firma)}</div>
@@ -3863,7 +3864,7 @@
     if (!box) return;
     box.innerHTML = challenges.map(ch => {
       const viol = S.ruleViolations(c, ch).filter(v => TRANSFER_RULES.includes(v.ruleId));
-      const labels = (ch.rules||[]).filter(r => TRANSFER_RULES.includes(r.ruleId)).map(r => D.RULES[r.ruleId] ? D.RULES[r.ruleId].label : r.ruleId);
+      const _RR = D.langPool("RULES"); const labels = (ch.rules||[]).filter(r => TRANSFER_RULES.includes(r.ruleId)).map(r => (_RR[r.ruleId]||D.RULES[r.ruleId]) ? (_RR[r.ruleId]||D.RULES[r.ruleId]).label : r.ruleId);
       return `<div class="list-row" data-goto="challenges" style="cursor:pointer;align-items:flex-start">
         <span class="ni-icon" data-icon="${viol.length ? "flag" : "check"}" style="color:${viol.length ? "var(--danger)" : "var(--accent)"};margin-top:2px"></span>
         <div class="lr-main"><b>${U.esc(ch.name)}</b><small>${U.esc(labels.join(" · "))}</small>
@@ -3943,22 +3944,22 @@
 
       <div class="section-title">${tr("chal.catalogSection")}</div>
       <div class="grid cols-2" id="ch-catalog">
-        ${D.CHALLENGES.map(t => `<div class="challenge-card">
+        ${D.langPool("CHALLENGES").map(t => { const RR = D.langPool("RULES"); return `<div class="challenge-card">
           <div class="cc-top"><div class="cc-emoji">${t.emoji}</div>
             <div style="flex:1"><b>${U.esc(t.name)}</b><div class="faint" style="font-size:12px">${U.esc(t.category)}</div></div>
             <div class="difficulty">${[1,2,3,4,5].map(i => `<i class="${i<=t.difficulty?"on":""}"></i>`).join("")}</div></div>
           <div class="muted" style="font-size:13px">${U.esc(t.blurb)}</div>
-          ${t.rules.length ? `<div class="cc-rules">${t.rules.map(r => `<span class="chip">${U.esc(D.RULES[r] ? D.RULES[r].label : r)}</span>`).join("")}</div>` : ""}
+          ${t.rules.length ? `<div class="cc-rules">${t.rules.map(r => `<span class="chip">${U.esc(RR[r] ? RR[r].label : r)}</span>`).join("")}</div>` : ""}
           <div class="faint" style="font-size:11px">${tr("chal.suggestedLabel")} ${U.esc(t.recommended.join(", "))}</div>
           <button class="btn btn-ghost btn-sm" data-activate="${t.id}"><span class="ni-icon" data-icon="target"></span> ${tr("chal.activateButton")}</button>
-        </div>`).join("")}
+        </div>`; }).join("")}
       </div>
 
       <div class="section-title">${tr("chal.achievementsLabel")}</div>
       <div class="ach-grid">
-        ${D.ACHIEVEMENTS.map(a => { const got = (c.achievements||[]).includes(a.id); return `<div class="ach ${got?"":"locked"}">
+        ${D.langPool("ACHIEVEMENTS").map(a => { const got = (c.achievements||[]).includes(a.id); const TL = D.langPool("TIER_LABEL"); return `<div class="ach ${got?"":"locked"}">
           <div class="ach-medal tier-${a.tier}">${a.emoji}</div><div class="ach-name">${U.esc(a.name)}</div>
-          <div class="ach-desc">${U.esc(a.desc)}</div><div class="chip tier-${a.tier}" style="margin-top:8px;font-size:10px">${D.TIER_LABEL[a.tier]}</div></div>`; }).join("")}
+          <div class="ach-desc">${U.esc(a.desc)}</div><div class="chip tier-${a.tier}" style="margin-top:8px;font-size:10px">${TL[a.tier]||D.TIER_LABEL[a.tier]}</div></div>`; }).join("")}
       </div>
     `);
     renderActiveChallenges(c);
@@ -3974,7 +3975,7 @@
       const viol = S.ruleViolations(c, ch);
       return `<div class="card" style="margin-bottom:12px">
         <div class="flex between center"><div><h3 style="margin:0">${U.esc(ch.name)}</h3>
-          <div class="cc-rules" style="margin-top:8px">${(ch.rules||[]).map(r => `<span class="chip">${U.esc(D.RULES[r.ruleId]?D.RULES[r.ruleId].label:r.ruleId)}${r.params&&r.params.nationality?": "+U.esc(r.params.nationality):""}${r.params&&r.params.amount?": "+FC.util.money(r.params.amount):""}${r.params&&r.params.age?": ≤"+U.esc(r.params.age):""}</span>`).join("")}</div></div>
+          <div class="cc-rules" style="margin-top:8px">${(ch.rules||[]).map(r => { const _rd = D.langPool("RULES")[r.ruleId]||D.RULES[r.ruleId]; return `<span class="chip">${U.esc(_rd?_rd.label:r.ruleId)}${r.params&&r.params.nationality?": "+U.esc(r.params.nationality):""}${r.params&&r.params.amount?": "+FC.util.money(r.params.amount):""}${r.params&&r.params.age?": ≤"+U.esc(r.params.age):""}</span>`; }).join("")}</div></div>
           <div class="flex gap"><button class="icon-btn sm" data-done-ch="${ch.id}" title="${tr("chal.completeTooltip")}"><span class="ni-icon" data-icon="check"></span></button>
             <button class="icon-btn sm" data-del-ch="${ch.id}"><span class="ni-icon" data-icon="trash"></span></button></div></div>
         <div style="margin-top:12px">
@@ -3991,15 +3992,16 @@
     let html = "";
     ruleIds.forEach(rid => {
       const def = D.RULES[rid];
+      const defDisp = D.langPool("RULES")[rid] || def;
       if (def && def.params) def.params.forEach(p => {
-        html += `<div class="field"><label>${U.esc(def.label)} — ${U.esc(p.label)}</label><input type="${p.type}" data-param="${rid}:${p.key}" placeholder="${U.esc(p.placeholder||"")}"/></div>`;
+        html += `<div class="field"><label>${U.esc(defDisp ? defDisp.label : def.label)} — ${U.esc(p.label)}</label><input type="${p.type}" data-param="${rid}:${p.key}" placeholder="${U.esc(p.placeholder||"")}"/></div>`;
       });
     });
     return html;
   }
   function activateChallenge(c, templateId) {
     const tr = FC.t;
-    const t = D.CHALLENGES.find(x => x.id === templateId);
+    const t = D.langPool("CHALLENGES").find(x => x.id === templateId) || D.CHALLENGES.find(x => x.id === templateId);
     const paramFields = ruleParamsFields(t.rules);
     UI.openModal(tr("chal.activateModalTitle", { name: t.name }), `
       <p class="muted" style="margin-top:0">${U.esc(t.blurb)}</p>
@@ -4021,7 +4023,7 @@
       <div class="field"><label>${tr("chal.customNameLabel")}</label><input type="text" id="cc-name" placeholder="${tr("chal.customNamePlaceholder")}"/></div>
       <div class="section-title" style="margin:6px 2px">${tr("chal.rulesLabel")}</div>
       <div class="list" id="cc-rules">
-        ${Object.keys(D.RULES).map(rid => { const def = D.RULES[rid]; return `<label class="list-row" style="cursor:pointer">
+        ${Object.keys(D.RULES).map(rid => { const def = D.langPool("RULES")[rid] || D.RULES[rid]; return `<label class="list-row" style="cursor:pointer">
           <input type="checkbox" data-rule="${rid}" style="width:18px;height:18px;accent-color:var(--accent)"/>
           <div class="lr-main"><b>${U.esc(def.label)}</b><small>${U.esc(def.desc)}</small></div></label>`; }).join("")}
       </div>

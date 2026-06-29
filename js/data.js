@@ -2232,5 +2232,415 @@
     ],
   };
 
+  /* ============================================================
+     ENGLISH CONTENT POOLS (Fase 4 i18n)
+     ============================================================ */
+
+  D.CRONICA_EN = {
+    apertura: {
+      win_big: [
+        "{team} dismantled {rival}. The {score} leaves absolutely no room for debate.",
+        "A statement night in {comp}: {team} run riot {score} and send a message to the entire league.",
+        "Masterclass. {team} strolls through {rival}'s backyard and stamps a commanding {score} on the scoreboard.",
+        "Four letters: thras-hing. {team} tears {rival} apart with a {score} that will send shockwaves.",
+      ],
+      win: [
+        "{team} bank three golden points against {rival}. {score} on the board.",
+        "Job done. {team} dispatch {rival} with a {score} that carries serious weight.",
+        "Narrow win, big merit: {team} edge out {rival} ({score}) in a demanding contest.",
+        "{team}: 1, obstacles: 0. The {score} delivers three points that taste twice as sweet.",
+      ],
+      draw: [
+        "Stalemate against {rival}. The {score} leaves mixed feelings in the {team} dressing room.",
+        "A point and nothing more. {team} cannot get past a {score} draw against a well-organised {rival}.",
+        "{score}: the scoreboard doesn't lie, even if {team} deserved more.",
+        "A draw that makes you think. {rival} levelled a game {team} thought they had won.",
+      ],
+      loss: [
+        "Defeat for {team}. {rival} prevail {score} on a difficult day.",
+        "{rival} win, {team} lose and reflect. The {score} stings more than it looks.",
+        "One to forget: {score} and three points that ended up on the wrong side.",
+        "{team} fall ({score}). It hurts, it happens, and you move on. The next matchday is a fresh start.",
+      ],
+      loss_big: [
+        "Dark night. {rival} swept {team} aside with a {score} that demands an urgent response.",
+        "Hammered: {score}. {team} walk away bruised from a game that completely slipped away.",
+        "{score}. You have to look it in the eye and own it: {team} were outclassed in every department.",
+        "A result that leaves a mark: {score}. {team} pay a heavy price for a night of too many mistakes.",
+      ],
+    },
+    momento: {
+      con_goleador: [
+        "{player} found the net at the most crucial moment. That is the goal that wins the game.",
+        "{player}'s strike was the turning point of the entire match.",
+        "{player} showed up exactly when the team needed them most. A performance to remember.",
+        "{player}'s finish captured the very best of this {team}: one player, one moment, one victory.",
+      ],
+      sin_goleador: [
+        "The collective outweighed any individual. That is how this {team} gets it done.",
+        "A team performance, a team victory. No standout individuals — just collective character.",
+        "Without a single named goalscorer, {team} found a way regardless: unity.",
+        "When the system clicks, the name on the scoresheet matters less. {team} know that better than anyone.",
+      ],
+      porteria_cero: [
+        "Clean sheet: {team} added another blank page to the season's story.",
+        "The defence was the headline: zero goals conceded and a rock-solid display.",
+        "When you keep it tight at the back, you take giant strides. {team} live by that.",
+        "Walls at the back, clinical up front. Exactly the formula the coaching staff love most.",
+      ],
+    },
+    cierre: {
+      win: [
+        "The run continues. Next opponent, be warned.",
+        "The journey goes on. {team} keep building.",
+        "Three points pocketed and the dressing room hungry for more.",
+        "This is how you build something special: game by game, no looking back.",
+      ],
+      draw: [
+        "Time to turn the page and lock in on the next match.",
+        "The point counts, but {team} know they have more to give.",
+        "In football, a draw can be a step forward or a step back. Time will tell.",
+        "On to the next one. There is no other way.",
+      ],
+      loss: [
+        "It hurts now — tomorrow, back to training and time to respond.",
+        "Football always offers a chance for revenge. {team} will go looking for it.",
+        "One defeat does not define a season. {team} know that.",
+        "Get back up. Always.",
+      ],
+    },
+  };
+
+  D.CHALLENGES_EN = [
+    { id:"road-to-glory", name:"Road to Glory", emoji:"🚀", difficulty:4, category:"Promotion", blurb:"Pick a lower-league club or a nation off the beaten path and drag them all the way to European glory.", recommended:["Wrexham","Le Havre","Pisa","Real Oviedo","Sunderland"], rules:[] },
+    { id:"youth-academy", name:"Youth Only", emoji:"🌱", difficulty:5, category:"Development", blurb:"After the first season, every new addition must come straight from your own academy.", recommended:["Any club with a strong youth setup"], rules:["youth-only"] },
+    { id:"journeyman", name:"Journeyman", emoji:"🧳", difficulty:3, category:"Manager", blurb:"Win a title in each of the top five leagues with a different club every time.", recommended:["Start in a lower league"], rules:[] },
+    { id:"treble", name:"The Treble", emoji:"🏆", difficulty:4, category:"Titles", blurb:"Win the league, the domestic cup and the Champions League all in the same season.", recommended:["Manchester City","Real Madrid","Bayern Munich","Paris Saint-Germain"], rules:[] },
+    { id:"fallen-giant", name:"Fallen Giant", emoji:"💔", difficulty:3, category:"Rebuild", blurb:"Breathe life back into a once-great club that has fallen on hard times and restore them to the summit.", recommended:["Sunderland","Hamburger SV","Real Oviedo","Leeds United","Parma"], rules:[] },
+    { id:"financial-fairplay", name:"Financial Straitjacket", emoji:"💸", difficulty:4, category:"Economy", blurb:"You can only spend what you bring in through sales. Easy money is strictly off the table.", recommended:["Brighton","Girona","Atalanta"], rules:["sell-before-buy"] },
+    { id:"one-nation", name:"National Pride", emoji:"🌍", difficulty:4, category:"Squad", blurb:"Build your entire squad from players sharing a single nationality. One flag, one team.", recommended:["Athletic Club","Any club"], rules:["one-nationality"] },
+    { id:"wonderkid-factory", name:"Wonderkid Factory", emoji:"⭐", difficulty:3, category:"Development", blurb:"Sign the young talents (23 or under) and turn them into world-beaters. No veterans allowed.", recommended:["Monaco","RB Leipzig","Benfica"], rules:["max-age"] },
+    { id:"world-domination", name:"World Domination", emoji:"👑", difficulty:5, category:"Titles", blurb:"Sweep the lot — league, cup, super cup, Champions League and the Club World Cup. Leave nothing on the shelf.", recommended:["Any giant club"], rules:[] },
+    { id:"no-signings", name:"Sealed Squad", emoji:"🔒", difficulty:5, category:"Squad", blurb:"Not a single signing. Make it work with what you have — and whatever your academy produces.", recommended:["A big club that already has the goods"], rules:["no-signings"] },
+  ];
+
+  D.ACHIEVEMENTS_EN = [
+    { id:"first-match", name:"First Whistle", emoji:"⚽", tier:"bronze", desc:"Log your very first match.", check: D.ACHIEVEMENTS.find(a=>a.id==="first-match").check },
+    { id:"first-win", name:"Opening Day Winner", emoji:"🎉", tier:"bronze", desc:"Win your first match.", check: D.ACHIEVEMENTS.find(a=>a.id==="first-win").check },
+    { id:"big-win", name:"Five and Counting", emoji:"🔥", tier:"bronze", desc:"Win a match by 5 or more goals.", check: D.ACHIEVEMENTS.find(a=>a.id==="big-win").check },
+    { id:"clean-sheets-10", name:"The Wall", emoji:"🧱", tier:"silver", desc:"Keep 10 clean sheets in a single season.", check: D.ACHIEVEMENTS.find(a=>a.id==="clean-sheets-10").check },
+    { id:"goal-fest", name:"Goal Machine", emoji:"⚽", tier:"silver", desc:"Score 80 or more goals as a team in one season.", check: D.ACHIEVEMENTS.find(a=>a.id==="goal-fest").check },
+    { id:"top-scorer-25", name:"Golden Boot", emoji:"👟", tier:"silver", desc:"One player nets 25 or more goals in a season.", check: D.ACHIEVEMENTS.find(a=>a.id==="top-scorer-25").check },
+    { id:"league-title", name:"League Champions", emoji:"🏆", tier:"gold", desc:"Win a league title.", check: D.ACHIEVEMENTS.find(a=>a.id==="league-title").check },
+    { id:"promotion", name:"Going Up", emoji:"⬆️", tier:"silver", desc:"Earn promotion to a higher division.", check: D.ACHIEVEMENTS.find(a=>a.id==="promotion").check },
+    { id:"cup-winner", name:"Cup Kings", emoji:"🏆", tier:"gold", desc:"Win a domestic cup competition.", check: D.ACHIEVEMENTS.find(a=>a.id==="cup-winner").check },
+    { id:"continental", name:"Continental Glory", emoji:"⭐", tier:"legend", desc:"Win a continental competition (Champions League, Europa League, Conference League or Libertadores).", check: D.ACHIEVEMENTS.find(a=>a.id==="continental").check },
+    { id:"invincible", name:"The Invincibles", emoji:"🛡️", tier:"legend", desc:"Go an entire league season unbeaten (minimum 20 matches).", check: D.ACHIEVEMENTS.find(a=>a.id==="invincible").check },
+    { id:"treble", name:"The Treble", emoji:"🏆", tier:"legend", desc:"Win the league, the cup and a continental trophy in the same season.", check: D.ACHIEVEMENTS.find(a=>a.id==="treble").check },
+    { id:"dynasty", name:"Dynasty", emoji:"👑", tier:"legend", desc:"Win the league three seasons in a row.", check: D.ACHIEVEMENTS.find(a=>a.id==="dynasty").check },
+    { id:"centurion", name:"Centurion", emoji:"💯", tier:"gold", desc:"One player makes 100 appearances for the club.", check: D.ACHIEVEMENTS.find(a=>a.id==="centurion").check },
+    { id:"legend-maker", name:"Legend Maker", emoji:"⭐", tier:"gold", desc:"An academy graduate reaches an overall rating of 85 or above.", check: D.ACHIEVEMENTS.find(a=>a.id==="legend-maker").check },
+    { id:"trip-long-haul", name:"Long-Haul Flight", emoji:"✈️", tier:"bronze", desc:"Play an away fixture over 1,000 km from home.", check: D.ACHIEVEMENTS.find(a=>a.id==="trip-long-haul").check },
+    { id:"trip-marathon", name:"The Marathon Man", emoji:"🌍", tier:"silver", desc:"Clock up 10,000 or more km of travel in a single season.", check: D.ACHIEVEMENTS.find(a=>a.id==="trip-marathon").check },
+    { id:"trip-globetrotter", name:"Globetrotter", emoji:"🌐", tier:"gold", desc:"Visit every opponent's ground in your league in one season.", check: D.ACHIEVEMENTS.find(a=>a.id==="trip-globetrotter").check },
+    { id:"trip-world-lap", name:"Around the World", emoji:"🌏", tier:"legend", desc:"Accumulate 40,075 km of travel across your career — one full lap of the planet.", check: D.ACHIEVEMENTS.find(a=>a.id==="trip-world-lap").check },
+  ];
+
+  D.RULES_EN = {
+    "no-signings":      { label:"No Signings",           desc:"You cannot bring in anyone from outside the club. The transfer window is firmly shut." },
+    "youth-only":       { label:"Academy Only",          desc:"Every new arrival must come through your own youth academy." },
+    "free-agents-only": { label:"Free Agents Only",      desc:"You may only sign players who are out of contract — no transfer fees, no loans." },
+    "no-loans":         { label:"No Loans",              desc:"Bringing in players on loan is not permitted." },
+    "one-nationality":  { label:"One Nationality",       desc:"Every player in your squad must share the same nationality." },
+    "max-spend":        { label:"Spending Cap",          desc:"Your total outlay on transfers cannot exceed the set limit." },
+    "sell-before-buy":  { label:"Sell Before You Buy",  desc:"You cannot spend more than you bring in through player sales." },
+    "max-age":          { label:"Young Blood Only",      desc:"You cannot register any player above the specified age limit." },
+    "homegrown-honor":  { label:"Homegrown XI (Honour Rule)", desc:"Field only players developed at your club. This cannot be verified automatically — your word is your bond." },
+  };
+
+  D.TIER_LABEL_EN = { bronze:"Bronze", silver:"Silver", gold:"Gold", legend:"Legend" };
+
+  D.GEN_OBJECTIVES_EN = [
+    { text:"Win the league", emoji:"🏆", diff:3 },
+    { text:"Win the Champions League", emoji:"🌟", diff:4 },
+    { text:"Win it all: the Treble", emoji:"🎯", diff:5 },
+    { text:"Earn promotion", emoji:"📈", diff:2 },
+    { text:"Go the entire league season unbeaten", emoji:"🛡️", diff:5 },
+    { text:"Top four finish and domestic cup", emoji:"🥈", diff:3 },
+    { text:"Win the league three years running", emoji:"👑", diff:5 },
+    { text:"Reach the Champions League final", emoji:"🏟️", diff:4 },
+    { text:"Start three academy graduates in the first XI", emoji:"🌱", diff:3 },
+  ];
+
+  D.GEN_TWISTS_EN = [
+    { label:"Academy players only", emoji:"🌱", ruleId:"youth-only" },
+    { label:"Free agents only", emoji:"🆓", ruleId:"free-agents-only" },
+    { label:"No signings", emoji:"🔒", ruleId:"no-signings" },
+    { label:"No loans", emoji:"🚫", ruleId:"no-loans" },
+    { label:"Nobody over 23", emoji:"⭐", ruleId:"max-age", params:{ age:"23" } },
+    { label:"Sell before you buy", emoji:"💸", ruleId:"sell-before-buy" },
+    { label:"One nationality", emoji:"🌍", ruleId:"one-nationality" },
+    { label:"Shoestring budget (≤5M)", emoji:"🪙", ruleId:"max-spend", params:{ amount:"5000000" } },
+    { label:"Start by selling your star player", emoji:"💔", ruleId:null },
+    { label:"Promoted from the second division", emoji:"📈", ruleId:null },
+  ];
+
+  D.PRESS_EN = {
+    DIANA: {
+      cronica: {
+        titW: ["UNSTOPPABLE","SPECTACULAR","BRING IT ON!","WHAT A SIDE YOU ARE","WE WIN AND WE DREAM","THIS IS FOOTBALL!","THREE POINTS OF GOLD!","WHAT A MATCH!"],
+        titW_goleada: ["HISTORIC THRASHING!","TOTAL SHOW!","NO MERCY!","ABSOLUTELY DOMINANT!","PERFECT NIGHT!"],
+        titD: ["IT SLIPS AWAY","A DRAW THAT STINGS","HALF A STEP BACKWARD","THIS POINT FEELS LIKE NOTHING","WHEN ARE WE GOING TO SCORE?","MISSED OPPORTUNITY","TWO POINTS THROWN AWAY"],
+        titL: ["CATASTROPHE","THIS IS A DISASTER!","ROCK BOTTOM","IT ALL FALLS APART","THE DARKEST NIGHT","PATIENCE HAS RUN OUT!","NO ARGUMENTS, NO IDEAS"],
+        titL_golazo: ["TOTAL HUMILIATION!","DISGRACEFUL!","CATASTROPHE WITHOUT EXCUSES!","UTTER DISASTER!"],
+        subW: [
+          "A commanding victory for {club} that sends the fans into raptures",
+          "{club} show no mercy and win again {score}",
+          "Three golden points that fire the squad straight to the top",
+          "{mvp} leads {club} to glory {loc}",
+          "No argument: {club} were the best side {loc} and they proved it",
+          "{club} thrash, dazzle and conquer: a night to frame against {rival}",
+          "{rival} had no answer: {club} were an absolute steamroller",
+        ],
+        subD: [
+          "A point that leaves {club} wanting so much more after a flat display {loc}",
+          "{rival} deny {club} at the death — the dropped points will hurt",
+          "All square at the final whistle, but {club} will feel they deserved more",
+          "A stalemate that raises serious questions ahead of the next fixture",
+          "Chances created, none taken — {club} pay the price for wastefulness",
+          "{club} unable to find a way through as {rival} hold firm {loc}",
+          "Honours even, but {club} fans leave feeling utterly deflated",
+        ],
+        subL: [
+          "A night to forget for {club} — {rival} handed them a brutal lesson {loc}",
+          "Defeated and demoralised: {club} left with nothing {loc}",
+          "{rival} tear {club} apart — the manager has serious questions to answer",
+          "A limp, lifeless performance as {club} slump to another damaging defeat",
+          "No fight, no quality, no excuse — {club} were second best from minute one",
+          "{club} crumble {loc} and {rival} make them pay without breaking a sweat",
+          "The wheels are coming off: {club} suffer another humbling setback",
+        ],
+        bodyW: [
+          ["A perfect night for {club}. The scoreline {score} tells the full story of what happened {loc} — this was a commanding display from first whistle to last.","{mvp} was the standout figure, pulling the strings and making the difference when it mattered most.","With this victory, the squad sends a loud and clear message to every other side in the {comp}."],
+          ["A thumping win and a masterclass in football — {club} were simply irresistible {loc} against a {rival} side that had no answers.","The fans left with huge smiles on their faces, knowing they had witnessed something truly special.","{mvp} was electric from start to finish, a performance that will be talked about for weeks."],
+          ["{club} came out to kill the game from the very first minute, pressing high and refusing to let {rival} settle {loc}.","{mvp} made the difference — clinical, decisive, and absolutely everywhere on the pitch.","The manager will be delighted with what he saw; this is a squad growing in confidence with every match."],
+          ["Three points that mean a great deal. {club} did enough {loc} without ever really getting out of second gear — and that is the sign of a serious side.","The dressing room is buzzing after a win that keeps the momentum firmly rolling in the right direction.","Special mention must go to {mvp}, who stepped up when it counted and delivered with ice in the veins."],
+        ],
+        bodyD: [
+          ["A frustrating evening for {club}, who created enough to win but walked away with only a point {loc} against {rival}.","The final whistle brought groans from the stands — this was two points dropped, not one gained.","Hard questions will be asked this week, because performances like this cannot keep delivering the same flat result."],
+          ["{rival} dug in and {club} simply could not find a way through — a stalemate that will linger long in the memory for all the wrong reasons.","Possession without penetration: {club} had the ball but lacked the cutting edge to do anything with it.","It is becoming a worrying trend, and the manager must find answers before the next match arrives."],
+          ["{club} thought they had done enough {loc}, but {rival} had other ideas and snatched a late equaliser that changed everything.","The timing of the goal was brutal — {club} were minutes away from three points and will feel desperately unlucky.","The mood in the dressing room will be grim tonight; this is a point that feels like a defeat."],
+          ["Level at the final whistle, but nobody connected with {club} is celebrating — this was a golden opportunity squandered {loc}.","{rival} offered very little going forward, yet they leave with a share of the spoils that flatters them enormously.","Until {club} sharpen their edge in the final third, nights like this will keep coming back to haunt them."],
+        ],
+        bodyL: [
+          ["A nightmare of a night for {club}. {rival} were ruthless {loc} and the scoreline {score} makes for grim reading — there are no excuses for a display that poor.","Every department let the side down; there was nowhere to hide and {rival} exposed every weakness without mercy.","The manager must pick the pieces up fast, because this result has real consequences for where {club} are heading in the {comp}."],
+          ["Outclassed, outfought, and ultimately swept aside — {club} were second best in every department {loc} and {rival} punished them without a hint of sympathy.","The fans who made the trip {loc} deserved far better than what they were served up tonight.","Until this squad shows more backbone and desire, performances like this will keep on coming."],
+          ["{club} never turned up {loc} — {rival} were allowed to play their football with almost no resistance from a side that looked lost from the opening whistle.","The defensive frailties that have been building for weeks were brutally exposed, and {rival} needed little invitation to take full advantage.","Something has to change — in attitude, in system, or in personnel — because this level simply is not good enough."],
+          ["Another damaging defeat and more damage done to the confidence of a squad that is visibly struggling to hold itself together {loc}.","{rival} were not even at their best, and that is perhaps the most alarming part of a result that sends shockwaves through {club}.","The board, the manager, and the players all need to take a long, hard look at themselves after a showing as wretched as this."],
+        ],
+      },
+      vestuario: {
+        titC: ["WAR IN THE DRESSING ROOM","PATIENCE HAS RUN OUT","THE DRESSING ROOM EXPLODES","TOTAL CHAOS","EVERYONE AGAINST THE BOSS","THE DRESSING ROOM IS TEARING APART!"],
+        titN: ["TENSION IN THE DRESSING ROOM","CRISIS RUMOURS SWIRL","THE ATMOSPHERE TURNS SOUR","SOMETHING'S BREWING","ARE THERE CRACKS IN THE SQUAD?","UNREST IS BEING WHISPERED ABOUT"],
+        entC: ["{club} ON THE BRINK: {capStr} CAN'T HOLD IT TOGETHER","DRESSING ROOM WAR AT {club} — AND {capStr} IS IN THE MIDDLE OF IT","{capStr} LOSES THE DRESSING ROOM AS {club} IMPLODE FROM WITHIN","MUTINY AT {club}: {capStr} FACING REVOLT FROM HIS OWN TEAMMATES"],
+        entN: ["ALL IS NOT WELL BEHIND CLOSED DOORS AT {club}","{capStr} URGED TO CALM GROWING UNREST AT {club}","WHISPERS OF DISCONTENT GROW LOUDER AT {club}","IS {capStr} LOSING THE DRESSING ROOM AT {club}?"],
+        bodyC: [
+          ["{evt0}","Sources close to the squad say the mood at {club}'s training ground has become toxic, with players refusing to speak to each other after sessions.","{capStr} attempted to intervene but was reportedly told in no uncertain terms to stay out of it — a damning sign of how far things have fallen."],
+          ["{evt0}","The fallout at {club} has been swift and brutal, with several senior players said to be furious at the direction of the club.","{capStr} is understood to have called an emergency meeting, but insiders say the words fell on deaf ears in a dressing room that has lost all faith."],
+          ["{evt0}","It is no longer a secret that {club}'s dressing room is fractured, with factions forming and training sessions growing increasingly volatile.","{capStr} is caught in the crossfire, struggling to maintain any semblance of authority as the situation spirals out of control."],
+          ["{evt0}","The scenes at {club} have shocked even the most battle-hardened observers, with shouting matches reportedly breaking out in front of coaching staff.","All eyes are now on {capStr} to see whether the captain can drag this squad back from the abyss before it is too late."],
+        ],
+        bodyN: [
+          ["{evt0}","The mood at {club} is described as 'edgy' by those in the know, with a palpable tension hanging over the training ground this week.","{capStr} has been working hard to keep spirits up, but not everyone in the squad appears to be buying it."],
+          ["{evt0}","There are murmurs coming out of {club} that all is not quite right behind the scenes, even if the official line remains one of unity.","{capStr} will be expected to show leadership and nip any simmering discontent in the bud before it becomes something more serious."],
+          ["{evt0}","A source close to the {club} dressing room admits that tensions are 'a little higher than usual', though they were quick to play down any suggestion of a crisis.","Still, {capStr} will know better than anyone that small fires left unattended have a nasty habit of becoming infernos."],
+          ["{evt0}","The body language at {club}'s last training session did little to dispel the talk of unrest, with players keeping largely to themselves.","{capStr} cut a composed figure publicly, but privately the pressure to restore harmony in the camp is mounting by the day."],
+        ],
+      },
+      racha: {
+        tit_drought_bad: ["THE ATTACK IS DEAD!","NO GOALS, NO IDEAS!","WHERE HAS THE GOAL GONE?","RED ALERT UP FRONT","NOWHERE TO BE FOUND!","{n} GAMES WITHOUT A GOAL!"],
+        tit_drought_mild: ["GOAL DROUGHT: WHEN DOES IT END?","WHAT A CRISIS UP FRONT!","NO ACCURACY, NO GOALS","THE GOAL HAS VANISHED","WE NEED A GOAL!","THREE GAMES, ZERO GOALS: UNACCEPTABLE"],
+        ent_drought: ["{n} games without a goal. {club} are running on empty up front.","The drought hits {n} games — and {club} fans are losing patience fast.","{club} have gone {n} matches without finding the net. Something has to give.","{n} scoreless outings for {club}. The striker crisis is very real."],
+        body_drought: [
+          ["{club} have now gone {n} games without scoring, and the alarm bells are ringing.","The forwards are misfiring badly, and chances are going begging at a worrying rate.","If this drought continues, the manager will have serious questions to answer."],
+          ["It has been {n} miserable games in front of goal for {club}, and morale is suffering.","Every chance created seems to drift wide or straight at the keeper — nothing is going in.","The goal drought is now the defining story of {club}'s season, and it needs solving urgently."],
+          ["{n} matches without a goal is a damning statistic for any club, and {club} are no exception.","The attacking unit looks disjointed, lacking both creativity and clinical finishing.","Until that goal arrives, {club} will struggle to climb the table and silence the critics."],
+          ["The {n}-game goal drought has exposed real structural problems in {club}'s attack.","Opponents have worked out how to contain them, and {club} have no answers yet.","A single goal could change everything — but right now it feels a long way away."],
+        ],
+        tit_streak_great: ["UNSTOPPABLE! {n} GAMES SCORING!","GOALSCORING MACHINE ACTIVATED!","THEY JUST WON'T STOP SCORING!","{n} STRAIGHT WITH A GOAL! INCREDIBLE!"],
+        tit_streak_good: ["IN THE FORM OF THEIR LIVES: {n} STRAIGHT WITH A GOAL","THE GOALSCORER HAS WOKEN UP!","RED-HOT STREAK: {n} GAMES SCORING","WHAT A RUN UP FRONT: {n} GAMES AND COUNTING"],
+        ent_streak: ["{n} games in a row with a goal — {club} are firing on all cylinders.","The floodgates are open. {club} have scored in {n} consecutive matches.","{club} are in the kind of goalscoring form every manager dreams of — {n} straight.","{n} games, {n} contributions up front. {club}'s attack is absolutely purring."],
+        body_streak: [
+          ["{club} have scored in each of their last {n} games, and confidence is sky-high.","The forwards are sharp, the movement is crisp, and chances are being taken clinically.","If this streak continues, {club} could be the most feared attack in the division."],
+          ["{n} consecutive games with a goal — {club} are in sensational attacking form.","Every match brings another contribution up front, and opponents simply can't cope.","The momentum is real, the numbers are impressive, and the team is buzzing."],
+          ["There is no stopping {club} right now — {n} games and counting with the scoresheet marked.","The attack has been the engine of everything good about this team in recent weeks.","Long may the streak continue — because {club} in this mood are a genuine force."],
+          ["{club}'s {n}-game scoring streak is the talk of the division, and rightly so.","Clinical in front of goal, relentless in their pressing — this is a team in its prime.","The manager will be delighted, the fans are loving it, and the goals keep coming."],
+        ],
+      },
+    },
+    Cronica: {
+      cronica: {
+        titW: ["{club} put {rival} to the sword with authority and keep the dream alive","A solid {club} victory that consolidates their position in the table","{club} deliver {loc}: three crucial points against {rival}","{rival} succumb to a {club} side that imposes its will {loc}","{club} follow the script and dispatch {rival} with composure in {comp}","{mvp} leads {club} to another victory in {comp}","{club} are a juggernaut: another win over {rival} that strengthens their candidacy"],
+        titD: ["{club} and {rival} share the spoils in a contest that refused to be decided","A draw that leaves {club} frustrated after dominating the contest","An equitable split that satisfies neither side","{club} unable to pick {rival}'s lock and settle for a point","A point that feels like too little for {club} given their merits on the pitch {loc}","Stalemate: {club} and {rival} cancel each other out in {comp}","{club} collect another draw that stalls their progress up the table"],
+        titL: ["Defeat for {club} against {rival} that opens the debate around the camp","{club} fall {loc} and cast uncertainty over the decisive run-in","{rival} overcome {club} in a performance that raises many questions","{club} without answers as {rival} punish them without mercy","Three points for {rival} that deepen {club}'s problems in {comp}","A defeat that stings: {club} were not up to the occasion","{club} lose to {rival} and self-criticism becomes unavoidable once more"],
+        entW: ["The side took control of the contest inside the opening quarter-hour and never gave the opposition a foothold.","The superiority of {club} was evident throughout all ninety minutes {loc}.","A deserved victory that arrives at the ideal moment for {club} in {comp}.","{mvp} and his teammates produced a thoroughly composed performance against a {rival} who could do little about it.","Three points that reflect the excellent form of a {club} side that grows stronger with each passing week.","{club} were better in every department and the result is the logical consequence of that."],
+        entD: ["An evenly contested match in which neither side managed to impose their play across the ninety minutes.","{club} had the better of it but lacked the precision required to crack the resistance of {rival}.","A draw that leaves mixed feelings: the football was there, but the goal arrived too late — or not at all.","No winner and no loser in a contest where tension exceeded genuine chances of note.","{club} dominated without converting that dominance into goals, and {rival} were content to pocket their point.","A draw that can be read as a point earned or two dropped, depending on your perspective."],
+        entL: ["The defeat lays bare the difficulties the side are experiencing in sustaining the form of recent weeks.","{rival} were superior in the key tactical areas and {club} found no answer at any stage.","A result that hurts and demands a thorough examination of the moment this squad is going through.","{club} were not at the required level and paid a heavy price against a {rival} who were devastatingly clinical.","The defeat {loc} leaves {club} with unanswered questions ahead of their forthcoming commitments.","A poor afternoon in every sense — football, attitude and result. {club} must hold the mirror up."],
+        bodyW: [
+          ["{club} resolved the contest against {rival} with maturity and authority. The scoreline {score} speaks to the gulf between the two sides.","{mvp} was once again the creative thread running through a side that knows exactly what it wants.","The three points cement a positive momentum that the manager will be determined to sustain."],
+          ["Dominance, clarity of thought and ruthless efficiency. {club} demonstrated once again that, at their best, they are extremely difficult to contain.","The game plan functioned to perfection: high press, quick transitions and clinical finishing in the box.","{mvp} was the beacon who guided the team through the moments of greatest tactical complexity."],
+          ["Controlled from first whistle to last. {club} had no need to overextend themselves against a {rival} who scarcely threatened.","Defensive solidity provided the bedrock on which the victory was constructed.","With this win, the side continue their march through {comp} with firm and assured strides."],
+          ["{rival} arrived with intent, but {club} dismantled their ambitions with composure and authority. The result requires no further explanation.","The standout performer was {mvp}, who dictated the tempo for the full ninety minutes in an impeccable display.","A victory that counts in the standings and lifts the spirit ahead of what is still to come."],
+        ],
+        bodyD: [
+          ["{club} could not unpick {rival}'s defensive structure despite controlling the ball and the game's direction.","The lack of cutting edge in the final third resurfaced at the most inopportune moment.","With homework half done, the squad must find solutions before their next assignment."],
+          ["Sterile possession for {club}, who accumulated merit without converting it into goals against a well-organised {rival} backline.","The draw is not a catastrophe, but the side set higher standards for themselves in circumstances such as these.","The manager faces work on the training ground this week to unlock the finishing touch that is currently missing."],
+          ["A match {club} could and should have won. The chances were there; the goal was not, when it mattered most.","The draw can be rationalised, but the sensation that two points were surrendered is inescapable in this environment.","A cool-headed analysis of what went wrong in the final third is now essential."],
+          ["{club} and {rival} shared the points in a contest where intensity outstripped attacking quality on both sides.","The side competed without ever producing the spark required to tip the balance decisively in their favour.","A result that does not close doors, but does not open them as wide as had been hoped."],
+        ],
+        bodyL: [
+          ["{rival} were superior in the decisive moments and {club} had no response to offer.","The side was exposed by its shortcomings in defensive transitions — an area the coaching staff must address.","The defeat demands reflection on the direction the team should take in their upcoming matches."],
+          ["{club} were not at their best. {rival} sensed it early and proved the more cohesive unit when it mattered.","The defeat raises questions that must be answered swiftly if the side are not to be carried away by negative inertia.","The focus must now move forward: the group's response will define a great deal of what is to follow."],
+          ["An afternoon to forget. {club} found no argument against a {rival} who capitalised on every error.","Tactical analysis points to recurring problems in the press and in playing out from the back.","The manager will need to make clear decisions to ensure this pattern does not repeat itself."],
+          ["A defeat that cuts deep on the scoreboard and in the performance. {rival} were clearly better and {club} know it.","Honest self-criticism must be the starting point for any genuine recovery.","In {comp}, every dropped point has the potential to prove costly when the final reckoning arrives."],
+        ],
+      },
+      vestuario: {
+        titC: ["Dressing Room Discord at {club} Reaches Boiling Point","Internal Tensions Threaten to Destabilise {club} From Within","The Crisis Behind Closed Doors: {club}'s Fractured Squad Exposed","Unity Collapses at {club} as Dressing Room Divisions Come to Light"],
+        titN: ["Underlying Tensions Emerge at {club} Amid Run of Difficult Results","Signs of Disquiet Within the {club} Camp Raise Concern","Dressing Room Harmony Under Scrutiny at {club}","A Fragile Mood Settles Over {club} as Pressure Builds"],
+        entC: ["The situation at {club} has deteriorated to the point where {capStr} and senior figures are openly at odds — a crisis the club can no longer hide.","What began as private frustration has erupted into open conflict at {club}, leaving {capStr} in an increasingly untenable position.","The fractures within the {club} squad are now too wide to paper over, with {capStr} unable to impose order on a dressing room in open revolt.","{club}'s season is being derailed not by opponents but by internal divisions that {capStr} and the coaching staff have so far failed to contain."],
+        entN: ["A mood of quiet unease has taken hold at {club}, with {capStr} tasked with managing delicate interpersonal dynamics before they escalate.","The {club} camp is not in open crisis, but the signs of strain are there for those looking closely enough — and {capStr} knows it.","Questions are beginning to be asked about the collective spirit at {club}, even as {capStr} works to project an image of calm.","The weight of expectation is beginning to tell at {club}, and {capStr} will need to show considerable leadership to prevent further deterioration."],
+        bodyC: [
+          ["{evt0}","The incident has ripped open tensions that had been building for weeks at {club}, laying bare a dressing room split along clear fault lines.","Without swift and decisive action from the coaching staff and {capStr}, there is a very real danger that these divisions become irreparable."],
+          ["{evt0}","Those within the {club} environment speak of a squad that has lost its cohesion, its collective purpose replaced by individual grievance and mutual suspicion.","{capStr} finds himself at the centre of a storm not of his making but one he will nonetheless be judged by how he navigates."],
+          ["{evt0}","The ripple effects of this unrest are being felt across every aspect of {club}'s preparation, with training intensity dropping and communication between players breaking down.","Leadership — from {capStr} and from the dugout — will be the decisive factor in whether {club} can arrest this slide before it becomes terminal."],
+          ["{evt0}","Analysts who have studied {club}'s recent performances point to a disconnected, joyless unit — and the root cause, sources suggest, lies firmly in the dressing room.","{capStr}'s ability to galvanise a fractured group will define not just this moment but the entire trajectory of {club}'s season."],
+        ],
+        bodyN: [
+          ["{evt0}","The episode has not triggered an outright crisis, but it has introduced a degree of unease into a {club} camp that had previously appeared settled.","{capStr} will be keen to address any grievances promptly, aware that unresolved tension at squad level rarely stays contained for long."],
+          ["{evt0}","It would be premature to speak of a dressing room in crisis at {club}, but the underlying dynamics bear watching as the season continues to intensify.","{capStr} has the experience and the credibility to manage these situations, though the coming days will test that capacity."],
+          ["{evt0}","The atmosphere at {club}'s training facilities has been described by those present as 'professional but strained' — a subtle but telling distinction.","{capStr} will be conscious that allowing minor discontent to fester is a risk no captain can afford, particularly at this stage of the campaign."],
+          ["{evt0}","There is nothing yet to suggest that {club} faces a full-blown internal crisis, but the warning signs are present and ought not to be dismissed.","{capStr}'s role in the days ahead will be as much about diplomacy as it is about football — a test of character beyond the pitch."],
+        ],
+      },
+    },
+    GolDirecto: {
+      cronica: {
+        titW: ["VICTORY! {club} win {score} and show no signs of stopping","{club} {score} vs {rival}: three points worth their weight in gold","{club} steamroll {rival} and set their sights higher","{mvp} inspires {club} to another triumph in {comp}","No mercy: {club} dispatch {rival} ({score}) with total authority","{club} win and keep rolling: another three points to cement their table place","{club} do the job and put {rival} firmly in their place in {comp}"],
+        titD: ["{club} {score} vs {rival}: a draw that leaves a bitter taste","{club} can't beat {rival} and settle for a share of the spoils","A dull stalemate between {club} and {rival} in {comp}","{club} drop two points against {rival} in a game they controlled","Neither side takes the win: {club} and {rival} share a goalless draw","The goal just won't come: {club} draw and eye the table nervously","A split that pleases no one at {club}'s ground"],
+        titL: ["{club} {score} vs {rival}: a defeat that stings","{rival} beat {club} and make life harder in {comp}","{club} lose to {rival} and the alarm bells are ringing","Gut punch: {club} fall {loc} without a single answer","{club} fall short: {rival} win with ease {loc}","Another defeat for {club}: the situation is starting to cause real concern","Three points for {rival}: {club} still searching for their best form"],
+        entW: ["{mvp} shines and gives {club} a crucial win in {comp}.","{club} don't let up and bank three vital points {loc} against a clueless {rival}.","Another win for {club}, who keep proving there's something special about this side this year.","A clear-cut victory for {club} against a {rival} side that had no answers.","{club} win, impress and keep climbing. That's about as good a summary of a great night as you'll get.","{club} {score} {rival}: the three points are {club}'s and the table says it all."],
+        entD: ["The points are shared {loc}. {club} will need to examine a performance that fell below their usual level.","A draw that doesn't satisfy {club}, who pick up another single point and glance at the table with caution.","{club} couldn't find the net against {rival} and leave with a point that feels like nothing.","One point that convinces no one. {club} deserved more and couldn't put it away when it mattered.","Stalemate in {comp}: {club} and {rival} cancel each other out.","{club} created, dominated and didn't score. Football can be that cruel sometimes."],
+        entL: ["A tough night for {club}, outclassed by {rival} in a game they never really controlled.","{club} fall and make things complicated in {comp}. {rival} were better in every department.","No response and no goal: {club} suffer another defeat that throws up some very difficult questions.","{club} went missing when it mattered and {rival} took full advantage, claiming all three points without breaking a sweat.","A heavy defeat for {club} that leaves plenty to think about ahead of their next {comp} assignment.","{rival} dominated every key area and {club} never managed to stand up to them at any point."],
+      },
+      vestuario: {
+        titC: ["🚨 Crisis at {club}: the dressing room is at breaking point...","⚡ Maximum tension... {club} imploding from within and nobody is talking","🔥 {club} is burning inside: {capStr} in the eye of the storm","💥 The {club} dressing room explodes: nobody's denying it anymore"],
+        titN: ["😬 Not all is well at {club}... the dressing room has a temperature problem","👀 Something's going on at {club}: {capStr} under the microscope","⚠️ Low-level tension at {club} — is this the calm before the storm?","🤔 Are there cracks forming at {club}? The whispers are getting louder..."],
+        entC: ["THREAD 🧵 Everything that has gone wrong at {club} this week — and {capStr} is right in the middle of it 👇","The dressing room at {club} is a powder keg right now 💣 {capStr} is trying to hold it together but sources say it's getting worse by the hour","We don't like to alarm but... what is happening at {club}?? {capStr} reportedly hasn't spoken to several teammates in DAYS 😳","Full chaos at {club}. The dressing room has fractured and {capStr} is being looked to for answers nobody seems to have right now 🔥"],
+        entN: ["Not a crisis. Not yet. But the vibe at {club} is OFF and {capStr} knows it 👀","Something is bubbling under the surface at {club}... {capStr} doing his best to keep the lid on 🤐","The {club} camp is tense. Not explosive — but tense. {capStr} working overtime behind the scenes 🧩","All quiet officially at {club} but our sources say the dressing room mood is far from ideal 😬 {capStr} has work to do"],
+      },
+      racha: {
+        tit_drought: ["{n} GAMES, ZERO GOALS: {club} IN CRISIS","{club} CAN'T BUY A GOAL — {n} MATCHES AND COUNTING","DROUGHT ALERT: {n} BLANKS FOR {club}","{n}-GAME GOAL DROUGHT DEEPENS FOR {club}","WHERE ARE THE GOALS? {club} SCORELESS FOR {n} GAMES"],
+        ent_drought: ["{n} games without scoring. {club}'s attack has gone completely quiet.","The goals have dried up for {club} — {n} games and still waiting.","{club} are stuck in a {n}-game rut in front of goal. Worrying times.","No goals, no wins, no answers. {club}'s {n}-game drought is a real problem."],
+      },
+    },
+    DXT24: {
+      cronica: {
+        chyronW: ["{club} beats {rival} ({score})","Win for {club} vs {rival} in {comp}","{club} wins and climbs in the table","{club} earns three key points {loc} against {rival}","{mvp} leads {club} to victory over {rival}","Triumph for {club} that strengthens their position in {comp}"],
+        chyronD: ["{club} and {rival} share the points ({score})","Points split between {club} and {rival} in {comp}","{club} held by {rival}: draw in {comp}","Stalemate in {comp}: {club} and {rival} level","{club} can't find a winner against {rival} and take just one point {loc}"],
+        chyronL: ["{rival} defeat {club} ({score})","{club} fall to {rival} in {comp}","{club} lose {loc} and drop ground in the table","Defeat for {club}: {rival} win with authority in {comp}","{rival} overcome {club} and pocket three points in {comp}"],
+        tickerW: ["{club} {score} {rival}  ·  MVP: {mvp}  ·  {comp}  ·  Next up: {club} look to extend their run  ·  More at DXT24.com","{club} on a roll  ·  Score: {score}  ·  Star man: {mvp}  ·  {comp}  ·  Full coverage at DXT24.com","Three points for {club}  ·  {club} {score} {rival}  ·  {comp}  ·  All the latest sport at DXT24.com"],
+        tickerD: ["{club} {score} {rival}  ·  Draw in {comp}  ·  {club} let points slip {loc}  ·  DXT24.com","Stalemate: {club} vs {rival}  ·  {comp}  ·  No goals in an evenly-matched contest  ·  Full analysis at DXT24.com","Goalless draw: {club} and {rival}  ·  {comp}  ·  {club} pick up one more point  ·  DXT24.com"],
+        tickerL: ["{rival} beat {club} ({score})  ·  Defeat for {club} in {comp}  ·  {rival} win  ·  A response needed  ·  DXT24.com","{club} fall to {rival}  ·  {comp}  ·  A defeat that will spark plenty of debate  ·  Full story at DXT24.com","Three points for {rival}  ·  {club} lose {loc}  ·  {comp}  ·  Analysis at DXT24.com"],
+      },
+      vestuario: {
+        titC: ["DRESSING ROOM WAR AT {club} — PLAYERS AT EACH OTHER'S THROATS","{club} IN CRISIS: DRESSING ROOM DIVIDED AS TENSION REACHES PEAK","INTERNAL REVOLT AT {club}: {capStr} UNABLE TO RESTORE ORDER","{club} MELTDOWN — COACHING STAFF CALLED IN TO MEDIATE PLAYER DISPUTE"],
+        titN: ["UNREST SIMMERS AT {club} AS DRESSING ROOM TENSION RISES","{club} CAMP ON EDGE: SOURCES POINT TO GROWING DISCONTENT","DRESSING ROOM ATMOSPHERE AT {club} DESCRIBED AS 'DIFFICULT'","WARNING SIGNS AT {club}: SQUAD HARMONY QUESTIONED BY INSIDERS"],
+        ticker: ["{evt0} | {club} dressing room situation deteriorating according to sources | Full coverage at DXT24.com","BREAKING | {evt0} | Tension inside {club}'s camp reaches new levels | DXT24.com","{evt0} | Is the {club} dressing room close to breaking point? | Follow live updates at DXT24.com"],
+      },
+    },
+    ZonaMixta: {
+      cronica: {
+        pregW: ["Can {club} genuinely challenge for the title?","Is this the best {club} side in years?","Does the manager deserve a new deal after this win?","Is {mvp} playing the football of their career right now?","Why is {club} so hard to beat {loc}?","Are {club} genuine contenders or just riding their luck?","How far can this {club} side go if they keep performing like this?"],
+        pregD: ["Does {club} have a goal-scoring problem?","Is {club} underperforming relative to their real potential?","Is this draw a step backward or a point gained?","Does {club} have a mentality issue when it comes to closing games out?","When will {club} learn to win the games they dominate?","Is {club}'s lack of cutting edge something that can be fixed?","Is {club}'s problem tactical or does it come down to attitude?"],
+        pregL: ["Does the manager need to change the system after this defeat?","Is {club} in a genuine crisis?","How many more defeats can the manager survive?","Is {rival} simply better, or is {club} just not up to it?","Has the time come to make some tough decisions at {club}?","What is going wrong at {club} that means they can't compete against sides like {rival}?","Does {club} have the squad depth for what's being asked of them in {comp}?"],
+        opsW: [
+          [["Marta Ríos","When a team dominates like that, the quality speaks for itself. This win says a great deal."],["J. Cana","I've seen better squads win less. The credit has to go to the manager, no question."]],
+          [["Marta Ríos","I'm not surprised. This team has been showing for weeks that they're well above the average level."],["J. Cana","{mvp} is the heartbeat of this team. When they perform like that, nobody can touch them."]],
+          [["Marta Ríos","{club} are playing with enormous confidence. They are the team of the moment, full stop."],["J. Cana","What I like is that winning doesn't weigh on them. They go out there to dominate and they do it. That's not easy."]],
+          [["Marta Ríos","Three points worth far more than three points. {club} are sending a message to everyone else."],["J. Cana","In football, the winner is always right. And today {club} won with every right in the world."]],
+          [["Marta Ríos","What impresses me most is the solidity. They give you nothing, and that reflects very well on the manager."],["J. Cana","I've played in sides like this. When you trust the system, the system delivers victories. That's exactly what this is."]],
+        ],
+        opsD: [
+          [["Marta Ríos","The draw doesn't reflect the football. This team deserves more and we all know it."],["J. Cana","No goal, no glory. {club} have to find a solution up front, and they need to find it now."]],
+          [["Marta Ríos","You dominate, you score, you win. If you dominate, don't score and don't win, something is wrong. Basic maths."],["J. Cana","{club} have the players to win these games. The problem is mental, not technical."]],
+          [["Marta Ríos","Credit to {rival} as well. Coming away with a point on the road is never straightforward."],["J. Cana","I take the positives — {club} had the game. Efficiency is something you work on, day in, day out."]],
+          [["Marta Ríos","Worrying. {club} have been wasting these chances for a while now and it will eventually cost them."],["J. Cana","I wouldn't overdramatise it. One draw isn't the end of the world. The concern is if it happens again next week."]],
+          [["Marta Ríos","{club} need a striker who makes the difference. Without that, these draws will keep piling up."],["J. Cana","I scored a lot of goals in my career. When the team isn't creating clear-cut chances, it's hard for anyone up front."]],
+        ],
+        opsL: [
+          [["Marta Ríos","No excuses. The team didn't show up at the key moments in this game."],["J. Cana","Time to look in the mirror. This cannot happen again. {club} are better than this."]],
+          [["Marta Ríos","{rival} were better. And when the opposition is better, you have to acknowledge it and learn from it."],["J. Cana","What worries me is the lack of reaction. A big club reacts. They didn't today."]],
+          [["Marta Ríos","The issue isn't losing to {rival}. The issue is how they lost — without putting up a fight."],["J. Cana","I wouldn't point the finger at the manager just yet. But if this continues, the questions become unavoidable."]],
+          [["Marta Ríos","{club} need urgent answers. The team has been showing warning signs throughout this match."],["J. Cana","I've been in dressing rooms like this. What they need now is to close ranks — not go looking for someone to blame."]],
+          [["Marta Ríos","The attitude worries me more than the result. A team that doesn't work hard enough cannot win in {comp}."],["J. Cana","I've been through runs like this. The way out is daily hard work and the manager's belief in his players."]],
+        ],
+      },
+      vestuario: {
+        pregC: ["Has the {club} dressing room crisis become impossible to ignore?","Can {capStr} still command the respect of a fractured {club} squad?","Is this internal meltdown at {club} a sign of deeper structural problems?","Does the manager still have the players at {club} onside — or has he lost the dressing room for good?","Are {club} facing a genuine crisis of leadership, or can they pull back from the brink?"],
+        pregN: ["Should we be reading more into the growing tension inside the {club} camp?","Is {capStr} doing enough to manage the unrest that's clearly present at {club}?","Are the signs of discontent at {club} a temporary blip or something more worrying?","How long can {club} keep a lid on the dressing room before it boils over?","Does the mood inside the {club} squad concern you, or is this being blown out of proportion?"],
+        opsC: [
+          [["Marta Ríos","This is a full-blown crisis and {club} are running out of time to fix it."],["J. Cana","Let's not overreact — every dressing room goes through turbulence. {club} will sort it out."]],
+          [["Marta Ríos","{capStr} has clearly lost control of that dressing room. The damage is done."],["J. Cana","{capStr} is exactly the kind of leader who can pull a group through a moment like this. I back him."]],
+          [["Marta Ríos","The manager needs to act now or {club} risk losing the entire season to this mess."],["J. Cana","The worst thing they can do is panic. {club} need calm heads, not knee-jerk decisions."]],
+          [["Marta Ríos","I've seen squads destroyed by less. This is a genuine crisis of unity at {club}."],["J. Cana","These things get resolved behind closed doors. By Saturday nobody will be talking about it."]],
+        ],
+        opsN: [
+          [["Marta Ríos","There's definitely something wrong at {club}. The body language doesn't lie."],["J. Cana","I think people are reading too much into this. Every squad has its ups and downs."]],
+          [["Marta Ríos","{capStr} needs to step up right now and bring this group together before it escalates."],["J. Cana","The manager is the one who needs to act here, not {capStr}. That's what he's paid for."]],
+          [["Marta Ríos","A bit of tension can actually be healthy — it means players care. {club} will be fine."],["J. Cana","I'm not convinced. This feels like something that's been building for a while at {club}."]],
+          [["Marta Ríos","We're still early enough to fix this. {club} have the tools to resolve it internally."],["J. Cana","The fact it's even become a talking point tells you everything. {club} have a problem."]],
+        ],
+      },
+    },
+  };
+
+  D.SEASON_REVIEW_EN = {
+    verdict: {
+      A: { title:"A Season to Frame", text:"The board has reviewed the {season} campaign. A record of {w}W-{d}D-{l}L, {posStr} in the league, and {trophyStr} confirm an outstanding year. The club is proud of what has been achieved and expects this level of ambition to be maintained." },
+      B: { title:"A Very Satisfying Campaign", text:"The board has reviewed the {season} campaign. With {points} points and {posStr}, the squad competed at a high level ({objStr} met). The board values the consistency shown and is confident the next step is within reach." },
+      C: { title:"An Acceptable Balance, With Room to Grow", text:"The board has reviewed the {season} campaign. A {winPct}% win rate and {posStr} leave a mixed impression: {objStr} met. The board expects a clear step forward in competitiveness next season." },
+      D: { title:"A Season Below Expectations", text:"The board has reviewed the {season} campaign. The numbers — {w}W-{d}D-{l}L, {posStr} — fall short of the club's ambitions (only {objStr} met). A stronger response and a more cohesive project are demanded." },
+      E: { title:"The Board Demands a Change of Direction", text:"The board has reviewed the {season} campaign. With just {points} points and a worrying {posStr}, the season has not met the required standard. The board is calling for immediate action to put the sporting project back on track." },
+    },
+    highlights: {
+      wonLeague: "League champions: the greatest achievement in football.",
+      wonContinental: "Continental glory — a landmark moment for the club.",
+      wonCup: "A cup title that adds another layer to a fine season.",
+      cleanSheets: "{cleanSheets} clean sheets: defensive solidity was a hallmark of this team.",
+      attackingGoals: "A relentless attack: {gpg} goals per game on average.",
+      scoringStreak: "A run of {bestStreakN} consecutive games on the scoresheet.",
+      topScorer: "{topScorerName} shone with {topScorerGoals} goals this season.",
+      posImproved: "The team climbed {deltaPos} places compared to the previous season.",
+    },
+    concerns: {
+      defense: "A porous backline: {gapg} goals conceded per game.",
+      attack: "A lack of firepower: less than a goal per game on average.",
+      drought: "A {droughtN}-game scoring drought weighed heavily on the team.",
+      objectives: "{unmetObj} of {objTotal} board objectives were left unmet.",
+      moreL: "More defeats ({l}) than wins ({w}): consistency was a persistent problem.",
+      posDropped: "The team slipped {absDeltaPos} places compared to last season.",
+    },
+    advice: {
+      defense: { title:"Strengthen the Defence", text:"You are conceding {gapg} goals per game. A reliable centre-back or a holding midfielder could transform the team's defensive shape." },
+      attack: { title:"Find More Firepower", text:"The attack is averaging just {gpg} goals per game. A difference-maker up front — someone who can unlock tight games — is a priority." },
+      goals: { title:"Spread the Goal Threat", text:"{topScorerName} accounted for {pct}% of your goals. If they are injured or lose form, the whole team suffers. Distribute the goalscoring responsibility more evenly." },
+      away: { title:"Improve on the Road", text:"You average {homePpg} points per game at home compared to {awayPpg} away. Work on a specific plan for away fixtures — that is where too many points are being dropped." },
+      objectives: { title:"Meet the Board's Targets", text:"The board set objectives that were not reached. Next season will be judged by the same standards: plan the squad with those targets firmly in mind." },
+      depth: { title:"Build Squad Depth", text:"{workhorseN} has played almost everything. A thin squad runs out of steam in the final run-in: bring in reliable cover." },
+      default: { title:"Stay the Course", text:"The project is working. Keep the core group, make surgical adjustments, and aim a little higher — without breaking what is already delivering results." },
+    },
+  };
+
   FC.data = D;
 })();
