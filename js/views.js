@@ -1437,6 +1437,7 @@
      temporada por resultado, métricas y pasaporte de estadios.
      ============================================================ */
   FC.views.viajes = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const T = c.clubName;
@@ -1503,9 +1504,9 @@
     // Rendimiento lejos de casa: correlación distancia↔resultado. VITALICIO (sobre
     // allAway = todos los desplazamientos jugados de la carrera); NO depende del seasonSelect.
     const RANGES = [
-      { label: "Cercanía", sub: "menos de 300 km", icon: "bus", lo: 0, hi: 300 },
-      { label: "Distancia media", sub: "entre 300 y 1.000 km", icon: "plane", lo: 300, hi: 1000 },
-      { label: "Lejanía", sub: "más de 1.000 km", icon: "plane", lo: 1000, hi: Infinity },
+      { label: tr("travel.proximity"), sub: tr("travel.proximityRange"), icon: "bus", lo: 0, hi: 300 },
+      { label: tr("travel.averageDistance"), sub: tr("travel.averageDistanceRange"), icon: "plane", lo: 300, hi: 1000 },
+      { label: tr("travel.remoteness"), sub: tr("travel.remotenessRange"), icon: "plane", lo: 1000, hi: Infinity },
     ];
     const buckets = RANGES.map(r => ({ ...r, n: 0, w: 0, d: 0, l: 0 }));
     allAway.forEach(m => {
@@ -1525,11 +1526,11 @@
       return `<div class="far-row">
         <div class="far-head"><span class="ni-icon" data-icon="${b.icon}"></span>
           <div class="far-name"><strong>${b.label}</strong><span class="far-sub">${b.sub}</span></div>
-          <span class="far-n">${b.n} viaje${b.n === 1 ? "" : "s"}</span></div>
+          <span class="far-n">${b.n} ${b.n === 1 ? tr("travel.trip.one") : tr("travel.trip.other")}</span></div>
         <div class="far-bar"><div class="far-fill" style="width:${(p / 3 * 100).toFixed(1)}%;background:${col}"></div></div>
-        <div class="far-meta"><span class="far-ppm" style="color:${col}">${fmt2(p)} pts/partido</span>
-          <span class="far-wdl"><b style="color:${acc}">${b.w}V</b> <b style="color:#ffd02e">${b.d}E</b> <b style="color:#ff5470">${b.l}D</b></span>
-          <span class="faint">${wp}% victorias</span></div>
+        <div class="far-meta"><span class="far-ppm" style="color:${col}">${fmt2(p)} ${tr("travel.pointsPerMatch")}</span>
+          <span class="far-wdl"><b style="color:${acc}">${b.w}${tr("res.W")}</b> <b style="color:#ffd02e">${b.d}${tr("res.D")}</b> <b style="color:#ff5470">${b.l}${tr("res.L")}</b></span>
+          <span class="faint">${wp}% ${tr("travel.wins")}</span></div>
       </div>`;
     };
     const activeBuckets = buckets.filter(b => b.n > 0);
@@ -1537,69 +1538,69 @@
     const near = buckets[0], far = buckets[2];
     if (near.n >= 2 && far.n >= 2) {
       const pn = ppm(near), pf = ppm(far), diff = pn - pf;
-      if (diff >= 0.5) farInsight = `Rindes mejor cerca de casa: <b>${fmt2(pn)}</b> pts/partido en viajes cortos frente a <b>${fmt2(pf)}</b> en los largos. La distancia te pesa.`;
-      else if (diff <= -0.5) farInsight = `Curiosamente viajas bien: <b>${fmt2(pf)}</b> pts/partido en los desplazamientos largos frente a <b>${fmt2(pn)}</b> en los cortos.`;
-      else farInsight = `Tu rendimiento aguanta la distancia: <b>${fmt2(pn)}</b> pts cerca y <b>${fmt2(pf)}</b> lejos.`;
+      if (diff >= 0.5) farInsight = tr("travel.performBetterAtHome", { pn: "<b>" + fmt2(pn) + "</b>", pf: "<b>" + fmt2(pf) + "</b>" });
+      else if (diff <= -0.5) farInsight = tr("travel.travelWell", { pn: "<b>" + fmt2(pn) + "</b>", pf: "<b>" + fmt2(pf) + "</b>" });
+      else farInsight = tr("travel.performanceHandlesDistance", { pn: "<b>" + fmt2(pn) + "</b>", pf: "<b>" + fmt2(pf) + "</b>" });
     }
     const farBody = allAway.length === 0
-      ? '<span class="faint">Aún no tienes desplazamientos jugados. Registra partidos como visitante para ver tu rendimiento según la distancia.</span>'
-      : `${homePlayed.length ? `<div class="far-ref">En casa promedias <b style="color:${acc}">${fmt2(homePPM)}</b> pts/partido <span class="faint">· referencia</span></div>` : ""}
+      ? `<span class="faint">${tr("travel.noAwayMatches")}</span>`
+      : `${homePlayed.length ? `<div class="far-ref">${tr("travel.homeAverageLabel")} <b style="color:${acc}">${fmt2(homePPM)}</b> ${tr("travel.pointsPerMatch")} <span class="faint">· ${tr("travel.referenceWord")}</span></div>` : ""}
          <div class="far-grid">${activeBuckets.map(farRow).join("")}</div>
-         ${allAway.length < 5 ? '<div class="far-note faint">Muestra pequeña — el patrón se afinará con más desplazamientos.</div>' : ""}
+         ${allAway.length < 5 ? `<div class="far-note faint">${tr("travel.smallSample")}</div>` : ""}
          ${farInsight ? `<div class="far-insight">${farInsight}</div>` : ""}`;
 
     // Diario de viaje: una postal coleccionable por desplazamiento JUGADO de la temporada,
     // cronológica (playedAway ya viene ordenado asc). El badge V/E/D desambigua el marcador.
-    const RESLAB = { W: "V", D: "E", L: "D" };
+    const RESLAB = { W: tr("res.W"), D: tr("res.D"), L: tr("res.L") };
     const postcard = (m) => {
       const cc = FC.trips.cityOf(m.home);
       const km = Math.round(FC.trips.distance(home, cc));
       const continental = D.isContinental(m.competition) || D.isInternational(m.competition);
       const avion = continental || km >= 300;
       const res = S.userResult(c, m);
-      const resWord = res === "W" ? "victoria" : res === "D" ? "empate" : res === "L" ? "derrota" : "";
-      return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="Revivir el viaje de vuelta de ${U.esc(cc.city)}${resWord ? ", " + resWord : ""}">
+      const resWord = res === "W" ? tr("res.WLower") : res === "D" ? tr("res.DLower") : res === "L" ? tr("res.LLower") : "";
+      return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="${tr("travel.reviveReturnTrip", { city: U.esc(cc.city) })}${resWord ? ", " + resWord : ""}">
         <div class="pc-top"><span class="pc-stamp">${codeOf(cc.city)}</span>
-          <span class="pc-mode"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${km.toLocaleString("es-ES")} km</span></div>
+          <span class="pc-mode"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${km.toLocaleString(FC.i18n.get() === "en" ? "en-US" : "es-ES")} km</span></div>
         <div class="pc-city">${U.esc(cc.city)}</div>
-        <div class="pc-rival">vs ${U.esc(m.home)}${m.competition ? " · " + U.esc(m.competition) : ""}</div>
-        <div class="pc-foot"><span class="pc-res">${RESLAB[res] || "·"}</span><span class="pc-score">${Number(m.homeScore)}-${Number(m.awayScore)}</span><span class="pc-date faint">${U.fmtDate(m.date) || "Sin fecha"}</span></div>
+        <div class="pc-rival">${tr("common.vs")} ${U.esc(m.home)}${m.competition ? " · " + U.esc(m.competition) : ""}</div>
+        <div class="pc-foot"><span class="pc-res">${RESLAB[res] || "·"}</span><span class="pc-score">${Number(m.homeScore)}-${Number(m.awayScore)}</span><span class="pc-date faint">${U.fmtDate(m.date) || tr("common.noDate")}</span></div>
       </div>`;
     };
     const diaryBody = playedAway.length
       ? `<div class="postcards">${playedAway.map(postcard).join("")}</div>`
-      : '<span class="faint">Aún no has jugado desplazamientos esta temporada. Cuando juegues fuera, cada viaje dejará su postal aquí.</span>';
+      : `<span class="faint">${tr("travel.noAwayMatchesThisSeason")}</span>`;
 
     UI.mount(`
-      <div class="page-head"><div><h1>Viajes</h1><div class="sub">${U.esc(season.label)} · ${estVis}/${leagueTeams.length} estadios esta temporada${laps >= 1 ? " · " + laps.toFixed(1).replace(".", ",") + " vueltas al mundo" : ""}</div></div>
+      <div class="page-head"><div><h1>${tr("travel.pageTitle")}</h1><div class="sub">${U.esc(season.label)} · ${estVis}/${leagueTeams.length} ${tr("travel.stadiumsThisSeason")}${laps >= 1 ? " · " + laps.toFixed(1).replace(".", ",") + " " + tr("travel.lapsAroundWorld") : ""}</div></div>
         <div class="flex gap center wrap">${seasonSelect(c)}</div>
       </div>
       <div class="grid cols-4 keep-2" style="margin-bottom:16px">
-        ${tile("Km esta temporada", seasonKm.toLocaleString("es-ES"), playedAway.length + " desplazamiento" + (playedAway.length === 1 ? "" : "s"))}
-        ${tile("Vueltas al mundo", laps.toFixed(2).replace(".", ","), Math.round(lifeKm).toLocaleString("es-ES") + " km en tu carrera")}
-        ${tile("Estadios", passport, "visitados en tu carrera")}
-        ${tile("Viaje más largo", Math.round(longest).toLocaleString("es-ES") + " km", longestCity || "—")}
+        ${tile(tr("travel.kmThisSeason"), seasonKm.toLocaleString("es-ES"), playedAway.length + " " + (playedAway.length === 1 ? tr("travel.disp.one") : tr("travel.disp.other")))}
+        ${tile(tr("travel.lapAroundWorld"), laps.toFixed(2).replace(".", ","), Math.round(lifeKm).toLocaleString("es-ES") + " " + tr("travel.careerKm"))}
+        ${tile(tr("travel.stadiums"), passport, tr("travel.visitedInCareer"))}
+        ${tile(tr("travel.longestTrip"), Math.round(longest).toLocaleString("es-ES") + " km", longestCity || "—")}
       </div>
       <div class="card vmap">
-        <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Mapa de Europa con las ciudades de tus rivales en su posición geográfica real y tus rutas de la temporada coloreadas por resultado.">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${tr("travel.mapAriaLabel")}">
           <rect x="0" y="0" width="${W}" height="${H}" fill="#0b141f"/>
           <g stroke="#1b2738" stroke-width="1">${grat}</g>
           ${faint}${arcs}${dots}${labels}${homeNode}
         </svg>
         <div class="vmap-legend">
-          <span>${dot(acc)} Tu club</span><span>${dot(COL.W)} Victoria</span><span>${dot(COL.D)} Empate</span><span>${dot(COL.L)} Derrota</span><span>${dot(COL.up)} Próximo</span><span>${dot(COL.faint)} Sin visitar</span>
+          <span>${dot(acc)} ${tr("travel.yourClub")}</span><span>${dot(COL.W)} ${tr("travel.win")}</span><span>${dot(COL.D)} ${tr("travel.draw")}</span><span>${dot(COL.L)} ${tr("travel.loss")}</span><span>${dot(COL.up)} ${tr("travel.next")}</span><span>${dot(COL.faint)} ${tr("travel.notVisited")}</span>
         </div>
       </div>
       <div class="card" style="margin-top:16px">
-        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="pin"></span> Pasaporte de estadios <span class="faint" style="font-weight:400">· ${estVis}/${leagueTeams.length} esta temporada</span></div>
-        <div class="vstamps">${stamps || '<span class="faint">Esta temporada no tiene rivales registrados.</span>'}</div>
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="pin"></span> ${tr("travel.stadiumPassport")} <span class="faint" style="font-weight:400">· ${estVis}/${leagueTeams.length} ${tr("travel.passportThisSeason")}</span></div>
+        <div class="vstamps">${stamps || `<span class="faint">${tr("travel.thisSeasonNoRivals")}</span>`}</div>
       </div>
       <div class="card" style="margin-top:16px">
-        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="book"></span> Diario de viaje <span class="faint" style="font-weight:400">· ${playedAway.length} viaje${playedAway.length === 1 ? "" : "s"} esta temporada</span></div>
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="book"></span> ${tr("travel.travelDiary")} <span class="faint" style="font-weight:400">· ${playedAway.length} ${playedAway.length === 1 ? tr("travel.trip.one") : tr("travel.trip.other")} ${tr("travel.passportThisSeason")}</span></div>
         ${diaryBody}
       </div>
       <div class="card" style="margin-top:16px">
-        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Rendimiento lejos de casa <span class="faint" style="font-weight:400">· toda tu carrera</span></div>
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> ${tr("travel.performanceAwayFromHome")} <span class="faint" style="font-weight:400">· ${tr("travel.entireCareer")}</span></div>
         ${farBody}
       </div>
     `);
