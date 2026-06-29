@@ -1356,6 +1356,7 @@
   let pressTab = "DIANA";  // "DIANA" | "Crónica" | "GolDirecto"
   let lastMatchCronica = null; // flash de portada tras registrar un resultado
   FC.views.matches = function () {
+    const T = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const ms = (c.matches || []).filter(m => m.seasonId === season.id && S.isPlayed(m)).slice().sort((a,b)=> new Date(b.date||0)-new Date(a.date||0));
@@ -1363,16 +1364,16 @@
     const sa = S.statsAverages(c, season.id);
     const statsCard = sa ? `
       <div class="card">
-        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Estadísticas avanzadas <span class="faint" style="font-weight:400">· ${sa.count} ${sa.count===1?"partido":"partidos"} con datos</span></div>
-        ${sa.possession ? statCompareRow("Posesión", sa.possession.f, sa.possession.a, "%") : ""}
-        ${sa.shots ? statCompareRow("Remates (media)", sa.shots.f, sa.shots.a) : ""}
-        ${sa.sot ? statCompareRow("Tiros a puerta (media)", sa.sot.f, sa.sot.a) : ""}
-        ${sa.xg ? statCompareRow("xG (media)", sa.xg.f, sa.xg.a) : ""}
-        ${sa.corners ? statCompareRow("Córners (media)", sa.corners.f, sa.corners.a) : ""}
-        ${sa.fouls ? statCompareRow("Faltas (media)", sa.fouls.f, sa.fouls.a) : ""}
-        ${sa.yellow ? statCompareRow("Amarillas (total)", sa.yellow.f, sa.yellow.a) : ""}
-        ${sa.red ? statCompareRow("Rojas (total)", sa.red.f, sa.red.a) : ""}
-        ${sa.pens ? statCompareRow("Penaltis (total)", sa.pens.f, sa.pens.a) : ""}
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> ${T("match.advancedStats.title")} <span class="faint" style="font-weight:400">· ${sa.count} ${sa.count===1?T("w.match.one"):T("w.match.other")} ${T("match.advancedStats.withData")}</span></div>
+        ${sa.possession ? statCompareRow(T("match.stats.possession"), sa.possession.f, sa.possession.a, "%") : ""}
+        ${sa.shots ? statCompareRow(T("match.stats.shots"), sa.shots.f, sa.shots.a) : ""}
+        ${sa.sot ? statCompareRow(T("match.stats.shotsOnTarget"), sa.sot.f, sa.sot.a) : ""}
+        ${sa.xg ? statCompareRow(T("match.stats.xg"), sa.xg.f, sa.xg.a) : ""}
+        ${sa.corners ? statCompareRow(T("match.stats.corners"), sa.corners.f, sa.corners.a) : ""}
+        ${sa.fouls ? statCompareRow(T("match.stats.fouls"), sa.fouls.f, sa.fouls.a) : ""}
+        ${sa.yellow ? statCompareRow(T("match.stats.yellowCards"), sa.yellow.f, sa.yellow.a) : ""}
+        ${sa.red ? statCompareRow(T("match.stats.redCards"), sa.red.f, sa.red.a) : ""}
+        ${sa.pens ? statCompareRow(T("match.stats.penalties"), sa.pens.f, sa.pens.a) : ""}
       </div>` : "";
     const luckCard = luckCardHtml(c, season.id);
     const famCard = formationFamiliarityCardHtml(c, season.id);
@@ -1381,21 +1382,21 @@
     const listHtml = `
       ${previaCard}
       ${upcoming.length ? `<div class="card">
-        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> Próximos partidos <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="calendar"></span> ${T("match.upcoming.title")} <span class="faint" style="font-weight:400">· ${upcoming.length}</span></div>
         ${upcoming.map(m => upcomingRow(c, m)).join("")}
       </div>` : ""}
       ${statsCard}
       ${luckCard}
       ${famCard}
       ${scoringCard}
-      <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>Sin partidos todavía</h3><p>Registra tu primer partido de la temporada.</p></div>`}</div>`;
+      <div class="card">${ms.length ? ms.map(m => fixtureRow(c, m, true)).join("") : `<div class="empty"><div class="emoji">⚽</div><h3>${T("match.empty.title")}</h3><p>${T("match.empty.subtitle")}</p></div>`}</div>`;
     UI.mount(`
-      <div class="page-head"><div><h1>Partidos</h1><div class="sub">${U.esc(season.label)} · ${ms.length} registrados${upcoming.length ? " · " + upcoming.length + " programado" + (upcoming.length>1?"s":"") : ""}</div></div>
-        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost" id="mt-sched"><span class="ni-icon" data-icon="calendar"></span> Programar</button><button class="btn btn-primary" id="mt-add"><span class="ni-icon" data-icon="plus"></span> Registrar partido</button></div>
+      <div class="page-head"><div><h1>${T("match.pageTitle")}</h1><div class="sub">${U.esc(season.label)} · ${T("match.registered", { n: ms.length })}${upcoming.length ? " · " + (upcoming.length>1?T("match.scheduledOther",{n:upcoming.length}):T("match.scheduledOne",{n:upcoming.length})) : ""}</div></div>
+        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost" id="mt-sched"><span class="ni-icon" data-icon="calendar"></span> ${T("match.scheduleButton")}</button><button class="btn btn-primary" id="mt-add"><span class="ni-icon" data-icon="plus"></span> ${T("dash.registerMatch")}</button></div>
       </div>
       <div class="seg" id="mt-tabs" style="margin-bottom:14px">
-        <button type="button" data-t="list" class="${matchesTab==="list"?"active":""}">Lista</button>
-        <button type="button" data-t="calendar" class="${matchesTab==="calendar"?"active":""}">Calendario</button>
+        <button type="button" data-t="list" class="${matchesTab==="list"?"active":""}">${T("match.tabs.list")}</button>
+        <button type="button" data-t="calendar" class="${matchesTab==="calendar"?"active":""}">${T("match.tabs.calendar")}</button>
       </div>
       ${matchesTab === "calendar" ? calendarHtml(c, season) : listHtml}
     `);
@@ -1426,7 +1427,7 @@
       e.stopPropagation(); UI.openCronica(c, findMatch(c, b.dataset.cronica));
     }));
     content().querySelectorAll("[data-del-match]").forEach(b => b.addEventListener("click", () => {
-      UI.confirm("¿Eliminar este partido?", () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast("Partido eliminado"); }, true);
+      UI.confirm(T("match.deleteConfirm"), () => { S.deleteMatch(c, b.dataset.delMatch); UI.toast(T("match.deleteToast")); }, true);
     }));
   };
 
@@ -1978,6 +1979,7 @@
      CLASIFICACIÓN + brackets
      ============================================================ */
   FC.views.standings = function () {
+    const T = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const table = S.computeStandings(c, season.id);
@@ -1986,12 +1988,12 @@
     const assisters = agg.filter(p => p.assists > 0).sort((a,b)=> b.assists - a.assists).slice(0, 8);
     const n = table.length;
     UI.mount(`
-      <div class="page-head"><div><h1>Clasificación</h1><div class="sub">${U.esc(season.leagueName||c.leagueName)} · ${U.esc(season.label)}</div></div>
-        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost btn-sm" id="st-fill"><span class="ni-icon" data-icon="plus"></span> Resultado de otro partido</button></div>
+      <div class="page-head"><div><h1>${T("stand.title")}</h1><div class="sub">${U.esc(season.leagueName||c.leagueName)} · ${U.esc(season.label)}</div></div>
+        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost btn-sm" id="st-fill"><span class="ni-icon" data-icon="plus"></span> ${T("stand.logOtherResult")}</button></div>
       </div>
       <div class="card tight">
         <div class="table-wrap"><table class="tbl"><thead><tr>
-          <th>#</th><th>Equipo</th><th class="num">PJ</th><th class="num">G</th><th class="num">E</th><th class="num">P</th><th class="num">GF</th><th class="num">GC</th><th class="num">DG</th><th class="num">Pts</th>
+          <th>#</th><th>${T("stand.th.team")}</th><th class="num">${T("stand.th.pj")}</th><th class="num">${T("stand.th.g")}</th><th class="num">${T("stand.th.e")}</th><th class="num">${T("stand.th.p")}</th><th class="num">${T("stand.th.gf")}</th><th class="num">${T("stand.th.gc")}</th><th class="num">${T("stand.th.dg")}</th><th class="num">${T("stand.th.pts")}</th>
         </tr></thead><tbody>
         ${table.length ? table.map((r, i) => {
           const zone = i === 0 ? "zone-ucl" : i < 4 ? "zone-ucl" : i < 6 ? "zone-uel" : i >= n - 3 ? "zone-rel" : "";
@@ -1999,16 +2001,16 @@
             <td><span class="pos-cell"><span class="zone-bar ${zone}"></span>${i+1}</span></td>
             <td>${U.esc(r.team)}</td><td class="num">${r.pj}</td><td class="num">${r.pg}</td><td class="num">${r.pe}</td><td class="num">${r.pp}</td>
             <td class="num">${r.gf}</td><td class="num">${r.gc}</td><td class="num">${(r.gf-r.gc>=0?"+":"")+(r.gf-r.gc)}</td><td class="num"><b>${r.pts}</b></td></tr>`;
-        }).join("") : `<tr><td colspan="10"><div class="empty" style="padding:30px"><div class="emoji">📊</div><p>La tabla se calcula con los partidos de Liga que registres.</p></div></td></tr>`}
+        }).join("") : `<tr><td colspan="10"><div class="empty" style="padding:30px"><div class="emoji">📊</div><p>${T("stand.empty")}</p></div></td></tr>`}
         </tbody></table></div>
       </div>
 
       <div class="grid cols-2" style="margin-top:16px">
-        ${rankCard("Máximos goleadores", scorers, "goals", "⚽")}
-        ${rankCard("Máximos asistentes", assisters, "assists", "🅰️")}
+        ${rankCard(T("stand.topScorers"), scorers, "goals", "⚽")}
+        ${rankCard(T("stand.topAssists"), assisters, "assists", "🅰️")}
       </div>
 
-      <div class="section-title">Generador de cuadros de copa</div>
+      <div class="section-title">${T("stand.bracketGenerator")}</div>
       <div class="card" id="bracket-card"></div>
     `);
     document.getElementById("st-fill").addEventListener("click", () => UI.openMatchModal(c));
@@ -2020,20 +2022,20 @@
         <span class="faint" style="width:18px">${i+1}</span>
         <div class="avatar" style="background:${U.colorFor(p.name)}">${U.initials(p.name)}</div>
         <div class="lr-main"><b>${U.esc(p.name)}</b></div>
-        <b style="font-size:18px">${p[key]}</b></div>`).join("")}</div>` : `<p class="faint">Registra goleadores/asistentes en tus partidos.</p>`}</div>`;
+        <b style="font-size:18px">${p[key]}</b></div>`).join("")}</div>` : `<p class="faint">${FC.t("stand.scorersEmpty")}</p>`}</div>`;
   }
   function renderBracket(c) {
     const box = document.getElementById("bracket-card");
     c.bracket = c.bracket || null;
     if (!c.bracket) {
-      box.innerHTML = `<p class="muted" style="margin-top:0">Crea un cuadro eliminatorio (copa, torneo ficticio o reto con amigos).</p>
-        <div class="field"><label>Equipos (separados por comas) — potencias de 2 ideal (4, 8, 16)</label>
+      box.innerHTML = `<p class="muted" style="margin-top:0">${FC.t("stand.bracketDescription")}</p>
+        <div class="field"><label>${FC.t("stand.bracketTeamsLabel")}</label>
         <textarea id="bk-teams" placeholder="${U.esc((S.currentSeason(c).teams||[]).slice(0,8).join(", "))}"></textarea></div>
-        <button class="btn btn-primary" id="bk-make"><span class="ni-icon" data-icon="target"></span> Generar cuadro</button>`;
+        <button class="btn btn-primary" id="bk-make"><span class="ni-icon" data-icon="target"></span> ${FC.t("stand.bracketGenerateButton")}</button>`;
       U.hydrateIcons(box);
       box.querySelector("#bk-make").addEventListener("click", () => {
         let teams = box.querySelector("#bk-teams").value.split(",").map(s => s.trim()).filter(Boolean);
-        if (teams.length < 2) { UI.toast("Añade al menos 2 equipos", "err"); return; }
+        if (teams.length < 2) { UI.toast(FC.t("stand.bracketMinTeamsError"), "err"); return; }
         // shuffle
         for (let i = teams.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [teams[i], teams[j]] = [teams[j], teams[i]]; }
         let size = 2; while (size < teams.length) size *= 2;
@@ -2051,7 +2053,7 @@
         ${round.map((tie, ti) => `<div class="card tight" style="margin-bottom:8px;padding:8px">
           ${tieTeam(tie, "a", ri, ti)}${tieTeam(tie, "b", ri, ti)}</div>`).join("")}
       </div>`).join("");
-    box.innerHTML = `<div class="flex between center mb"><b>Cuadro</b><button class="btn btn-ghost btn-sm" id="bk-reset"><span class="ni-icon" data-icon="trash"></span> Reiniciar</button></div>
+    box.innerHTML = `<div class="flex between center mb"><b>${FC.t("stand.bracketLabel")}</b><button class="btn btn-ghost btn-sm" id="bk-reset"><span class="ni-icon" data-icon="trash"></span> ${FC.t("stand.bracketReset")}</button></div>
       <div class="scroll-x flex gap" style="align-items:flex-start">${html}</div>`;
     U.hydrateIcons(box);
     box.querySelector("#bk-reset").addEventListener("click", () => { c.bracket = null; S.emit(); renderBracket(c); });
@@ -2076,8 +2078,8 @@
       <span style="${bye?"opacity:.4":""}">${U.esc(name||"—")}</span>${isW?'<span class="ni-icon" data-icon="check" style="color:var(--accent)"></span>':""}</div>`;
   }
   function roundName(total, ri) {
-    const left = total - ri; if (left === 1) return "Final"; if (left === 2) return "Semifinal"; if (left === 3) return "Cuartos"; if (left === 4) return "Octavos";
-    return "Ronda " + (ri + 1);
+    const left = total - ri; if (left === 1) return FC.t("stand.round.final"); if (left === 2) return FC.t("stand.round.semi"); if (left === 3) return FC.t("stand.round.quarters"); if (left === 4) return FC.t("stand.round.last16");
+    return FC.t("stand.round.n", { n: ri + 1 });
   }
 
   /* ============================================================
@@ -4637,7 +4639,7 @@
     return `<div class="list-row" data-rival="${U.esc(o.rival)}" style="cursor:pointer">
       <span class="career-badge" style="background:${U.teamColors(o.rival).bg};color:${U.teamColors(o.rival).text}">${U.initials(o.rival)}</span>
       <div class="lr-main"><b>${U.esc(o.rival)}</b>
-        <small class="faint">${o.played} duelo${o.played === 1 ? "" : "s"} · <span style="color:var(--ok);font-weight:700">${o.w}V</span> <span style="color:var(--warn);font-weight:700">${o.d}E</span> <span style="color:var(--danger);font-weight:700">${o.l}D</span> · ${o.gf}:${o.ga}</small></div>
+        <small class="faint">${o.played} ${o.played === 1 ? FC.t("w.meeting.one") : FC.t("w.meeting.other")} · <span style="color:var(--ok);font-weight:700">${o.w}${FC.t("res.W")}</span> <span style="color:var(--warn);font-weight:700">${o.d}${FC.t("res.D")}</span> <span style="color:var(--danger);font-weight:700">${o.l}${FC.t("res.L")}</span> · ${o.gf}:${o.ga}</small></div>
       <span class="flex gap center" style="flex-shrink:0">${CH.formBar(o.form)}</span>
       <span class="chip" style="background:transparent;border:1px solid var(--line);color:${ppgCol};font-weight:700;flex-shrink:0">${f1(o.ppg)}</span>
       <span class="ni-icon" data-icon="chevron" style="color:var(--text-dim);flex-shrink:0"></span>
@@ -4649,7 +4651,7 @@
     const pct = tot ? Math.round(fv / tot * 100) : 50;
     suffix = suffix || "";
     return `<div style="margin-bottom:10px">
-      <div class="flex between" style="font-size:12px;margin-bottom:4px"><span><b>${fv}${suffix}</b> tú</span><span class="faint">${U.esc(label)}</span><span class="faint">rival <b style="color:var(--text)">${av}${suffix}</b></span></div>
+      <div class="flex between" style="font-size:12px;margin-bottom:4px"><span><b>${fv}${suffix}</b> ${FC.t("stat.you")}</span><span class="faint">${U.esc(label)}</span><span class="faint">${FC.t("stat.rival")} <b style="color:var(--text)">${av}${suffix}</b></span></div>
       <div class="bar"><i style="width:${pct}%"></i></div></div>`;
   }
   function alertRow(icon, text, tone, route) {
@@ -4677,14 +4679,14 @@
     return `<div class="fixture upcoming" data-up="${m.id}" style="cursor:pointer">
       <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
       <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${teamDot(m.home||"")}${U.esc(m.home||"—")}</span>
-        <span class="fx-vs">vs</span>
+        <span class="fx-vs">${FC.t("common.vs")}</span>
         <span class="t away" style="${away?"font-weight:700":""}">${teamDot(m.away||"")}${U.esc(m.away||"—")}</span></div>
-      <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
+      <span class="up-date faint">${m.date ? U.fmtDate(m.date) : FC.t("common.noDate")}</span>
       <div class="up-actions">
-        ${canScout ? `<button class="btn btn-ghost btn-sm" data-scout="${U.esc(rival)}"><span class="ni-icon" data-icon="shield"></span> Analizar</button>` : ""}
-        <button class="btn btn-ghost btn-sm" data-odds="${m.id}"><span class="ni-icon" data-icon="coin"></span> Cuotas</button>
-        ${away ? `<button class="btn btn-ghost btn-sm" data-trip="${m.id}"><span class="ni-icon" data-icon="plane"></span> Viaje</button>` : ""}
-        <button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>
+        ${canScout ? `<button class="btn btn-ghost btn-sm" data-scout="${U.esc(rival)}"><span class="ni-icon" data-icon="shield"></span> ${FC.t("dash.analyze")}</button>` : ""}
+        <button class="btn btn-ghost btn-sm" data-odds="${m.id}"><span class="ni-icon" data-icon="coin"></span> ${FC.t("dash.odds")}</button>
+        ${away ? `<button class="btn btn-ghost btn-sm" data-trip="${m.id}"><span class="ni-icon" data-icon="plane"></span> ${FC.t("dash.trip")}</button>` : ""}
+        <button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> ${FC.t("common.log")}</button>
         <button class="icon-btn sm" data-del-match="${m.id}"><span class="ni-icon" data-icon="trash"></span></button>
       </div>
     </div>`;
@@ -4695,14 +4697,14 @@
     const home = m.home === c.clubName, away = m.away === c.clubName;
     const r = played ? S.userResult(c, m) : null;
     const rc = r === "W" ? "win" : r === "L" ? "loss" : "";
-    const score = played ? `<span class="fx-score ${rc}">${m.homeScore}-${m.awayScore}</span>` : `<span class="fx-vs">vs</span>`;
+    const score = played ? `<span class="fx-score ${rc}">${m.homeScore}-${m.awayScore}</span>` : `<span class="fx-vs">${FC.t("common.vs")}</span>`;
     return `<div class="fixture${played ? "" : " upcoming"}${isNext ? " is-next" : ""}" ${played ? `data-match="${m.id}"` : `data-up="${m.id}"`} style="cursor:pointer">
       <span class="fx-comp">${U.esc(m.competition||"")}${m.round ? " · " + U.esc(m.round) : ""}</span>
       <div class="fx-teams"><span class="t" style="${home?"font-weight:700":""}">${teamDot(m.home||"")}${U.esc(m.home||"—")}</span>
         ${score}
         <span class="t away" style="${away?"font-weight:700":""}">${teamDot(m.away||"")}${U.esc(m.away||"—")}</span></div>
-      ${!played ? `<button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> Registrar</button>` : ""}
-      <span class="up-date faint">${m.date ? U.fmtDate(m.date) : "Sin fecha"}</span>
+      ${!played ? `<button class="btn btn-primary btn-sm" data-play-match="${m.id}"><span class="ni-icon" data-icon="ball"></span> ${FC.t("common.log")}</button>` : ""}
+      <span class="up-date faint">${m.date ? U.fmtDate(m.date) : FC.t("common.noDate")}</span>
     </div>`;
   }
   // Calendario de temporada: todos los partidos (jugados + programados) en orden
@@ -4710,11 +4712,12 @@
   function calendarHtml(c, season) {
     const all = (c.matches || []).filter(m => m.seasonId === season.id && S.isUserMatch(c, m))
       .sort((a, b) => (a.date ? new Date(a.date).getTime() : Infinity) - (b.date ? new Date(b.date).getTime() : Infinity));
-    if (!all.length) return `<div class="card"><div class="empty"><div class="emoji">📅</div><h3>Calendario vacío</h3><p>Registra o programa partidos para construir tu calendario de temporada.</p></div></div>`;
+    if (!all.length) return `<div class="card"><div class="empty"><div class="emoji">📅</div><h3>${FC.t("fx.emptyCalendar")}</h3><p>${FC.t("fx.emptyCalendarDesc")}</p></div></div>`;
+    const locale = (FC.i18n && FC.i18n.get() === "en") ? "en-US" : "es-ES";
     const monthOf = (d) => {
-      if (!d) return "Sin fecha";
-      const dt = new Date(d); if (isNaN(dt)) return "Sin fecha";
-      const s = dt.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+      if (!d) return FC.t("common.noDate");
+      const dt = new Date(d); if (isNaN(dt)) return FC.t("common.noDate");
+      const s = dt.toLocaleDateString(locale, { month: "long", year: "numeric" });
       return s.charAt(0).toUpperCase() + s.slice(1);
     };
     const nextId = (S.nextMatch(c, season.id) || {}).id;
