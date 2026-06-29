@@ -3597,6 +3597,7 @@
      NARRATIVA / STORYLINE
      ============================================================ */
   FC.views.story = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const beats = S.storyline(c, season.id);
@@ -3604,27 +3605,27 @@
     const tone = { good: "var(--accent)", bad: "var(--danger)", neutral: "var(--text-dim)" };
     UI.mount(`
       <div class="page-head">
-        <div><h1>Narrativa</h1><div class="sub">La crónica de tu temporada ${U.esc(season.label)}</div></div>
-        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost btn-sm" id="story-img"><span class="ni-icon" data-icon="download"></span> Tarjeta</button></div>
+        <div><h1>${tr("story.pageTitle")}</h1><div class="sub">${tr("story.subtitle", { label: U.esc(season.label) })}</div></div>
+        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost btn-sm" id="story-img"><span class="ni-icon" data-icon="download"></span> ${tr("story.downloadCard")}</button></div>
       </div>
       <div class="card" style="margin-bottom:16px">
         <div class="flex gap" style="align-items:flex-start">
           <span class="ni-icon" data-icon="news" style="color:var(--accent);flex:none;margin-top:2px"></span>
           <div style="font-size:14px;line-height:1.5">${U.esc(recap)}</div></div>
       </div>
-      <div class="section-title">Titulares</div>
+      <div class="section-title">${tr("story.headlines")}</div>
       <div class="card">
         ${beats.length ? `<div class="list">${beats.map(b => `<div class="list-row" style="align-items:flex-start">
           <span class="ni-icon" data-icon="${b.icon}" style="color:${tone[b.tone] || "var(--text-dim)"};flex:none;margin-top:2px"></span>
           <div class="lr-main"><b style="white-space:normal">${b.title}</b><small>${b.sub}</small></div></div>`).join("")}</div>`
-          : `<div class="empty"><div class="emoji">📰</div><h3>Sin titulares todavía</h3><p>Registra partidos, fichajes y títulos para que tu historia cobre vida.</p></div>`}
+          : `<div class="empty"><div class="emoji">📰</div><h3>${tr("story.noHeadlines")}</h3><p>${tr("story.noHeadlinesDesc")}</p></div>`}
       </div>
 
-      <div class="section-title">Vida de vestuario</div>
+      <div class="section-title">${tr("story.dressing")}</div>
       <div class="card">
         <div class="flex between center wrap" style="gap:8px;margin-bottom:4px">
-          <p class="faint" style="font-size:13px;margin:0;flex:1;min-width:180px">Sucesos del día a día del club: peleas, liderazgo, rumores de mercado, malestar... usando tu plantilla real.</p>
-          <button class="btn btn-primary btn-sm" id="story-incident"><span class="ni-icon" data-icon="dice"></span> Generar suceso</button>
+          <p class="faint" style="font-size:13px;margin:0;flex:1;min-width:180px">${tr("story.dressingDesc")}</p>
+          <button class="btn btn-primary btn-sm" id="story-incident"><span class="ni-icon" data-icon="dice"></span> ${tr("story.generateIncident")}</button>
         </div>
         <div id="story-incidents" style="margin-top:10px"></div>
       </div>
@@ -3641,14 +3642,14 @@
     }));
     document.getElementById("story-incident").addEventListener("click", () => {
       const inc = FC.incidents.generate(c);
-      if (!inc) { UI.toast("Añade jugadores a tu plantilla para que ocurran cosas en el vestuario", "err"); return; }
+      if (!inc) { UI.toast(tr("story.noPlayersForIncidents"), "err"); return; }
       S.addIncident(c, inc, true);
       renderIncidents(c);
-      UI.toast("Nuevo suceso en el vestuario", "ok");
+      UI.toast(tr("story.incidentGenerated"), "ok");
     });
     document.getElementById("story-img").addEventListener("click", () => UI.downloadCard({
-      brand: "Boardroom · Temporada", title: c.clubName, subtitle: season.label,
-      lines: [recap], footer: "Mi Modo Carrera", filename: "temporada-" + c.clubName + "-" + season.label,
+      brand: tr("story.cardBrand"), title: c.clubName, subtitle: season.label,
+      lines: [recap], footer: tr("story.cardFooter"), filename: "temporada-" + c.clubName + "-" + season.label,
     }));
   };
   function renderIncidents(c) {
@@ -3662,7 +3663,7 @@
           <span class="ni-icon" data-icon="${i.icon || "news"}" style="color:${tone[i.tone] || "var(--text-dim)"};flex:none;margin-top:2px"></span>
           <div class="lr-main"><b style="white-space:normal">${i.title}</b><small>${U.esc(i.label || "")}${i.date ? " · " + U.fmtDate(i.date) : ""}</small></div>
           <button class="icon-btn sm" data-del-inc="${i.id}"><span class="ni-icon" data-icon="trash"></span></button></div>`).join("")}</div>`
-      : `<div class="empty" style="padding:18px 0"><div class="emoji">🎭</div><h3>El vestuario está tranquilo</h3><p>Pulsa "Generar suceso" para ver qué se cuece entre tus jugadores.</p></div>`;
+      : `<div class="empty" style="padding:18px 0"><div class="emoji">🎭</div><h3>${FC.t("story.quietDressing")}</h3><p>${FC.t("story.quietDressingDesc")}</p></div>`;
     U.hydrateIcons(box);
     box.querySelectorAll("[data-del-inc]").forEach(b => b.addEventListener("click", () => { S.deleteIncident(c, b.dataset.delInc, true); renderIncidents(c); }));
   }
@@ -4217,21 +4218,22 @@
      SCOUTING (wonderkids)
      ============================================================ */
   FC.views.scouting = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     c.shortlist = c.shortlist || [];
     UI.mount(`
-      <div class="page-head"><div><h1>Scouting · Wonderkids</h1><div class="sub">Las mayores promesas de FC 26 · datos de referencia</div></div></div>
+      <div class="page-head"><div><h1>${tr("scout.pageTitle")}</h1><div class="sub">${tr("scout.pageSubtitle")}</div></div></div>
       <div class="card tight mb">
         <div class="field-row three" style="margin-bottom:0">
-          <div class="field" style="margin:0"><label>Buscar</label><input type="search" id="sc-q" placeholder="Nombre o club"/></div>
-          <div class="field" style="margin:0"><label>Posición</label><select id="sc-pos"><option value="">Todas</option>${D.POSITIONS.map(p => `<option>${p}</option>`).join("")}</select></div>
-          <div class="field" style="margin:0"><label>Potencial mínimo</label><input type="number" id="sc-pot" value="83" min="70" max="99"/></div>
+          <div class="field" style="margin:0"><label>${tr("scout.searchLabel")}</label><input type="search" id="sc-q" placeholder="${tr("scout.searchPlaceholder")}"/></div>
+          <div class="field" style="margin:0"><label>${tr("season.position")}</label><select id="sc-pos"><option value="">${tr("youth.filterAll")}</option>${D.POSITIONS.map(p => `<option>${p}</option>`).join("")}</select></div>
+          <div class="field" style="margin:0"><label>${tr("scout.potentialLabel")}</label><input type="number" id="sc-pot" value="83" min="70" max="99"/></div>
         </div>
       </div>
       <div class="card tight"><div class="table-wrap"><table class="tbl"><thead><tr>
-        <th></th><th>Jugador</th><th>Pos</th><th class="num">Edad</th><th class="num">OVR</th><th class="num">POT</th><th>Club</th><th>País</th>
+        <th></th><th>${tr("squad.player")}</th><th>${tr("squad.pos")}</th><th class="num">${tr("squad.age")}</th><th class="num">OVR</th><th class="num">${tr("squad.colPot")}</th><th>Club</th><th>${tr("scout.countryHeader")}</th>
       </tr></thead><tbody id="sc-rows"></tbody></table></div></div>
-      <p class="faint" style="font-size:12px;margin-top:10px">⚠️ Estos son potenciales “de fábrica” de referencia, no los de tu partida concreta. En una versión futura podrás importar los datos reales de tu save (PC).</p>
+      <p class="faint" style="font-size:12px;margin-top:10px">${tr("scout.disclaimerText")}</p>
     `);
     function render() {
       const q = document.getElementById("sc-q").value.toLowerCase();
@@ -4244,7 +4246,7 @@
         <td><b>${U.esc(w.name)}</b></td><td><span class="chip">${w.position}</span></td><td class="num">${w.age}</td>
         <td class="num"><span class="ovr ${U.ovrClass(w.ovr)}">${w.ovr}</span></td><td class="num"><span class="ovr">${w.potential}</span></td>
         <td class="faint">${U.esc(w.club)}</td><td class="faint">${U.esc(w.nationality)}</td></tr>`; }).join("")
-        : `<tr><td colspan="8"><div class="empty" style="padding:24px"><p>Sin resultados con esos filtros.</p></div></td></tr>`;
+        : `<tr><td colspan="8"><div class="empty" style="padding:24px"><p>${tr("scout.noResults")}</p></div></td></tr>`;
       U.hydrateIcons(document.getElementById("sc-rows"));
       document.querySelectorAll("[data-star]").forEach(b => b.addEventListener("click", () => {
         const n = b.dataset.star; const i = c.shortlist.indexOf(n);
