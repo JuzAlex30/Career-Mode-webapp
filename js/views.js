@@ -4254,74 +4254,75 @@
      AJUSTES Y DATOS
      ============================================================ */
   FC.views.settings = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     UI.mount(`
-      <div class="page-head"><div><h1>Ajustes y datos</h1><div class="sub">Gestiona tu carrera y tus datos</div></div></div>
+      <div class="page-head"><div><h1>${tr("settings.pageTitle")}</h1><div class="sub">${tr("settings.pageSubtitle")}</div></div></div>
 
-      <div class="section-title">Apariencia</div>
+      <div class="section-title">${tr("settings.appearanceTitle")}</div>
       <div class="card">
-        <p class="muted" style="margin-top:0">Color de acento de la app. El tema claro/oscuro se cambia con el botón ☾ del menú.</p>
+        <p class="muted" style="margin-top:0">${tr("settings.accentColorDescription")}</p>
         <div class="flex gap wrap" id="se-accents">
           ${D.ACCENTS.map(a => `<button class="accent-dot ${(S.settings().accent||"#00e1a0")===a.color?"active":""}" data-accent="${a.color}" title="${U.esc(a.name)}" style="background:${a.color}"></button>`).join("")}
         </div>
       </div>
 
-      <div class="section-title">Carrera actual</div>
+      <div class="section-title">${tr("settings.currentCareerTitle")}</div>
       <div class="card">
-        <div class="field-row"><div class="field"><label>Nombre del club</label><input type="text" id="se-club" value="${U.esc(c.clubName)}"/></div>
-          <div class="field"><label>Mánager</label><input type="text" id="se-manager" value="${U.esc(c.managerName||"")}"/></div></div>
+        <div class="field-row"><div class="field"><label>${tr("settings.clubNameLabel")}</label><input type="text" id="se-club" value="${U.esc(c.clubName)}"/></div>
+          <div class="field"><label>${tr("settings.managerLabel")}</label><input type="text" id="se-manager" value="${U.esc(c.managerName||"")}"/></div></div>
         <div class="flex gap wrap">
-          <button class="btn btn-primary" id="se-save">Guardar cambios</button>
-          <button class="btn btn-ghost" id="se-newseason"><span class="ni-icon" data-icon="plus"></span> Nueva temporada</button>
-          <button class="btn btn-danger" id="se-delete"><span class="ni-icon" data-icon="trash"></span> Eliminar carrera</button>
+          <button class="btn btn-primary" id="se-save">${tr("settings.saveChanges")}</button>
+          <button class="btn btn-ghost" id="se-newseason"><span class="ni-icon" data-icon="plus"></span> ${tr("settings.newSeason")}</button>
+          <button class="btn btn-danger" id="se-delete"><span class="ni-icon" data-icon="trash"></span> ${tr("settings.deleteCareer")}</button>
         </div>
       </div>
 
-      <div class="section-title">Mis carreras</div>
+      <div class="section-title">${tr("settings.myCareersTitle")}</div>
       <div class="card"><div class="list" id="se-careers"></div>
-        <button class="btn btn-ghost mt" id="se-new"><span class="ni-icon" data-icon="plus"></span> Crear otra carrera</button></div>
+        <button class="btn btn-ghost mt" id="se-new"><span class="ni-icon" data-icon="plus"></span> ${tr("settings.createNewCareer")}</button></div>
 
-      <div class="section-title">Copia de seguridad</div>
+      <div class="section-title">${tr("settings.backupTitle")}</div>
       <div class="card">
-        <p class="muted" style="margin-top:0">Tus datos viven en este navegador. Expórtalos para no perderlos nunca o llevarlos a otro dispositivo.</p>
+        <p class="muted" style="margin-top:0">${tr("settings.backupDescription")}</p>
         <div class="flex gap wrap">
-          <button class="btn" id="se-export"><span class="ni-icon" data-icon="download"></span> Exportar (.json)</button>
-          <button class="btn" id="se-import"><span class="ni-icon" data-icon="upload"></span> Importar</button>
+          <button class="btn" id="se-export"><span class="ni-icon" data-icon="download"></span> ${tr("settings.export")}</button>
+          <button class="btn" id="se-import"><span class="ni-icon" data-icon="upload"></span> ${tr("settings.import")}</button>
           <input type="file" id="se-file" accept="application/json" hidden/>
         </div>
       </div>
 
-      <div class="section-title">Importar partidos (CSV)</div>
+      <div class="section-title">${tr("settings.importCSVTitle")}</div>
       <div class="card">
-        <p class="muted" style="margin-top:0">Pega o sube un CSV de partidos. Cabecera: <code>fecha, competicion, ronda, condicion, rival, gf, ga</code> <span class="faint">— condición = local/visitante · gf = tus goles · ga = los del rival. Sin <code>competicion</code> se asume «Liga».</span></p>
-        <div class="field"><label>Temporada destino</label>
+        <p class="muted" style="margin-top:0">${tr("settings.csvDescription")}</p>
+        <div class="field"><label>${tr("settings.targetSeasonLabel")}</label>
           <select id="se-csv-season">${(c.seasons||[]).slice().sort(U.by("startYear")).reverse().map(s => `<option value="${s.id}" ${s.id===c.currentSeasonId?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div>
         <div class="field"><textarea id="se-csv-text" placeholder="fecha,competicion,condicion,rival,gf,ga&#10;2025-09-01,Liga,local,Rival CF,3,1&#10;2025-09-08,Liga,visitante,Otro CF,0,2"></textarea></div>
         <div class="flex gap wrap">
-          <button class="btn" id="se-csv-upload"><span class="ni-icon" data-icon="upload"></span> Subir .csv</button>
-          <button class="btn btn-primary" id="se-csv-import"><span class="ni-icon" data-icon="check"></span> Importar partidos</button>
+          <button class="btn" id="se-csv-upload"><span class="ni-icon" data-icon="upload"></span> ${tr("settings.uploadCSV")}</button>
+          <button class="btn btn-primary" id="se-csv-import"><span class="ni-icon" data-icon="check"></span> ${tr("settings.importMatches")}</button>
           <input type="file" id="se-csv-file" accept=".csv,text/csv" hidden/>
         </div>
       </div>
 
-      <div class="section-title">Sobre los datos del Modo Carrera</div>
+      <div class="section-title">${tr("settings.aboutDataTitle")}</div>
       <div class="card muted" style="font-size:13px">
-        <p style="margin-top:0">EA Sports FC <b>no ofrece una API oficial</b> para el Modo Carrera: los datos están en tu partida. Por eso esta app funciona con <b>entrada manual asistida</b> y nada se sincroniza automáticamente.</p>
-        <p style="margin-bottom:0">Ya puedes <b>importar partidos por CSV</b> (arriba). En la hoja de ruta quedan capas que requieren más infraestructura: subir el save de PC (solo lectura), OCR de capturas, y la versión con cuentas en la nube y comunidad (compartir carreras, leaderboards).</p>
+        <p style="margin-top:0">${tr("settings.aboutDataText")}</p>
+        <p style="margin-bottom:0">${tr("settings.aboutDataRoadmap")}</p>
       </div>
-      <div class="section-title">Comunidad</div>
+      <div class="section-title">${tr("settings.communityTitle")}</div>
       <div class="card">
-        <div class="field"><label>Alias en comentarios</label>
-          <input type="text" id="se-displayname" maxlength="30" placeholder="Nombre visible para los demás" value="${U.esc(S.settings().displayName||"")}"/>
+        <div class="field"><label>${tr("settings.displayNameLabel")}</label>
+          <input type="text" id="se-displayname" maxlength="30" placeholder="${tr("settings.displayNamePlaceholder")}" value="${U.esc(S.settings().displayName||"")}"/>
         </div>
-        <button class="btn btn-primary btn-sm mt" id="se-displayname-save">Guardar alias</button>
+        <button class="btn btn-primary btn-sm mt" id="se-displayname-save">${tr("settings.saveDisplayName")}</button>
       </div>
-      <div class="section-title">Privacidad y aviso legal</div>
+      <div class="section-title">${tr("settings.privacyLegalTitle")}</div>
       <div class="card" style="font-size:13px">
-        <p class="faint" style="margin-top:0">Boardroom es un proyecto de fans <b>no oficial</b>, sin afiliación con EA Sports / EA Sports FC, la FIFA ni los clubes o competiciones mencionados.</p>
+        <p class="faint" style="margin-top:0">${tr("settings.disclaimerText")}</p>
         <div class="flex gap wrap">
-          <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> Política de privacidad</button>
-          <button class="btn btn-ghost btn-sm" id="se-terms"><span class="ni-icon" data-icon="news"></span> Términos de uso</button>
+          <button class="btn btn-ghost btn-sm" id="se-privacy"><span class="ni-icon" data-icon="news"></span> ${tr("settings.privacyPolicy")}</button>
+          <button class="btn btn-ghost btn-sm" id="se-terms"><span class="ni-icon" data-icon="news"></span> ${tr("legal.terms")}</button>
         </div>
       </div>
     `);
@@ -4329,11 +4330,11 @@
       const val = (document.getElementById("se-displayname").value || "").trim().slice(0, 30);
       S.settings().displayName = val || undefined;
       S.save();
-      UI.toast("Alias actualizado", "ok");
+      UI.toast(tr("settings.toastAliasUpdated"), "ok");
     });
     document.getElementById("se-save").addEventListener("click", () => {
       S.updateCareer({ clubName: document.getElementById("se-club").value.trim() || c.clubName, managerName: document.getElementById("se-manager").value.trim() });
-      UI.toast("Cambios guardados", "ok");
+      UI.toast(tr("settings.toastChangesSaved"), "ok");
     });
     document.getElementById("se-privacy").addEventListener("click", () => UI.openPrivacy());
     document.getElementById("se-terms").addEventListener("click", () => UI.openTerms());
@@ -4341,9 +4342,9 @@
       const cur = S.currentSeason(c);
       // Si la temporada en curso tiene partidos, la junta emite su informe antes de avanzar.
       if (cur && S.userMatches(c, cur.id).length) UI.openSeasonReview(c, cur.id, { canAdvance: true });
-      else UI.confirm("¿Avanzar a una nueva temporada? La actual quedará archivada en tu historia.", () => { S.addSeason(c); UI.toast("Nueva temporada iniciada", "ok"); FC.router.go("dashboard"); });
+      else UI.confirm(tr("settings.confirmAdvanceSeasonText"), () => { S.addSeason(c); UI.toast(tr("season.newSeasonStarted"), "ok"); FC.router.go("dashboard"); });
     });
-    document.getElementById("se-delete").addEventListener("click", () => UI.confirm("¿Eliminar esta carrera y todos sus datos? No se puede deshacer.", () => {
+    document.getElementById("se-delete").addEventListener("click", () => UI.confirm(tr("settings.confirmDeleteCareerText"), () => {
       S.deleteCareer(c.id); FC.app.boot();
     }, true));
     document.getElementById("se-new").addEventListener("click", () => { FC.views.onboarding(); });
@@ -4351,15 +4352,15 @@
     const cl = document.getElementById("se-careers");
     cl.innerHTML = S.careersList().map(cc => `<div class="list-row">
       <div class="career-badge" style="background:${U.teamColors(cc.clubName,cc.badgeColor).bg};color:${U.teamColors(cc.clubName,cc.badgeColor).text}">${U.initials(cc.clubName)}</div>
-      <div class="lr-main"><b>${U.esc(cc.clubName)}</b><small>${U.esc(cc.leagueName)} · ${(cc.seasons||[]).length} temp.</small></div>
-      ${cc.id === c.id ? `<span class="chip accent">Activa</span>` : `<button class="btn btn-ghost btn-sm" data-switch="${cc.id}">Abrir</button>`}</div>`).join("");
+      <div class="lr-main"><b>${U.esc(cc.clubName)}</b><small>${U.esc(cc.leagueName)} · ${(cc.seasons||[]).length} ${tr("settings.careerSeasonsAbbrev")}</small></div>
+      ${cc.id === c.id ? `<span class="chip accent">${tr("settings.careerActiveChip")}</span>` : `<button class="btn btn-ghost btn-sm" data-switch="${cc.id}">${tr("settings.openCareerButton")}</button>`}</div>`).join("");
     cl.querySelectorAll("[data-switch]").forEach(b => b.addEventListener("click", () => { S.setActiveCareer(b.dataset.switch); FC.router.go("dashboard"); FC.app.refreshChrome(); }));
     // export/import
     document.getElementById("se-export").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(S.raw(), null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = "carrera-fc-backup.json"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      UI.toast("Copia exportada", "ok");
+      UI.toast(tr("settings.toastBackupExported"), "ok");
     });
     const file = document.getElementById("se-file");
     document.getElementById("se-import").addEventListener("click", () => file.click());
@@ -4370,12 +4371,12 @@
         try {
           const data = JSON.parse(r.result);
           if (!data.careers || typeof data.careers !== "object") throw new Error("formato");
-          const vMsg = (data.version && data.version !== 1) ? `\n\nEl archivo es de una versión diferente (${data.version}). Los datos se normalizarán automáticamente.` : "";
-          UI.confirm("Importar reemplazará tus datos actuales. ¿Continuar?" + vMsg, () => {
+          const vMsg = (data.version && data.version !== 1) ? tr("settings.importVersionMismatch", { version: data.version }) : "";
+          UI.confirm(tr("settings.confirmImportData") + vMsg, () => {
             localStorage.setItem("carrerafc:db:v1", JSON.stringify(data));
-            S.load(); FC.app.boot(); UI.toast("Datos importados", "ok");
+            S.load(); FC.app.boot(); UI.toast(tr("settings.toastDataImported"), "ok");
           });
-        } catch (e) { UI.toast("Archivo no válido", "err"); }
+        } catch (e) { UI.toast(tr("settings.toastInvalidFile"), "err"); }
       };
       r.readAsText(f);
     });
@@ -4385,15 +4386,15 @@
     csvFile.addEventListener("change", () => {
       const f = csvFile.files[0]; if (!f) return;
       const r = new FileReader();
-      r.onload = () => { document.getElementById("se-csv-text").value = r.result; UI.toast("CSV cargado: revisa y pulsa Importar", "ok"); };
+      r.onload = () => { document.getElementById("se-csv-text").value = r.result; UI.toast(tr("settings.toastCSVLoaded"), "ok"); };
       r.readAsText(f);
     });
     document.getElementById("se-csv-import").addEventListener("click", () => {
       const txt = document.getElementById("se-csv-text").value;
-      if (!txt.trim()) { UI.toast("Pega o sube un CSV primero", "err"); return; }
+      if (!txt.trim()) { UI.toast(tr("settings.toastEmptyCSV"), "err"); return; }
       const res = S.importMatchesCSV(c, txt, document.getElementById("se-csv-season").value);
       if (res.error) { UI.toast(res.error, "err"); return; }
-      UI.toast("Importados " + res.added + " partidos" + (res.skipped ? " · " + res.skipped + " omitidos" : ""), "ok");
+      UI.toast(tr("settings.toastMatchesImported", { added: res.added }) + (res.skipped ? tr("settings.toastMatchesSkippedSuffix", { skipped: res.skipped }) : ""), "ok");
       if (res.added) FC.router.go("matches");
     });
     // apariencia: acento de color (S.save directo, sin emit → sin re-render)
@@ -4401,7 +4402,7 @@
       const color = d.dataset.accent;
       S.settings().accent = color; S.save(); FC.app.applyAccent(color);
       document.querySelectorAll("#se-accents .accent-dot").forEach(x => x.classList.toggle("active", x === d));
-      UI.toast("Acento actualizado", "ok");
+      UI.toast(tr("settings.toastAccentUpdated"), "ok");
     }));
   };
 
