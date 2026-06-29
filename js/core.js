@@ -1723,7 +1723,8 @@
     const sid = season.id, T = c.clubName, esc = U.esc;
     const hash = (s) => { let h = 0; s = String(s || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100000; return h; };
     const phrase = (kind, seed, vars) => {
-      const pool = (FC.data.STORY && FC.data.STORY[kind]) || ["{team}"];
+      const pools = (FC.data.langPool ? FC.data.langPool("STORY") : FC.data.STORY) || {};
+      const pool = pools[kind] || ["{team}"];
       return pool[hash(seed) % pool.length].replace(/\{(\w+)\}/g, (_, k) => esc(vars[k] != null ? vars[k] : ""));
     };
     const norm = (s) => String(s == null ? "" : s).trim().toLowerCase();

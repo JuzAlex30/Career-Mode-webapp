@@ -653,6 +653,11 @@
   /* ============================================================
      NARRATIVA — pools de titulares (se rellenan con {placeholders})
      ============================================================ */
+  // Motor narrativo bilingüe: devuelve el pool EN si el idioma es inglés y existe
+  // su versión "_EN"; si no, el pool español por defecto. Usado por storyline,
+  // vestuario/incidentes y prensa.
+  D.langPool = (base) => ((FC.i18n && FC.i18n.get() === "en" && D[base + "_EN"]) ? D[base + "_EN"] : D[base]) || {};
+
   D.STORY = {
     opener:      ["Arranca la temporada {season}", "Comienza una nueva campaña: {season}", "Se levanta el telón: {season}"],
     bigWin:      ["¡Recital del {team}! Goleada al {rival}", "Goleada de época: el {team} arrasa al {rival}", "El {team} se da un festín ante el {rival}"],
@@ -680,6 +685,34 @@
     clasico_W:   ["El Clásico es del {team}: victoria ante {rival}", "Noche épica: {team} vence al {rival} en el Clásico", "Superioridad total: {team} domina el Clásico"],
     clasico_L:   ["El {rival} se impone en el Clásico", "El Clásico se va con {rival}: noche amarga para {team}", "Derrota en el Clásico: el {rival} fue mejor"],
     clasico_D:   ["El Clásico acaba sin vencedor: espectáculo puro", "Empate en el Clásico: igualados en el campo y en la tabla", "El Clásico reparte honores: nadie pudo romper el equilibrio"],
+  };
+  D.STORY_EN = {
+    opener:      ["Season {season} kicks off", "A new campaign begins: {season}", "The curtain rises: {season}"],
+    bigWin:      ["{team} put on a show! Thrashing of {rival}", "Emphatic win: {team} crush {rival}", "{team} feast on {rival}"],
+    bigLoss:     ["Setback: {rival} steamroll {team}", "A night to forget against {rival}", "Serious slip-up by {team} against {rival}"],
+    hattrick:    ["{player}'s hat-trick: unstoppable", "{player} bags a treble for the ages", "Perfect day for {player}: three goals"],
+    trophyWin:   ["CHAMPIONS! {team} conquer {comp}", "{team} lift the {comp} title", "Eternal glory: {comp} stays home"],
+    promotion:   ["Promotion! {team} go up", "Mission accomplished: {team} are promoted", "{team} take the leap: promotion sealed"],
+    runnerup:    ["Runners-up in {comp}: so close...", "{team} fall at the final hurdle in {comp}", "Silver in {comp} for {team}"],
+    signIn:      ["Signing: {player} lands at {team}", "{team} strengthen with {player}", "New face in the dressing room: {player}"],
+    signMarquee: ["BOMBSHELL: {player} signs for {fee}", "{team} land {player} for {fee}", "Marquee signing: {player} ({fee})"],
+    saleOut:     ["{player} packs his bags for {club}", "Sale: {player} leaves for {club}", "Farewell {player}: signs for {club}"],
+    youth:       ["From the academy to the first team: {player} steps up", "The academy delivers: {player} promoted", "New academy gem: {player} reaches the top"],
+    streak:      ["Unbeaten run: {n} games without defeat", "{team} don't know how to lose: {n} in a row", "Unstoppable: {n} matchdays unbeaten"],
+    domination:  ["Total dominance by {team}: {poss}% possession", "{team} monopolized the ball ({poss}%)", "A masterclass in control: {poss}% possession for {team}"],
+    clinical:    ["Lethal finishing: {team} were clinical against {rival}", "{team} won with a killer's efficiency", "Surgical {team}: scored just enough and won"],
+    unlucky:     ["The scoreline was unfair on {team}: they deserved more", "Football was cruel to {team}", "{team} created plenty, but it wouldn't go in"],
+    wasteful:    ["{shots} shots and little reward: {team} lacked a cutting edge", "{team} shot a lot and scored little", "Dominated the shots but not the net: {team}"],
+    redcard:     ["Heated afternoon: {team} finished a man down", "Drama and a sending-off in {team}'s game", "{team} suffered a numerical disadvantage"],
+    derbi_W:     ["The derby is ours! {team} beat {rival}", "Glory night: {team} win the derby against {rival}", "The derby has an owner: {team} crush {rival}"],
+    derbi_L:     ["Painful derby defeat to {rival}", "{rival} take the derby with authority", "Dark night for {team}: the derby goes to {rival}"],
+    derbi_D:     ["Nobody could break through: derby without a winner", "The derby is shared: a tense draw", "Honours even in the derby between {team} and {rival}"],
+    final_W:     ["CHAMPIONS! {team} win the final against {rival}", "The final is ours: {team} overcome {rival}", "Pure history: {team} crowned in the grand final"],
+    final_L:     ["Cruel final: {rival} snatch the title from {team}", "Runners-up: the final slips away from {team}", "Agony in the final: {rival} were a touch better"],
+    final_D:     ["Goalless, tight final: the drama is yet to come", "Draw in the final: the title goes to penalties", "The final isn't settled in 90 minutes: all still open"],
+    clasico_W:   ["The Clásico belongs to {team}: win over {rival}", "Epic night: {team} beat {rival} in the Clásico", "Total superiority: {team} dominate the Clásico"],
+    clasico_L:   ["{rival} prevail in the Clásico", "The Clásico goes to {rival}: bitter night for {team}", "Defeat in the Clásico: {rival} were better"],
+    clasico_D:   ["The Clásico ends without a winner: pure spectacle", "Draw in the Clásico: level on the pitch and in the table", "The Clásico shares the spoils: nobody could break the deadlock"],
   };
 
   /* ============================================================
