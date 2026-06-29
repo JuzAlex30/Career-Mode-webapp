@@ -3195,6 +3195,7 @@
   }
 
   FC.views.development = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     const players = (c.players || []).slice().sort((a,b) => (D.POS_ORDER[a.position]||99) - (D.POS_ORDER[b.position]||99) || (b.ovr||0) - (a.ovr||0));
     const anyHistory = players.some(p => (p.ovrHistory || []).length);
@@ -3208,16 +3209,16 @@
     });
     UI.mount(`
       <div class="page-head">
-        <div><h1>Desarrollo de jugadores</h1>
-          <div class="sub">${players.length} jugadores · progresión de OVR por temporada</div></div>
+        <div><h1>${tr("dev.title")}</h1>
+          <div class="sub">${tr("dev.subtitle", { count: players.length })}</div></div>
         ${seasonSelect(c)}
       </div>
       ${!anyHistory ? `<div class="card" style="margin-bottom:16px"><div class="flex gap center">
         <span class="ni-icon" data-icon="growth" style="color:var(--accent);flex:none"></span>
-        <div class="muted" style="font-size:13px">Las curvas se construyen al <b>avanzar de temporada</b> (Ajustes → Nueva temporada): al cerrar cada temporada se guarda el OVR de tus jugadores. Por ahora solo ves su OVR actual.</div></div></div>` : ""}
+        <div class="muted" style="font-size:13px">${tr("dev.noHistory")}</div></div></div>` : ""}
       <div class="card tight">
         ${players.length ? `<div class="table-wrap"><table class="tbl"><thead><tr>
-          <th>Jugador</th><th>Pos</th><th class="num">OVR</th><th class="num">POT</th><th class="num">Pico</th><th class="num">Tendencia</th><th>Progresión</th>
+          <th>${tr("squad.player")}</th><th>${tr("squad.pos")}</th><th class="num">OVR</th><th class="num">${tr("squad.colPot")}</th><th class="num">${tr("dev.colPeak")}</th><th class="num">${tr("dev.colTrend")}</th><th>${tr("dev.colProgression")}</th>
         </tr></thead><tbody>
         ${rows.map(({p, ovrs, cur, peak, trend}) => {
           const trendHtml = trend == null ? `<span class="faint">—</span>`
@@ -3226,7 +3227,7 @@
             : `<span class="chip">= 0</span>`;
           return `<tr data-dev="${p.id}" style="cursor:pointer">
             <td><div class="flex gap center"><div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
-              <div><b>${U.esc(p.name)}</b>${p.fromYouth?' <span class="chip accent" style="padding:1px 6px;font-size:10px">cantera</span>':""}<br><small class="faint">${U.esc(p.age||"—")} años</small></div></div></td>
+              <div><b>${U.esc(p.name)}</b>${p.fromYouth?` <span class="chip accent" style="padding:1px 6px;font-size:10px">${tr("squad.academy")}</span>`:""}<br><small class="faint">${tr("dev.years", { age: U.esc(p.age||"—") })}</small></div></div></td>
             <td><span class="chip">${U.esc(p.position||"—")}</span></td>
             <td class="num"><span class="ovr ${U.ovrClass(cur)}">${cur||"—"}</span></td>
             <td class="num faint">${p.potential||"—"}</td>
@@ -3234,7 +3235,7 @@
             <td class="num">${trendHtml}</td>
             <td>${miniSpark(ovrs)}</td></tr>`;
         }).join("")}
-        </tbody></table></div>` : `<div class="empty"><div class="emoji">📈</div><h3>Sin jugadores</h3><p>Añade jugadores en Plantilla para seguir su progresión.</p></div>`}
+        </tbody></table></div>` : `<div class="empty"><div class="emoji">📈</div><h3>${tr("dev.noPlayers")}</h3><p>${tr("dev.noPlayersDesc")}</p></div>`}
       </div>
       ${mentoringCardHtml(c)}
     `);
@@ -3317,38 +3318,39 @@
   let toolRoll = null, toolLeagueId = "", toolMode = "random"; // estado en módulo: no re-rollear en cada render
   function rollShareText(r) {
     const stars = "★".repeat(r.difficulty) + "☆".repeat(5 - r.difficulty);
-    return "⚽ RETO MODO CARRERA ⚽\n"
-      + "Club: " + r.club + " (" + r.league + ")\n"
-      + "Objetivo: " + r.objective.text + " en " + r.seasons + " temporadas\n"
-      + (r.twists.length ? "Reglas: " + r.twists.map(t => t.label).join(" · ") + "\n" : "")
-      + "Dificultad: " + stars + "\n"
-      + "¿Te atreves? #Boardroom #ModoCarrera";
+    return FC.t("tools.shareHeader") + "\n"
+      + FC.t("tools.shareClub") + r.club + " (" + r.league + ")\n"
+      + FC.t("tools.shareObjective") + r.objective.text + " " + FC.t("tools.seasonsLabel", { seasons: r.seasons }) + "\n"
+      + (r.twists.length ? FC.t("tools.shareRules") + r.twists.map(t => t.label).join(" · ") + "\n" : "")
+      + FC.t("tools.shareDifficulty") + stars + "\n"
+      + FC.t("tools.shareDare");
   }
   function toolCopy(txt) {
-    const done = () => UI.toast("Reto copiado 📋", "ok");
+    const done = () => UI.toast(FC.t("tools.copied"), "ok");
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => toolFallbackCopy(txt, done));
     else toolFallbackCopy(txt, done);
   }
   function toolFallbackCopy(txt, done) {
     try { const ta = document.createElement("textarea"); ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); done(); }
-    catch (e) { UI.toast("Copia el texto del recuadro manualmente", "err"); }
+    catch (e) { UI.toast(FC.t("tools.copyManual"), "err"); }
   }
   FC.views.tools = function () {
+    const tr = FC.t;
     const leagues = D.LEAGUES.filter(l => (l.teams || []).length);
     if (!toolRoll) toolRoll = S.rollChallenge({ leagueId: toolLeagueId, mode: toolMode });
     UI.mount(`
-      <div class="page-head"><div><h1>Generador de retos</h1>
-        <div class="sub">Tira un reto aleatorio, compártelo y actívalo en tu carrera</div></div></div>
+      <div class="page-head"><div><h1>${tr("tools.title")}</h1>
+        <div class="sub">${tr("tools.subtitle")}</div></div></div>
       <div class="card tight mb">
         <div class="field-row three" style="margin-bottom:0;align-items:end">
-          <div class="field" style="margin:0"><label>Liga del club</label>
-            <select id="tool-league"><option value="">Cualquiera</option>
+          <div class="field" style="margin:0"><label>${tr("tools.leagueLabel")}</label>
+            <select id="tool-league"><option value="">${tr("tools.leagueAny")}</option>
               ${leagues.map(l => `<option value="${l.id}" ${l.id===toolLeagueId?"selected":""}>${U.esc(l.name)}</option>`).join("")}</select></div>
-          <div class="field" style="margin:0"><label>Modo</label>
-            <select id="tool-mode"><option value="random" ${toolMode==="random"?"selected":""}>Reto aleatorio</option>
-              <option value="rebuild" ${toolMode==="rebuild"?"selected":""}>Rebuild (reconstrucción)</option></select></div>
+          <div class="field" style="margin:0"><label>${tr("tools.modeLabel")}</label>
+            <select id="tool-mode"><option value="random" ${toolMode==="random"?"selected":""}>${tr("tools.modeRandom")}</option>
+              <option value="rebuild" ${toolMode==="rebuild"?"selected":""}>${tr("tools.modeRebuild")}</option></select></div>
           <div class="field" style="margin:0"><label>&nbsp;</label>
-            <button class="btn btn-primary btn-block" id="tool-roll"><span class="ni-icon" data-icon="dice"></span> Generar</button></div>
+            <button class="btn btn-primary btn-block" id="tool-roll"><span class="ni-icon" data-icon="dice"></span> ${tr("tools.generate")}</button></div>
         </div>
       </div>
       <div id="tool-card"></div>
@@ -3363,33 +3365,33 @@
       const box = document.getElementById("tool-card");
       box.innerHTML = `<div class="challenge-card">
         <div class="cc-top"><div class="cc-emoji">${r.mode==="rebuild"?"🔨":"🎲"}</div>
-          <div style="flex:1"><div class="st-label">${r.mode==="rebuild"?"Rebuild":"Reto aleatorio"}</div>
+          <div style="flex:1"><div class="st-label">${r.mode==="rebuild"?tr("tools.cardLabelRebuild"):tr("tools.cardLabelChallenge")}</div>
             <b style="font-size:20px">${U.esc(r.club)}</b><div class="faint" style="font-size:12px">${U.esc(r.league)}</div></div>
           <div class="difficulty">${stars}</div></div>
-        <p style="margin:4px 0;font-size:15px">${r.objective.emoji} <b>${U.esc(r.objective.text)}</b> <span class="faint">en ${r.seasons} temporadas</span></p>
+        <p style="margin:4px 0;font-size:15px">${r.objective.emoji} <b>${U.esc(r.objective.text)}</b> <span class="faint">${tr("tools.seasonsLabel", { seasons: r.seasons })}</span></p>
         ${r.twists.length ? `<div class="cc-rules">${r.twists.map(t => `<span class="chip ${t.ruleId?"accent":""}">${t.emoji} ${U.esc(t.label)}</span>`).join("")}</div>` : ""}
         <textarea readonly id="tool-share" style="margin-top:12px;min-height:118px;font-size:12px;line-height:1.5">${U.esc(rollShareText(r))}</textarea>
         <div class="flex gap wrap" style="margin-top:12px">
-          <button class="btn btn-primary" id="tool-copy"><span class="ni-icon" data-icon="share"></span> Copiar para compartir</button>
-          <button class="btn" id="tool-img"><span class="ni-icon" data-icon="download"></span> Descargar imagen</button>
-          <button class="btn" id="tool-activate"><span class="ni-icon" data-icon="target"></span> Activar como reto</button>
-          <button class="btn btn-ghost" id="tool-again"><span class="ni-icon" data-icon="dice"></span> Otro</button>
+          <button class="btn btn-primary" id="tool-copy"><span class="ni-icon" data-icon="share"></span> ${tr("tools.copyShare")}</button>
+          <button class="btn" id="tool-img"><span class="ni-icon" data-icon="download"></span> ${tr("tools.downloadImage")}</button>
+          <button class="btn" id="tool-activate"><span class="ni-icon" data-icon="target"></span> ${tr("tools.activate")}</button>
+          <button class="btn btn-ghost" id="tool-again"><span class="ni-icon" data-icon="dice"></span> ${tr("tools.another")}</button>
         </div></div>`;
       U.hydrateIcons(box);
       document.getElementById("tool-copy").addEventListener("click", () => toolCopy(rollShareText(r)));
       document.getElementById("tool-img").addEventListener("click", () => UI.downloadCard({
-        brand: r.mode === "rebuild" ? "Boardroom · Rebuild" : "Boardroom · Reto",
+        brand: r.mode === "rebuild" ? tr("tools.brandRebuild") : tr("tools.brandChallenge"),
         title: r.club, subtitle: r.league, difficulty: r.difficulty,
-        lines: [r.objective.text, "en " + r.seasons + " temporadas"],
+        lines: [r.objective.text, tr("tools.seasonsLabel", { seasons: r.seasons })],
         chips: r.twists.map(t => t.label),
-        footer: "¿Te atreves? · #Boardroom #ModoCarrera", filename: "reto-" + r.club,
+        footer: tr("tools.footerShare"), filename: "reto-" + r.club,
       }));
       document.getElementById("tool-again").addEventListener("click", reroll);
       document.getElementById("tool-activate").addEventListener("click", () => {
         const cc = S.getActiveCareer();
         const rules = r.twists.filter(t => t.ruleId).map(t => ({ ruleId: t.ruleId, params: t.params || {} }));
         S.addChallenge(cc, { name: r.objective.text, emoji: r.objective.emoji || "🎲", rules, status: "active", startedAt: Date.now(), custom: true });
-        UI.toast("Reto activado en tu carrera 🎯", "ok");
+        UI.toast(tr("tools.activatedSuccess"), "ok");
       });
     }
     paintRoll();
@@ -3672,38 +3674,39 @@
      SALÓN DE LA FAMA (Hall of Fame local, entre carreras)
      ============================================================ */
   FC.views.hall = function () {
+    const tr = FC.t;
     const hof = S.hallOfFame();
     const t = hof.totals;
     const legend = (label, emoji, l, unit) => `<div class="card stat-tile"><div class="st-glow"></div>
       <div class="st-label">${emoji} ${label}</div>
       <div class="st-value" style="font-size:20px">${l ? U.esc(l.name) : "—"}</div>
-      <div class="st-sub">${l ? l.value + " " + unit + " · " + U.esc(l.club) : "Sin datos"}</div></div>`;
+      <div class="st-sub">${l ? l.value + " " + unit + " · " + U.esc(l.club) : tr("season.noData")}</div></div>`;
     UI.mount(`
-      <div class="page-head"><div><h1>Salón de la fama</h1><div class="sub">Tu legado en todas tus carreras</div></div></div>
+      <div class="page-head"><div><h1>${tr("hall.title")}</h1><div class="sub">${tr("hall.subtitle")}</div></div></div>
       <div class="grid cols-4 keep-2">
-        ${statTile("Carreras", t.careers, "")}
-        ${statTile("Temporadas", t.seasons, "")}
-        ${statTile("Partidos", t.matches, "")}
-        ${statTile("Trofeos", t.trophies, "")}
+        ${statTile(tr("hall.careers"), t.careers, "")}
+        ${statTile(tr("hall.seasons"), t.seasons, "")}
+        ${statTile(tr("hall.matches"), t.matches, "")}
+        ${statTile(tr("hall.trophies"), t.trophies, "")}
       </div>
 
-      <div class="section-title">Mejor temporada</div>
+      <div class="section-title">${tr("hall.bestSeason")}</div>
       <div class="card">${hof.bestSeason
         ? `<div class="flex between center wrap"><div><b style="font-size:18px">${U.esc(hof.bestSeason.club)}</b> <span class="faint">· ${U.esc(hof.bestSeason.label)}</span>
-            <div class="faint" style="font-size:13px;margin-top:4px">${hof.bestSeason.w}V ${hof.bestSeason.d}E ${hof.bestSeason.l}D · ${hof.bestSeason.gf}:${hof.bestSeason.ga} goles</div></div>
-            <div class="st-value" style="font-size:28px">${hof.bestSeason.points} <span class="faint" style="font-size:14px">pts</span></div></div>`
-        : `<p class="faint">Juega partidos de liga para registrar tu mejor temporada.</p>`}</div>
+            <div class="faint" style="font-size:13px;margin-top:4px">${hof.bestSeason.w}${tr("res.W")} ${hof.bestSeason.d}${tr("res.D")} ${hof.bestSeason.l}${tr("res.L")} · ${hof.bestSeason.gf}:${hof.bestSeason.ga} ${tr("hall.goals")}</div></div>
+            <div class="st-value" style="font-size:28px">${hof.bestSeason.points} <span class="faint" style="font-size:14px">${tr("hall.pts")}</span></div></div>`
+        : `<p class="faint">${tr("hall.noData")}</p>`}</div>
 
-      <div class="section-title">Leyendas · histórico de todas las carreras</div>
+      <div class="section-title">${tr("hall.legends")}</div>
       <div class="grid cols-3 keep-2">
-        ${legend("Máximo goleador", "⚽", hof.legends.scorer, "goles")}
-        ${legend("Máximo asistente", "🅰️", hof.legends.assister, "asist.")}
-        ${legend("Más partidos", "👕", hof.legends.apps, "partidos")}
+        ${legend(tr("hall.topScorer"), "⚽", hof.legends.scorer, tr("hall.goals"))}
+        ${legend(tr("hall.topAssister"), "🅰️", hof.legends.assister, tr("hall.assists"))}
+        ${legend(tr("hall.mostMatches"), "👕", hof.legends.apps, tr("hall.matchesUnit"))}
       </div>
 
-      <div class="section-title">Tus carreras</div>
+      <div class="section-title">${tr("hall.yourCareers")}</div>
       <div class="card tight"><div class="table-wrap"><table class="tbl"><thead><tr>
-        <th>Club</th><th>Liga</th><th class="num">Temp.</th><th class="num">Trofeos</th><th class="num">Títulos</th>
+        <th>Club</th><th>${tr("hall.league")}</th><th class="num">${tr("hall.seasonsShort")}</th><th class="num">${tr("hall.trophies")}</th><th class="num">${tr("hall.titles")}</th>
       </tr></thead><tbody>
       ${hof.careers.map(cc => `<tr>
         <td><div class="flex gap center"><div class="career-badge" style="background:${U.teamColors(cc.clubName,cc.badgeColor).bg};color:${U.teamColors(cc.clubName,cc.badgeColor).text}">${U.initials(cc.clubName)}</div><b>${U.esc(cc.clubName)}</b></div></td>
