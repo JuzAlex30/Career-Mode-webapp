@@ -1223,6 +1223,34 @@ body.trip-open { overflow: hidden; }
       "betting.disclaimer": "Simulación con fines de inmersión · sin dinero real · +18",
       "betting.slipOddSub": "BETMÁXIMA · cuota {odd}",
       "betting.betPlaced": "¡Boleto simulado! Ganarías €{amount}",
+      // —— Informe de temporada (UI.openSeasonReview) ——
+      "season.noMatches": "Esta temporada aún no tiene partidos para analizar",
+      "season.score": "Nota {score}/100",
+      "season.ongoing": "en curso",
+      "season.position": "Posición",
+      "season.noLeague": "Sin liga",
+      "season.pj": "{n} PJ",
+      "season.winPctSub": "{pct}% victorias",
+      "season.comparedTo": "▲▼ comparado con la temporada {label}",
+      "season.objectivesTitle": "Objetivos de la junta · {met}/{total} cumplidos",
+      "season.standoutPerformers": "Actuaciones destacadas",
+      "season.topScorer": "⚽ Goleador",
+      "season.goalsSub": "{n} goles",
+      "season.topAssister": "🅰️ Asistente",
+      "season.assistsSub": "{n} asist.",
+      "season.bestRated": "⭐ Mejor nota",
+      "season.avgSub": "{n} media",
+      "season.mostApps": "👕 Más partidos",
+      "season.noData": "Sin datos",
+      "season.matchesOfYear": "Partidos del año",
+      "season.bestResult": "Mejor resultado",
+      "season.worstResult": "Peor resultado",
+      "season.highlights": "Lo mejor de la temporada",
+      "season.concerns": "Asignaturas pendientes",
+      "season.boardAdvice": "Consejos de la junta para la próxima temporada",
+      "season.advance": "Avanzar a la próxima temporada",
+      "season.reportTitle": "Informe de temporada · {label}",
+      "season.newSeasonStarted": "Nueva temporada iniciada",
     },
     en: {
       // —— Chrome / brand ——
@@ -1574,6 +1602,34 @@ body.trip-open { overflow: hidden; }
       "betting.disclaimer": "Simulation for immersion only · no real money · 18+",
       "betting.slipOddSub": "BETMÁXIMA · odd {odd}",
       "betting.betPlaced": "Bet placed! You'd win €{amount}",
+      // —— Season report (UI.openSeasonReview) ——
+      "season.noMatches": "This season has no matches to analyze yet",
+      "season.score": "Score {score}/100",
+      "season.ongoing": "ongoing",
+      "season.position": "Position",
+      "season.noLeague": "No league",
+      "season.pj": "{n} played",
+      "season.winPctSub": "{pct}% wins",
+      "season.comparedTo": "▲▼ compared to the {label} season",
+      "season.objectivesTitle": "Board objectives · {met}/{total} met",
+      "season.standoutPerformers": "Standout performers",
+      "season.topScorer": "⚽ Top scorer",
+      "season.goalsSub": "{n} goals",
+      "season.topAssister": "🅰️ Top assister",
+      "season.assistsSub": "{n} assists",
+      "season.bestRated": "⭐ Best rated",
+      "season.avgSub": "{n} avg",
+      "season.mostApps": "👕 Most appearances",
+      "season.noData": "No data",
+      "season.matchesOfYear": "Matches of the year",
+      "season.bestResult": "Best result",
+      "season.worstResult": "Worst result",
+      "season.highlights": "Season highlights",
+      "season.concerns": "Areas to improve",
+      "season.boardAdvice": "Board advice for next season",
+      "season.advance": "Advance to next season",
+      "season.reportTitle": "Season report · {label}",
+      "season.newSeasonStarted": "New season started",
     },
   };
 
@@ -10044,9 +10100,10 @@ body.trip-open { overflow: hidden; }
 
   /* Resumen de temporada — veredicto de la junta directiva. */
   UI.openSeasonReview = function (c, seasonId, opts) {
+    const T = FC.t;
     opts = opts || {};
     const r = S.seasonReview(c, seasonId);
-    if (!r) { UI.toast("Esta temporada aún no tiene partidos para analizar", "err"); return; }
+    if (!r) { UI.toast(T("season.noMatches"), "err"); return; }
     const tone = { good: "var(--ok)", neutral: "var(--text-dim)", warn: "var(--warn)", bad: "var(--danger)" };
     const gtone = tone[r.grade.tone];
     const sm = r.summary;
@@ -10064,7 +10121,7 @@ body.trip-open { overflow: hidden; }
     const perfTile = (label, p, statTxt) => `<div class="card tight text-c">
       <div class="tile-label" style="font-size:11px">${label}</div>
       <div class="tile-val" style="font-size:16px;font-weight:700">${p ? U.esc(p.name) : "—"}</div>
-      <div class="tile-sub faint" style="font-size:12px">${p ? statTxt(p) : "Sin datos"}</div></div>`;
+      <div class="tile-sub faint" style="font-size:12px">${p ? statTxt(p) : T("season.noData")}</div></div>`;
     const matchLine = (label, x, col) => x ? `<div class="flex between center" style="padding:7px 0">
       <span class="faint" style="font-size:12px">${label}</span>
       <span style="font-size:13px"><b style="color:${col}">${U.esc(x.m.home)} ${x.m.homeScore}-${x.m.awayScore} ${U.esc(x.m.away)}</b></span></div>` : "";
@@ -10072,7 +10129,7 @@ body.trip-open { overflow: hidden; }
       <span class="ni-icon" data-icon="${i.icon}" style="color:${col};flex-shrink:0;margin-top:2px"></span>
       <div class="lr-main"><b style="font-weight:500;font-size:13px">${U.esc(i.text)}</b></div></div>`;
 
-    const objHtml = r.objTotal ? `<div class="section-title">Objetivos de la junta · ${r.objMet}/${r.objTotal} cumplidos</div>
+    const objHtml = r.objTotal ? `<div class="section-title">${T("season.objectivesTitle", { met: r.objMet, total: r.objTotal })}</div>
       <div class="card" style="margin:0">${r.objectives.map(o => `<div style="margin-bottom:10px">
         <div class="flex between center" style="font-size:13px;margin-bottom:4px">
           <span>${o.met ? "✅" : o.pct >= 60 ? "🔶" : "❌"} ${U.esc(o.text)}</span>
@@ -10084,54 +10141,54 @@ body.trip-open { overflow: hidden; }
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:${gtone}1a;border:1.5px solid ${gtone};border-radius:10px;padding:8px 16px;flex-shrink:0">
           <div style="font-size:30px;line-height:1">${r.grade.emoji}</div>
           <div style="font:800 13px var(--font-sans);color:${gtone};letter-spacing:.02em;margin-top:2px">${r.grade.label}</div>
-          <div class="faint" style="font-size:10px">Nota ${r.score}/100</div>
+          <div class="faint" style="font-size:10px">${T("season.score", { score: r.score })}</div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
           <b style="font-size:18px;line-height:1.15">${U.esc(r.verdictTitle)}</b>
-          <div class="faint" style="font-size:12px;margin-top:2px">Temporada ${U.esc(r.season.label)}${r.isCurrent ? " · en curso" : ""}</div>
+          <div class="faint" style="font-size:12px;margin-top:2px">${T("dash.season", { label: U.esc(r.season.label) })}${r.isCurrent ? " · " + T("season.ongoing") : ""}</div>
         </div>
       </div>
       <div style="border-left:3px solid ${gtone};background:var(--panel);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.5">${U.esc(r.verdictText)}</div>
 
       <div class="grid cols-4 keep-2">
-        ${tileD("Posición", r.pos ? r.pos.pos + "º" : "—", r.pos ? "de " + r.pos.total : "Sin liga", r.deltas ? deltaChip(r.deltas.pos, "", false) : "")}
-        ${tileD("Puntos", sm.points, sm.played + " PJ", r.deltas ? deltaChip(r.deltas.points, "", false) : "")}
-        ${tileD("Balance", sm.w + "-" + sm.d + "-" + sm.l, sm.winPct + "% victorias", r.deltas ? deltaChip(r.deltas.winPct, "%", false) : "")}
-        ${tileD("Goles", sm.gf + ":" + sm.ga, "Dif " + (sm.gd >= 0 ? "+" : "") + sm.gd, r.deltas ? deltaChip(r.deltas.gd, "", false) : "")}
+        ${tileD(T("season.position"), r.pos ? r.pos.pos + "º" : "—", r.pos ? T("dash.stat.positionOf", { total: r.pos.total }) : T("season.noLeague"), r.deltas ? deltaChip(r.deltas.pos, "", false) : "")}
+        ${tileD(T("dash.stat.points"), sm.points, T("season.pj", { n: sm.played }), r.deltas ? deltaChip(r.deltas.points, "", false) : "")}
+        ${tileD(T("rival.stat.record"), sm.w + "-" + sm.d + "-" + sm.l, T("season.winPctSub", { pct: sm.winPct }), r.deltas ? deltaChip(r.deltas.winPct, "%", false) : "")}
+        ${tileD(T("dash.stat.goals"), sm.gf + ":" + sm.ga, T("dash.stat.diff", { gd: (sm.gd >= 0 ? "+" : "") + sm.gd }), r.deltas ? deltaChip(r.deltas.gd, "", false) : "")}
       </div>
-      ${r.deltas ? `<div class="faint" style="font-size:11px;text-align:center;margin-top:6px">▲▼ comparado con la temporada ${U.esc(r.deltas.label)}</div>` : ""}
+      ${r.deltas ? `<div class="faint" style="font-size:11px;text-align:center;margin-top:6px">${T("season.comparedTo", { label: U.esc(r.deltas.label) })}</div>` : ""}
 
       ${objHtml}
 
-      <div class="section-title">Actuaciones destacadas</div>
+      <div class="section-title">${T("season.standoutPerformers")}</div>
       <div class="grid cols-4 keep-2">
-        ${perfTile("⚽ Goleador", r.topScorer, p => p.goals + " goles")}
-        ${perfTile("🅰️ Asistente", r.topAssister, p => p.assists + " asist.")}
-        ${perfTile("⭐ Mejor nota", r.bestRated, p => f1(p.avg) + " media")}
-        ${perfTile("👕 Más partidos", r.workhorse, p => p.apps + " PJ")}
+        ${perfTile(T("season.topScorer"), r.topScorer, p => T("season.goalsSub", { n: p.goals }))}
+        ${perfTile(T("season.topAssister"), r.topAssister, p => T("season.assistsSub", { n: p.assists }))}
+        ${perfTile(T("season.bestRated"), r.bestRated, p => T("season.avgSub", { n: f1(p.avg) }))}
+        ${perfTile(T("season.mostApps"), r.workhorse, p => T("season.pj", { n: p.apps }))}
       </div>
 
-      ${(r.bestMatch || r.worstMatch) ? `<div class="section-title">Partidos del año</div>
-        <div class="card" style="margin:0">${matchLine("Mejor resultado", r.bestMatch, "var(--ok)")}${matchLine("Peor resultado", r.worstMatch, "var(--danger)")}</div>` : ""}
+      ${(r.bestMatch || r.worstMatch) ? `<div class="section-title">${T("season.matchesOfYear")}</div>
+        <div class="card" style="margin:0">${matchLine(T("season.bestResult"), r.bestMatch, "var(--ok)")}${matchLine(T("season.worstResult"), r.worstMatch, "var(--danger)")}</div>` : ""}
 
-      ${r.highlights.length ? `<div class="section-title">Lo mejor de la temporada</div>
+      ${r.highlights.length ? `<div class="section-title">${T("season.highlights")}</div>
         <div class="card" style="margin:0">${r.highlights.map(i => liItem(i, "var(--ok)")).join("")}</div>` : ""}
-      ${r.concerns.length ? `<div class="section-title">Asignaturas pendientes</div>
+      ${r.concerns.length ? `<div class="section-title">${T("season.concerns")}</div>
         <div class="card" style="margin:0">${r.concerns.map(i => liItem(i, "var(--danger)")).join("")}</div>` : ""}
 
-      <div class="section-title">Consejos de la junta para la próxima temporada</div>
+      <div class="section-title">${T("season.boardAdvice")}</div>
       <div class="list">${r.advice.map(i => `<div class="list-row" style="align-items:flex-start">
         <span class="ni-icon" data-icon="${i.icon}" style="color:var(--accent);flex-shrink:0;margin-top:2px"></span>
         <div class="lr-main"><b>${U.esc(i.title)}</b><div style="font-size:13px;margin-top:2px;color:var(--text-dim)">${U.esc(i.text)}</div></div>
       </div>`).join("")}</div>
     `;
     const foot = opts.canAdvance
-      ? '<button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="sr-advance"><span class="ni-icon" data-icon="growth"></span> Avanzar a la próxima temporada</button>'
-      : '<button class="btn btn-ghost" data-close>Cerrar</button>';
-    UI.openModal("Informe de temporada · " + r.season.label, body, foot, { lg: true });
+      ? `<button class="btn btn-ghost" data-close>${T("common.close")}</button><button class="btn btn-primary" id="sr-advance"><span class="ni-icon" data-icon="growth"></span> ${T("season.advance")}</button>`
+      : `<button class="btn btn-ghost" data-close>${T("common.close")}</button>`;
+    UI.openModal(T("season.reportTitle", { label: r.season.label }), body, foot, { lg: true });
     if (opts.canAdvance) {
       const adv = document.getElementById("sr-advance");
-      if (adv) adv.addEventListener("click", () => { S.addSeason(c); UI.closeModal(); UI.toast("Nueva temporada iniciada", "ok"); FC.router.go("dashboard"); });
+      if (adv) adv.addEventListener("click", () => { S.addSeason(c); UI.closeModal(); UI.toast(T("season.newSeasonStarted"), "ok"); FC.router.go("dashboard"); });
     }
   };
 
