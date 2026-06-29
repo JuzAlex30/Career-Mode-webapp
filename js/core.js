@@ -3009,9 +3009,9 @@
       if (chosen[1]) vars.p2 = chosen[1].name;
       if (cat.club) {
         const clubs = (FC.data.RUMOR_CLUBS || []).filter(x => _norm(x) !== _norm(c.clubName));
-        vars.club = clubs.length ? rnd(clubs) : "otro club";
+        vars.club = clubs.length ? rnd(clubs) : (FC.i18n && FC.i18n.get() === "en" ? "another club" : "otro club");
       }
-      const title = _fillT((FC.data.VESTUARIO || {})[cat.key], "ves:" + cat.key, vars, ordinal);
+      const title = _fillT((FC.data.langPool ? FC.data.langPool("VESTUARIO") : (FC.data.VESTUARIO || {}))[cat.key], "ves:" + cat.key, vars, ordinal);
       if (!title) return null;
       // Fecha narrativa: la del último partido jugado de la temporada (fecha
       // ficticia coherente con la carrera); "" si aún no se ha jugado.

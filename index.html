@@ -3499,6 +3499,100 @@ body.trip-open { overflow: hidden; }
       "{p1} repite que este es su sitio: la renovación va por buen camino.",
     ],
   };
+  D.VESTUARIO_EN = {
+    conflicto: [
+      "{p1} and {p2} had a bust-up in the dressing room after training.",
+      "Tension at the training ground: {p1} and {p2} had to be pulled apart.",
+      "{p1} and {p2} got into an argument that lit up the dressing room.",
+      "Sparks flew between {p1} and {p2} in today's training.",
+      "The coaching staff had to step in between {p1} and {p2} after a war of words.",
+      "{p1} and {p2} ended up shouting during a heated drill.",
+      "Friction between {p1} and {p2}: social media is already talking about a divided squad.",
+      "A training session boiled over and {p1} and {p2} nearly came to blows.",
+    ],
+    bajon_minutos: [
+      "{p1} isn't hiding his frustration at the lack of minutes.",
+      "{p1} has asked for an explanation about his bench role.",
+      "{p1}'s camp hints he isn't comfortable with his role.",
+      "{p1} is weighing up his future if the situation doesn't change.",
+      "Long face from {p1}: he wants a bigger role in the starting XI.",
+      "{p1} has reportedly told the manager he wants to play more.",
+      "Whispers about {p1}, fed up with warming the bench.",
+    ],
+    liderazgo: [
+      "{p1} gathered the group for a talk at a delicate moment.",
+      "{p1} acts as captain and whips the dressing room into shape.",
+      "A leader's gesture: {p1} stood up for his teammates in front of the manager.",
+      "{p1} drags the team along and keeps the squad united.",
+      "The dressing room feels {p1}'s quiet leadership.",
+      "{p1} carried the team on his back in the pre-match talk.",
+      "When things go wrong, {p1} is the first to raise his voice.",
+    ],
+    promesa: [
+      "{p1} is leaving the coaching staff open-mouthed in training.",
+      "Wonderkid {p1} earns a first-team spot the hard way.",
+      "{p1} shows real promise: the reserves are too small for him.",
+      "Everyone's talking about {p1} at the training ground.",
+      "{p1} trains with the maturity of a veteran despite his youth.",
+      "The manager can't take his eyes off {p1} in every session.",
+      "{p1} is surprising everyone in training.",
+    ],
+    interes: [
+      "{club} have reportedly asked about {p1}'s situation.",
+      "{p1} is highly rated in {club}'s offices.",
+      "Transfer rumors: {club} are keeping a close eye on {p1}.",
+      "{club} are testing the waters for {p1}.",
+      "{p1} is on {club}'s list ahead of the transfer window.",
+      "{club} are sounding things out: they want to know {p1}'s price.",
+      "{club}'s scouts have watched {p1}'s recent matches.",
+    ],
+    vinculo: [
+      "{p1} and {p2} have become inseparable on and off the pitch.",
+      "The partnership between {p1} and {p2} works in the dressing room too.",
+      "{p1} and {p2} even share their coffee: the group appreciates it.",
+      "Good chemistry between {p1} and {p2}, and it shows in training.",
+      "{p1} has taken {p2} under his wing.",
+      "{p1} and {p2} are the training ground's favorite duo.",
+    ],
+    disciplina: [
+      "{p1} arrived late to training and the manager didn't let it slide.",
+      "A telling-off for {p1} for breaking club protocol.",
+      "{p1} was set aside for a day over a disciplinary matter.",
+      "The club fined {p1} for arriving late to the team camp.",
+      "{p1} earned a reprimand for his attitude in training.",
+      "An internal warning for {p1}: discipline is non-negotiable.",
+    ],
+    prensa: [
+      "{p1} stirred things up with some comments to the press.",
+      "{p1}'s words in the press conference are getting people talking.",
+      "{p1} fired up the fans with a controversial interview.",
+      "Media uproar over a few remarks by {p1}.",
+      "{p1} had to clarify his comments from the day before.",
+      "The club called for calm after {p1}'s interview.",
+    ],
+    ambiente: [
+      "The {team} dressing room is enjoying a moment of maximum unity.",
+      "Unbeatable atmosphere at the training ground this week.",
+      "The squad organized a meal to strengthen the bond.",
+      "Optimism is in the air in the {team} dressing room.",
+      "The group pulls together and the manager is grateful.",
+      "Good vibes in training: {team} are switched on.",
+    ],
+    racha_forma: [
+      "{p1} is going through a spectacular run of form.",
+      "{p1} doesn't miss a thing in training: he's unplayable.",
+      "{p1} has carried the team on his back with his level.",
+      "A purple patch for {p1}, unstoppable these days.",
+      "{p1} arrives in superb form.",
+    ],
+    renovacion: [
+      "{p1} expresses his wish to renew and stay for many years.",
+      "{p1} declares himself happy at the club and opens the door to an extension.",
+      "Good news: {p1} wants to stay.",
+      "{p1} and the club begin negotiating a renewal on good terms.",
+      "{p1} keeps saying this is his place: the renewal is on track.",
+    ],
+  };
   // Clubes "grandes" para rumores de mercado creíbles (slot {club} de interes).
   D.RUMOR_CLUBS = ["Real Madrid", "Barcelona", "Manchester City", "Bayern Múnich", "Paris Saint-Germain",
     "Liverpool", "Manchester United", "Arsenal", "Chelsea", "Juventus", "Inter", "Milan", "Atlético de Madrid",
@@ -8898,9 +8992,9 @@ body.trip-open { overflow: hidden; }
       if (chosen[1]) vars.p2 = chosen[1].name;
       if (cat.club) {
         const clubs = (FC.data.RUMOR_CLUBS || []).filter(x => _norm(x) !== _norm(c.clubName));
-        vars.club = clubs.length ? rnd(clubs) : "otro club";
+        vars.club = clubs.length ? rnd(clubs) : (FC.i18n && FC.i18n.get() === "en" ? "another club" : "otro club");
       }
-      const title = _fillT((FC.data.VESTUARIO || {})[cat.key], "ves:" + cat.key, vars, ordinal);
+      const title = _fillT((FC.data.langPool ? FC.data.langPool("VESTUARIO") : (FC.data.VESTUARIO || {}))[cat.key], "ves:" + cat.key, vars, ordinal);
       if (!title) return null;
       // Fecha narrativa: la del último partido jugado de la temporada (fecha
       // ficticia coherente con la carrera); "" si aún no se ha jugado.
