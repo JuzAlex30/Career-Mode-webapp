@@ -4051,6 +4051,7 @@
      HISTORIA
      ============================================================ */
   FC.views.history = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     const rec = S.allTimeRecords(c);
     const trophies = (c.trophies || []).slice().sort((a,b) => (b.season||"").localeCompare(a.season||""));
@@ -4061,10 +4062,10 @@
     const timeline = S.careerTimeline(c);
     const tlTone = { good: "var(--ok)", neutral: "var(--text-dim)", warn: "var(--warn)", bad: "var(--danger)" };
     UI.mount(`
-      <div class="page-head"><div><h1>Historia del club</h1><div class="sub">Tu legado, temporada a temporada</div></div>
-        <div class="flex gap wrap"><button class="btn btn-ghost" id="hs-hall"><span class="ni-icon" data-icon="medal"></span> Salón de la fama</button>
-          <button class="btn btn-ghost" id="hs-award"><span class="ni-icon" data-icon="star"></span> Premio</button>
-          <button class="btn btn-primary" id="hs-trophy"><span class="ni-icon" data-icon="trophy"></span> Añadir trofeo</button></div>
+      <div class="page-head"><div><h1>${tr("hist.pageTitle")}</h1><div class="sub">${tr("hist.pageSubtitle")}</div></div>
+        <div class="flex gap wrap"><button class="btn btn-ghost" id="hs-hall"><span class="ni-icon" data-icon="medal"></span> ${tr("hist.hallOfFame")}</button>
+          <button class="btn btn-ghost" id="hs-award"><span class="ni-icon" data-icon="star"></span> ${tr("hist.award")}</button>
+          <button class="btn btn-primary" id="hs-trophy"><span class="ni-icon" data-icon="trophy"></span> ${tr("hist.addTrophy")}</button></div>
       </div>
 
       ${review ? `<div class="card" id="hs-review-card" style="cursor:pointer;border-left:3px solid ${rTone};display:flex;align-items:center;gap:14px">
@@ -4073,48 +4074,48 @@
           <div style="font:800 11px var(--font-sans);color:${rTone}">${review.grade.label}</div>
         </div>
         <div style="flex:1">
-          <div style="font:700 10px var(--font-sans);letter-spacing:.12em;color:${rTone}">VEREDICTO DE LA JUNTA · ${U.esc(review.season.label)}</div>
+          <div style="font:700 10px var(--font-sans);letter-spacing:.12em;color:${rTone}">${tr("hist.verdict")} · ${U.esc(review.season.label)}</div>
           <b style="font-size:16px;display:block;margin:2px 0 1px">${U.esc(review.verdictTitle)}</b>
-          <div class="faint" style="font-size:12px">Pulsa para leer el informe completo de la temporada</div>
+          <div class="faint" style="font-size:12px">${tr("hist.readFullReport")}</div>
         </div>
         <span class="ni-icon" data-icon="chevron-right" style="flex-shrink:0;color:var(--text-dim)"></span>
       </div>` : ""}
 
-      <div class="section-title">Vitrina de trofeos</div>
+      <div class="section-title">${tr("hist.trophyCase")}</div>
       <div class="card">${trophies.length ? `<div class="grid cols-4 keep-2">${trophies.map(t => `<div class="card tight text-c" style="position:relative">
         <button class="icon-btn sm" data-del-trophy="${t.id}" style="position:absolute;top:6px;right:6px"><span class="ni-icon" data-icon="trash"></span></button>
         <div style="font-size:34px">${t.result === "winner" ? "🏆" : t.result === "promotion" ? "⬆️" : "🥈"}</div>
-        <b style="display:block;margin-top:4px">${U.esc(t.competition)}</b><small class="faint">${U.esc(t.season||"")} · ${t.result === "winner" ? "Campeón" : t.result === "promotion" ? "Ascenso" : "Subcampeón"}</small></div>`).join("")}</div>`
-        : `<div class="empty"><div class="emoji">🏆</div><h3>Vitrina vacía</h3><p>Registra los títulos que vayas ganando.</p></div>`}</div>
+        <b style="display:block;margin-top:4px">${U.esc(t.competition)}</b><small class="faint">${U.esc(t.season||"")} · ${t.result === "winner" ? tr("hist.trophyTagWinner") : t.result === "promotion" ? tr("hist.trophyTagPromotion") : tr("hist.trophyTagRunnerup")}</small></div>`).join("")}</div>`
+        : `<div class="empty"><div class="emoji">🏆</div><h3>${tr("hist.emptyTrophyCase")}</h3><p>${tr("hist.emptyTrophyCaseDesc")}</p></div>`}</div>
 
-      <div class="section-title">Récords históricos</div>
+      <div class="section-title">${tr("hist.historicalRecords")}</div>
       <div class="grid cols-4 keep-2">
-        ${recordTile("Máx. goleador", rec.topScorer, "goals", "⚽")}
-        ${recordTile("Máx. asistente", rec.topAssister, "assists", "🅰️")}
-        ${recordTile("Más partidos", rec.topApps, "apps", "👕")}
-        ${statTile("Racha sin perder", rec.bestUnbeaten, "partidos")}
-        ${statTile("Racha ganadora", rec.bestWinStreak || 0, "victorias seguidas")}
-        ${rec.bestSeason ? `<div class="card tight text-c"><div class="tile-label">Mejor temporada</div><div class="tile-val">${U.esc(rec.bestSeason.label)}</div><div class="tile-sub">${rec.bestSeason.wins} victorias · ${rec.bestSeason.pts} pts</div></div>` : statTile("Mejor temporada", "—", "sin datos")}
+        ${recordTile(tr("hist.topScorer"), rec.topScorer, "goals", "⚽")}
+        ${recordTile(tr("hist.topAssister"), rec.topAssister, "assists", "🅰️")}
+        ${recordTile(tr("hist.mostAppearances"), rec.topApps, "apps", "👕")}
+        ${statTile(tr("hist.unbeatenRun"), rec.bestUnbeaten, tr("hist.unbeatenRunUnit"))}
+        ${statTile(tr("hist.winStreak"), rec.bestWinStreak || 0, tr("hist.winStreakUnit"))}
+        ${rec.bestSeason ? `<div class="card tight text-c"><div class="tile-label">${tr("hist.bestSeason")}</div><div class="tile-val">${U.esc(rec.bestSeason.label)}</div><div class="tile-sub">${rec.bestSeason.wins} ${tr("hist.bestSeasonWins")} · ${rec.bestSeason.pts} ${tr("hist.bestSeasonPts")}</div></div>` : statTile(tr("hist.bestSeason"), "—", tr("hist.noDataSeason"))}
       </div>
-      ${rec.bestWin && rec.bestWin.diff > 0 ? `<div class="card mt"><b>Mayor goleada:</b> ${U.esc(rec.bestWin.match.home)} ${rec.bestWin.match.homeScore}-${rec.bestWin.match.awayScore} ${U.esc(rec.bestWin.match.away)}</div>` : ""}
+      ${rec.bestWin && rec.bestWin.diff > 0 ? `<div class="card mt"><b>${tr("hist.biggestWin")}</b> ${U.esc(rec.bestWin.match.home)} ${rec.bestWin.match.homeScore}-${rec.bestWin.match.awayScore} ${U.esc(rec.bestWin.match.away)}</div>` : ""}
 
-      <div class="section-title">Premios individuales</div>
+      <div class="section-title">${tr("hist.individualAwards")}</div>
       <div class="card">${(c.awards||[]).length ? `<div class="list">${(c.awards||[]).slice().reverse().map(a => `<div class="list-row">
         <span style="font-size:20px">${a.icon||"🏅"}</span><div class="lr-main"><b>${U.esc(a.title)}</b><small>${U.esc(a.player||"")} · ${U.esc(a.season||"")}</small></div>
         <button class="icon-btn sm" data-del-award="${a.id}"><span class="ni-icon" data-icon="trash"></span></button></div>`).join("")}</div>`
-        : `<p class="faint">Registra Balón de Oro, Bota de Oro, MVP del mes...</p>`}</div>
+        : `<p class="faint">${tr("hist.noAwardsPlaceholder")}</p>`}</div>
 
-      <div class="section-title">Resumen por temporadas</div>
+      <div class="section-title">${tr("hist.seasonsSummary")}</div>
       <div class="card tight"><div class="table-wrap"><table class="tbl"><thead><tr>
-        <th>Temporada</th><th>Liga</th><th class="num">Pos</th><th class="num">PJ</th><th class="num">V-E-D</th><th class="num">GF:GC</th><th class="num">Títulos</th><th></th>
+        <th>${tr("hist.season")}</th><th>${tr("hall.league")}</th><th class="num">${tr("squad.pos")}</th><th class="num">${tr("hist.tableHeaderGames")}</th><th class="num">${tr("rival.vedSub")}</th><th class="num">${tr("hist.tableHeaderGoals")}</th><th class="num">${tr("hist.tableHeaderTrophies")}</th><th></th>
       </tr></thead><tbody>
       ${seasonsRows.map(({s, sm, pos}) => `<tr ${sm.played ? `data-review="${s.id}" style="cursor:pointer"` : ""}><td><b>${U.esc(s.label)}</b></td><td class="faint">${U.esc(s.leagueName||c.leagueName)}</td>
         <td class="num">${pos ? pos.pos + "º" : "—"}</td><td class="num">${sm.played}</td><td class="num">${sm.w}-${sm.d}-${sm.l}</td>
         <td class="num">${sm.gf}:${sm.ga}</td><td class="num">${sm.trophies}</td>
         <td class="num">${sm.played ? `<span class="ni-icon" data-icon="chevron-right" style="color:var(--text-dim)"></span>` : ""}</td></tr>`).join("")}
-      </tbody></table></div><div class="faint" style="font-size:11px;padding:6px 10px 0">Pulsa una temporada para ver el informe de la junta.</div></div>
+      </tbody></table></div><div class="faint" style="font-size:11px;padding:6px 10px 0">${tr("hist.tableClickHint")}</div></div>
 
-      ${timeline.length ? `<div class="section-title">Línea de tiempo de la carrera</div>
+      ${timeline.length ? `<div class="section-title">${tr("hist.careerTimeline")}</div>
       <div class="card"><div style="position:relative;padding-left:6px">
         ${timeline.slice().reverse().map((t, i, arr) => `<div style="display:flex;gap:12px;align-items:flex-start;${i < arr.length - 1 ? "padding-bottom:14px" : ""};position:relative">
           ${i < arr.length - 1 ? `<div style="position:absolute;left:9px;top:22px;bottom:-2px;width:2px;background:var(--line)"></div>` : ""}
@@ -4122,7 +4123,7 @@
             <span class="ni-icon" data-icon="${t.icon}" style="width:11px;height:11px;color:${tlTone[t.tone]}"></span></div>
           <div style="flex:1;min-width:0">
             <div class="flex between center" style="gap:8px">
-              <b style="font-size:14px">${U.esc(t.title)}${t.isCurrent ? ` <span class="chip" style="font-size:9px;padding:1px 6px;background:var(--accent);color:#fff">EN CURSO</span>` : ""}</b>
+              <b style="font-size:14px">${U.esc(t.title)}${t.isCurrent ? ` <span class="chip" style="font-size:9px;padding:1px 6px;background:var(--accent);color:#fff">${tr("hist.currentBadge")}</span>` : ""}</b>
               <span class="faint" style="font-size:12px;flex-shrink:0">${U.esc(t.label)}</span></div>
             <div class="faint" style="font-size:12px;margin-top:2px">${U.esc(t.sub)}</div>
             ${t.badges.length ? `<div style="font-size:17px;margin-top:3px;letter-spacing:1px">${t.badges.join(" ")}</div>` : ""}
@@ -4136,13 +4137,13 @@
         played.forEach(m => { counts[m.formation] = (counts[m.formation] || 0) + 1; });
         const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
         const total = played.length;
-        return `<div class="section-title">Formaciones más usadas</div>
-          <div class="card tight"><div class="table-wrap"><table class="tbl"><thead><tr><th>Formación</th><th class="num">Partidos</th><th class="num">% uso</th></tr></thead><tbody>
+        return `<div class="section-title">${tr("hist.formations")}</div>
+          <div class="card tight"><div class="table-wrap"><table class="tbl"><thead><tr><th>${tr("hist.formationHeader")}</th><th class="num">${tr("hist.matchesHeader")}</th><th class="num">${tr("hist.usageHeader")}</th></tr></thead><tbody>
           ${sorted.map(([f, n]) => `<tr><td><b>${U.esc(f)}</b></td><td class="num">${n}</td><td class="num faint">${Math.round(n/total*100)}%</td></tr>`).join("")}
           </tbody></table></div></div>`;
       })()}
-      <div class="section-title">Diario de la carrera</div>
-      <div class="card"><button class="btn btn-ghost btn-sm mb" id="hs-note"><span class="ni-icon" data-icon="book"></span> Nueva entrada</button>
+      <div class="section-title">${tr("hist.careerDiary")}</div>
+      <div class="card"><button class="btn btn-ghost btn-sm mb" id="hs-note"><span class="ni-icon" data-icon="book"></span> ${tr("hist.newEntry")}</button>
         <div id="hs-notes"></div></div>
     `);
     renderNotes(c);
@@ -4153,13 +4154,13 @@
     document.getElementById("hs-trophy").addEventListener("click", () => trophyModal(c));
     document.getElementById("hs-award").addEventListener("click", () => awardModal(c));
     document.getElementById("hs-note").addEventListener("click", () => noteModal(c));
-    content().querySelectorAll("[data-del-trophy]").forEach(b => b.addEventListener("click", () => { S.deleteTrophy(c, b.dataset.delTrophy); UI.toast("Trofeo eliminado"); }));
-    content().querySelectorAll("[data-del-award]").forEach(b => b.addEventListener("click", () => { S.deleteAward(c, b.dataset.delAward); UI.toast("Premio eliminado"); }));
+    content().querySelectorAll("[data-del-trophy]").forEach(b => b.addEventListener("click", () => { S.deleteTrophy(c, b.dataset.delTrophy); UI.toast(tr("hist.trophyDeleted")); }));
+    content().querySelectorAll("[data-del-award]").forEach(b => b.addEventListener("click", () => { S.deleteAward(c, b.dataset.delAward); UI.toast(tr("hist.awardDeleted")); }));
   };
   function recordTile(label, p, key, emoji) {
     return `<div class="card stat-tile"><div class="st-glow"></div><div class="st-label">${emoji} ${label}</div>
       <div class="st-value" style="font-size:20px">${p && p[key] ? U.esc(p.name) : "—"}</div>
-      <div class="st-sub">${p && p[key] ? p[key] + (key === "apps" ? " partidos" : key === "goals" ? " goles" : " asist.") : "Sin datos"}</div></div>`;
+      <div class="st-sub">${p && p[key] ? p[key] + (key === "apps" ? " " + FC.t("hist.recordApps") : key === "goals" ? " " + FC.t("hist.recordGoals") : " " + FC.t("hist.recordAssists")) : FC.t("hist.noRecordData")}</div></div>`;
   }
   function renderNotes(c) {
     const box = document.getElementById("hs-notes");
@@ -4167,53 +4168,56 @@
     box.innerHTML = notes.length ? notes.map(n => `<div class="list-row"><div class="lr-main"><b>${U.esc(n.title)}</b><small>${U.esc(n.season||"")} · ${U.fmtDate(n.date)}</small>
       ${n.body ? `<div class="muted" style="font-size:13px;margin-top:4px">${U.esc(n.body)}</div>` : ""}</div>
       <button class="icon-btn sm" data-del-note="${n.id}"><span class="ni-icon" data-icon="trash"></span></button></div>`).join("")
-      : `<p class="faint">Escribe crónicas, momentos clave o decisiones de tu carrera.</p>`;
+      : `<p class="faint">${FC.t("hist.diaryNotesPlaceholder")}</p>`;
     U.hydrateIcons(box);
     box.querySelectorAll("[data-del-note]").forEach(b => b.addEventListener("click", () => { S.deleteNote(c, b.dataset.delNote); renderNotes(c); }));
   }
   function trophyModal(c) {
+    const tr = FC.t;
     const season = S.currentSeason(c);
-    UI.openModal("Añadir trofeo", `
-      <div class="field"><label>Competición</label><input type="text" id="t-comp" list="dl-comp" placeholder="p.ej. LaLiga / Champions"/>
+    UI.openModal(tr("hist.addTrophy"), `
+      <div class="field"><label>${tr("hist.trophyCompetition")}</label><input type="text" id="t-comp" list="dl-comp" placeholder="${tr("hist.trophyCompetitionPlaceholder")}"/>
         <datalist id="dl-comp">${D.compGroupsFor(careerCountry(c)).reduce((a,g)=>a.concat(g.items),[]).map(x => `<option value="${U.esc(x)}">`).join("")}</datalist></div>
-      <div class="field-row"><div class="field"><label>Temporada</label><select id="t-season">${(c.seasons||[]).map(s => `<option value="${s.label}" ${s.id===season.id?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div>
-        <div class="field"><label>Resultado</label><select id="t-res"><option value="winner">Campeón 🏆</option><option value="runnerup">Subcampeón 🥈</option><option value="promotion">Ascenso ⬆️</option></select></div></div>
-    `, `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="t-save">Guardar</button>`);
+      <div class="field-row"><div class="field"><label>${tr("hist.season")}</label><select id="t-season">${(c.seasons||[]).map(s => `<option value="${s.label}" ${s.id===season.id?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div>
+        <div class="field"><label>${tr("hist.trophyResult")}</label><select id="t-res"><option value="winner">${tr("hist.trophyWinner")}</option><option value="runnerup">${tr("hist.trophyRunnerup")}</option><option value="promotion">${tr("hist.trophyPromotion")}</option></select></div></div>
+    `, `<button class="btn btn-ghost" data-close>${tr("common.cancel")}</button><button class="btn btn-primary" id="t-save">${tr("common.save")}</button>`);
     document.getElementById("t-save").addEventListener("click", () => {
       const comp = document.getElementById("t-comp").value.trim();
-      if (!comp) { UI.toast("Indica la competición", "err"); return; }
+      if (!comp) { UI.toast(tr("hist.trophyNoCompetition"), "err"); return; }
       const label = document.getElementById("t-season").value;
       const s = (c.seasons||[]).find(x => x.label === label);
       S.addTrophy(c, { competition: comp, season: label, seasonId: s ? s.id : season.id, result: document.getElementById("t-res").value });
-      UI.closeModal(); UI.toast("Trofeo añadido 🏆", "ok");
+      UI.closeModal(); UI.toast(tr("hist.trophyAdded"), "ok");
     });
   }
   function awardModal(c) {
+    const tr = FC.t;
     const season = S.currentSeason(c);
-    UI.openModal("Añadir premio", `
-      <div class="field"><label>Premio</label><input type="text" id="a-title" placeholder="p.ej. Balón de Oro / Bota de Oro"/></div>
-      <div class="field-row"><div class="field"><label>Jugador</label><input type="text" id="a-player" list="dl-players2" placeholder="Nombre"/>
+    UI.openModal(tr("hist.awardModalTitle"), `
+      <div class="field"><label>${tr("hist.awardTitle")}</label><input type="text" id="a-title" placeholder="${tr("hist.awardTitlePlaceholder")}"/></div>
+      <div class="field-row"><div class="field"><label>${tr("squad.player")}</label><input type="text" id="a-player" list="dl-players2" placeholder="${tr("hist.awardPlayerPlaceholder")}"/>
         <datalist id="dl-players2">${(c.players||[]).map(p => `<option value="${U.esc(p.name)}">`).join("")}</datalist></div>
-        <div class="field"><label>Temporada</label><select id="a-season">${(c.seasons||[]).map(s => `<option value="${s.label}" ${s.id===season.id?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div></div>
-    `, `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="a-save">Guardar</button>`);
+        <div class="field"><label>${tr("hist.season")}</label><select id="a-season">${(c.seasons||[]).map(s => `<option value="${s.label}" ${s.id===season.id?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div></div>
+    `, `<button class="btn btn-ghost" data-close>${tr("common.cancel")}</button><button class="btn btn-primary" id="a-save">${tr("common.save")}</button>`);
     document.getElementById("a-save").addEventListener("click", () => {
       const title = document.getElementById("a-title").value.trim();
-      if (!title) { UI.toast("Indica el premio", "err"); return; }
+      if (!title) { UI.toast(tr("hist.awardNoTitle"), "err"); return; }
       S.addAward(c, { title, player: document.getElementById("a-player").value.trim(), season: document.getElementById("a-season").value });
-      UI.closeModal(); UI.toast("Premio añadido 🏅", "ok");
+      UI.closeModal(); UI.toast(tr("hist.awardAdded"), "ok");
     });
   }
   function noteModal(c) {
+    const tr = FC.t;
     const season = S.currentSeason(c);
-    UI.openModal("Nueva entrada del diario", `
-      <div class="field"><label>Título</label><input type="text" id="n-title" placeholder="p.ej. Remontada histórica en Champions"/></div>
-      <div class="field"><label>Texto</label><textarea id="n-body" placeholder="Cuenta qué pasó..."></textarea></div>
-    `, `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="n-save">Guardar</button>`);
+    UI.openModal(tr("hist.diaryModalTitle"), `
+      <div class="field"><label>${tr("hist.diaryTitle")}</label><input type="text" id="n-title" placeholder="${tr("hist.diaryTitlePlaceholder")}"/></div>
+      <div class="field"><label>${tr("hist.diaryText")}</label><textarea id="n-body" placeholder="${tr("hist.diaryTextPlaceholder")}"></textarea></div>
+    `, `<button class="btn btn-ghost" data-close>${tr("common.cancel")}</button><button class="btn btn-primary" id="n-save">${tr("common.save")}</button>`);
     document.getElementById("n-save").addEventListener("click", () => {
       const title = document.getElementById("n-title").value.trim();
-      if (!title) { UI.toast("Escribe un título", "err"); return; }
+      if (!title) { UI.toast(tr("hist.diaryNoTitle"), "err"); return; }
       S.addNote(c, { title, body: document.getElementById("n-body").value.trim(), season: season.label, date: new Date().toISOString() });
-      UI.closeModal(); renderNotes(c); UI.toast("Entrada guardada 📖", "ok");
+      UI.closeModal(); renderNotes(c); UI.toast(tr("hist.diarySaved"), "ok");
     });
   }
 
