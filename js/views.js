@@ -1616,6 +1616,7 @@
      RIVALES — historial cara a cara vitalicio + dossier táctico
      ============================================================ */
   FC.views.rivales = function () {
+    const T = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const list = S.rivalsList(c);
@@ -1625,19 +1626,19 @@
 
     const nextCard = nextRival ? `<div class="card next-match">
       <div class="nm-left"><span class="ni-icon" data-icon="shield"></span>
-        <div><div class="nm-label">Próximo rival${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
+        <div><div class="nm-label">${T("rival.nextRival")}${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
           <div class="nm-teams">${U.esc(nextRival)}</div>
-          <small class="faint">${nextHist ? `${nextHist.all.pj} duelo${nextHist.all.pj === 1 ? "" : "s"} previo${nextHist.all.pj === 1 ? "" : "s"} · ${nextHist.all.w}V-${nextHist.all.d}E-${nextHist.all.l}D` : "Primer enfrentamiento — sin historial todavía"}</small></div>
+          <small class="faint">${nextHist ? `${nextHist.all.pj} ${nextHist.all.pj === 1 ? T("rival.prevMeeting.one") : T("rival.prevMeeting.other")} · ${nextHist.all.w}${T("res.W")}-${nextHist.all.d}${T("res.D")}-${nextHist.all.l}${T("res.L")}` : T("rival.firstMeeting")}</small></div>
       </div>
-      ${nextHist ? `<button class="btn btn-primary btn-sm" id="rv-next-scout"><span class="ni-icon" data-icon="search"></span> Analizar rival</button>` : ""}
+      ${nextHist ? `<button class="btn btn-primary btn-sm" id="rv-next-scout"><span class="ni-icon" data-icon="search"></span> ${T("rival.scoutRival")}</button>` : ""}
     </div>` : "";
 
     UI.mount(`
-      <div class="page-head"><div><h1>Rivales</h1><div class="sub">Historial y análisis táctico de cada equipo al que te has enfrentado</div></div></div>
+      <div class="page-head"><div><h1>${T("rival.pageTitle")}</h1><div class="sub">${T("rival.pageSubtitle")}</div></div></div>
       ${nextCard}
       <div class="card">
-        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="table"></span> Cara a cara <span class="faint" style="font-weight:400">· ${list.length} rival${list.length === 1 ? "" : "es"}</span></div>
-        ${list.length ? `<div class="list">${list.map(o => rivalRow(c, o)).join("")}</div>` : `<div class="empty"><div class="emoji">🛡️</div><h3>Aún no hay rivales</h3><p>Registra partidos para construir tu historial de enfrentamientos.</p></div>`}
+        <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="table"></span> ${T("rival.headToHead")} <span class="faint" style="font-weight:400">· ${list.length} ${list.length === 1 ? T("rival.word.one") : T("rival.word.other")}</span></div>
+        ${list.length ? `<div class="list">${list.map(o => rivalRow(c, o)).join("")}</div>` : `<div class="empty"><div class="emoji">🛡️</div><h3>${T("rival.noRivalsTitle")}</h3><p>${T("rival.noRivalsDesc")}</p></div>`}
       </div>
     `);
     content().querySelectorAll("[data-rival]").forEach(el => el.addEventListener("click", () => UI.openRivalDossier(c, el.dataset.rival)));
@@ -1647,14 +1648,15 @@
 
   // Dossier táctico de un rival: veredicto + balance + análisis + splits + últimos duelos.
   UI.openRivalDossier = function (c, rival) {
+    const T = FC.t;
     const d = S.rivalDossier(c, rival);
-    if (!d) { UI.toast("Sin enfrentamientos contra " + rival, "err"); return; }
+    if (!d) { UI.toast(T("rival.noMeetings", { rival }), "err"); return; }
     const h = d.history, a = h.all;
     const tone = { good: "var(--ok)", bad: "var(--danger)", neutral: "var(--text-dim)" };
     const vtone = tone[d.verdict.tone];
     const splitRow = (label, o) => o.pj ? `<div class="flex between center" style="padding:9px 0;border-bottom:1px solid var(--line)">
       <span style="font-size:13px">${U.esc(label)} <span class="faint">· ${o.pj}</span></span>
-      <span style="font-size:13px"><b style="color:var(--ok)">${o.w}V</b> <b style="color:var(--warn)">${o.d}E</b> <b style="color:var(--danger)">${o.l}D</b> <span class="faint">· ${o.gf}:${o.ga} · ${f1(o.ppg)} pts</span></span></div>` : "";
+      <span style="font-size:13px"><b style="color:var(--ok)">${o.w}${T("res.W")}</b> <b style="color:var(--warn)">${o.d}${T("res.D")}</b> <b style="color:var(--danger)">${o.l}${T("res.L")}</b> <span class="faint">· ${o.gf}:${o.ga} · ${f1(o.ppg)} pts</span></span></div>` : "";
     const lastMeetings = h.matches.slice(0, 6).map(m => {
       const r = S.userResult(c, m), cls = r === "W" ? "win" : r === "L" ? "loss" : "";
       return `<div class="fixture" data-rmatch="${m.id}" style="cursor:pointer">
@@ -1668,42 +1670,42 @@
     const body = `
       <div class="flex gap center mb">
         <span class="career-badge" style="background:${U.teamColors(rival).bg};color:${U.teamColors(rival).text}">${U.initials(rival)}</span>
-        <div><b style="font-size:18px">${U.esc(rival)}</b><br><small class="faint">${a.pj} enfrentamiento${a.pj === 1 ? "" : "s"} · ${a.w}V-${a.d}E-${a.l}D · ${a.gf}:${a.ga}</small></div>
+        <div><b style="font-size:18px">${U.esc(rival)}</b><br><small class="faint">${a.pj} ${a.pj === 1 ? T("rival.meeting.one") : T("rival.meeting.other")} · ${a.w}${T("res.W")}-${a.d}${T("res.D")}-${a.l}${T("res.L")} · ${a.gf}:${a.ga}</small></div>
       </div>
       <div style="border-left:3px solid ${vtone};background:var(--panel);padding:12px 14px;border-radius:8px;margin-bottom:14px">
         <b style="color:${vtone}">${U.esc(d.verdict.title)}</b>
         <div style="font-size:13px;margin-top:4px">${U.esc(d.verdict.text)}</div>
       </div>
       <div class="grid cols-4 keep-2">
-        ${statTile("Enfrentamientos", a.pj, "")}
-        ${statTile("Balance", a.w + "-" + a.d + "-" + a.l, "V-E-D")}
-        ${statTile("Goles", a.gf + ":" + a.ga, "Dif " + (a.gd >= 0 ? "+" : "") + a.gd)}
-        ${statTile("% Victorias", a.winPct + "%", f1(a.ppg) + " pts/partido")}
+        ${statTile(T("rival.stat.meetings"), a.pj, "")}
+        ${statTile(T("rival.stat.record"), a.w + "-" + a.d + "-" + a.l, T("rival.vedSub"))}
+        ${statTile(T("dash.stat.goals"), a.gf + ":" + a.ga, T("dash.stat.diff", { gd: (a.gd >= 0 ? "+" : "") + a.gd }))}
+        ${statTile(T("dash.stat.winPct"), a.winPct + "%", T("rival.ppgSub", { n: f1(a.ppg) }))}
       </div>
       <div class="flex between center" style="margin:12px 2px 0;flex-wrap:wrap;gap:8px">
-        <span class="flex gap center"><span class="faint" style="font-size:12px">Forma</span>${h.form.length ? CH.formBar(h.form) : '<span class="faint">—</span>'}</span>
+        <span class="flex gap center"><span class="faint" style="font-size:12px">${T("rival.form")}</span>${h.form.length ? CH.formBar(h.form) : '<span class="faint">—</span>'}</span>
         <span class="faint" style="font-size:12px">
-          ${h.streak.unbeaten >= 2 ? `<span style="color:var(--ok)">😎 ${h.streak.unbeaten} sin perder</span>` : h.streak.winless >= 2 ? `<span style="color:var(--danger)">😰 ${h.streak.winless} sin ganar</span>` : ""}
-          ${h.cleanSheets ? ` · 🧤 ${h.cleanSheets} a cero` : ""}${h.failedToScore ? ` · 🚫 ${h.failedToScore} sin marcar` : ""}
+          ${h.streak.unbeaten >= 2 ? `<span style="color:var(--ok)">😎 ${T("rival.unbeaten", { n: h.streak.unbeaten })}</span>` : h.streak.winless >= 2 ? `<span style="color:var(--danger)">😰 ${T("rival.winless", { n: h.streak.winless })}</span>` : ""}
+          ${h.cleanSheets ? ` · 🧤 ${T("rival.cleanSheets", { n: h.cleanSheets })}` : ""}${h.failedToScore ? ` · 🚫 ${T("rival.failedToScore", { n: h.failedToScore })}` : ""}
         </span>
       </div>
       ${(h.biggestWin || h.biggestLoss) ? `<div class="card" style="margin:10px 0 0">
-        ${h.biggestWin ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">Mayor victoria</span><b style="color:var(--ok)">${U.esc(h.biggestWin.home)} ${h.biggestWin.homeScore}-${h.biggestWin.awayScore} ${U.esc(h.biggestWin.away)}</b></div>` : ""}
-        ${h.biggestLoss ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">Mayor derrota</span><b style="color:var(--danger)">${U.esc(h.biggestLoss.home)} ${h.biggestLoss.homeScore}-${h.biggestLoss.awayScore} ${U.esc(h.biggestLoss.away)}</b></div>` : ""}
+        ${h.biggestWin ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">${T("rival.biggestWin")}</span><b style="color:var(--ok)">${U.esc(h.biggestWin.home)} ${h.biggestWin.homeScore}-${h.biggestWin.awayScore} ${U.esc(h.biggestWin.away)}</b></div>` : ""}
+        ${h.biggestLoss ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">${T("rival.biggestLoss")}</span><b style="color:var(--danger)">${U.esc(h.biggestLoss.home)} ${h.biggestLoss.homeScore}-${h.biggestLoss.awayScore} ${U.esc(h.biggestLoss.away)}</b></div>` : ""}
       </div>` : ""}
-      <div class="section-title">Análisis táctico</div>
+      <div class="section-title">${T("rival.tacticalAnalysis")}</div>
       ${d.insights.length ? `<div class="list">${d.insights.map(i => `<div class="list-row" style="align-items:flex-start">
         <span class="ni-icon" data-icon="${i.icon}" style="color:${tone[i.tone]};flex-shrink:0;margin-top:2px"></span>
         <div class="lr-main"><b>${U.esc(i.title)}</b><div style="font-size:13px;margin-top:2px;color:var(--text-dim)">${U.esc(i.text)}</div></div>
-      </div>`).join("")}</div>` : `<p class="faint">Necesitas más enfrentamientos para un análisis táctico detallado.</p>`}
-      ${(h.home.pj || h.away.pj) ? `<div class="section-title">Local vs visitante</div>
-        <div class="card" style="margin:0">${splitRow("En casa", h.home)}${splitRow("A domicilio", h.away)}</div>` : ""}
-      ${Object.keys(h.byComp).length > 1 ? `<div class="section-title">Por competición</div>
+      </div>`).join("")}</div>` : `<p class="faint">${T("rival.needMore")}</p>`}
+      ${(h.home.pj || h.away.pj) ? `<div class="section-title">${T("rival.homeVsAway")}</div>
+        <div class="card" style="margin:0">${splitRow(T("rival.atHome"), h.home)}${splitRow(T("rival.away"), h.away)}</div>` : ""}
+      ${Object.keys(h.byComp).length > 1 ? `<div class="section-title">${T("rival.byCompetition")}</div>
         <div class="card" style="margin:0">${Object.values(h.byComp).sort((x, y) => y.pj - x.pj).map(cb => splitRow(cb.comp, cb)).join("")}</div>` : ""}
-      <div class="section-title">Últimos enfrentamientos</div>
+      <div class="section-title">${T("rival.recentMeetings")}</div>
       <div class="card" style="margin:0">${lastMeetings}</div>
     `;
-    UI.openModal("Dossier · " + rival, body, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
+    UI.openModal(T("rival.dossierTitle", { rival }), body, `<button class="btn btn-ghost" data-close>${T("common.close")}</button>`, { lg: true });
     const modal = document.getElementById("modal");
     modal.querySelectorAll("[data-rmatch]").forEach(el => el.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, el.dataset.rmatch))));
   };
