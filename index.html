@@ -1464,6 +1464,32 @@ body.trip-open { overflow: hidden; }
       "settings.toastMatchesImported": "Importados {added} partidos",
       "settings.toastMatchesSkippedSuffix": " · {skipped} omitidos",
       "settings.toastAccentUpdated": "Acento actualizado",
+      // —— Academia (FC.views.youth) ——
+      "youth.title": "Academia juvenil",
+      "youth.statsLabel": "{academyN} en la academia · {promotedN} promovidas · {season}",
+      "youth.generateBtn": "Generar promesas",
+      "youth.emptyHint": "Genera una hornada de promesas de tu cantera. Las que promociones entran en tu Plantilla como jugadores <b>de cantera</b> y cuentan para el reto «Solo cantera» y el logro «Hacedor de leyendas».",
+      "youth.filterAcademy": "En la academia",
+      "youth.filterPromoted": "Promovidas",
+      "youth.filterAll": "Todas",
+      "youth.columnProspect": "Promesa",
+      "youth.promoteBtn": "Promover",
+      "youth.releaseTitle": "Descartar",
+      "youth.promotedBadge": "Promovida",
+      "youth.emptyPromotedTitle": "Sin promovidas todavía",
+      "youth.emptyPromotedText": "Promueve promesas para verlas aquí.",
+      "youth.emptyAcademyTitle": "Sin promesas",
+      "youth.emptyAcademyText": "Pulsa «Generar promesas» para crear tu primera hornada.",
+      "youth.toastGenerated": "{count} promesas generadas 🌱",
+      "youth.toastPromoted": "¡{name} sube al primer equipo! 🎉",
+      "youth.toastPromoteError": "No se pudo promover",
+      "youth.confirmRelease": "¿Descartar esta promesa?",
+      "youth.toastReleased": "Promesa descartada",
+      // —— Modo en vivo (FC.views.live) ——
+      "live.exit": "Salir",
+      "live.next": "Próximo:",
+      "live.record": "V·E·D",
+      "live.emptyStandings": "Registra partidos de Liga para ver la tabla en vivo.",
     },
     en: {
       // —— Chrome / brand ——
@@ -2054,6 +2080,32 @@ body.trip-open { overflow: hidden; }
       "settings.toastMatchesImported": "Imported {added} matches",
       "settings.toastMatchesSkippedSuffix": " · {skipped} skipped",
       "settings.toastAccentUpdated": "Accent updated",
+      // —— Youth academy (FC.views.youth) ——
+      "youth.title": "Youth Academy",
+      "youth.statsLabel": "{academyN} in academy · {promotedN} promoted · {season}",
+      "youth.generateBtn": "Generate Prospects",
+      "youth.emptyHint": "Generate a batch of academy prospects. The ones you promote join your Squad as <b>academy</b> players and count towards the \"Academy Only\" challenge and the \"Legend Maker\" achievement.",
+      "youth.filterAcademy": "In Academy",
+      "youth.filterPromoted": "Promoted",
+      "youth.filterAll": "All",
+      "youth.columnProspect": "Prospect",
+      "youth.promoteBtn": "Promote",
+      "youth.releaseTitle": "Release",
+      "youth.promotedBadge": "Promoted",
+      "youth.emptyPromotedTitle": "No promoted players yet",
+      "youth.emptyPromotedText": "Promote prospects to see them here.",
+      "youth.emptyAcademyTitle": "No prospects",
+      "youth.emptyAcademyText": "Press \"Generate Prospects\" to create your first batch.",
+      "youth.toastGenerated": "{count} prospects generated 🌱",
+      "youth.toastPromoted": "{name} steps up to the first team! 🎉",
+      "youth.toastPromoteError": "Could not promote",
+      "youth.confirmRelease": "Release this prospect?",
+      "youth.toastReleased": "Prospect released",
+      // —— Live mode (FC.views.live) ——
+      "live.exit": "Exit",
+      "live.next": "Next:",
+      "live.record": "W·D·L",
+      "live.emptyStandings": "Log league matches to see the live standings.",
     },
   };
 
@@ -10731,6 +10783,7 @@ body.trip-open { overflow: hidden; }
      actualiza en el sitio (sin salir del modo).
      ============================================================ */
   FC.views.live = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const table = S.computeStandings(c, season.id);
@@ -10747,22 +10800,22 @@ body.trip-open { overflow: hidden; }
             <span class="career-badge" style="background:${U.teamColors(c.clubName,c.badgeColor).bg};color:${U.teamColors(c.clubName,c.badgeColor).text}">${U.initials(c.clubName)}</span>
             <div class="live-club-meta"><b>${U.esc(c.clubName)}</b><small>${U.esc(season.leagueName || c.leagueName)} · ${U.esc(season.label)}</small></div>
           </div>
-          <button class="btn btn-ghost" id="live-exit"><span class="ni-icon" data-icon="close"></span> Salir</button>
+          <button class="btn btn-ghost" id="live-exit"><span class="ni-icon" data-icon="close"></span> ${tr("live.exit")}</button>
         </div>
 
-        ${nextM ? `<div class="live-next"><span class="ni-icon" data-icon="calendar"></span> Próximo: <b>${U.esc(nextM.home||"—")} vs ${U.esc(nextM.away||"—")}</b>${nextM.competition?` · ${U.esc(nextM.competition)}`:""}${nextM.date?` · ${U.fmtDate(nextM.date)}`:""}</div>` : ""}
-        <button class="live-add" id="live-add"><span class="ni-icon" data-icon="plus"></span> Registrar resultado</button>
+        ${nextM ? `<div class="live-next"><span class="ni-icon" data-icon="calendar"></span> ${tr("live.next")} <b>${U.esc(nextM.home||"—")} ${tr("common.vs")} ${U.esc(nextM.away||"—")}</b>${nextM.competition?` · ${U.esc(nextM.competition)}`:""}${nextM.date?` · ${U.fmtDate(nextM.date)}`:""}</div>` : ""}
+        <button class="live-add" id="live-add"><span class="ni-icon" data-icon="plus"></span> ${tr("dash.registerResult")}</button>
 
         <div class="live-stats">
-          <div class="live-stat"><span class="ls-val">${pos ? pos.pos + "º" : "—"}</span><span class="ls-lbl">Posición</span></div>
-          <div class="live-stat"><span class="ls-val">${sum.points}</span><span class="ls-lbl">Puntos</span></div>
-          <div class="live-stat"><span class="ls-val">${sum.w}-${sum.d}-${sum.l}</span><span class="ls-lbl">V·E·D</span></div>
-          <div class="live-stat"><span class="ls-form">${last5.length ? CH.formBar(last5) : '<span class="faint">—</span>'}</span><span class="ls-lbl">Forma</span></div>
+          <div class="live-stat"><span class="ls-val">${pos ? pos.pos + "º" : "—"}</span><span class="ls-lbl">${tr("season.position")}</span></div>
+          <div class="live-stat"><span class="ls-val">${sum.points}</span><span class="ls-lbl">${tr("dash.stat.points")}</span></div>
+          <div class="live-stat"><span class="ls-val">${sum.w}-${sum.d}-${sum.l}</span><span class="ls-lbl">${tr("live.record")}</span></div>
+          <div class="live-stat"><span class="ls-form">${last5.length ? CH.formBar(last5) : '<span class="faint">—</span>'}</span><span class="ls-lbl">${tr("rival.form")}</span></div>
         </div>
 
         <div class="card tight live-table">
           <div class="table-wrap"><table class="tbl"><thead><tr>
-            <th>#</th><th>Equipo</th><th class="num">PJ</th><th class="num">DG</th><th class="num">Pts</th>
+            <th>#</th><th>${tr("stand.th.team")}</th><th class="num">${tr("stand.th.pj")}</th><th class="num">${tr("stand.th.dg")}</th><th class="num">${tr("stand.th.pts")}</th>
           </tr></thead><tbody>
           ${table.length ? table.map((r, i) => {
             const zone = i < 4 ? "zone-ucl" : i < 6 ? "zone-uel" : i >= n - 3 ? "zone-rel" : "";
@@ -10770,7 +10823,7 @@ body.trip-open { overflow: hidden; }
               <td><span class="pos-cell"><span class="zone-bar ${zone}"></span>${i + 1}</span></td>
               <td>${U.esc(r.team)}</td><td class="num">${r.pj}</td>
               <td class="num">${(r.gf - r.gc >= 0 ? "+" : "") + (r.gf - r.gc)}</td><td class="num"><b>${r.pts}</b></td></tr>`;
-          }).join("") : `<tr><td colspan="5"><div class="empty" style="padding:26px"><div class="emoji">📊</div><p>Registra partidos de Liga para ver la tabla en vivo.</p></div></td></tr>`}
+          }).join("") : `<tr><td colspan="5"><div class="empty" style="padding:26px"><div class="emoji">📊</div><p>${tr("live.emptyStandings")}</p></div></td></tr>`}
           </tbody></table></div>
         </div>
       </div>
@@ -11883,6 +11936,7 @@ body.trip-open { overflow: hidden; }
      ============================================================ */
   let ytFilter = "academy"; // estado del filtro (persiste entre re-renders, como en Finanzas)
   FC.views.youth = function () {
+    const tr = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const all = (c.youth || []);
@@ -11890,29 +11944,29 @@ body.trip-open { overflow: hidden; }
     const promotedN = all.filter(y => y.status === "promoted").length;
     UI.mount(`
       <div class="page-head">
-        <div><h1>Academia juvenil</h1>
-          <div class="sub">${academyN} en la academia · ${promotedN} promovidas · ${U.esc(season.label)}</div></div>
-        <button class="btn btn-primary" id="yt-gen"><span class="ni-icon" data-icon="sprout"></span> Generar promesas</button>
+        <div><h1>${tr("youth.title")}</h1>
+          <div class="sub">${tr("youth.statsLabel", { academyN, promotedN, season: U.esc(season.label) })}</div></div>
+        <button class="btn btn-primary" id="yt-gen"><span class="ni-icon" data-icon="sprout"></span> ${tr("youth.generateBtn")}</button>
       </div>
       ${!all.length ? `<div class="card" style="margin-bottom:16px"><div class="flex gap center">
         <span class="ni-icon" data-icon="sprout" style="color:var(--accent);flex:none"></span>
-        <div class="muted" style="font-size:13px">Genera una hornada de promesas de tu cantera. Las que promociones entran en tu Plantilla como jugadores <b>de cantera</b> y cuentan para el reto «Solo cantera» y el logro «Hacedor de leyendas».</div></div></div>` : ""}
+        <div class="muted" style="font-size:13px">${tr("youth.emptyHint")}</div></div></div>` : ""}
       <div class="card tight">
         <div class="flex gap center wrap mb">
           <div class="seg" id="yt-filter">
-            <button type="button" data-yf="academy" class="${ytFilter==='academy'?'active':''}">En la academia</button>
-            <button type="button" data-yf="promoted" class="${ytFilter==='promoted'?'active':''}">Promovidas</button>
-            <button type="button" data-yf="all" class="${ytFilter==='all'?'active':''}">Todas</button>
+            <button type="button" data-yf="academy" class="${ytFilter==='academy'?'active':''}">${tr("youth.filterAcademy")}</button>
+            <button type="button" data-yf="promoted" class="${ytFilter==='promoted'?'active':''}">${tr("youth.filterPromoted")}</button>
+            <button type="button" data-yf="all" class="${ytFilter==='all'?'active':''}">${tr("youth.filterAll")}</button>
           </div>
         </div>
         <div class="table-wrap"><table class="tbl"><thead><tr>
-          <th>Promesa</th><th>Pos</th><th class="num">Edad</th><th class="num">OVR</th><th class="num">POT</th><th></th>
+          <th>${tr("youth.columnProspect")}</th><th>${tr("squad.pos")}</th><th class="num">${tr("squad.age")}</th><th class="num">OVR</th><th class="num">${tr("squad.colPot")}</th><th></th>
         </tr></thead><tbody id="yt-rows"></tbody></table></div>
       </div>
     `);
     document.getElementById("yt-gen").addEventListener("click", () => {
       const made = S.generateYouthIntake(c, 3);
-      UI.toast(made.length + " promesas generadas 🌱", "ok");
+      UI.toast(tr("youth.toastGenerated", { count: made.length }), "ok");
     });
     function paint() {
       const rows = (c.youth || []).filter(y => ytFilter === "all" || y.status === ytFilter)
@@ -11928,17 +11982,17 @@ body.trip-open { overflow: hidden; }
           <td class="num"><span class="ovr ${U.ovrClass(y.ovr)}">${y.ovr||"—"}</span></td>
           <td class="num faint">${y.potential||"—"}</td>
           <td class="num">${isAcad
-            ? `<div class="flex gap" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" data-promote="${y.id}"><span class="ni-icon" data-icon="check"></span> Promover</button>
-                <button class="icon-btn sm" data-release="${y.id}" title="Descartar"><span class="ni-icon" data-icon="trash"></span></button></div>`
-            : `<span class="chip accent">Promovida</span>`}</td></tr>`;
-      }).join("") : `<tr><td colspan="6"><div class="empty" style="padding:26px"><div class="emoji">🌱</div><h3>${ytFilter==="promoted"?"Sin promovidas todavía":"Sin promesas"}</h3><p>${ytFilter==="promoted"?"Promueve promesas para verlas aquí.":"Pulsa «Generar promesas» para crear tu primera hornada."}</p></div></td></tr>`;
+            ? `<div class="flex gap" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" data-promote="${y.id}"><span class="ni-icon" data-icon="check"></span> ${tr("youth.promoteBtn")}</button>
+                <button class="icon-btn sm" data-release="${y.id}" title="${tr("youth.releaseTitle")}"><span class="ni-icon" data-icon="trash"></span></button></div>`
+            : `<span class="chip accent">${tr("youth.promotedBadge")}</span>`}</td></tr>`;
+      }).join("") : `<tr><td colspan="6"><div class="empty" style="padding:26px"><div class="emoji">🌱</div><h3>${ytFilter==="promoted"?tr("youth.emptyPromotedTitle"):tr("youth.emptyAcademyTitle")}</h3><p>${ytFilter==="promoted"?tr("youth.emptyPromotedText"):tr("youth.emptyAcademyText")}</p></div></td></tr>`;
       U.hydrateIcons(tb);
       tb.querySelectorAll("[data-promote]").forEach(b => b.addEventListener("click", () => {
         const np = S.promoteYouth(c, b.dataset.promote);
-        UI.toast(np ? "¡" + np.name + " sube al primer equipo! 🎉" : "No se pudo promover", np ? "ok" : "err");
+        UI.toast(np ? tr("youth.toastPromoted", { name: np.name }) : tr("youth.toastPromoteError"), np ? "ok" : "err");
       }));
       tb.querySelectorAll("[data-release]").forEach(b => b.addEventListener("click", () =>
-        UI.confirm("¿Descartar esta promesa?", () => { S.releaseYouth(c, b.dataset.release); UI.toast("Promesa descartada"); }, true)));
+        UI.confirm(tr("youth.confirmRelease"), () => { S.releaseYouth(c, b.dataset.release); UI.toast(tr("youth.toastReleased")); }, true)));
     }
     document.querySelectorAll("#yt-filter button").forEach(b => b.addEventListener("click", () => {
       ytFilter = b.dataset.yf; document.querySelectorAll("#yt-filter button").forEach(x => x.classList.toggle("active", x === b)); paint();
