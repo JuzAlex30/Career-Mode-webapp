@@ -2,7 +2,7 @@
    Estrategia: network-first para index.html (siempre la versión más reciente),
    cache-first para el resto de assets estáticos (manifest, icono).
    Offline: sirve index.html cacheado como fallback. */
-const CACHE_KEY = "boardhub-v1782835756360";
+const CACHE_KEY = "boardhub-v1782836261221";
 const ASSETS = ["./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./social.png", "./logo.png"];
 
 self.addEventListener("install", e => {

@@ -73,6 +73,10 @@
     "Sevilla":{primary:"#FFFFFF",secondary:"#D2122E"},
     "Valencia":{primary:"#FFFFFF",secondary:"#F4A71D"},
     "Villarreal":{primary:"#F9E300",secondary:"#005689"},
+    // Ascendidos 2025/26 → LaLiga 2026/27
+    "Racing de Santander":{primary:"#006633",secondary:"#FFFFFF"},
+    "Deportivo de La Coruña":{primary:"#FFFFFF",secondary:"#003DA5"},
+    "Málaga":{primary:"#003893",secondary:"#FFFFFF"},
     // Serie A
     "Atalanta":{primary:"#1E3C87",secondary:"#000000"},
     "Bologna":{primary:"#B4121B",secondary:"#002F5F"},
@@ -145,9 +149,12 @@
     "Sunderland":73,"Tottenham Hotspur":83,"West Ham United":78,"Wolverhampton Wanderers":76,
     // LaLiga
     "Alavés":73,"Athletic Club":81,"Atlético de Madrid":85,"Barcelona":88,"Celta de Vigo":76,
-    "Elche":72,"Espanyol":74,"Getafe":75,"Girona":77,"Levante":72,"Mallorca":74,"Osasuna":75,
-    "Rayo Vallecano":75,"Real Betis":79,"Real Madrid":90,"Real Oviedo":71,"Real Sociedad":80,
+    "Elche":72,"Espanyol":74,"Getafe":75,"Levante":72,"Osasuna":75,
+    "Rayo Vallecano":75,"Real Betis":79,"Real Madrid":90,"Real Sociedad":80,
     "Sevilla":78,"Valencia":77,"Villarreal":80,
+    "Racing de Santander":73,"Deportivo de La Coruña":73,"Málaga":72,
+    // Descendidos 2025/26 → mantienen rating para cuando se usen en Hypermotion
+    "Girona":75,"Mallorca":73,"Real Oviedo":70,
     // Serie A
     "Atalanta":84,"Bologna":79,"Cagliari":74,"Como":76,"Cremonese":72,"Fiorentina":80,"Genoa":75,
     "Inter":87,"Juventus":84,"Lazio":81,"Lecce":73,"Milan":84,"Napoli":86,"Parma":74,"Pisa":72,
@@ -357,7 +364,7 @@
   D._cupWord = /(copa|coppa|coupe|pokal|beker|taça|taca|supercup|schaal|\bcup\b)/i;
   D.isDomesticCup = (comp) => { comp = String(comp || ""); return D._cupWord.test(comp) && !D.isContinental(comp) && !D.isInternational(comp); };
 
-  /* ---------- Ligas seed (catálogo de EA Sports FC 26, plantillas 2025/26) ----------
+  /* ---------- Ligas seed (EA Sports FC 26; ligas actualizadas a resultados reales 2025/26) ----------
      Cada liga lleva `group` para agrupar el desplegable por región. Las plantillas
      son orientativas (editables por el usuario); priorizan clubes reconocibles. */
   D.LEAGUES = [
@@ -367,8 +374,8 @@
     { id: "eng-l1", name: "EFL League One", country: "Inglaterra", group: "Inglaterra", teams: ["Bolton Wanderers","Wigan Athletic","Barnsley","Huddersfield Town","Reading","Stockport County","Wycombe Wanderers","Lincoln City","Leyton Orient","Blackpool","Mansfield Town","Peterborough United","Burton Albion","Northampton Town","Rotherham United","Cardiff City","Plymouth Argyle","Luton Town","Stevenage","Bradford City","Exeter City","Port Vale","Doncaster Rovers","AFC Wimbledon"] },
     { id: "eng-l2", name: "EFL League Two", country: "Inglaterra", group: "Inglaterra", teams: ["Notts County","Bristol Rovers","Walsall","Chesterfield","Gillingham","Milton Keynes Dons","Colchester United","Crewe Alexandra","Salford City","Swindon Town","Bromley","Grimsby Town","Newport County","Crawley Town","Accrington Stanley","Harrogate Town","Tranmere Rovers","Cheltenham Town","Barrow","Fleetwood Town","Barnet","Oldham Athletic","Shrewsbury Town","Cambridge United"] },
     // —— España ——
-    { id: "esp-laliga", name: "LaLiga EA Sports", country: "España", group: "España", teams: ["Alavés","Athletic Club","Atlético de Madrid","Barcelona","Celta de Vigo","Elche","Espanyol","Getafe","Girona","Levante","Mallorca","Osasuna","Rayo Vallecano","Real Betis","Real Madrid","Real Oviedo","Real Sociedad","Sevilla","Valencia","Villarreal"] },
-    { id: "esp-hypermotion", name: "LaLiga Hypermotion", country: "España", group: "España", teams: ["Almería","Cádiz","Eibar","Granada","Las Palmas","Leganés","Real Valladolid","Huesca","Sporting de Gijón","Real Zaragoza","Racing de Santander","Burgos","Albacete","Mirandés","Castellón","Córdoba","Deportivo de La Coruña","Málaga","Andorra","Cultural Leonesa","Real Sociedad B","Ceuta"] },
+    { id: "esp-laliga", name: "LaLiga EA Sports", country: "España", group: "España", teams: ["Alavés","Athletic Club","Atlético de Madrid","Barcelona","Celta de Vigo","Deportivo de La Coruña","Elche","Espanyol","Getafe","Levante","Málaga","Osasuna","Racing de Santander","Rayo Vallecano","Real Betis","Real Madrid","Real Sociedad","Sevilla","Valencia","Villarreal"] },
+    { id: "esp-hypermotion", name: "LaLiga Hypermotion", country: "España", group: "España", teams: ["Almería","Cádiz","Eibar","Girona","Granada","Las Palmas","Leganés","Mallorca","Real Oviedo","Real Valladolid","Huesca","Sporting de Gijón","Real Zaragoza","Burgos","Albacete","Mirandés","Castellón","Córdoba","Andorra","Cultural Leonesa","Real Sociedad B","Ceuta"] },
     // —— Italia ——
     { id: "ita-seriea", name: "Serie A", country: "Italia", group: "Italia", teams: ["Atalanta","Bologna","Cagliari","Como","Cremonese","Fiorentina","Genoa","Inter","Juventus","Lazio","Lecce","Milan","Napoli","Parma","Pisa","Roma","Sassuolo","Torino","Udinese","Hellas Verona"] },
     // —— Alemania ——
