@@ -1,4 +1,4 @@
-﻿/* build.js — genera un index.html AUTOCONTENIDO (CSS + JS incrustados)
+/* build.js — genera un index.html AUTOCONTENIDO (CSS + JS incrustados)
    a partir de los ficheros fuente (styles.css y js/*.js).
    Así el archivo funciona con doble clic en cualquier navegador o visor,
    sin depender de cargar recursos externos (file:// o visores sandbox).

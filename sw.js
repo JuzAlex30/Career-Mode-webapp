@@ -1,4 +1,4 @@
-﻿/* Boardhub — Service Worker
+/* Boardhub — Service Worker
    Estrategia: network-first para index.html (siempre la versión más reciente),
    cache-first para el resto de assets estáticos (manifest, icono).
    Offline: sirve index.html cacheado como fallback. */

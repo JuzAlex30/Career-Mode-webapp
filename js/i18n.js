@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    i18n.js — capa de idiomas (ES por defecto, EN). Expone FC.i18n y FC.t.
    · FC.t(clave, vars)  → traduce; interpola {var}; fallback a ES y luego a la clave.
    · FC.i18n.set(lang)  → cambia idioma (no persiste; eso lo hace app.js vía settings).

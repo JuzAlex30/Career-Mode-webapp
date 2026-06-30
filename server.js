@@ -1,4 +1,4 @@
-﻿/* Servidor estático mínimo, sin dependencias.
+/* Servidor estático mínimo, sin dependencias.
    Uso: node server.js   (luego abre http://localhost:4321) */
 const http = require("http");
 const fs = require("fs");

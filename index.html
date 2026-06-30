@@ -23,7 +23,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
   <style>
-﻿/* ============================================================
+/* ============================================================
    Boardhub — estilos
    Tema oscuro por defecto (data-theme="dark"), variante clara.
    ============================================================ */
@@ -884,7 +884,7 @@ body.trip-open { overflow: hidden; }
   </div>
   <div class="toast-stack" id="toastStack"></div>
   <script>
-﻿/* ============================================================
+/* ============================================================
    i18n.js — capa de idiomas (ES por defecto, EN). Expone FC.i18n y FC.t.
    · FC.t(clave, vars)  → traduce; interpola {var}; fallback a ES y luego a la clave.
    · FC.i18n.set(lang)  → cambia idioma (no persiste; eso lo hace app.js vía settings).
@@ -7832,7 +7832,7 @@ body.trip-open { overflow: hidden; }
   // Parser CSV minimal: soporta campos entrecomillados ("" escapa comilla), comas
   // internas, y saltos \n/\r\n. Devuelve filas (arrays de celdas), sin filas vacías.
   function parseCSV(text) {
-    text = String(text == null ? "" : text).replace(/^﻿/, "");
+    text = String(text == null ? "" : text).replace(/^/, "");
     const rows = []; let row = [], field = "", inQ = false;
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
@@ -10506,7 +10506,7 @@ body.trip-open { overflow: hidden; }
 
 /* ───────── */
 
-﻿/* ============================================================
+/* ============================================================
    views.js — UI y vistas. Expone FC.ui y FC.views
    ============================================================ */
 (function () {
