@@ -851,7 +851,7 @@
   // Parser CSV minimal: soporta campos entrecomillados ("" escapa comilla), comas
   // internas, y saltos \n/\r\n. Devuelve filas (arrays de celdas), sin filas vacías.
   function parseCSV(text) {
-    text = String(text == null ? "" : text).replace(/^/, "");
+    text = String(text == null ? "" : text).replace(/^﻿/, "");
     const rows = []; let row = [], field = "", inQ = false;
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
