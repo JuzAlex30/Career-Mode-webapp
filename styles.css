@@ -861,3 +861,25 @@ body.tour-on { overflow: hidden; }
   .tour-pop { width: calc(100vw - 20px); left: 10px !important; }
   .tour-pop:not(.centered) { bottom: 14px; top: auto !important; }
 }
+
+/* ───── Resultados de la jornada (grid rápido) ───── */
+.md-context { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-bottom: 12px; font-size: 14px; }
+.md-context .md-ctx-label { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-dim); margin-right: 8px; }
+.md-context b { color: var(--text); font-weight: 700; }
+.md-grid-head { display: grid; grid-template-columns: minmax(0,1fr) 108px minmax(0,1fr) 30px; gap: 8px; padding: 0 2px 5px; }
+.md-grid-head span { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); }
+.md-grid-head span:nth-child(3) { text-align: right; }
+#md-rows { display: flex; flex-direction: column; gap: 7px; }
+.md-row { display: grid; grid-template-columns: minmax(0,1fr) 46px 16px 46px minmax(0,1fr) 30px; gap: 8px; align-items: center; }
+.md-row .md-team { min-width: 0; width: 100%; }
+.md-row .md-score { width: 46px; text-align: center; padding: 8px 4px; -moz-appearance: textfield; }
+.md-row .md-score::-webkit-outer-spin-button, .md-row .md-score::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.md-row .md-dash { text-align: center; color: var(--text-dim); font-weight: 700; }
+.md-row .md-del { opacity: .6; }
+.md-row .md-del:hover { opacity: 1; }
+.md-hint { margin-top: 14px; font-size: 12px; line-height: 1.5; color: var(--text-dim); background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 10px; padding: 9px 12px; }
+@media (max-width: 520px) {
+  .md-grid-head { grid-template-columns: minmax(0,1fr) 96px minmax(0,1fr) 26px; gap: 5px; }
+  .md-row { grid-template-columns: minmax(0,1fr) 40px 12px 40px minmax(0,1fr) 26px; gap: 5px; }
+  .md-row .md-score { width: 40px; padding: 8px 2px; }
+}

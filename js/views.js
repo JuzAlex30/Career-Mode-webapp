@@ -635,6 +635,144 @@
     }
   }
 
+  /* ============================================================
+     RESULTADOS DE LA JORNADA — grid rápido para registrar los
+     partidos del resto de equipos de la liga, de modo que la
+     clasificación sea fiel a tu partida de EA FC (tú solo juegas
+     uno por jornada). Los partidos se guardan como partidos de
+     liga normales (competición "Liga") que NO te involucran, por
+     lo que computeStandings los suma a la tabla y, a la vez, las
+     vistas centradas en el usuario (que filtran por isUserMatch)
+     los ignoran. Fase 2 reaprovechará este grid: la foto + IA
+     autocompletará estas mismas filas.
+     ============================================================ */
+  UI.openMatchdayModal = function (c) {
+    const t = FC.t;
+    const season = S.currentSeason(c);
+    const userClub = c.clubName;
+    const allTeams = (season.teams || []).slice();
+    const otherTeams = allTeams.filter(x => x !== userClub);
+    const LEAGUE_COMP = "Liga"; // misma competición que cuenta computeStandings
+    const isLeague = (m) => /liga(?!\s+de\s+campe)/i.test(m.competition || "");
+    const isUserM = (m) => m.home === userClub || m.away === userClub;
+
+    // Sugerencia de jornada/fecha a partir de tu último partido de liga.
+    const userLeague = (c.matches || [])
+      .filter(m => m.seasonId === season.id && isLeague(m) && isUserM(m) && S.isPlayed(m))
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    const lastUser = userLeague[0];
+    const suggestRound = lastUser && lastUser.round ? lastUser.round : ("J" + (userLeague.length || 1));
+    const suggestDate = lastUser && lastUser.date ? lastUser.date : "";
+
+    // Resultados rivales ya guardados para esa jornada (para editarlos, no duplicar).
+    const existingFor = (round) => (c.matches || []).filter(m =>
+      m.seasonId === season.id && isLeague(m) && !isUserM(m) &&
+      String(m.round || "") === String(round || "") && S.isPlayed(m));
+
+    const teamOptions = (selVal) => '<option value="">' + U.esc(t("matchday.pickTeam")) + '</option>' +
+      otherTeams.map(x => '<option value="' + U.esc(x) + '"' + (x === selVal ? ' selected' : '') + '>' + U.esc(x) + '</option>').join("");
+
+    const rowHTML = (r) => {
+      r = r || {};
+      const sc = (v) => (v != null && v !== "" ? Number(v) : "");
+      return '<div class="md-row" data-md-row>' +
+        '<select class="md-team" data-side="home" aria-label="' + U.esc(t("matchday.home")) + '">' + teamOptions(r.home) + '</select>' +
+        '<input class="md-score" type="number" min="0" inputmode="numeric" data-side="hs" value="' + sc(r.hs) + '"/>' +
+        '<span class="md-dash">–</span>' +
+        '<input class="md-score" type="number" min="0" inputmode="numeric" data-side="as" value="' + sc(r.as) + '"/>' +
+        '<select class="md-team" data-side="away" aria-label="' + U.esc(t("matchday.away")) + '">' + teamOptions(r.away) + '</select>' +
+        '<button type="button" class="icon-btn sm md-del" data-md-del aria-label="✕"><span class="ni-icon" data-icon="close"></span></button>' +
+      '</div>';
+    };
+
+    const ex = existingFor(suggestRound).map(m => ({ home: m.home, away: m.away, hs: m.homeScore, as: m.awayScore }));
+    const nRows = Math.max(1, Math.floor(allTeams.length / 2) - 1); // liga de 20 → 9 partidos rivales
+    const initRows = ex.length ? ex : Array.from({ length: nRows }, () => ({}));
+
+    const body =
+      '<p class="muted" style="margin-top:0">' + U.esc(t("matchday.intro")) + '</p>' +
+      (lastUser ? '<div class="md-context"><span class="md-ctx-label">' + U.esc(t("matchday.yourMatch")) + '</span> <b>' + U.esc(lastUser.home) + '</b> ' + Number(lastUser.homeScore) + '–' + Number(lastUser.awayScore) + ' <b>' + U.esc(lastUser.away) + '</b></div>' : '') +
+      '<div class="field-row">' +
+        '<div class="field"><label>' + U.esc(t("matchday.round")) + '</label><input type="text" id="md-round" value="' + U.esc(suggestRound) + '" placeholder="' + U.esc(t("matchday.roundPh")) + '"/></div>' +
+        '<div class="field"><label>' + U.esc(t("matchday.date")) + '</label><input type="date" id="md-date" value="' + U.esc(suggestDate) + '"/></div>' +
+      '</div>' +
+      '<div class="md-grid-head"><span>' + U.esc(t("matchday.home")) + '</span><span></span><span>' + U.esc(t("matchday.away")) + '</span><span></span></div>' +
+      '<div id="md-rows">' + initRows.map(rowHTML).join("") + '</div>' +
+      '<button type="button" class="btn btn-ghost btn-sm" id="md-add" style="margin-top:6px"><span class="ni-icon" data-icon="plus"></span> ' + U.esc(t("matchday.addRow")) + '</button>' +
+      '<div class="md-hint">💡 ' + U.esc(t("matchday.photoSoon")) + '</div>';
+
+    const foot = '<button class="btn btn-ghost" data-close>' + U.esc(t("matchday.cancel")) + '</button>' +
+      '<button class="btn btn-primary" id="md-save">' + U.esc(t("matchday.save")) + '</button>';
+
+    const m = UI.openModal(t("matchday.title"), body, foot, { lg: true });
+
+    // Evita elegir el mismo equipo dos veces: deshabilita en cada select los
+    // equipos ya usados por otra fila.
+    function refreshDisables() {
+      const selects = Array.prototype.slice.call(m.querySelectorAll(".md-team"));
+      const used = selects.map(s => s.value).filter(Boolean);
+      selects.forEach(s => {
+        Array.prototype.forEach.call(s.options, o => {
+          if (!o.value) return;
+          o.disabled = o.value !== s.value && used.indexOf(o.value) !== -1;
+        });
+      });
+    }
+    function wireRow(row) {
+      row.querySelectorAll(".md-team").forEach(s => s.addEventListener("change", refreshDisables));
+      const del = row.querySelector("[data-md-del]");
+      if (del) del.addEventListener("click", () => {
+        const rows = m.querySelectorAll("[data-md-row]");
+        if (rows.length <= 1) row.querySelectorAll("select,input").forEach(el => { el.value = ""; });
+        else row.remove();
+        refreshDisables();
+      });
+    }
+    m.querySelectorAll("[data-md-row]").forEach(wireRow);
+    refreshDisables();
+
+    m.querySelector("#md-add").addEventListener("click", () => {
+      const host = m.querySelector("#md-rows");
+      const tmp = document.createElement("div");
+      tmp.innerHTML = rowHTML({});
+      const row = tmp.firstElementChild;
+      host.appendChild(row);
+      U.hydrateIcons(row);
+      wireRow(row);
+      refreshDisables();
+    });
+
+    m.querySelector("#md-save").addEventListener("click", () => {
+      const round = m.querySelector("#md-round").value.trim();
+      const date = m.querySelector("#md-date").value;
+      const rowEls = Array.prototype.slice.call(m.querySelectorAll("[data-md-row]"));
+      const collected = [];
+      const seen = {};
+      for (let i = 0; i < rowEls.length; i++) {
+        const row = rowEls[i];
+        const home = row.querySelector('[data-side="home"]').value;
+        const away = row.querySelector('[data-side="away"]').value;
+        const hs = row.querySelector('[data-side="hs"]').value;
+        const as = row.querySelector('[data-side="as"]').value;
+        if (!home && !away && hs === "" && as === "") continue;       // fila vacía
+        if (!home || !away || home === away || hs === "" || as === "" || !isFinite(+hs) || !isFinite(+as)) continue; // incompleta → ignora
+        if (seen[home]) { UI.toast(t("matchday.dupTeam", { team: home }), "err"); return; }
+        if (seen[away]) { UI.toast(t("matchday.dupTeam", { team: away }), "err"); return; }
+        seen[home] = seen[away] = true;
+        collected.push({ home, away, hs: Math.max(0, Math.round(+hs)), as: Math.max(0, Math.round(+as)) });
+      }
+      // Reemplaza los resultados rivales previos de esta jornada (re-guardar = sustituir).
+      existingFor(round).forEach(d => { c.matches = (c.matches || []).filter(x => x.id !== d.id); });
+      collected.forEach(r => S.addMatch(c, {
+        seasonId: season.id, competition: LEAGUE_COMP, round: round, date: date,
+        home: r.home, away: r.away, homeScore: r.hs, awayScore: r.as,
+      }));
+      if (!collected.length) S.afterChange(c); // persiste/re-renderiza aun si solo hubo borrados
+      UI.closeModal();
+      UI.toast(collected.length ? t("matchday.saved", { n: collected.length }) : t("matchday.savedNone"), collected.length ? "ok" : "");
+    });
+  };
+
   UI.openMatchModal = function (c, existing, opts) {
     opts = opts || {};
     const season = S.currentSeason(c);
@@ -1366,7 +1504,7 @@
     const T = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
-    const ms = (c.matches || []).filter(m => m.seasonId === season.id && S.isPlayed(m)).slice().sort((a,b)=> new Date(b.date||0)-new Date(a.date||0));
+    const ms = (c.matches || []).filter(m => m.seasonId === season.id && S.isPlayed(m) && S.isUserMatch(c, m)).slice().sort((a,b)=> new Date(b.date||0)-new Date(a.date||0));
     const upcoming = S.upcomingMatches(c, season.id);
     const sa = S.statsAverages(c, season.id);
     const statsCard = sa ? `
@@ -2025,7 +2163,7 @@
       <div class="section-title">${T("stand.bracketGenerator")}</div>
       <div class="card" id="bracket-card"></div>
     `);
-    document.getElementById("st-fill").addEventListener("click", () => UI.openMatchModal(c));
+    document.getElementById("st-fill").addEventListener("click", () => UI.openMatchdayModal(c));
     renderBracket(c);
   };
   function rankCard(title, rows, key, emoji) {
