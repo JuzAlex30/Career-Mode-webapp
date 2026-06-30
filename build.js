@@ -75,16 +75,16 @@ const out = `<!DOCTYPE html>
   <title>Boardhub · Compañero del Modo Carrera</title>
   <meta name="description" content="El compañero definitivo del Modo Carrera de EA Sports FC: tracking, clasificaciones, retos y la historia de tu club." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://juzalex30.github.io/Career-Mode-webapp/" />
+  <meta property="og:url" content="https://boardhubfc.com/" />
   <meta property="og:title" content="Boardhub · Compañero del Modo Carrera" />
   <meta property="og:description" content="Lleva tu Modo Carrera al siguiente nivel: plantilla, partidos, estadísticas, retos y comunidad." />
-  <meta property="og:image" content="https://juzalex30.github.io/Career-Mode-webapp/social.png" />
+  <meta property="og:image" content="https://boardhubfc.com/social.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Boardhub · Compañero del Modo Carrera" />
   <meta name="twitter:description" content="Lleva tu Modo Carrera al siguiente nivel: plantilla, partidos, estadísticas, retos y comunidad." />
-  <meta name="twitter:image" content="https://juzalex30.github.io/Career-Mode-webapp/social.png" />
+  <meta name="twitter:image" content="https://boardhubfc.com/social.png" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00e1a0" />
   <link rel="icon" type="image/svg+xml" href="icon.svg" />
