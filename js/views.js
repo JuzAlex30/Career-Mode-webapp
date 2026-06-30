@@ -346,7 +346,9 @@
     if (obStep == null) obStep = CL && CL.isLoggedIn() ? "restore" : "home";
     const thisYear = new Date().getFullYear();
     const go = (s) => { obStep = s; FC.views.onboarding(); };
-    const finish = () => { obStep = null; obCodeSent = false; obBusy = false; host.remove(); document.getElementById("app").style.display = ""; FC.app.refreshChrome(); FC.router.go("dashboard"); };
+    const finish = () => { obStep = null; obCodeSent = false; obBusy = false; host.remove(); document.getElementById("app").style.display = ""; FC.app.refreshChrome(); FC.router.go("dashboard");
+      // Tutorial interactivo: solo la primera vez (tras crear la primera carrera).
+      try { if (FC.tour) setTimeout(() => FC.tour.maybeAutoStart(), 500); } catch (e) { /* noop */ } };
 
     // —— Columna de marca (izquierda) ——
     const t = FC.t;
@@ -4281,6 +4283,12 @@
     UI.mount(`
       <div class="page-head"><div><h1>${tr("settings.pageTitle")}</h1><div class="sub">${tr("settings.pageSubtitle")}</div></div></div>
 
+      <div class="section-title">${tr("settings.tourTitle")}</div>
+      <div class="card">
+        <p class="muted" style="margin-top:0">${tr("settings.tourDesc")}</p>
+        <button class="btn btn-primary" id="se-tour"><span class="ni-icon" data-icon="play"></span> ${tr("settings.tourBtn")}</button>
+      </div>
+
       <div class="section-title">${tr("settings.appearanceTitle")}</div>
       <div class="card">
         <p class="muted" style="margin-top:0">${tr("settings.accentColorDescription")}</p>
@@ -4360,6 +4368,8 @@
       S.updateCareer({ clubName: document.getElementById("se-club").value.trim() || c.clubName, managerName: document.getElementById("se-manager").value.trim() });
       UI.toast(tr("settings.toastChangesSaved"), "ok");
     });
+    const seTour = document.getElementById("se-tour");
+    if (seTour) seTour.addEventListener("click", () => { if (FC.tour) FC.tour.start(); });
     document.getElementById("se-privacy").addEventListener("click", () => UI.openPrivacy());
     document.getElementById("se-terms").addEventListener("click", () => UI.openTerms());
     document.getElementById("se-newseason").addEventListener("click", () => {

@@ -829,6 +829,64 @@ body.trip-open { overflow: hidden; }
 }
 .btn-founder:hover { transform: translateY(-1px); box-shadow: 0 4px 16px color-mix(in srgb, #f5a623 45%, transparent); }
 
+/* ===================== Tutorial interactivo (FC.tour) ===================== */
+.tour-root { position: fixed; inset: 0; z-index: 9000; }
+body.tour-on { overflow: hidden; }
+.tour-overlay {
+  position: fixed; inset: 0;
+  background: rgba(4, 8, 12, 0);
+  transition: background .25s ease;
+  pointer-events: auto; /* bloquea clics en la app durante el tour */
+}
+.tour-overlay.solid { background: rgba(4, 8, 12, .82); }
+.tour-spot {
+  position: fixed; border-radius: 12px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(4, 8, 12, .82), 0 0 0 2px var(--accent),
+              0 0 22px 4px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition: top .28s cubic-bezier(.4,0,.2,1), left .28s cubic-bezier(.4,0,.2,1),
+              width .28s cubic-bezier(.4,0,.2,1), height .28s cubic-bezier(.4,0,.2,1);
+  animation: tour-pulse 2s ease-in-out infinite;
+}
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(4,8,12,.82), 0 0 0 2px var(--accent), 0 0 18px 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+  50%      { box-shadow: 0 0 0 9999px rgba(4,8,12,.82), 0 0 0 2px var(--accent), 0 0 28px 8px color-mix(in srgb, var(--accent) 65%, transparent); }
+}
+.tour-pop {
+  position: fixed; width: min(360px, calc(100vw - 24px));
+  background: var(--bg-2, #121a21);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 16px; padding: 20px 20px 16px;
+  box-shadow: 0 18px 50px -12px rgba(0,0,0,.7);
+  z-index: 9001;
+  animation: tour-pop-in .28s cubic-bezier(.34,1.56,.64,1);
+}
+.tour-pop.centered { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100vw - 32px)); text-align: center; padding: 28px 26px 20px; }
+@keyframes tour-pop-in { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.tour-pop.centered { animation: tour-pop-in-c .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes tour-pop-in-c { from { opacity: 0; transform: translate(-50%, -46%) scale(.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.tour-emoji { font-size: 34px; line-height: 1; margin-bottom: 10px; }
+.tour-pop.centered .tour-emoji { font-size: 48px; margin-bottom: 14px; }
+.tour-step { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.tour-title { font-size: 19px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; color: var(--text); }
+.tour-pop.centered .tour-title { font-size: 23px; }
+.tour-body { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin-bottom: 16px; }
+.tour-body b { color: var(--text); font-weight: 700; }
+.tour-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 16px; }
+.tour-dot { width: 7px; height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--text-dim) 40%, transparent); transition: all .2s; }
+.tour-dot.on { background: var(--accent); width: 20px; }
+.tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tour-left, .tour-right { display: flex; align-items: center; gap: 8px; }
+.tour-btn { font-family: inherit; font-size: 14px; font-weight: 700; border-radius: 10px; padding: 9px 16px; cursor: pointer; border: 1px solid transparent; transition: transform .12s, background .15s, opacity .15s; }
+.tour-btn:hover { transform: translateY(-1px); }
+.tour-btn.primary { background: var(--accent); color: #03110c; }
+.tour-btn.ghost { background: transparent; border-color: var(--line); color: var(--text); }
+.tour-btn.link { background: transparent; color: var(--text-dim); padding: 9px 6px; font-weight: 600; }
+.tour-btn.link:hover { color: var(--text); transform: none; }
+@media (max-width: 520px) {
+  .tour-pop { width: calc(100vw - 20px); left: 10px !important; }
+  .tour-pop:not(.centered) { bottom: 14px; top: auto !important; }
+}
+
   </style>
 </head>
 <body data-theme="dark">
@@ -1589,6 +1647,28 @@ body.trip-open { overflow: hidden; }
       "support.youAreFounderDesc": "Gracias por sostener Boardhub. Tu insignia de fundador ya luce en la comunidad.",
       "support.founderBadge": "Fundador",
       "support.founderBadgeTitle": "Fundador de Boardhub — apoyó el proyecto desde el principio",
+      "tour.progress": "{n} de {total}",
+      "tour.next": "Siguiente",
+      "tour.back": "Atrás",
+      "tour.skip": "Saltar",
+      "tour.finish": "¡Empezar!",
+      "tour.welcome.title": "Bienvenido a tu leyenda",
+      "tour.welcome.body": "Esto no es solo una libreta de resultados. Es el lugar donde tu Modo Carrera cobra vida: cada partido, cada fichaje y cada título construyen una historia que será <b>tuya para siempre</b>. Deja que te enseñe lo que puedes hacer.",
+      "tour.register.title": "Todo empieza con un partido",
+      "tour.register.body": "Pulsa aquí para registrar cada resultado. Con un par de toques alimentas tu <b>clasificación, estadísticas, finanzas y narrativa</b> automáticamente. Tú juegas; Boardhub recuerda.",
+      "tour.standings.title": "Tu liga, viva",
+      "tour.standings.body": "La <b>clasificación</b> se calcula sola con tus partidos. Mira tu posición, la lucha por el título y las zonas de Champions o descenso en tiempo real.",
+      "tour.rivals.title": "Conoce a tu enemigo",
+      "tour.rivals.body": "Cada rival tiene su <b>historial cara a cara</b> y un dossier táctico que te avisa de tu bestia negra y te da pistas para ganar. El conocimiento es poder.",
+      "tour.legacy.title": "Tu legado vivirá para siempre",
+      "tour.legacy.body": "Récords, palmarés, leyendas del club y el <b>Salón de la Fama</b> entre todas tus carreras. Aquí es donde se mide la grandeza. ¿Hasta dónde llegarás?",
+      "tour.community.title": "Compite con el mundo",
+      "tour.community.body": "Comparte tu carrera con un enlace, presume de tus títulos en el <b>ranking global</b> y descubre las historias de otros mánagers. Tu leyenda merece público.",
+      "tour.ready.title": "Estás listo, míster",
+      "tour.ready.body": "Ya conoces lo esencial. El resto está esperándote: plantilla, academia, viajes, retos y mucho más. <b>Registra tu primer partido</b> y que empiece la historia.",
+      "settings.tourTitle": "Tutorial",
+      "settings.tourDesc": "¿Te perdiste algo? Vuelve a ver el recorrido guiado por las funciones de Boardhub.",
+      "settings.tourBtn": "Ver tutorial",
       "community.viewSharedCareer": "Ver carrera compartida",
       "community.careerCode": "Código de carrera",
       "community.careerCodePlaceholder": "p.ej. a1b2c3d4e5",
@@ -2551,6 +2631,28 @@ body.trip-open { overflow: hidden; }
       "support.youAreFounderDesc": "Thanks for keeping Boardhub alive. Your founder badge is already shining across the community.",
       "support.founderBadge": "Founder",
       "support.founderBadgeTitle": "Boardhub founder — backed the project from the start",
+      "tour.progress": "{n} of {total}",
+      "tour.next": "Next",
+      "tour.back": "Back",
+      "tour.skip": "Skip",
+      "tour.finish": "Let's go!",
+      "tour.welcome.title": "Welcome to your legend",
+      "tour.welcome.body": "This isn't just a results notebook. It's where your Career Mode comes alive: every match, signing and trophy builds a story that will be <b>yours forever</b>. Let me show you what you can do.",
+      "tour.register.title": "It all starts with a match",
+      "tour.register.body": "Tap here to log every result. With a couple of taps you feed your <b>table, stats, finances and storyline</b> automatically. You play; Boardhub remembers.",
+      "tour.standings.title": "Your league, alive",
+      "tour.standings.body": "The <b>table</b> updates itself from your matches. Watch your position, the title race and the Champions or relegation zones in real time.",
+      "tour.rivals.title": "Know your enemy",
+      "tour.rivals.body": "Every rival has its own <b>head-to-head record</b> and a tactical dossier that flags your bogey team and gives you hints to win. Knowledge is power.",
+      "tour.legacy.title": "Your legacy lives forever",
+      "tour.legacy.body": "Records, honours, club legends and the <b>Hall of Fame</b> across all your careers. This is where greatness is measured. How far will you go?",
+      "tour.community.title": "Compete with the world",
+      "tour.community.body": "Share your career with a link, show off your trophies on the <b>global ranking</b> and discover other managers' stories. Your legend deserves an audience.",
+      "tour.ready.title": "You're ready, gaffer",
+      "tour.ready.body": "You know the essentials now. The rest is waiting: squad, academy, travel, challenges and much more. <b>Log your first match</b> and let the story begin.",
+      "settings.tourTitle": "Tutorial",
+      "settings.tourDesc": "Missed something? Replay the guided tour of Boardhub's features.",
+      "settings.tourBtn": "View tutorial",
       "community.viewSharedCareer": "View shared career",
       "community.careerCode": "Career code",
       "community.careerCodePlaceholder": "e.g. a1b2c3d4e5",
@@ -10854,7 +10956,9 @@ body.trip-open { overflow: hidden; }
     if (obStep == null) obStep = CL && CL.isLoggedIn() ? "restore" : "home";
     const thisYear = new Date().getFullYear();
     const go = (s) => { obStep = s; FC.views.onboarding(); };
-    const finish = () => { obStep = null; obCodeSent = false; obBusy = false; host.remove(); document.getElementById("app").style.display = ""; FC.app.refreshChrome(); FC.router.go("dashboard"); };
+    const finish = () => { obStep = null; obCodeSent = false; obBusy = false; host.remove(); document.getElementById("app").style.display = ""; FC.app.refreshChrome(); FC.router.go("dashboard");
+      // Tutorial interactivo: solo la primera vez (tras crear la primera carrera).
+      try { if (FC.tour) setTimeout(() => FC.tour.maybeAutoStart(), 500); } catch (e) { /* noop */ } };
 
     // —— Columna de marca (izquierda) ——
     const t = FC.t;
@@ -14789,6 +14893,12 @@ body.trip-open { overflow: hidden; }
     UI.mount(`
       <div class="page-head"><div><h1>${tr("settings.pageTitle")}</h1><div class="sub">${tr("settings.pageSubtitle")}</div></div></div>
 
+      <div class="section-title">${tr("settings.tourTitle")}</div>
+      <div class="card">
+        <p class="muted" style="margin-top:0">${tr("settings.tourDesc")}</p>
+        <button class="btn btn-primary" id="se-tour"><span class="ni-icon" data-icon="play"></span> ${tr("settings.tourBtn")}</button>
+      </div>
+
       <div class="section-title">${tr("settings.appearanceTitle")}</div>
       <div class="card">
         <p class="muted" style="margin-top:0">${tr("settings.accentColorDescription")}</p>
@@ -14868,6 +14978,8 @@ body.trip-open { overflow: hidden; }
       S.updateCareer({ clubName: document.getElementById("se-club").value.trim() || c.clubName, managerName: document.getElementById("se-manager").value.trim() });
       UI.toast(tr("settings.toastChangesSaved"), "ok");
     });
+    const seTour = document.getElementById("se-tour");
+    if (seTour) seTour.addEventListener("click", () => { if (FC.tour) FC.tour.start(); });
     document.getElementById("se-privacy").addEventListener("click", () => UI.openPrivacy());
     document.getElementById("se-terms").addEventListener("click", () => UI.openTerms());
     document.getElementById("se-newseason").addEventListener("click", () => {
@@ -15311,6 +15423,171 @@ body.trip-open { overflow: hidden; }
     const g = e.target.closest && e.target.closest("[data-goto]");
     if (g) FC.router.go(g.dataset.goto);
   });
+})();
+
+
+/* ───────── */
+
+/* ============================================================
+   tour.js — tutorial interactivo híbrido: una tarjeta de
+   bienvenida emocional + pasos de spotlight sobre la UI real.
+   Sin dependencias. Se expone en window.FC.tour
+   ============================================================ */
+(function () {
+  window.FC = window.FC || {};
+  const FC = window.FC;
+  const T = {};
+  const t = (k, v) => FC.t(k, v);
+
+  // Definición de pasos. type "card" = ventana flotante centrada;
+  // "spot" = se ilumina un elemento real y la ventana se ancla al lado.
+  function buildSteps() {
+    return [
+      { type: "card", emoji: "👋", key: "welcome" },
+      { type: "spot", route: "dashboard", target: "#dash-add", place: "bottom", emoji: "📈", key: "register" },
+      { type: "spot", route: "dashboard", target: '[data-route="standings"]', place: "right", emoji: "📊", key: "standings" },
+      { type: "spot", route: "dashboard", target: '[data-route="rivales"]', place: "right", emoji: "⚔️", key: "rivals" },
+      { type: "spot", route: "dashboard", target: '[data-route="history"]', place: "right", emoji: "🏆", key: "legacy" },
+      { type: "spot", route: "dashboard", target: '[data-route="cloud"]', place: "right", emoji: "🌍", key: "community" },
+      { type: "card", emoji: "🚀", key: "ready" },
+    ];
+  }
+
+  let idx = 0, list = [], root = null, reflow = null, keyHandler = null;
+
+  T.isActive = () => !!root;
+
+  T.start = function () {
+    if (root) T._teardown();
+    list = buildSteps();
+    idx = 0;
+    root = document.createElement("div");
+    root.className = "tour-root";
+    root.innerHTML =
+      '<div class="tour-overlay" id="tourOverlay"></div>' +
+      '<div class="tour-spot" id="tourSpot" hidden></div>' +
+      '<div class="tour-pop" id="tourPop" role="dialog" aria-modal="true" aria-live="polite"></div>';
+    document.body.appendChild(root);
+    document.body.classList.add("tour-on");
+    reflow = () => T._draw(list[idx]);
+    window.addEventListener("resize", reflow);
+    window.addEventListener("scroll", reflow, true);
+    keyHandler = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); T.skip(); }
+      else if (e.key === "ArrowRight" || e.key === "Enter") { e.preventDefault(); T.next(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); T.back(); }
+    };
+    document.addEventListener("keydown", keyHandler, true);
+    T._render();
+  };
+
+  T.next = function () {
+    if (idx >= list.length - 1) { T._finish(); return; }
+    idx++; T._render();
+  };
+  T.back = function () { if (idx > 0) { idx--; T._render(); } };
+  T.skip = function () { T._finish(); };
+
+  T._finish = function () {
+    try { const s = FC.store.settings(); s.tourDone = true; FC.store.save(); } catch (e) { /* noop */ }
+    T._teardown();
+  };
+
+  T._teardown = function () {
+    if (keyHandler) document.removeEventListener("keydown", keyHandler, true);
+    if (reflow) { window.removeEventListener("resize", reflow); window.removeEventListener("scroll", reflow, true); }
+    document.body.classList.remove("tour-on");
+    if (root) root.remove();
+    root = null; reflow = null; keyHandler = null;
+  };
+
+  T._render = function () {
+    const step = list[idx];
+    // Si el paso vive en otra ruta, navegamos primero (el tour vive en <body>,
+    // así que el re-render de la ruta no lo borra).
+    if (step.route && FC.router.current !== step.route) FC.router.go(step.route);
+    // Dos frames para garantizar que el DOM de la ruta ya existe antes de medir.
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (root) T._draw(step); }));
+  };
+
+  T._draw = function (step) {
+    if (!root) return;
+    const spot = root.querySelector("#tourSpot");
+    const pop = root.querySelector("#tourPop");
+    const overlay = root.querySelector("#tourOverlay");
+    const total = list.length;
+    const isFirst = idx === 0, isLast = idx === total - 1;
+
+    const dots = list.map((_, i) => '<span class="tour-dot' + (i === idx ? " on" : "") + '"></span>').join("");
+    const skipBtn = !isLast ? '<button class="tour-btn link" data-tour="skip">' + t("tour.skip") + "</button>" : "";
+    const backBtn = !isFirst ? '<button class="tour-btn ghost" data-tour="back">' + t("tour.back") + "</button>" : "";
+    const nextBtn = '<button class="tour-btn primary" data-tour="next">' + (isLast ? t("tour.finish") : t("tour.next")) + "</button>";
+
+    pop.innerHTML =
+      '<div class="tour-emoji">' + (step.emoji || "") + "</div>" +
+      '<div class="tour-step">' + t("tour.progress", { n: idx + 1, total: total }) + "</div>" +
+      '<div class="tour-title">' + t("tour." + step.key + ".title") + "</div>" +
+      '<div class="tour-body">' + t("tour." + step.key + ".body") + "</div>" +
+      '<div class="tour-dots">' + dots + "</div>" +
+      '<div class="tour-actions"><div class="tour-left">' + skipBtn + "</div>" +
+      '<div class="tour-right">' + backBtn + nextBtn + "</div></div>";
+
+    pop.querySelectorAll("[data-tour]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        const a = b.dataset.tour;
+        if (a === "next") T.next(); else if (a === "back") T.back(); else T.skip();
+      });
+    });
+
+    let el = null;
+    if (step.type === "spot" && step.target) el = document.querySelector(step.target);
+
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const pad = 6;
+      spot.hidden = false;
+      spot.style.top = (r.top - pad) + "px";
+      spot.style.left = (r.left - pad) + "px";
+      spot.style.width = (r.width + pad * 2) + "px";
+      spot.style.height = (r.height + pad * 2) + "px";
+      overlay.classList.remove("solid"); // el oscurecido lo hace el box-shadow del spot
+      pop.classList.remove("centered");
+      T._placePop(pop, r, step.place || "bottom");
+    } else {
+      // tarjeta centrada (bienvenida / cierre, o fallback si no se encuentra el target)
+      spot.hidden = true;
+      overlay.classList.add("solid");
+      pop.classList.add("centered");
+      pop.style.top = ""; pop.style.left = "";
+    }
+  };
+
+  // Coloca la ventana junto al elemento iluminado, con margen y recorte a la pantalla.
+  T._placePop = function (pop, r, place) {
+    const gap = 14;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pw = Math.min(pop.offsetWidth || 320, vw - 24);
+    const ph = pop.offsetHeight || 200;
+    let top, left;
+    if (place === "right") { left = r.right + gap; top = r.top + r.height / 2 - ph / 2; }
+    else if (place === "left") { left = r.left - gap - pw; top = r.top + r.height / 2 - ph / 2; }
+    else if (place === "top") { top = r.top - gap - ph; left = r.left + r.width / 2 - pw / 2; }
+    else { top = r.bottom + gap; left = r.left + r.width / 2 - pw / 2; } // bottom
+    // si no cabe a la derecha, lo pasamos debajo
+    if (place === "right" && left + pw > vw - 12) { left = r.left; top = r.bottom + gap; }
+    left = Math.max(12, Math.min(left, vw - pw - 12));
+    top = Math.max(12, Math.min(top, vh - ph - 12));
+    pop.style.left = left + "px";
+    pop.style.top = top + "px";
+  };
+
+  // Lanza el tour solo la primera vez (tras crear la primera carrera).
+  T.maybeAutoStart = function () {
+    try { if (FC.store.settings().tourDone) return; } catch (e) { return; }
+    T.start();
+  };
+
+  FC.tour = T;
 })();
 
 

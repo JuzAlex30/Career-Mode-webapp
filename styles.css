@@ -803,3 +803,61 @@ body.trip-open { overflow: hidden; }
   transition: transform .12s, box-shadow .12s;
 }
 .btn-founder:hover { transform: translateY(-1px); box-shadow: 0 4px 16px color-mix(in srgb, #f5a623 45%, transparent); }
+
+/* ===================== Tutorial interactivo (FC.tour) ===================== */
+.tour-root { position: fixed; inset: 0; z-index: 9000; }
+body.tour-on { overflow: hidden; }
+.tour-overlay {
+  position: fixed; inset: 0;
+  background: rgba(4, 8, 12, 0);
+  transition: background .25s ease;
+  pointer-events: auto; /* bloquea clics en la app durante el tour */
+}
+.tour-overlay.solid { background: rgba(4, 8, 12, .82); }
+.tour-spot {
+  position: fixed; border-radius: 12px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(4, 8, 12, .82), 0 0 0 2px var(--accent),
+              0 0 22px 4px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition: top .28s cubic-bezier(.4,0,.2,1), left .28s cubic-bezier(.4,0,.2,1),
+              width .28s cubic-bezier(.4,0,.2,1), height .28s cubic-bezier(.4,0,.2,1);
+  animation: tour-pulse 2s ease-in-out infinite;
+}
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(4,8,12,.82), 0 0 0 2px var(--accent), 0 0 18px 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+  50%      { box-shadow: 0 0 0 9999px rgba(4,8,12,.82), 0 0 0 2px var(--accent), 0 0 28px 8px color-mix(in srgb, var(--accent) 65%, transparent); }
+}
+.tour-pop {
+  position: fixed; width: min(360px, calc(100vw - 24px));
+  background: var(--bg-2, #121a21);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 16px; padding: 20px 20px 16px;
+  box-shadow: 0 18px 50px -12px rgba(0,0,0,.7);
+  z-index: 9001;
+  animation: tour-pop-in .28s cubic-bezier(.34,1.56,.64,1);
+}
+.tour-pop.centered { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100vw - 32px)); text-align: center; padding: 28px 26px 20px; }
+@keyframes tour-pop-in { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.tour-pop.centered { animation: tour-pop-in-c .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes tour-pop-in-c { from { opacity: 0; transform: translate(-50%, -46%) scale(.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.tour-emoji { font-size: 34px; line-height: 1; margin-bottom: 10px; }
+.tour-pop.centered .tour-emoji { font-size: 48px; margin-bottom: 14px; }
+.tour-step { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.tour-title { font-size: 19px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; color: var(--text); }
+.tour-pop.centered .tour-title { font-size: 23px; }
+.tour-body { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin-bottom: 16px; }
+.tour-body b { color: var(--text); font-weight: 700; }
+.tour-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 16px; }
+.tour-dot { width: 7px; height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--text-dim) 40%, transparent); transition: all .2s; }
+.tour-dot.on { background: var(--accent); width: 20px; }
+.tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tour-left, .tour-right { display: flex; align-items: center; gap: 8px; }
+.tour-btn { font-family: inherit; font-size: 14px; font-weight: 700; border-radius: 10px; padding: 9px 16px; cursor: pointer; border: 1px solid transparent; transition: transform .12s, background .15s, opacity .15s; }
+.tour-btn:hover { transform: translateY(-1px); }
+.tour-btn.primary { background: var(--accent); color: #03110c; }
+.tour-btn.ghost { background: transparent; border-color: var(--line); color: var(--text); }
+.tour-btn.link { background: transparent; color: var(--text-dim); padding: 9px 6px; font-weight: 600; }
+.tour-btn.link:hover { color: var(--text); transform: none; }
+@media (max-width: 520px) {
+  .tour-pop { width: calc(100vw - 20px); left: 10px !important; }
+  .tour-pop:not(.centered) { bottom: 14px; top: auto !important; }
+}

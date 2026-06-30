@@ -10,7 +10,7 @@ const here = __dirname;
 const read = (f) => fs.readFileSync(path.join(here, f), "utf8");
 
 const css = read("styles.css");
-const js = ["js/i18n.js", "js/data.js", "js/rosters.js", "js/core.js", "js/cloud.js", "js/views.js", "js/app.js"].map(read).join("\n\n/* ───────── */\n\n");
+const js = ["js/i18n.js", "js/data.js", "js/rosters.js", "js/core.js", "js/cloud.js", "js/views.js", "js/tour.js", "js/app.js"].map(read).join("\n\n/* ───────── */\n\n");
 
 // Seguridad: un cierre </script> dentro del JS rompería el bloque inline.
 const safeJs = js.replace(/<\/script>/gi, "<\\/script>");
