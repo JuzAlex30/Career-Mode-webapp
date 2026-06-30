@@ -2236,6 +2236,413 @@
      ENGLISH CONTENT POOLS (Fase 4 i18n)
      ============================================================ */
 
+  D.TRIP_EN = {
+    ambient: {
+      avion: {
+        despegue: [
+          "Wheels up: {team} set course for {city}.",
+          "Leaving {ocity} behind. Next stop, {city}.",
+          "The {team} charter lifts off toward {city}.",
+          "Seatbelts fastened: {comp} awaits in {city}.",
+          "{team} are in the air, headed for {city}.",
+          "Engines running: {team} switch to autopilot bound for {city}.",
+          "Seats, seatbelts, {city}: {team} have a game to win.",
+          "Runway clear in {ocity} — whatever is waiting in {city} can start worrying.",
+          "{team} board with their heads already in {comp}.",
+          "One last look at {ocity} before the clouds swallow it: only {city} matters now.",
+        ],
+      },
+      bus: {
+        salida: [
+          "The {team} coach pulls out, heading for {city}.",
+          "Leaving {ocity}: on the road to {city}.",
+          "The team bus takes the motorway toward {city}.",
+          "Rolling toward {city}, with {comp} on the horizon.",
+          "{team} are on the road to {city}.",
+          "Seats filled, silence on the bus: {team} are already in match mode.",
+          "Road trip to {city}: the scenery changes, the focus does not.",
+          "Steamed-up windows and miles ahead before {city}.",
+          "Music drifting from the back of the bus; hours to go until {city}.",
+          "Motorway ahead: {team} have had {comp} in their heads since the first junction.",
+        ],
+      },
+    },
+    h2h: {
+      bestia: [
+        "Visit number {n} to {city} and {team} still do not know what it feels like to win here.",
+        "Cursed ground: {d} defeats for {team} in {city}. Time to end the run.",
+        "{team} return to {city}, their unfinished business ({v}W {d}L).",
+        "Nightmare stadium for {team}: not a single win in {d} visits to {city}.",
+        "{team} cannot crack the code in {city}. Trip number {n} to try again.",
+      ],
+      fortin: [
+        "{city} suits {team}: {v} wins at this ground.",
+        "Happy hunting ground: {team} usually leave {city} with the points.",
+        "{team} return to {city}, where they almost always call the shots ({v}W).",
+        "{team} arrive in {city} with good vibes: they tend to take something home from here.",
+        "{team} have celebrated in {city} {v} times; let's make it one more.",
+      ],
+      equilibrado: [
+        "Visit {n} to {city}: an even head-to-head ({v}W {e}D {d}L).",
+        "{team} know {city} well: not a fortress, not a bogey ground — pure battle.",
+        "Another date in {city}; the last one finished {score}.",
+        "No favourites in {city}: {v}W {e}D {d}L.",
+        "There is always a game in {city}; the even head-to-head record proves it.",
+      ],
+      primera: [
+        "First visit for {team} to {city}. No baggage, no history.",
+        "Debut in {city}: {team} step onto this pitch for the very first time.",
+        "Unknown territory: {team} make their first away appearance in {city}.",
+        "{team} play at {city}'s ground for the first time — a blank page, everything to write.",
+        "Fresh start in {city}: {team} begin a brand new chapter today.",
+      ],
+    },
+    hero: {
+      goleador: [
+        "Sitting in row 7: {player}, with {goals} goals already this season.",
+        "{team} count on {player} ({goals} goals) to make the difference in {city}.",
+        "{player} arrives in {city} on a roll: {goals} goals and counting.",
+      ],
+      canterano: [
+        "{player}, the academy product, stares out the window on the way to {city}.",
+        "A big day for {player}: the academy graduate travels with the first team.",
+        "Homegrown and proud: {player} ({pos}) faces another away day in {city}.",
+      ],
+      veterano: [
+        "{player}, the old hand, keeps things calm on the road to {city}.",
+        "Captain {player} passes on advice throughout the journey to {city}.",
+        "{player} has seen it all before — today he leads the group in {city}.",
+      ],
+      estrella: [
+        "{player} ({pos}), {team}'s star man, heads up the travelling party to {city}.",
+        "All eyes are on {player} for the showdown in {city}.",
+        "{team} travel with their best weapon: {player}.",
+      ],
+    },
+    stake: {
+      liderato: [
+        "{team} travel as leaders: winning in {city} would be a giant leap.",
+        "The title race is on the line: every point in {city} is worth its weight in gold.",
+        "{team} carry the leader's badge to {city} — the first serious test awaits.",
+        "Staying at the top means winning away too: {team} know exactly what is at stake in {city}.",
+      ],
+      europa_zona: [
+        "European places up for grabs: {team} cannot afford to drop points in {city}.",
+        "The top half is up for grabs; {team} go all in at {city}.",
+        "A win in {city} would put {team} one step closer to Europe.",
+        "The European places are within reach; {team} cannot slip up in {city}.",
+      ],
+      descenso: [
+        "Six-pointer: {team} are fighting for their lives in {city}.",
+        "No safety net: {team} need to take something from {city} to breathe.",
+        "The table is tightening; {team} need the three points from {city} to stay afloat.",
+        "Climbing out of trouble means winning away: {team} put it all on the line in {city}.",
+      ],
+      media: [
+        "Nothing riding on the table, {team} travel to {city} to compete and grow.",
+        "A mid-table matchday in {city}: pride and professionalism.",
+        "No extra pressure — {team} head to {city} to show what they can do.",
+        "A middle-of-the-season fixture in {city}: nothing to lose, plenty to gain.",
+      ],
+      copa: [
+        "Cup night in {city}: go through or go home.",
+        "Knockout football in {city}: there is no tomorrow if you slip up.",
+        "No second chances in the cup: {team} either win in {city} or pack their bags.",
+        "One-off clash in {city}: {team} know that losing means elimination.",
+      ],
+      continental: [
+        "European night in {city}: {comp} does not forgive mistakes.",
+        "The {comp} lights shine in {city}; {team} are here to pull off something special.",
+        "The {comp} anthem is already playing in their heads; {team} are not going to {city} as tourists.",
+        "{comp}: {team} look for another firm step forward in {city}.",
+      ],
+      final_euro: [
+        "Continental final in {city}. {team} stand before history.",
+        "{comp}: {team} travel to {city} in pursuit of eternal glory.",
+      ],
+    },
+    atmosfera: {
+      nieve: [
+        "Snow over the north: the real cold is waiting in {city}.",
+        "Leaden skies and snowflakes; they will be playing in gloves in {city}.",
+        "Weather alert in {city}; the snow could decide how the game is played.",
+        "Flurries on the horizon: {team} packed the studs with the best grip for {city}.",
+      ],
+      frio: [
+        "Winter cold in {city}: you can see your breath above the pitch.",
+        "A freezing afternoon in {city}; time to warm up fast.",
+        "Near-zero temperatures forecast in {city}; the warm-up will never matter more.",
+        "A biting winter's afternoon in {city}: those who fear the cold least will dominate.",
+      ],
+      calor: [
+        "Summer heat in {city}: a heavy afternoon, hydration at maximum.",
+        "Scorching in {city}; the thermometer will dictate the tempo.",
+        "Heat alert in {city}; whoever moves the ball faster will suffer less.",
+        "Midsummer in {city}: an afternoon for short passes and plenty of water.",
+      ],
+      lluvia: [
+        "Raining in {city}: the ball will skid fast across the surface.",
+        "Wet turf in {city}; watch out for slips.",
+        "Umbrellas on the bench and a heavy ball: it is raining in {city}.",
+        "Rain from first thing in {city}; set pieces could be the key factor.",
+      ],
+      normal: [
+        "A pleasant afternoon of football in {city}.",
+        "Good weather in {city} for the ball to move freely.",
+        "Clean conditions in {city}: nothing to worry about except the game.",
+        "Ideal conditions in {city} — no excuses on grounds of the weather.",
+      ],
+    },
+    reunion: [
+      "Reunion: {player} is on the other side now, wearing the {rival} shirt.",
+      "Old face in {city}: {player} is in the {rival} colours today.",
+      "The {rival} squad list includes {player}; the reunion is set.",
+      "{player} no longer wears this badge, but {team} will never forget what he did for the club.",
+      "You will see {player} on the opposite side in {city}: a game with history before a ball is kicked.",
+    ],
+    rivalry: {
+      victima: [
+        "{rival} are your favourite opponent: {av} wins from {total} meetings.",
+        "Another date with {rival}, the side {team} have well and truly figured out ({av}W from {total}).",
+        "{team} always find a way against {rival}: {av} wins from {total} games.",
+        "Some opponents bring out the best in you; {rival} are one of them ({av}W from {total}).",
+        "{rival} arrive in {city} as {team}'s favourite victims: {av} wins from {total} meetings.",
+      ],
+      verdugo: [
+        "{rival}, your historical bogey side: {al} defeats in {total} meetings. Time to change that.",
+        "Scores to settle with {rival} ({al}L from {total}); {team} travel with a thirst for revenge.",
+        "No opponent stings like {rival}: they have beaten {team} {al} times.",
+        "{rival} and their {al} wins over {team}; another chapter is written tonight.",
+        "{al} defeats against {rival} weigh heavy; {team} travel to {city} to settle the debt.",
+      ],
+      clasico: [
+        "A fixture all of its own: {total} meetings with {rival} and there is never a dull one.",
+        "{team} and {rival}, old rivals with {total} battles between them. One more in {city}.",
+        "Neither {team} nor {rival} give an inch: {total} games, always tight.",
+        "{total} encounters with {rival} and not one has been the same as the last.",
+        "{team} and {rival} carry {total} battles on their backs; today's will count just the same.",
+      ],
+    },
+    arc: {
+      leyenda: [
+        "{player} is still adding to the tally: {apps} appearances in this shirt.",
+        "A legend on board: {player} reaches {apps} outings with {team}.",
+        "{player} keeps clocking up the miles: {apps} games in this shirt, and counting.",
+        "Game {apps} for {player} with {team} — not many pages left in the legend.",
+      ],
+      veterano: [
+        "{player} is a fixture: {apps} professional appearances on the road to {city}.",
+        "Experience in the travelling party: {player} has {apps} games under his belt with {team}.",
+        "Consistency never fades: {apps} games and {player}'s travel routine is exactly what it always was.",
+        "{player} knows these journeys by heart; {apps} appearances with {team} say it all.",
+      ],
+      cantera: [
+        "{player} came through the academy and is now the face of the project.",
+        "From youth team to regular: {player} leads the travelling party to {city}.",
+        "{player} knows where he came from: {team}'s academy to the first team.",
+        "Academy confirmed: {player} is now a first-team regular on every trip.",
+      ],
+    },
+    milestone: [
+      "Away trip number {trip} for {team}. So many miles of history.",
+      "{trip} away days in this career; here comes another, bound for {city}.",
+      "A travelling milestone: {team} reach their {trip}th away fixture.",
+      "{team} have now made {trip} trips; every journey has left its mark.",
+      "{trip} times this team has gone out and defended the badge away from home.",
+      "Miles, defeats, wins, draws: {trip} journeys for {team} and counting.",
+    ],
+    emergent: {
+      norte: [
+        "Deep northern night and a strange sky above the clouds; nobody sleeps.",
+        "Odd lights appear to the north during the night flight; the group will remember this one.",
+        "The pilot mentions they are flying over Scandinavia; outside, the darkness feels otherworldly.",
+        "Silence in the cabin; the northern cold seeps through even at ten thousand metres.",
+        "Lights on the horizon that are neither city nor star: the north in all its mystery.",
+      ],
+      veterano: [
+        "This might be one of {player}'s last trips to this corner of the world. You can tell.",
+        "{player}, carrying the weight of experience, stares out the window like someone saying goodbye.",
+        "{player} watches the clouds with the calm that only years of travel and football can bring.",
+        "Time makes itself felt on these journeys; {player} does not waste a single one.",
+        "There may not be many more trips like this for {player}. Today, as always: first on the bus.",
+      ],
+    },
+    rare: [
+      "Light turbulence: the group grips the armrests and manages a nervous smile.",
+      "Delay on the runway; the manager takes the chance for one last tactical chat.",
+      "One player cannot sleep for the entire journey: big-game nerves.",
+      "The pilot greets the {team} supporters travelling with the squad over the intercom.",
+      "Singing drifting from the back of the aisle: the journey flies by.",
+      "Fog on the approach; the captain asks for calm — everything under control.",
+      "Bags in the hold and music in the dressing room: {team} switch on match mode before boarding.",
+      "The coach cuts through {city} at night; outside, the home fans are already warming up.",
+      "Unplanned technical stop: an hour's wait, but the squad use it to run through the game plan.",
+      "The manager closes his eyes in the front seat. When he sleeps on the journey, the team flies.",
+      "A local TV camera at the airport: {team} are news before they even set foot on the pitch.",
+      "A {team} supporter spots the squad at the airport and asks for photos; the travelling party smiles.",
+      "The bus arrives at the stadium two hours early; the stillness of the empty ground already imposes.",
+      "Headphones on and one last look at the opposition: productive silence on the way to {city}.",
+      "A sudden brake on the motorway: a scary moment, nothing more. The driver apologises; the group laughs.",
+      "The hotel is a hundred metres from the stadium; the noise of the {rival} fans already seeps through the windows.",
+    ],
+    arrival: [
+      "Arrived in {city}. {team} step into {rival}'s territory.",
+      "End of the road: {city}. Time to go and get those three points.",
+      "{team} are in {city}. Time to compete.",
+      "{team} touch down in {city} with time to check out the ground.",
+      "Quiet arrival; there will be no margin for error against {rival} tomorrow.",
+      "Welcome to {city}. {rival} are waiting. So is {team}.",
+      "Hotel, final tactical meeting, rest: the same ritual as always in {city}.",
+      "First look at {city}: {team} can already smell the competition.",
+    ],
+    vuelta: {
+      apertura: {
+        win_big: [
+          "The {team} travelling party leave {city} with a thumping win in the bag.",
+          "Party atmosphere leaving {city}: {team} head home with a stunning {score}.",
+          "You do not often leave {city} feeling like this; {team} produced a match to frame.",
+          "{team} leave {city} with the solid satisfaction of a job more than done.",
+        ],
+        win: [
+          "{team} leave {city} with the three points safely secured.",
+          "Quiet departure from {city}: a hard-earned win for {team}.",
+          "Mission accomplished in {city}; {team} make the journey home with a smile.",
+          "{team} leave {city} with a golden {score} to show for it.",
+        ],
+        draw: [
+          "{team} leave {city} with a point and mixed feelings.",
+          "Shared spoils in {city}; {team} head back not quite sure what to make of it.",
+          "A draw in {city}: {team} leave unbeaten, but with the feeling it could have been more.",
+          "One point in the bag; {team} depart {city} all square.",
+        ],
+        loss: [
+          "A quiet departure from {city}: {team} lose by the smallest of margins.",
+          "{team} leave {city} empty-handed and grim-faced.",
+          "A narrow defeat in {city}; {team} make the journey home chewing over the frustration.",
+          "Little to celebrate: {team} leave {city} with a {score} against them.",
+        ],
+        loss_big: [
+          "A night to forget in {city}: {team} leave badly stung after the {score}.",
+          "Complete silence on the way out of {city}; {team} were completely overrun.",
+          "{team} leave {city} with a heavy defeat behind them and plenty to discuss.",
+          "A long, bitter road back from {city}: the {score} weighs like a stone.",
+        ],
+      },
+      nucleo: {
+        win_big: [
+          "The mood inside the group is euphoric: days like this are what the game is all about.",
+          "The manager calls for calm, but even he cannot hide the grin after the {score}.",
+          "Laughter, music and phones out: {team} enjoy a special afternoon.",
+          "A display like the one in {city} gets talked about in the dressing room for weeks.",
+        ],
+        win: [
+          "Modest on the scoreboard, but winning away always earns its reward.",
+          "{team} know exactly what these three points on the road are worth.",
+          "Not pretty, but effective; the group travel back from {city} satisfied.",
+          "Away three points count double, and the dressing room knows it.",
+        ],
+        draw: [
+          "The group debates whether the point feels like a rescue or a disappointment.",
+          "The draw leaves an odd aftertaste: neither joy nor drama, just equality.",
+          "The manager spends the whole journey turning over the missed chances in his mind.",
+          "A point away is never to be sniffed at, though {team} were hoping for more today.",
+        ],
+        loss: [
+          "The silence says it all: {team} know this one slipped away by the finest of margins.",
+          "Long faces and few words; the defeat in {city} hurts because of how close they came.",
+          "The manager plays back the moment that changed everything over and over in his head.",
+          "Controlled frustration in the group: losing to small details is the sharpest kind of pain.",
+        ],
+        loss_big: [
+          "Nobody speaks. The hammering in {city} demands a long look in the mirror.",
+          "{team} absorb the blow in silence; there is a lot to put right.",
+          "A long, bitter journey: the {score} leaves wounds that will take time to heal.",
+          "The manager is already thinking about the working week ahead; there are no excuses today.",
+        ],
+      },
+      especial: {
+        gesta_grande: [
+          "A European night to frame; {team} head home with something remarkable under their arm.",
+          "From {city} to history: {team} deliver a victory that will be talked about for years.",
+        ],
+        bestia_caida: [
+          "At last. {team} break the curse of {city} after years without a win here.",
+          "The bogey ground falls: {team} remove a long-standing thorn in {city}.",
+        ],
+        verdugo_caido: [
+          "Revenge served: {team} finally get the better of their bogey side, {rival}.",
+          "{rival} are no longer a ghost; {team} have settled old scores.",
+        ],
+        salvacion: [
+          "Pure oxygen: winning a survival battle tastes like glory.",
+          "{team} breathe again; three points of gold in the fight to stay up.",
+        ],
+        liderato_tocado: [
+          "The lead wobbles after the loss in {city}; the chasing pack are closing in.",
+          "The leader slips up in {city}; {team} know they cannot afford a repeat.",
+        ],
+        porteria_cero: [
+          "Clean sheet and three points: {team} head home with the perfect away day.",
+          "Nothing conceded and a win to boot; this is the way to travel, thinks {team}.",
+        ],
+      },
+      cierre: {
+        win: [
+          "Back in {home} with the quiet satisfaction of a job well done.",
+          "{team} are home; savour the win, because tomorrow brings the next challenge.",
+          "Journey's end in {home}; nights like this recharge the batteries.",
+          "{team} touch down in {home}, a little closer to their dreams.",
+        ],
+        draw: [
+          "Back in {home} with a point and a list of things to improve.",
+          "{team} are home; not great, not terrible — keep going.",
+          "Back in {home}: the draw is in the past, time to focus on what is coming.",
+          "{team} step off in {home} remembering that the season is a very long one.",
+        ],
+        loss: [
+          "Back in {home}. Time to get back up: the season will not wait.",
+          "{team} come home carrying the defeat, but their heads are already on the next game.",
+          "Journey's end in {home}; the hard nights teach you things too.",
+          "{team} land in {home} with revenge on their minds as soon as possible.",
+        ],
+      },
+    },
+    memoria: {
+      hito_rival: {
+        "5": [
+          "The fifth meeting between {team} and {rival}. They have history now.",
+          "Five clashes, each one different. This rivalry is taking shape.",
+          "{rival} is no stranger any more: five chapters of a blossoming rivalry.",
+          "Fifth date with {rival}. {team} are starting to know this territory by heart.",
+        ],
+        "10": [
+          "Ten meetings between {team} and {rival}. This is a proper rivalry now.",
+          "Double figures: {team} and {rival} write their tenth chapter.",
+          "Ten encounters make history; {team} and {rival} have earned theirs.",
+          "The tenth clash between {team} and {rival}: ten chapters and still counting.",
+        ],
+        "15": [
+          "Fifteen times face to face. {rival} know how {team} think — and vice versa.",
+          "One more chapter with a rival that is now part of {team}'s DNA.",
+          "Fifteen meetings do not happen with just anyone: {rival} are part of the story.",
+          "{team} and {rival} sign their fifteenth chapter. The book keeps growing.",
+        ],
+        "20": [
+          "Twenty meetings. This fixture has its own name in the club's record books.",
+          "{team} vs {rival}: twenty chapters of a rivalry that shows no sign of slowing.",
+          "Two decades of head-to-heads in numbers: this is a genuine classic.",
+          "The twentieth face-off between {team} and {rival}. Long may it continue.",
+        ],
+        "30": [
+          "Thirty meetings. An entire generation of football between {team} and {rival}.",
+          "{team} and {rival}: thirty chapters and a rivalry that is now living history.",
+          "Thirty times. Nobody who knows {team} could fail to know {rival}.",
+          "Thirty encounters: the rivalry with {rival} has become part of {team}'s soul.",
+        ],
+      },
+    },
+  };
+
   D.CRONICA_EN = {
     apertura: {
       win_big: [
