@@ -180,13 +180,17 @@
     const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = fn; a.click();
     UI.toast("Imagen descargada", "ok");
   };
+  // Insignia de fundador (solo si el owner_id está en el set público de fundadores).
+  UI.founderBadge = (ownerId) => FC.cloud.isFounder(ownerId)
+    ? `<span class="founder-badge" title="${FC.t("support.founderBadgeTitle")}">★ ${FC.t("support.founderBadge")}</span>` : "";
   // Visor read-only de una carrera compartida (datos vienen de la nube → escapar todo)
   UI.sharedCardHTML = (row) => {
     const s = (row && row.summary) || {};
     const top = s.topScorer ? U.esc(s.topScorer.name) + " · " + (s.topScorer.goals || 0) + " goles" : "—";
     const trophies = s.titlesList || [];
+    const fb = UI.founderBadge(row && row.owner_id);
     return `<div class="flex gap center mb"><div class="career-badge" style="background:${U.teamColors(s.club||"").bg};color:${U.teamColors(s.club||"").text}">${U.initials(s.club||"?")}</div>
-        <div><b style="font-size:18px">${U.esc(s.club||"Club")}</b><br><small class="faint">${U.esc(s.league||"")}${s.manager?" · "+U.esc(s.manager):""}</small></div></div>
+        <div><b style="font-size:18px">${U.esc(s.club||"Club")}</b>${fb}<br><small class="faint">${U.esc(s.league||"")}${s.manager?" · "+U.esc(s.manager):""}</small></div></div>
       <div class="grid cols-4 keep-2">
         ${statTile("Títulos", s.titles||0, "")}
         ${statTile("Temporadas", s.seasons||0, "")}
@@ -204,6 +208,7 @@
     try {
       const row = await FC.cloud.getShared(code, cfgOverride);
       if (!row) { UI.toast("No se encontró esa carrera compartida", "err"); return; }
+      await FC.cloud.loadFounders(cfgOverride);
       UI.openSharedModal(row, cfgOverride);
     } catch (e) { UI.toast(e.message || "Error al cargar", "err"); }
   };
@@ -254,14 +259,14 @@
     if (!ownerId) return;
     UI.openModal("Perfil del manager", `<div id="pf-body"><p class="faint">Cargando…</p></div>`, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
     let rows = [];
-    try { rows = (await FC.cloud.profileCareers(ownerId, cfg)) || []; }
+    try { rows = (await FC.cloud.profileCareers(ownerId, cfg)) || []; await FC.cloud.loadFounders(cfg); }
     catch (e) { const b = document.getElementById("pf-body"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar el perfil.</p>`; return; }
     const box = document.getElementById("pf-body");
     if (!box) return;
     if (!rows.length) { box.innerHTML = `<p class="faint">Este manager aún no tiene carreras publicadas.</p>`; return; }
     const manager = (rows[0].manager || "").trim();
     const totalTitles = rows.reduce((a, r) => a + (Number(r.titles) || 0), 0);
-    box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || "Manager")}</b><br><small class="faint">${rows.length} carrera(s) · ${totalTitles} título(s) en total</small></div></div>
+    box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || "Manager")}</b>${UI.founderBadge(ownerId)}<br><small class="faint">${rows.length} carrera(s) · ${totalTitles} título(s) en total</small></div></div>
       <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.teamColors(r.club||"").bg};color:${U.teamColors(r.club||"").text}">${U.initials(r.club||"?")}</span><div class="lr-main"><b>${U.esc(r.club || "Club")}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} títulos</small></div></div>`).join("")}</div>`;
     U.hydrateIcons(box);
     box.querySelectorAll("[data-pf]").forEach(el => el.addEventListener("click", () => UI.openSharedModal(rows[+el.dataset.pf], cfg)));
@@ -280,7 +285,7 @@
     const headline = (Number(row.titles) || 0) > 0 ? `${who} presume de <b>${club}</b>` : `${who} empieza su aventura con <b>${club}</b>`;
     return `<div class="list-row" data-feed="${i}" style="cursor:pointer;align-items:flex-start">
       <span class="career-badge" style="background:${U.teamColors(row.club||"").bg};color:${U.teamColors(row.club||"").text}">${U.initials(row.club||"?")}</span>
-      <div class="lr-main"><div>${headline}</div>
+      <div class="lr-main"><div>${headline}${UI.founderBadge(row.owner_id)}</div>
         <small class="faint">${U.esc(row.league || "")}${row.created_at ? " · " + U.fmtDate(row.created_at) : ""}</small>
         ${chips.length ? `<div class="cc-rules" style="margin-top:6px">${chips.join("")}</div>` : ""}
       </div></div>`;
@@ -4334,6 +4339,8 @@
         </div>
         <button class="btn btn-primary btn-sm mt" id="se-displayname-save">${tr("settings.saveDisplayName")}</button>
       </div>
+      <div class="section-title">${tr("support.title")}</div>
+      <div class="card" id="se-support"></div>
       <div class="section-title">${tr("settings.privacyLegalTitle")}</div>
       <div class="card" style="font-size:13px">
         <p class="faint" style="margin-top:0">${tr("settings.disclaimerText")}</p>
@@ -4421,6 +4428,26 @@
       document.querySelectorAll("#se-accents .accent-dot").forEach(x => x.classList.toggle("active", x === d));
       UI.toast(tr("settings.toastAccentUpdated"), "ok");
     }));
+    // apoya el proyecto / hazte fundador (estado fundador se resuelve tras cargar el set público)
+    const renderSupport = () => {
+      const box = document.getElementById("se-support"); if (!box) return;
+      const isFounder = FC.cloud.amFounder();
+      box.innerHTML = isFounder
+        ? `<div class="flex gap center"><span class="founder-badge founder-badge-lg">★ ${tr("support.founderBadge")}</span>
+             <div><b>${tr("support.youAreFounder")}</b><br><small class="faint">${tr("support.youAreFounderDesc")}</small></div></div>`
+        : `<p class="muted" style="margin-top:0">${tr("support.desc")}</p>
+           <ul class="support-perks">
+             <li><span class="ni-icon" data-icon="medal"></span> ${tr("support.perk1")}</li>
+             <li><span class="ni-icon" data-icon="check"></span> ${tr("support.perk2")}</li>
+             <li><span class="ni-icon" data-icon="cloud"></span> ${tr("support.perk3")}</li>
+           </ul>
+           <a class="btn btn-founder" href="${U.esc(D.KOFI_URL)}" target="_blank" rel="noopener noreferrer">☕ ${tr("support.becomeFounder")}</a>
+           <p class="faint" style="font-size:12px;margin:12px 0 0">${tr("support.disclaimer")}</p>`;
+      U.hydrateIcons(box);
+    };
+    renderSupport();
+    // si hay sesión, refrescamos por si el usuario ya es fundador (badge de agradecimiento)
+    if (FC.cloud.isLoggedIn()) FC.cloud.loadFounders().then(renderSupport).catch(() => {});
   };
 
   /* ============================================================
@@ -4612,11 +4639,12 @@
         const btn = $("cl-lb-load"); btn.disabled = true;
         try {
           lbRows = await CL.leaderboard(20);
+          await CL.loadFounders();
           const box = $("cl-lb");
           box.innerHTML = (lbRows && lbRows.length)
             ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>${T("community.lbHead.club")}</th><th>${T("community.lbHead.league")}</th><th class="num">${T("community.lbHead.titles")}</th><th class="num">${T("community.lbHead.bestPts")}</th></tr></thead><tbody>
                 ${lbRows.map((r, i) => `<tr data-lb="${i}" style="cursor:pointer"><td><b>${i + 1}</b></td>
-                  <td><b>${U.esc(r.club || T("community.lbHead.club"))}</b>${r.manager ? `<br><small class="faint">${U.esc(r.manager)}</small>` : ""}</td>
+                  <td><b>${U.esc(r.club || T("community.lbHead.club"))}</b>${UI.founderBadge(r.owner_id)}${r.manager ? `<br><small class="faint">${U.esc(r.manager)}</small>` : ""}</td>
                   <td class="faint">${U.esc(r.league || "")}</td><td class="num">${Number(r.titles) || 0}</td><td class="num">${Number(r.best_points) || 0}</td></tr>`).join("")}
                 </tbody></table></div>`
             : `<p class="faint">${T("community.noCareersPublished")}</p>`;
@@ -4642,7 +4670,7 @@
         if (cloudFeedLoading) return;
         cloudFeedLoading = true;
         const box = $("cl-feed"); if (box && !cloudFeedRows) box.innerHTML = `<p class="faint">${T("community.loadingFeed")}</p>`;
-        try { cloudFeedRows = (await CL.activityFeed(30)) || []; }
+        try { const [feed] = await Promise.all([CL.activityFeed(30), CL.loadFounders()]); cloudFeedRows = feed || []; }
         catch (e) {
           if (e.code === "SUPABASE_PAUSED") { showPausedBanner(); const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">${T("community.feedUnavailable")}</p>`; }
           else if (!cloudFeedRows) { const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">${T("community.feedLoadError")}</p>`; }

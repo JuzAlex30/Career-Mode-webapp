@@ -181,6 +181,21 @@
   // Feed de actividad (lectura pública): lo último publicado por la comunidad, ordenado por fecha.
   C.activityFeed = (limit) => api("/rest/v1/shared_careers?select=share_id,owner_id,club,league,manager,titles,best_points,summary,created_at&order=created_at.desc&limit=" + (parseInt(limit, 10) || 30));
 
+  /* ---------- fundadores (badge de estatus; lectura pública, alta solo por admin) ----------
+     El set se cachea a nivel de módulo y persiste entre re-render. Los renderizadores
+     de tarjetas son síncronos: quien vaya a pintar badges debe await C.loadFounders() antes.
+     Si la tabla no existe (proyecto sin el SQL nuevo) → set vacío, sin badges, sin romper. */
+  let _founders = null; // Set de owner_id; null = aún no cargado
+  C.loadFounders = async (cfgOverride) => {
+    try {
+      const rows = await apiWith(cfgOverride || C.config(), "/rest/v1/founders?select=owner_id", { method: "GET" });
+      _founders = new Set((rows || []).map(r => r.owner_id));
+    } catch (e) { if (!_founders) _founders = new Set(); }
+    return _founders;
+  };
+  C.isFounder = (ownerId) => !!(_founders && ownerId && _founders.has(ownerId));
+  C.amFounder = () => C.isFounder(C.myOwnerId());
+
   /* ---------- perfil público del manager (todas sus carreras publicadas) ---------- */
   C.profileCareers = (ownerId, cfgOverride) => apiWith(cfgOverride || C.config(), "/rest/v1/shared_careers?select=*&owner_id=eq." + encodeURIComponent(String(ownerId || "").trim()) + "&order=titles.desc,best_points.desc", { method: "GET" });
   C.profileLink = (ownerId) => { const cfg = C.config(); const b = btoa(JSON.stringify({ o: ownerId, u: cfg.url, k: cfg.anonKey })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); return location.origin + location.pathname + "#profile=" + b; };
@@ -278,6 +293,16 @@
     "create policy \"comments owner delete\" on shared_comments for delete using (author_id = auth.uid());",
     "create index if not exists shared_comments_share_idx on shared_comments(share_id, created_at);",
     "",
+    "-- 3b) Fundadores (insignia de estatus). Lectura publica; el alta la hace SOLO",
+    "--     el admin desde el dashboard de Supabase (o un webhook de Ko-fi con",
+    "--     service_role): NO hay policy de insert para usuarios, no se autoconceden.",
+    "create table if not exists founders (",
+    "  owner_id uuid primary key references auth.users(id) on delete cascade,",
+    "  since timestamptz not null default now()",
+    ");",
+    "alter table founders enable row level security;",
+    "create policy \"founders public read\" on founders for select using (true);",
+    "",
     "-- 4) Permisos base (GRANT) que PostgREST necesita ADEMÁS de las policies RLS.",
     "--    Sin esto, las tablas públicas dan 'permission denied' a los visitantes",
     "--    sin sesión (ranking, feed, enlaces compartidos y comentarios no se ven).",
@@ -286,6 +311,7 @@
     "grant insert, update, delete on public.shared_careers to authenticated;",
     "grant select on public.shared_comments to anon, authenticated;",
     "grant insert, delete on public.shared_comments to authenticated;",
+    "grant select on public.founders to anon, authenticated;",
     "",
     "-- 5) Anti-spam: limites de frecuencia por usuario (rate limiting en servidor).",
     "create or replace function public.check_comment_rate() returns trigger",

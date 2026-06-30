@@ -953,6 +953,10 @@
     { name:"Hielo", color:"#22d3ee" },
   ];
 
+  // Enlace de "Hazte fundador" (Ko-fi). ← Sustituir por el handle real cuando
+  // la cuenta de Ko-fi esté creada (p.ej. "https://ko-fi.com/tuusuario").
+  D.KOFI_URL = "https://ko-fi.com/boardroomfc";
+
   /* ============================================================
      VIAJES — coordenadas de ciudades por equipo (sedes de las ligas
      seed) y pools narrativos de la "Cabina en directo".

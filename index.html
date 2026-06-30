@@ -804,6 +804,31 @@ body.trip-open { overflow: hidden; }
 .cloud-paused-banner b { font-size: 13.5px; }
 .cloud-paused-banner span { color: var(--text-dim); font-size: 12.5px; }
 
+/* Insignia de fundador + tarjeta "Hazte fundador" (monetización: estatus, no utilidad) */
+.founder-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  margin-left: 7px; padding: 1px 8px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .03em; white-space: nowrap;
+  color: #2a1c00;
+  background: linear-gradient(135deg, #ffd87a, #f5a623);
+  border: 1px solid color-mix(in srgb, #ffc24d 60%, transparent);
+  box-shadow: 0 1px 4px color-mix(in srgb, #f5a623 35%, transparent);
+  vertical-align: middle;
+}
+.founder-badge-lg { font-size: 13px; padding: 4px 12px; margin-left: 0; }
+.support-perks { list-style: none; margin: 12px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.support-perks li { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; line-height: 1.45; color: var(--text); }
+.support-perks .ni-icon { color: var(--accent); flex: none; font-size: 16px; margin-top: 1px; }
+.btn-founder {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: linear-gradient(135deg, #ffd87a, #f5a623);
+  color: #2a1c00; font-weight: 800; border: none; border-radius: 10px;
+  padding: 10px 18px; cursor: pointer; text-decoration: none; font-size: 14px;
+  box-shadow: 0 2px 10px color-mix(in srgb, #f5a623 35%, transparent);
+  transition: transform .12s, box-shadow .12s;
+}
+.btn-founder:hover { transform: translateY(-1px); box-shadow: 0 4px 16px color-mix(in srgb, #f5a623 45%, transparent); }
+
   </style>
 </head>
 <body data-theme="dark">
@@ -1553,6 +1578,17 @@ body.trip-open { overflow: hidden; }
       "community.publicProfile": "Tu <b>perfil público</b> reúne todas tus carreras publicadas en una sola página.",
       "community.viewMyProfile": "Ver mi perfil público",
       "community.copyProfileLink": "Copiar enlace de mi perfil",
+      "support.title": "Apoya el proyecto",
+      "support.desc": "Boardroom es gratis y sin anuncios. Si te gusta, puedes hacerte <b>fundador</b> con una aportación única y simbólica. No desbloquea ninguna función: todo es y será gratis. Lo que recibes es <b>estatus</b>.",
+      "support.becomeFounder": "Hazte fundador",
+      "support.perk1": "Insignia de <b>fundador</b> visible en tu perfil y en la comunidad",
+      "support.perk2": "Voto en el roadmap: ayuda a decidir qué construimos",
+      "support.perk3": "Acceso al Discord de fundadores",
+      "support.disclaimer": "Aportación voluntaria para sostener el hosting. No es una compra de funciones ni da derecho a premios.",
+      "support.youAreFounder": "Eres fundador",
+      "support.youAreFounderDesc": "Gracias por sostener Boardroom. Tu insignia de fundador ya luce en la comunidad.",
+      "support.founderBadge": "Fundador",
+      "support.founderBadgeTitle": "Fundador de Boardroom — apoyó el proyecto desde el principio",
       "community.viewSharedCareer": "Ver carrera compartida",
       "community.careerCode": "Código de carrera",
       "community.careerCodePlaceholder": "p.ej. a1b2c3d4e5",
@@ -2504,6 +2540,17 @@ body.trip-open { overflow: hidden; }
       "community.publicProfile": "Your <b>public profile</b> brings together all your published careers on a single page.",
       "community.viewMyProfile": "View my public profile",
       "community.copyProfileLink": "Copy my profile link",
+      "support.title": "Support the project",
+      "support.desc": "Boardroom is free and ad-free. If you enjoy it, you can become a <b>founder</b> with a single, symbolic contribution. It unlocks no features — everything is and will stay free. What you get is <b>status</b>.",
+      "support.becomeFounder": "Become a founder",
+      "support.perk1": "<b>Founder</b> badge shown on your profile and across the community",
+      "support.perk2": "A vote on the roadmap: help decide what we build next",
+      "support.perk3": "Access to the founders' Discord",
+      "support.disclaimer": "Voluntary contribution to keep the hosting running. It is not a purchase of features and grants no prizes.",
+      "support.youAreFounder": "You're a founder",
+      "support.youAreFounderDesc": "Thanks for keeping Boardroom alive. Your founder badge is already shining across the community.",
+      "support.founderBadge": "Founder",
+      "support.founderBadgeTitle": "Boardroom founder — backed the project from the start",
       "community.viewSharedCareer": "View shared career",
       "community.careerCode": "Career code",
       "community.careerCodePlaceholder": "e.g. a1b2c3d4e5",
@@ -3764,6 +3811,10 @@ body.trip-open { overflow: hidden; }
     { name:"Royal", color:"#b06bff" },
     { name:"Hielo", color:"#22d3ee" },
   ];
+
+  // Enlace de "Hazte fundador" (Ko-fi). ← Sustituir por el handle real cuando
+  // la cuenta de Ko-fi esté creada (p.ej. "https://ko-fi.com/tuusuario").
+  D.KOFI_URL = "https://ko-fi.com/boardroomfc";
 
   /* ============================================================
      VIAJES — coordenadas de ciudades por equipo (sedes de las ligas
@@ -10286,6 +10337,21 @@ body.trip-open { overflow: hidden; }
   // Feed de actividad (lectura pública): lo último publicado por la comunidad, ordenado por fecha.
   C.activityFeed = (limit) => api("/rest/v1/shared_careers?select=share_id,owner_id,club,league,manager,titles,best_points,summary,created_at&order=created_at.desc&limit=" + (parseInt(limit, 10) || 30));
 
+  /* ---------- fundadores (badge de estatus; lectura pública, alta solo por admin) ----------
+     El set se cachea a nivel de módulo y persiste entre re-render. Los renderizadores
+     de tarjetas son síncronos: quien vaya a pintar badges debe await C.loadFounders() antes.
+     Si la tabla no existe (proyecto sin el SQL nuevo) → set vacío, sin badges, sin romper. */
+  let _founders = null; // Set de owner_id; null = aún no cargado
+  C.loadFounders = async (cfgOverride) => {
+    try {
+      const rows = await apiWith(cfgOverride || C.config(), "/rest/v1/founders?select=owner_id", { method: "GET" });
+      _founders = new Set((rows || []).map(r => r.owner_id));
+    } catch (e) { if (!_founders) _founders = new Set(); }
+    return _founders;
+  };
+  C.isFounder = (ownerId) => !!(_founders && ownerId && _founders.has(ownerId));
+  C.amFounder = () => C.isFounder(C.myOwnerId());
+
   /* ---------- perfil público del manager (todas sus carreras publicadas) ---------- */
   C.profileCareers = (ownerId, cfgOverride) => apiWith(cfgOverride || C.config(), "/rest/v1/shared_careers?select=*&owner_id=eq." + encodeURIComponent(String(ownerId || "").trim()) + "&order=titles.desc,best_points.desc", { method: "GET" });
   C.profileLink = (ownerId) => { const cfg = C.config(); const b = btoa(JSON.stringify({ o: ownerId, u: cfg.url, k: cfg.anonKey })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); return location.origin + location.pathname + "#profile=" + b; };
@@ -10383,6 +10449,16 @@ body.trip-open { overflow: hidden; }
     "create policy \"comments owner delete\" on shared_comments for delete using (author_id = auth.uid());",
     "create index if not exists shared_comments_share_idx on shared_comments(share_id, created_at);",
     "",
+    "-- 3b) Fundadores (insignia de estatus). Lectura publica; el alta la hace SOLO",
+    "--     el admin desde el dashboard de Supabase (o un webhook de Ko-fi con",
+    "--     service_role): NO hay policy de insert para usuarios, no se autoconceden.",
+    "create table if not exists founders (",
+    "  owner_id uuid primary key references auth.users(id) on delete cascade,",
+    "  since timestamptz not null default now()",
+    ");",
+    "alter table founders enable row level security;",
+    "create policy \"founders public read\" on founders for select using (true);",
+    "",
     "-- 4) Permisos base (GRANT) que PostgREST necesita ADEMÁS de las policies RLS.",
     "--    Sin esto, las tablas públicas dan 'permission denied' a los visitantes",
     "--    sin sesión (ranking, feed, enlaces compartidos y comentarios no se ven).",
@@ -10391,6 +10467,7 @@ body.trip-open { overflow: hidden; }
     "grant insert, update, delete on public.shared_careers to authenticated;",
     "grant select on public.shared_comments to anon, authenticated;",
     "grant insert, delete on public.shared_comments to authenticated;",
+    "grant select on public.founders to anon, authenticated;",
     "",
     "-- 5) Anti-spam: limites de frecuencia por usuario (rate limiting en servidor).",
     "create or replace function public.check_comment_rate() returns trigger",
@@ -10611,13 +10688,17 @@ body.trip-open { overflow: hidden; }
     const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = fn; a.click();
     UI.toast("Imagen descargada", "ok");
   };
+  // Insignia de fundador (solo si el owner_id está en el set público de fundadores).
+  UI.founderBadge = (ownerId) => FC.cloud.isFounder(ownerId)
+    ? `<span class="founder-badge" title="${FC.t("support.founderBadgeTitle")}">★ ${FC.t("support.founderBadge")}</span>` : "";
   // Visor read-only de una carrera compartida (datos vienen de la nube → escapar todo)
   UI.sharedCardHTML = (row) => {
     const s = (row && row.summary) || {};
     const top = s.topScorer ? U.esc(s.topScorer.name) + " · " + (s.topScorer.goals || 0) + " goles" : "—";
     const trophies = s.titlesList || [];
+    const fb = UI.founderBadge(row && row.owner_id);
     return `<div class="flex gap center mb"><div class="career-badge" style="background:${U.teamColors(s.club||"").bg};color:${U.teamColors(s.club||"").text}">${U.initials(s.club||"?")}</div>
-        <div><b style="font-size:18px">${U.esc(s.club||"Club")}</b><br><small class="faint">${U.esc(s.league||"")}${s.manager?" · "+U.esc(s.manager):""}</small></div></div>
+        <div><b style="font-size:18px">${U.esc(s.club||"Club")}</b>${fb}<br><small class="faint">${U.esc(s.league||"")}${s.manager?" · "+U.esc(s.manager):""}</small></div></div>
       <div class="grid cols-4 keep-2">
         ${statTile("Títulos", s.titles||0, "")}
         ${statTile("Temporadas", s.seasons||0, "")}
@@ -10635,6 +10716,7 @@ body.trip-open { overflow: hidden; }
     try {
       const row = await FC.cloud.getShared(code, cfgOverride);
       if (!row) { UI.toast("No se encontró esa carrera compartida", "err"); return; }
+      await FC.cloud.loadFounders(cfgOverride);
       UI.openSharedModal(row, cfgOverride);
     } catch (e) { UI.toast(e.message || "Error al cargar", "err"); }
   };
@@ -10685,14 +10767,14 @@ body.trip-open { overflow: hidden; }
     if (!ownerId) return;
     UI.openModal("Perfil del manager", `<div id="pf-body"><p class="faint">Cargando…</p></div>`, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
     let rows = [];
-    try { rows = (await FC.cloud.profileCareers(ownerId, cfg)) || []; }
+    try { rows = (await FC.cloud.profileCareers(ownerId, cfg)) || []; await FC.cloud.loadFounders(cfg); }
     catch (e) { const b = document.getElementById("pf-body"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar el perfil.</p>`; return; }
     const box = document.getElementById("pf-body");
     if (!box) return;
     if (!rows.length) { box.innerHTML = `<p class="faint">Este manager aún no tiene carreras publicadas.</p>`; return; }
     const manager = (rows[0].manager || "").trim();
     const totalTitles = rows.reduce((a, r) => a + (Number(r.titles) || 0), 0);
-    box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || "Manager")}</b><br><small class="faint">${rows.length} carrera(s) · ${totalTitles} título(s) en total</small></div></div>
+    box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || "Manager")}</b>${UI.founderBadge(ownerId)}<br><small class="faint">${rows.length} carrera(s) · ${totalTitles} título(s) en total</small></div></div>
       <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.teamColors(r.club||"").bg};color:${U.teamColors(r.club||"").text}">${U.initials(r.club||"?")}</span><div class="lr-main"><b>${U.esc(r.club || "Club")}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} títulos</small></div></div>`).join("")}</div>`;
     U.hydrateIcons(box);
     box.querySelectorAll("[data-pf]").forEach(el => el.addEventListener("click", () => UI.openSharedModal(rows[+el.dataset.pf], cfg)));
@@ -10711,7 +10793,7 @@ body.trip-open { overflow: hidden; }
     const headline = (Number(row.titles) || 0) > 0 ? `${who} presume de <b>${club}</b>` : `${who} empieza su aventura con <b>${club}</b>`;
     return `<div class="list-row" data-feed="${i}" style="cursor:pointer;align-items:flex-start">
       <span class="career-badge" style="background:${U.teamColors(row.club||"").bg};color:${U.teamColors(row.club||"").text}">${U.initials(row.club||"?")}</span>
-      <div class="lr-main"><div>${headline}</div>
+      <div class="lr-main"><div>${headline}${UI.founderBadge(row.owner_id)}</div>
         <small class="faint">${U.esc(row.league || "")}${row.created_at ? " · " + U.fmtDate(row.created_at) : ""}</small>
         ${chips.length ? `<div class="cc-rules" style="margin-top:6px">${chips.join("")}</div>` : ""}
       </div></div>`;
@@ -14765,6 +14847,8 @@ body.trip-open { overflow: hidden; }
         </div>
         <button class="btn btn-primary btn-sm mt" id="se-displayname-save">${tr("settings.saveDisplayName")}</button>
       </div>
+      <div class="section-title">${tr("support.title")}</div>
+      <div class="card" id="se-support"></div>
       <div class="section-title">${tr("settings.privacyLegalTitle")}</div>
       <div class="card" style="font-size:13px">
         <p class="faint" style="margin-top:0">${tr("settings.disclaimerText")}</p>
@@ -14852,6 +14936,26 @@ body.trip-open { overflow: hidden; }
       document.querySelectorAll("#se-accents .accent-dot").forEach(x => x.classList.toggle("active", x === d));
       UI.toast(tr("settings.toastAccentUpdated"), "ok");
     }));
+    // apoya el proyecto / hazte fundador (estado fundador se resuelve tras cargar el set público)
+    const renderSupport = () => {
+      const box = document.getElementById("se-support"); if (!box) return;
+      const isFounder = FC.cloud.amFounder();
+      box.innerHTML = isFounder
+        ? `<div class="flex gap center"><span class="founder-badge founder-badge-lg">★ ${tr("support.founderBadge")}</span>
+             <div><b>${tr("support.youAreFounder")}</b><br><small class="faint">${tr("support.youAreFounderDesc")}</small></div></div>`
+        : `<p class="muted" style="margin-top:0">${tr("support.desc")}</p>
+           <ul class="support-perks">
+             <li><span class="ni-icon" data-icon="medal"></span> ${tr("support.perk1")}</li>
+             <li><span class="ni-icon" data-icon="check"></span> ${tr("support.perk2")}</li>
+             <li><span class="ni-icon" data-icon="cloud"></span> ${tr("support.perk3")}</li>
+           </ul>
+           <a class="btn btn-founder" href="${U.esc(D.KOFI_URL)}" target="_blank" rel="noopener noreferrer">☕ ${tr("support.becomeFounder")}</a>
+           <p class="faint" style="font-size:12px;margin:12px 0 0">${tr("support.disclaimer")}</p>`;
+      U.hydrateIcons(box);
+    };
+    renderSupport();
+    // si hay sesión, refrescamos por si el usuario ya es fundador (badge de agradecimiento)
+    if (FC.cloud.isLoggedIn()) FC.cloud.loadFounders().then(renderSupport).catch(() => {});
   };
 
   /* ============================================================
@@ -15043,11 +15147,12 @@ body.trip-open { overflow: hidden; }
         const btn = $("cl-lb-load"); btn.disabled = true;
         try {
           lbRows = await CL.leaderboard(20);
+          await CL.loadFounders();
           const box = $("cl-lb");
           box.innerHTML = (lbRows && lbRows.length)
             ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>${T("community.lbHead.club")}</th><th>${T("community.lbHead.league")}</th><th class="num">${T("community.lbHead.titles")}</th><th class="num">${T("community.lbHead.bestPts")}</th></tr></thead><tbody>
                 ${lbRows.map((r, i) => `<tr data-lb="${i}" style="cursor:pointer"><td><b>${i + 1}</b></td>
-                  <td><b>${U.esc(r.club || T("community.lbHead.club"))}</b>${r.manager ? `<br><small class="faint">${U.esc(r.manager)}</small>` : ""}</td>
+                  <td><b>${U.esc(r.club || T("community.lbHead.club"))}</b>${UI.founderBadge(r.owner_id)}${r.manager ? `<br><small class="faint">${U.esc(r.manager)}</small>` : ""}</td>
                   <td class="faint">${U.esc(r.league || "")}</td><td class="num">${Number(r.titles) || 0}</td><td class="num">${Number(r.best_points) || 0}</td></tr>`).join("")}
                 </tbody></table></div>`
             : `<p class="faint">${T("community.noCareersPublished")}</p>`;
@@ -15073,7 +15178,7 @@ body.trip-open { overflow: hidden; }
         if (cloudFeedLoading) return;
         cloudFeedLoading = true;
         const box = $("cl-feed"); if (box && !cloudFeedRows) box.innerHTML = `<p class="faint">${T("community.loadingFeed")}</p>`;
-        try { cloudFeedRows = (await CL.activityFeed(30)) || []; }
+        try { const [feed] = await Promise.all([CL.activityFeed(30), CL.loadFounders()]); cloudFeedRows = feed || []; }
         catch (e) {
           if (e.code === "SUPABASE_PAUSED") { showPausedBanner(); const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">${T("community.feedUnavailable")}</p>`; }
           else if (!cloudFeedRows) { const b = $("cl-feed"); if (b) b.innerHTML = `<p class="faint">${T("community.feedLoadError")}</p>`; }
