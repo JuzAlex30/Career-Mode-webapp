@@ -1,4 +1,4 @@
-/* Servidor estático mínimo, sin dependencias.
+﻿/* Servidor estático mínimo, sin dependencias.
    Uso: node server.js   (luego abre http://localhost:4321) */
 const http = require("http");
 const fs = require("fs");
@@ -30,4 +30,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream" });
     res.end(data);
   });
-}).listen(PORT, () => console.log(`Carrera FC en http://localhost:${PORT}`));
+}).listen(PORT, () => console.log(`Boardhub en http://localhost:${PORT}`));

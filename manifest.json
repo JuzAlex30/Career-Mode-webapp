@@ -1,6 +1,6 @@
-{
-  "name": "Boardroom",
-  "short_name": "Boardroom",
+﻿{
+  "name": "Boardhub",
+  "short_name": "Boardhub",
   "description": "El compañero definitivo del Modo Carrera de EA Sports FC: tracking, clasificaciones, retos y la historia de tu club.",
   "start_url": "./",
   "scope": "./",

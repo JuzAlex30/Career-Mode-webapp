@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    views.js — UI y vistas. Expone FC.ui y FC.views
    ============================================================ */
 (function () {
@@ -71,10 +71,10 @@
     const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
     const body = `
       <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">Última actualización: junio de 2026</p>
-      ${h("Qué es Boardroom")}
-      ${p("Boardroom es una aplicación web <b>gratuita y de fans</b>, companion del Modo Carrera de EA Sports FC. Funciona en tu navegador y guarda tus datos en este dispositivo; la nube y la comunidad son <b>opcionales</b>.")}
+      ${h("Qué es Boardhub")}
+      ${p("Boardhub es una aplicación web <b>gratuita y de fans</b>, companion del Modo Carrera de EA Sports FC. Funciona en tu navegador y guarda tus datos en este dispositivo; la nube y la comunidad son <b>opcionales</b>.")}
       ${h("Aviso legal — proyecto no oficial")}
-      ${p("Boardroom es un proyecto <b>no oficial</b> sin afiliación, patrocinio ni licencia de Electronic Arts Inc., EA Sports, EA Sports FC, la FIFA, ni de los clubes, ligas, competiciones o jugadores mencionados. Todas las marcas, nombres y derechos pertenecen a sus respectivos propietarios y se usan solo con fines descriptivos para que registres tu propia carrera.")}
+      ${p("Boardhub es un proyecto <b>no oficial</b> sin afiliación, patrocinio ni licencia de Electronic Arts Inc., EA Sports, EA Sports FC, la FIFA, ni de los clubes, ligas, competiciones o jugadores mencionados. Todas las marcas, nombres y derechos pertenecen a sus respectivos propietarios y se usan solo con fines descriptivos para que registres tu propia carrera.")}
       ${h("Qué datos tratamos y con qué fin")}
       ${p("• <b>Tus carreras</b> (partidos, plantilla, etc.) se guardan en <b>tu navegador</b> (localStorage). No salen de tu dispositivo salvo que tú decidas subirlas a la nube.")}
       ${p("• <b>Email</b>: solo si creas una cuenta. Se usa para enviarte un <b>código de acceso de un solo uso</b> (no usamos contraseñas). Base legal: tu consentimiento.")}
@@ -100,9 +100,9 @@
     const body = `
       <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">Última actualización: junio de 2026</p>
       ${h("1. Aceptación")}
-      ${p("Al usar Boardroom aceptas estos términos. Si no estás de acuerdo, no uses la aplicación. El uso de las funciones de <b>cuenta</b> y <b>comunidad</b> requiere además aceptar estos términos y la Política de privacidad.")}
-      ${h("2. Qué es Boardroom")}
-      ${p("Boardroom es una herramienta <b>gratuita y de fans</b> para registrar tu Modo Carrera. Es un proyecto <b>no oficial</b>, sin afiliación ni licencia de Electronic Arts, EA Sports, EA Sports FC, la FIFA ni de los clubes, ligas o jugadores mencionados. El «mercado» y las cuotas son una <b>simulación sin dinero real</b> con fines de entretenimiento.")}
+      ${p("Al usar Boardhub aceptas estos términos. Si no estás de acuerdo, no uses la aplicación. El uso de las funciones de <b>cuenta</b> y <b>comunidad</b> requiere además aceptar estos términos y la Política de privacidad.")}
+      ${h("2. Qué es Boardhub")}
+      ${p("Boardhub es una herramienta <b>gratuita y de fans</b> para registrar tu Modo Carrera. Es un proyecto <b>no oficial</b>, sin afiliación ni licencia de Electronic Arts, EA Sports, EA Sports FC, la FIFA ni de los clubes, ligas o jugadores mencionados. El «mercado» y las cuotas son una <b>simulación sin dinero real</b> con fines de entretenimiento.")}
       ${h("3. Uso aceptable")}
       ${p("Te comprometes a <b>no</b>: publicar contenido ilegal, ofensivo, difamatorio, que incite al odio o vulnere derechos de terceros; suplantar a otras personas; enviar spam o publicidad; intentar vulnerar la seguridad del servicio o de otros usuarios; ni usar la app de forma que la dañe o interrumpa.")}
       ${h("4. Tu contenido")}
@@ -112,9 +112,9 @@
       ${h("6. Disponibilidad del servicio")}
       ${p("El servicio se ofrece «<b>tal cual</b>» y «según disponibilidad». La nube y la comunidad funcionan sobre infraestructura gratuita y <b>pueden pausarse, fallar o discontinuarse</b> en cualquier momento. Tus datos guardados en este dispositivo no dependen de la nube y siguen siendo tuyos (puedes exportarlos desde Ajustes).")}
       ${h("7. Limitación de responsabilidad")}
-      ${p("En la medida que permita la ley, Boardroom y sus responsables <b>no se hacen responsables</b> de daños derivados del uso o de la imposibilidad de uso, ni de la pérdida de datos, ni del contenido publicado por otros usuarios. No ofrecemos ninguna garantía sobre la exactitud de cuotas, estadísticas o predicciones simuladas.")}
+      ${p("En la medida que permita la ley, Boardhub y sus responsables <b>no se hacen responsables</b> de daños derivados del uso o de la imposibilidad de uso, ni de la pérdida de datos, ni del contenido publicado por otros usuarios. No ofrecemos ninguna garantía sobre la exactitud de cuotas, estadísticas o predicciones simuladas.")}
       ${h("8. Propiedad intelectual")}
-      ${p("Las marcas, nombres de clubes, ligas, competiciones y jugadores pertenecen a sus respectivos titulares y se usan solo con fines descriptivos. Boardroom no reclama ningún derecho sobre ellos.")}
+      ${p("Las marcas, nombres de clubes, ligas, competiciones y jugadores pertenecen a sus respectivos titulares y se usan solo con fines descriptivos. Boardhub no reclama ningún derecho sobre ellos.")}
       ${h("9. Cambios")}
       ${p("Podemos actualizar estos términos. Los cambios relevantes se reflejarán en esta página con su fecha. El uso continuado tras un cambio implica su aceptación.")}
       ${h("10. Ley aplicable")}
@@ -168,14 +168,14 @@
     ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = 2; rr(PAD / 2, PAD / 2, W - PAD, H - PAD, 40); ctx.stroke();
     const maxW = W - PAD * 2;
     let y = PAD + 36;
-    ctx.fillStyle = ACC; ctx.font = font(30, "bold"); ctx.fillText(String(spec.brand || "Boardroom").toUpperCase(), PAD, y); y += 80;
+    ctx.fillStyle = ACC; ctx.font = font(30, "bold"); ctx.fillText(String(spec.brand || "Boardhub").toUpperCase(), PAD, y); y += 80;
     ctx.fillStyle = TEXT; wrap(spec.title, maxW, 96, "800").slice(0, 3).forEach(l => { ctx.font = font(96, "800"); ctx.fillText(l, PAD, y); y += 108; });
     if (spec.subtitle) { ctx.fillStyle = DIM; ctx.font = font(42); ctx.fillText(String(spec.subtitle), PAD, y + 4); y += 72; }
     y += 16; ctx.strokeStyle = ACC; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(PAD + 130, y); ctx.stroke(); y += 58;
     if (spec.difficulty) { ctx.fillStyle = DIM; ctx.font = font(28, "bold"); ctx.fillText("DIFICULTAD", PAD, y); ctx.fillStyle = ACC; ctx.font = font(50); ctx.fillText("★".repeat(spec.difficulty) + "☆".repeat(Math.max(0, 5 - spec.difficulty)), PAD + 240, y + 8); y += 80; }
     ctx.fillStyle = TEXT; (spec.lines || []).forEach(line => wrap(line, maxW, 42).forEach(l => { if (y > H - PAD - 110) return; ctx.font = font(42); ctx.fillText(l, PAD, y); y += 58; }));
     if ((spec.chips || []).length) { y += 18; let cx = PAD, cy = y; ctx.font = font(32, "600"); spec.chips.forEach(ch => { const cw = ctx.measureText(ch).width + 48; if (cx + cw > W - PAD) { cx = PAD; cy += 70; } ctx.fillStyle = "rgba(0,225,160,0.14)"; rr(cx, cy - 40, cw, 56, 28); ctx.fill(); ctx.fillStyle = ACC; ctx.font = font(32, "600"); ctx.fillText(ch, cx + 24, cy); cx += cw + 16; }); }
-    ctx.fillStyle = DIM; ctx.font = font(30); ctx.fillText(String(spec.footer || "Mi Modo Carrera · Boardroom"), PAD, H - PAD + 8);
+    ctx.fillStyle = DIM; ctx.font = font(30); ctx.fillText(String(spec.footer || "Mi Modo Carrera · Boardhub"), PAD, H - PAD + 8);
     const fn = (String(spec.filename || "carrera-fc").replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "carrera-fc") + ".png";
     const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = fn; a.click();
     UI.toast("Imagen descargada", "ok");
@@ -201,7 +201,7 @@
       ${trophies.length ? `<div class="cc-rules">${trophies.map(t=>`<span class="chip gold">🏆 ${U.esc(t.competition||"")}${t.season?" "+U.esc(t.season):""}</span>`).join("")}</div>` : `<p class="faint">Sin títulos todavía.</p>`}
       <div class="section-title">Estrella del club</div>
       <p style="margin:0">⚽ Máximo goleador: <b>${top}</b></p>
-      <p class="faint" style="font-size:12px;margin-top:16px">Carrera compartida desde Boardroom · solo lectura.</p>`;
+      <p class="faint" style="font-size:12px;margin-top:16px">Carrera compartida desde Boardhub · solo lectura.</p>`;
   };
   UI.openSharedByCode = async (code, cfgOverride) => {
     if (!code) { UI.toast("Indica un código", "err"); return; }
@@ -357,7 +357,7 @@
     const feat = (icon, title, desc) => `<div class="wl-feat"><span class="wl-feat-ic"><span class="ni-icon" data-icon="${icon}"></span></span><div><b>${title}</b><span>${desc}</span></div></div>`;
     const brand = `<div class="wl-brand">
       ${langSwitch}
-      <div class="wl-logo"><img src="logo.png" style="width:50px;height:50px;border-radius:14px;flex:none" alt="Boardroom"><div><div class="wl-name">Boardroom</div><div class="wl-tag">${t("ob.tagline")}</div></div></div>
+      <div class="wl-logo"><img src="logo.png" style="width:50px;height:50px;border-radius:14px;flex:none" alt="Boardhub"><div><div class="wl-name">Boardhub</div><div class="wl-tag">${t("ob.tagline")}</div></div></div>
       <div class="wl-feats">
         ${feat("coin", t("feat.market.t"), t("feat.market.d"))}
         ${feat("news", t("feat.press.t"), t("feat.press.d"))}
@@ -1081,7 +1081,7 @@
     ctx.beginPath(); ctx.moveTo(40, H-55); ctx.lineTo(W-40, H-55); ctx.stroke();
     ctx.fillStyle = "#00e1a0"; ctx.font = `bold 20px ${FONT}`;
     ctx.textAlign = "right"; ctx.textBaseline = "bottom";
-    ctx.fillText("Boardroom", W-40, H-16);
+    ctx.fillText("Boardhub", W-40, H-16);
     ctx.fillStyle = "#62748c"; ctx.font = `17px ${FONT}`;
     ctx.textAlign = "left";
     ctx.fillText(FC.t("card.tagline"), 40, H-16);
