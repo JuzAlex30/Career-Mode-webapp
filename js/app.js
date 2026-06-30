@@ -192,5 +192,14 @@
   }
 
   FC.app = App;
+
+  // Auto-recarga cuando un nuevo SW toma el control (nuevo deploy detectado).
+  // Solo se registra si ya había un SW previo (evita bucle en primera visita).
+  if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      window.location.reload();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => { wire(); App.boot(); });
 })();

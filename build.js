@@ -106,3 +106,10 @@ ${safeJs}
 
 fs.writeFileSync(path.join(here, "index.html"), out, "utf8");
 console.log("✓ index.html autocontenido generado (" + (out.length / 1024).toFixed(0) + " KB)");
+
+// Sella sw.js con el timestamp del build para que el navegador detecte el nuevo SW en cada deploy.
+const swPath = path.join(here, "sw.js");
+const swSrc = fs.readFileSync(swPath, "utf8");
+const swOut = swSrc.replace(/const CACHE_KEY = "[^"]*"/, 'const CACHE_KEY = "boardhub-v' + Date.now() + '"');
+fs.writeFileSync(swPath, swOut, "utf8");
+console.log("✓ sw.js cache key actualizado");
