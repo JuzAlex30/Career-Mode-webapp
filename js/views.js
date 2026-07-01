@@ -773,6 +773,99 @@
     });
   };
 
+  /* ============================================================
+     EQUIPOS DE LA LIGA / ASCENSO-DESCENSO
+     El Modo Carrera real rota ~3 equipos por temporada (suben/bajan)
+     y tu propio club puede ascender o descender. `season.teams` era
+     inmutable tras crear la carrera; estas dos utilidades lo hacen
+     editable: una para la temporada en curso y otra al avanzar de
+     temporada (eligiendo división). `S.addSeason(c, data)` ya acepta
+     {leagueId, leagueName, teams}.
+     ============================================================ */
+  // Parsea un textarea de equipos (uno por línea o por coma), sin vacíos ni duplicados.
+  function parseTeamLines(text) {
+    const raw = String(text || "").split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    const seen = {}, out = [];
+    raw.forEach(n => { const k = n.toLowerCase(); if (!seen[k]) { seen[k] = 1; out.push(n); } });
+    return out;
+  }
+  // Campo de textarea reutilizable con la lista de equipos.
+  function teamsFieldHtml(teams) {
+    return '<div class="field"><label>' + U.esc(FC.t("season.teamsLabel")) + '</label>' +
+      '<textarea id="teamsEditorTa" rows="9" style="width:100%;font-family:inherit;line-height:1.55;resize:vertical">' +
+      U.esc((teams || []).join("\n")) + '</textarea>' +
+      '<p class="muted" style="font-size:12px;margin:6px 0 0">' + U.esc(FC.t("season.teamsHint")) + '</p></div>';
+  }
+  // Normaliza la lista y garantiza que el club del usuario está presente.
+  function finalizeTeams(c, text) {
+    let teams = parseTeamLines(text);
+    if (teams.length < 2) return null;
+    if (c.clubName && !teams.some(x => x.toLowerCase() === c.clubName.toLowerCase())) teams.unshift(c.clubName);
+    return teams;
+  }
+
+  // Editar los equipos de la temporada EN CURSO (sin avanzar de año).
+  UI.openEditTeamsModal = function (c) {
+    const t = FC.t;
+    const season = S.currentSeason(c);
+    const foot = '<button class="btn btn-ghost" data-close>' + U.esc(t("common.cancel")) + '</button>' +
+      '<button class="btn btn-primary" id="et-save">' + U.esc(t("common.save")) + '</button>';
+    const m = UI.openModal(t("season.editTeamsTitle", { label: season.label }), teamsFieldHtml(season.teams || []), foot, { lg: true });
+    m.querySelector("#et-save").addEventListener("click", () => {
+      const teams = finalizeTeams(c, m.querySelector("#teamsEditorTa").value);
+      if (!teams) { UI.toast(t("season.teamsEmpty"), "err"); return; }
+      season.teams = teams;
+      S.emit();
+      UI.closeModal();
+      UI.toast(t("season.teamsUpdated"), "ok");
+    });
+  };
+
+  // Avanzar de temporada eligiendo división (ascenso/descenso) y equipos.
+  UI.openNewSeasonModal = function (c) {
+    const t = FC.t;
+    const prev = S.currentSeason(c);
+    const y = (prev ? prev.startYear + 1 : new Date().getFullYear());
+    const nextLabel = y + "/" + String(y + 1).slice(-2);
+    const finishAdvance = (data) => {
+      S.addSeason(c, data);
+      UI.closeModal();
+      UI.toast(t("season.newSeasonStarted"), "ok");
+      FC.router.go("dashboard");
+    };
+    // Selecciones nacionales: no hay ascensos/descensos → avanzar directo.
+    if (c.isNational) { finishAdvance(); return; }
+
+    const catalogHas = D.LEAGUES.some(l => l.id === (prev && prev.leagueId));
+    const keepOpt = catalogHas ? "" :
+      '<option value="__keep__" selected>' + U.esc(t("season.keepCurrentLeague", { name: (prev && prev.leagueName) || "—" })) + '</option>';
+    const body =
+      '<div class="field"><label>' + U.esc(t("season.divisionLabel")) + '</label>' +
+        '<select id="ns-league">' + keepOpt + leagueOptions(catalogHas ? prev.leagueId : "__none__") + '</select>' +
+        '<p class="muted" style="font-size:12px;margin:6px 0 0">' + U.esc(t("season.divisionHint")) + '</p></div>' +
+      '<button type="button" class="btn btn-ghost btn-sm" id="ns-load" style="margin:0 0 12px">' + U.esc(t("season.loadLeagueTeams")) + '</button>' +
+      teamsFieldHtml((prev && prev.teams) || []);
+    const foot = '<button class="btn btn-ghost" data-close>' + U.esc(t("common.cancel")) + '</button>' +
+      '<button class="btn btn-primary" id="ns-confirm"><span class="ni-icon" data-icon="growth"></span> ' + U.esc(t("season.confirmNewSeason")) + '</button>';
+    const m = UI.openModal(t("season.newSeasonTitle", { label: nextLabel }), body, foot, { lg: true });
+    U.hydrateIcons(m);
+
+    // Rellena el textarea con el catálogo de la liga elegida (para cambios de división).
+    m.querySelector("#ns-load").addEventListener("click", () => {
+      const league = D.LEAGUES.find(l => l.id === m.querySelector("#ns-league").value);
+      if (!league) return; // "__keep__" (liga custom): mantener lo que haya
+      m.querySelector("#teamsEditorTa").value = league.teams.join("\n");
+    });
+    m.querySelector("#ns-confirm").addEventListener("click", () => {
+      const league = D.LEAGUES.find(l => l.id === m.querySelector("#ns-league").value);
+      const leagueId = league ? league.id : (prev && prev.leagueId);
+      const leagueName = league ? league.name : (prev && prev.leagueName);
+      const teams = finalizeTeams(c, m.querySelector("#teamsEditorTa").value);
+      if (!teams) { UI.toast(t("season.teamsEmpty"), "err"); return; }
+      finishAdvance({ leagueId, leagueName, teams });
+    });
+  };
+
   UI.openMatchModal = function (c, existing, opts) {
     opts = opts || {};
     const season = S.currentSeason(c);
@@ -2121,7 +2214,7 @@
     UI.openModal(T("season.reportTitle", { label: r.season.label }), body, foot, { lg: true });
     if (opts.canAdvance) {
       const adv = document.getElementById("sr-advance");
-      if (adv) adv.addEventListener("click", () => { S.addSeason(c); UI.closeModal(); UI.toast(T("season.newSeasonStarted"), "ok"); FC.router.go("dashboard"); });
+      if (adv) adv.addEventListener("click", () => { UI.openNewSeasonModal(c); });
     }
   };
 
@@ -2139,7 +2232,7 @@
     const n = table.length;
     UI.mount(`
       <div class="page-head"><div><h1>${T("stand.title")}</h1><div class="sub">${U.esc(season.leagueName||c.leagueName)} · ${U.esc(season.label)}</div></div>
-        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost btn-sm" id="st-fill"><span class="ni-icon" data-icon="plus"></span> ${T("stand.logOtherResult")}</button></div>
+        <div class="flex gap center wrap">${seasonSelect(c)}<button class="btn btn-ghost btn-sm" id="st-editteams"><span class="ni-icon" data-icon="shield"></span> ${T("stand.editTeams")}</button><button class="btn btn-ghost btn-sm" id="st-fill"><span class="ni-icon" data-icon="plus"></span> ${T("stand.logOtherResult")}</button></div>
       </div>
       <div class="card tight">
         <div class="table-wrap"><table class="tbl"><thead><tr>
@@ -2164,6 +2257,7 @@
       <div class="card" id="bracket-card"></div>
     `);
     document.getElementById("st-fill").addEventListener("click", () => UI.openMatchdayModal(c));
+    document.getElementById("st-editteams").addEventListener("click", () => UI.openEditTeamsModal(c));
     renderBracket(c);
   };
   function rankCard(title, rows, key, emoji) {
@@ -4514,7 +4608,7 @@
       const cur = S.currentSeason(c);
       // Si la temporada en curso tiene partidos, la junta emite su informe antes de avanzar.
       if (cur && S.userMatches(c, cur.id).length) UI.openSeasonReview(c, cur.id, { canAdvance: true });
-      else UI.confirm(tr("settings.confirmAdvanceSeasonText"), () => { S.addSeason(c); UI.toast(tr("season.newSeasonStarted"), "ok"); FC.router.go("dashboard"); });
+      else UI.openNewSeasonModal(c);
     });
     document.getElementById("se-delete").addEventListener("click", () => UI.confirm(tr("settings.confirmDeleteCareerText"), () => {
       S.deleteCareer(c.id); FC.app.boot();
