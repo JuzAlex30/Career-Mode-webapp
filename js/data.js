@@ -1519,7 +1519,7 @@
 
   /* ============================================================
      PLANTILLAS DE REFERENCIA — LaLiga y Serie A
-     Base: plantillas y ratings de referencia 2024/25 (editables por el usuario).
+     Base: plantillas y ratings de referencia orientativos (~2024/25, editables por el usuario).
      { name, pos, age, ovr, nat }
      ============================================================ */
   D.SQUADS = {

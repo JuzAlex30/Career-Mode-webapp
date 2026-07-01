@@ -1281,6 +1281,7 @@ body.tour-on { overflow: hidden; }
       "rival.biggestWin": "Mayor victoria",
       "rival.biggestLoss": "Mayor derrota",
       "rival.tacticalAnalysis": "Análisis táctico",
+      "rival.sampleCaveat": "Basado en tus {n} enfrentamientos con este rival: refleja tu historial cara a cara, no un rasgo absoluto de su juego.",
       "rival.needMore": "Necesitas más enfrentamientos para un análisis táctico detallado.",
       "rival.homeVsAway": "Local vs visitante",
       "rival.atHome": "En casa",
@@ -2295,6 +2296,7 @@ body.tour-on { overflow: hidden; }
       "rival.biggestWin": "Biggest win",
       "rival.biggestLoss": "Biggest loss",
       "rival.tacticalAnalysis": "Tactical analysis",
+      "rival.sampleCaveat": "Based on your {n} meetings with this rival: it reflects your head-to-head record, not an absolute trait of their play.",
       "rival.needMore": "You need more meetings for a detailed tactical analysis.",
       "rival.homeVsAway": "Home vs away",
       "rival.atHome": "Home",
@@ -4558,7 +4560,7 @@ body.tour-on { overflow: hidden; }
 
   /* ============================================================
      PLANTILLAS DE REFERENCIA — LaLiga y Serie A
-     Base: plantillas y ratings de referencia 2024/25 (editables por el usuario).
+     Base: plantillas y ratings de referencia orientativos (~2024/25, editables por el usuario).
      { name, pos, age, ovr, nat }
      ============================================================ */
   D.SQUADS = {
@@ -6106,7 +6108,7 @@ body.tour-on { overflow: hidden; }
 /* ───────── */
 
 /* ============================================================
-   rosters.js — plantillas de referencia (temporada 2024/25)
+   rosters.js — plantillas de referencia orientativas (base ~2024/25, editables)
    Premier League (20 equipos) + Bundesliga (18 equipos)
    Expuesto en window.FC.data.ROSTERS
    ============================================================ */
@@ -12628,7 +12630,7 @@ body.tour-on { overflow: hidden; }
         ${h.biggestLoss ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">${T("rival.biggestLoss")}</span><b style="color:var(--danger)">${U.esc(h.biggestLoss.home)} ${h.biggestLoss.homeScore}-${h.biggestLoss.awayScore} ${U.esc(h.biggestLoss.away)}</b></div>` : ""}
       </div>` : ""}
       <div class="section-title">${T("rival.tacticalAnalysis")}</div>
-      ${d.insights.length ? `<div class="list">${d.insights.map(i => `<div class="list-row" style="align-items:flex-start">
+      ${d.insights.length ? `<p class="muted" style="font-size:12px;margin:0 2px 10px">${T("rival.sampleCaveat", { n: a.pj })}</p><div class="list">${d.insights.map(i => `<div class="list-row" style="align-items:flex-start">
         <span class="ni-icon" data-icon="${i.icon}" style="color:${tone[i.tone]};flex-shrink:0;margin-top:2px"></span>
         <div class="lr-main"><b>${U.esc(i.title)}</b><div style="font-size:13px;margin-top:2px;color:var(--text-dim)">${U.esc(i.text)}</div></div>
       </div>`).join("")}</div>` : `<p class="faint">${T("rival.needMore")}</p>`}
@@ -13619,7 +13621,8 @@ body.tour-on { overflow: hidden; }
     const roster = (D.SQUADS || {})[c.clubName];
     if (!roster || !roster.length) { UI.toast("No hay plantilla disponible para este club", "err"); return; }
     const hasPlayers = (c.players || []).length > 0;
-    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> <span class="faint">(plantilla de referencia 2024/25)</span>.</p>
+    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> <span class="faint">(plantilla orientativa de referencia)</span>.</p>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Los OVR y edades son una base orientativa y pueden no coincidir con la temporada actual del juego; edítalos para que reflejen tu partida.</p>
       ${hasPlayers ? `<div class="field" style="margin-top:12px"><label>Plantilla actual (${c.players.length} jugadores)</label>
         <select id="imp-mode">
           <option value="merge">Fusionar (mantener existentes, añadir nuevos)</option>

@@ -1933,7 +1933,7 @@
         ${h.biggestLoss ? `<div class="flex between center" style="padding:6px 0;font-size:13px"><span class="faint">${T("rival.biggestLoss")}</span><b style="color:var(--danger)">${U.esc(h.biggestLoss.home)} ${h.biggestLoss.homeScore}-${h.biggestLoss.awayScore} ${U.esc(h.biggestLoss.away)}</b></div>` : ""}
       </div>` : ""}
       <div class="section-title">${T("rival.tacticalAnalysis")}</div>
-      ${d.insights.length ? `<div class="list">${d.insights.map(i => `<div class="list-row" style="align-items:flex-start">
+      ${d.insights.length ? `<p class="muted" style="font-size:12px;margin:0 2px 10px">${T("rival.sampleCaveat", { n: a.pj })}</p><div class="list">${d.insights.map(i => `<div class="list-row" style="align-items:flex-start">
         <span class="ni-icon" data-icon="${i.icon}" style="color:${tone[i.tone]};flex-shrink:0;margin-top:2px"></span>
         <div class="lr-main"><b>${U.esc(i.title)}</b><div style="font-size:13px;margin-top:2px;color:var(--text-dim)">${U.esc(i.text)}</div></div>
       </div>`).join("")}</div>` : `<p class="faint">${T("rival.needMore")}</p>`}
@@ -2924,7 +2924,8 @@
     const roster = (D.SQUADS || {})[c.clubName];
     if (!roster || !roster.length) { UI.toast("No hay plantilla disponible para este club", "err"); return; }
     const hasPlayers = (c.players || []).length > 0;
-    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> <span class="faint">(plantilla de referencia 2024/25)</span>.</p>
+    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> <span class="faint">(plantilla orientativa de referencia)</span>.</p>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Los OVR y edades son una base orientativa y pueden no coincidir con la temporada actual del juego; edítalos para que reflejen tu partida.</p>
       ${hasPlayers ? `<div class="field" style="margin-top:12px"><label>Plantilla actual (${c.players.length} jugadores)</label>
         <select id="imp-mode">
           <option value="merge">Fusionar (mantener existentes, añadir nuevos)</option>
