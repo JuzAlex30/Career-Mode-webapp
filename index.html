@@ -1235,8 +1235,8 @@ body.tour-on { overflow: hidden; }
       "stand.th.dg": "DG",
       "stand.th.pts": "Pts",
       "stand.empty": "La tabla se calcula con los partidos de Liga que registres.",
-      "stand.topScorers": "Máximos goleadores",
-      "stand.topAssists": "Máximos asistentes",
+      "stand.topScorers": "Goleadores de tu equipo",
+      "stand.topAssists": "Asistentes de tu equipo",
       "stand.scorersEmpty": "Registra goleadores/asistentes en tus partidos.",
       "stand.bracketGenerator": "Generador de cuadros de copa",
       "stand.bracketDescription": "Crea un cuadro eliminatorio (copa, torneo ficticio o reto con amigos).",
@@ -1823,7 +1823,7 @@ body.tour-on { overflow: hidden; }
       "hall.goals": "goles",
       "hall.pts": "pts",
       "hall.noData": "Juega partidos de liga para registrar tu mejor temporada.",
-      "hall.legends": "Leyendas · histórico de todas las carreras",
+      "hall.legends": "Leyendas · histórico de tus carreras",
       "hall.topScorer": "Máximo goleador",
       "hall.topAssister": "Máximo asistente",
       "hall.assists": "asist.",
@@ -1857,7 +1857,7 @@ body.tour-on { overflow: hidden; }
       "hist.trophyTagWinner": "Campeón",
       "hist.trophyTagPromotion": "Ascenso",
       "hist.trophyTagRunnerup": "Subcampeón",
-      "hist.historicalRecords": "Récords históricos",
+      "hist.historicalRecords": "Récords de tu carrera",
       "hist.topScorer": "Máx. goleador",
       "hist.topAssister": "Máx. asistente",
       "hist.mostAppearances": "Más partidos",
@@ -2237,8 +2237,8 @@ body.tour-on { overflow: hidden; }
       "stand.th.dg": "GD",
       "stand.th.pts": "Pts",
       "stand.empty": "The table is calculated from the league matches you log.",
-      "stand.topScorers": "Top scorers",
-      "stand.topAssists": "Top assists",
+      "stand.topScorers": "Your squad's scorers",
+      "stand.topAssists": "Your squad's assists",
       "stand.scorersEmpty": "Log scorers and assisters in your matches.",
       "stand.bracketGenerator": "Cup bracket generator",
       "stand.bracketDescription": "Create a knockout bracket (cup, fictional tournament, or challenge with friends).",
@@ -2823,7 +2823,7 @@ body.tour-on { overflow: hidden; }
       "hall.goals": "goals",
       "hall.pts": "pts",
       "hall.noData": "Play league matches to record your best season.",
-      "hall.legends": "Legends · all-time across every career",
+      "hall.legends": "Legends · all-time across your careers",
       "hall.topScorer": "Top scorer",
       "hall.topAssister": "Top assister",
       "hall.assists": "assists",
@@ -2857,7 +2857,7 @@ body.tour-on { overflow: hidden; }
       "hist.trophyTagWinner": "Champion",
       "hist.trophyTagPromotion": "Promotion",
       "hist.trophyTagRunnerup": "Runner-up",
-      "hist.historicalRecords": "Historical records",
+      "hist.historicalRecords": "Career records",
       "hist.topScorer": "Top scorer",
       "hist.topAssister": "Top assister",
       "hist.mostAppearances": "Most appearances",
@@ -10871,7 +10871,7 @@ body.tour-on { overflow: hidden; }
       <div class="section-title">Palmarés</div>
       ${trophies.length ? `<div class="cc-rules">${trophies.map(t=>`<span class="chip gold">🏆 ${U.esc(t.competition||"")}${t.season?" "+U.esc(t.season):""}</span>`).join("")}</div>` : `<p class="faint">Sin títulos todavía.</p>`}
       <div class="section-title">Estrella del club</div>
-      <p style="margin:0">⚽ Máximo goleador: <b>${top}</b></p>
+      <p style="margin:0">⚽ Máximo goleador del club: <b>${top}</b></p>
       <p class="faint" style="font-size:12px;margin-top:16px">Carrera compartida desde Boardhub · solo lectura.</p>`;
   };
   UI.openSharedByCode = async (code, cfgOverride) => {
@@ -11869,7 +11869,7 @@ body.tour-on { overflow: hidden; }
 
     if (topScorer) {
       ctx.fillStyle = "#93a6bd"; ctx.font = `19px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
-      ctx.fillText("⚽  Máximo goleador", 48, cy);
+      ctx.fillText("⚽  Máximo goleador del club", 48, cy);
       ctx.fillStyle = "#eaf1f8"; ctx.font = `bold 32px ${FONT}`;
       ctx.fillText(topScorer.name + "  ·  " + topScorer.goals + " goles", 48, cy + 24);
       cy += 82;

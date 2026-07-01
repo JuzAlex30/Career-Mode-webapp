@@ -200,7 +200,7 @@
       <div class="section-title">Palmarés</div>
       ${trophies.length ? `<div class="cc-rules">${trophies.map(t=>`<span class="chip gold">🏆 ${U.esc(t.competition||"")}${t.season?" "+U.esc(t.season):""}</span>`).join("")}</div>` : `<p class="faint">Sin títulos todavía.</p>`}
       <div class="section-title">Estrella del club</div>
-      <p style="margin:0">⚽ Máximo goleador: <b>${top}</b></p>
+      <p style="margin:0">⚽ Máximo goleador del club: <b>${top}</b></p>
       <p class="faint" style="font-size:12px;margin-top:16px">Carrera compartida desde Boardhub · solo lectura.</p>`;
   };
   UI.openSharedByCode = async (code, cfgOverride) => {
@@ -1198,7 +1198,7 @@
 
     if (topScorer) {
       ctx.fillStyle = "#93a6bd"; ctx.font = `19px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
-      ctx.fillText("⚽  Máximo goleador", 48, cy);
+      ctx.fillText("⚽  Máximo goleador del club", 48, cy);
       ctx.fillStyle = "#eaf1f8"; ctx.font = `bold 32px ${FONT}`;
       ctx.fillText(topScorer.name + "  ·  " + topScorer.goals + " goles", 48, cy + 24);
       cy += 82;
