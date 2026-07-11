@@ -328,6 +328,8 @@
       managerName: data.managerName || "", badgeColor: data.badgeColor || U.colorFor(data.clubName),
       createdAt: Date.now(), currentSeasonId: seasonId,
       isNational: !!data.isNational,
+      linkedClubId: data.linkedClubId || null,
+      linkedNationalId: data.linkedNationalId || null,
       seasons: [season], players: [], matches: [], trophies: [], awards: [],
       transfers: [], challenges: [], achievements: [], notes: [],
     };
@@ -336,9 +338,28 @@
     emit();
     return career;
   };
+  // «Te llama la selección»: crea una carrera de selección vinculada a un club
+  // existente (enlace en ambos sentidos) y la deja como carrera activa.
+  S.createLinkedNational = (clubCareer, data) => {
+    const nat = S.createCareer(Object.assign({}, data, { isNational: true, linkedClubId: clubCareer.id }));
+    clubCareer.linkedNationalId = nat.id;
+    emit();
+    return nat;
+  };
+  // Devuelve la carrera vinculada (club↔selección) si existe y sigue viva.
+  S.linkedCareer = (c) => {
+    if (!c) return null;
+    const id = c.isNational ? c.linkedClubId : c.linkedNationalId;
+    return id ? (db.careers[id] || null) : null;
+  };
   S.updateCareer = (patch) => { const c = S.getActiveCareer(); if (!c) return; Object.assign(c, patch); emit(); };
   S.deleteCareer = (id) => {
     delete db.careers[id];
+    // Rompe el vínculo inverso (club↔selección) para no dejar enlaces colgando.
+    Object.values(db.careers).forEach(c => {
+      if (c.linkedNationalId === id) c.linkedNationalId = null;
+      if (c.linkedClubId === id) c.linkedClubId = null;
+    });
     if (db.activeCareerId === id) db.activeCareerId = S.careersList()[0] ? S.careersList()[0].id : null;
     emit();
   };

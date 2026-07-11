@@ -315,6 +315,14 @@
       `<option value="${U.esc(l.id)}"${l.id === sel ? " selected" : ""}>${U.esc(l.name)}${l.country && l.country !== "—" ? " · " + U.esc(l.country) : ""}</option>`
     ).join("")}</optgroup>`).join("");
   }
+  // Opciones del desplegable de club para la liga elegida (equipos del catálogo
+  // EA Sports FC), más una opción «Otro» para escribir un equipo a mano.
+  function clubOptionsFor(leagueId, sel) {
+    const league = D.LEAGUES.find(l => l.id === leagueId);
+    const teams = (league && Array.isArray(league.teams)) ? league.teams : [];
+    const opts = teams.map(tm => `<option value="${U.esc(tm)}"${tm === sel ? " selected" : ""}>${U.esc(tm)}</option>`).join("");
+    return opts + `<option value="__other__"${sel === "__other__" ? " selected" : ""}>${U.esc(FC.t("ob.club.other"))}</option>`;
+  }
   // País de una carrera (campo country o derivado de la liga).
   function careerCountry(c) {
     if (c && c.country) return c.country;
@@ -322,14 +330,14 @@
     return l ? l.country : null;
   }
   // Opciones del desplegable de selecciones nacionales agrupadas por confederación.
-  function nationalTeamOptions() {
+  function nationalTeamOptions(sel) {
     const order = [], byC = {};
     D.NATIONAL_TEAMS.forEach(t => {
       if (!byC[t.confederation]) { byC[t.confederation] = []; order.push(t.confederation); }
       byC[t.confederation].push(t);
     });
     return order.map(conf => `<optgroup label="${U.esc(conf)}">${byC[conf].map(t =>
-      `<option value="${U.esc(t.id)}">${U.esc(t.name)}</option>`
+      `<option value="${U.esc(t.id)}"${t.id === sel ? " selected" : ""}>${U.esc(t.name)}</option>`
     ).join("")}</optgroup>`).join("");
   }
   // Opciones del desplegable de competiciones (optgroups) con las copas del país.
@@ -430,9 +438,11 @@
           <button type="button" data-type="national">${t("ob.type.national")}</button>
         </div>
         <div id="ob-club-fields">
-          <div class="field"><label>${t("ob.club.name")} <span class="faint">${t("ob.club.nameHint")}</span></label>
-            <input type="text" id="ob-club" placeholder="${t("ob.clubPh")}" autofocus /></div>
           <div class="field"><label>${t("ob.league")}</label><select id="ob-league">${leagueOptions("esp-laliga")}</select></div>
+          <div class="field" id="ob-club-sel-wrap"><label>${t("ob.club.pick")}</label>
+            <select id="ob-club-sel">${clubOptionsFor("esp-laliga")}</select></div>
+          <div class="field" id="ob-club-wrap" hidden><label>${t("ob.club.name")} <span class="faint">${t("ob.club.nameHint")}</span></label>
+            <input type="text" id="ob-club" placeholder="${t("ob.clubPh")}" /></div>
           <div class="field" id="ob-custom-wrap" hidden>
             <label>${t("ob.customTeams")} <span class="faint">${t("ob.customTeamsHint")}</span></label>
             <textarea id="ob-teams" placeholder="${t("ob.customTeamsPh")}"></textarea></div>
@@ -515,10 +525,25 @@
         natFields.hidden = careerType === "club";
       }));
 
-      // League / custom toggle
+      // League → club dropdown → «otro» (escribir) / liga custom
       const leagueSel = $("ob-league");
-      const customWrap = $("ob-custom-wrap");
-      leagueSel.addEventListener("change", () => { customWrap.hidden = leagueSel.value !== "custom"; });
+      const clubSel = $("ob-club-sel");
+      const clubSelWrap = $("ob-club-sel-wrap");
+      const clubWrap = $("ob-club-wrap");       // input de texto para «otro»
+      const customWrap = $("ob-custom-wrap");   // textarea de equipos (liga custom)
+      const syncClubFields = () => {
+        const isCustomLeague = leagueSel.value === "custom";
+        clubSelWrap.hidden = isCustomLeague;           // sin desplegable en liga custom
+        customWrap.hidden = !isCustomLeague;           // textarea de equipos solo en custom
+        const isOther = isCustomLeague || clubSel.value === "__other__";
+        clubWrap.hidden = !isOther;                    // input de texto solo si «otro»/custom
+      };
+      leagueSel.addEventListener("change", () => {
+        clubSel.innerHTML = clubOptionsFor(leagueSel.value);
+        syncClubFields();
+      });
+      clubSel.addEventListener("change", syncClubFields);
+      syncClubFields();
 
       $("ob-create").addEventListener("click", async () => {
         let createData;
@@ -536,12 +561,19 @@
             managerName, startYear, isNational: true,
           };
         } else {
-          const club = ($("ob-club").value || "").trim();
-          if (!club) { UI.toast(t("ob.toast.clubName"), "err"); return; }
           const lid = leagueSel.value;
           const league = D.LEAGUES.find(l => l.id === lid);
           let teams = league ? league.teams.slice() : [];
-          if (lid === "custom") teams = $("ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
+          let club;
+          if (lid === "custom") {
+            club = ($("ob-club").value || "").trim();
+            teams = $("ob-teams").value.split(",").map(s => s.trim()).filter(Boolean);
+          } else if (clubSel.value === "__other__") {
+            club = ($("ob-club").value || "").trim();
+          } else {
+            club = clubSel.value;
+          }
+          if (!club) { UI.toast(t("ob.toast.clubName"), "err"); return; }
           if (!teams.includes(club)) teams.unshift(club);
           createData = {
             name: club, clubName: club, leagueId: lid, leagueName: league ? league.name : t("ob.fallback.league"),
@@ -1081,6 +1113,49 @@
       UI.toast(T("group.toastDeleted"), "ok");
       UI.closeModal();
       if (onDone) onDone();
+    });
+  };
+
+  // «Te llama la selección»: desde una carrera de club, crea una carrera de
+  // selección vinculada (enlace en ambos sentidos) y la deja activa. Reutiliza
+  // toda la maquinaria de selecciones ya existente (competiciones, narrativa…).
+  UI.openNationalCallModal = function (clubCareer) {
+    const T = FC.t;
+    if (!clubCareer || clubCareer.isNational) return;
+    // Preselección: selección del país del club, si la hay en el catálogo.
+    const cc = careerCountry(clubCareer);
+    const guess = D.NATIONAL_TEAMS.find(nt => nt.country === cc);
+    const startYear = (S.currentSeason(clubCareer) || {}).startYear || new Date().getFullYear();
+    const body = `
+      <p style="margin:0 0 14px;font-size:13px;color:var(--text-dim);line-height:1.5">${T("natcall.intro", { club: U.esc(clubCareer.clubName) })}</p>
+      <div class="field"><label>${T("ob.national.team")}</label>
+        <select id="nc-team">${nationalTeamOptions(guess ? guess.id : undefined)}</select></div>
+      <div class="field"><label>${T("ob.startSeason")}</label>
+        <input type="number" id="nc-year" value="${startYear}" min="2000" max="2100" /></div>
+      <p class="muted" style="margin:2px 0 0;font-size:12px">${T("natcall.note")}</p>`;
+    const foot = `<button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button>
+      <button class="btn btn-primary" id="nc-accept"><span class="ni-icon" data-icon="ball"></span> ${U.esc(T("natcall.accept"))}</button>`;
+    const m = UI.openModal(T("natcall.title"), body, foot);
+    U.hydrateIcons(m);
+    m.querySelector("#nc-accept").addEventListener("click", async () => {
+      const sel = m.querySelector("#nc-team");
+      const natTeam = D.NATIONAL_TEAMS.find(nt => nt.id === sel.value);
+      if (!natTeam) { UI.toast(T("ob.toast.pickNational"), "err"); return; }
+      const yr = Number(m.querySelector("#nc-year").value) || startYear;
+      const rivals = D.NATIONAL_TEAMS.filter(nt => nt.id !== natTeam.id).map(nt => nt.name);
+      S.createLinkedNational(clubCareer, {
+        name: natTeam.name, clubName: natTeam.name,
+        leagueId: "national", leagueName: T("ob.fallback.national", { conf: natTeam.confederation }),
+        country: natTeam.country, teams: [natTeam.name, ...rivals],
+        managerName: clubCareer.managerName || "", startYear: yr,
+      });
+      S.flush();
+      UI.closeModal();
+      UI.toast(T("natcall.toast", { team: natTeam.name }), "ok");
+      FC.router.go("dashboard");
+      FC.app.refreshChrome();
+      const CL = FC.cloud;
+      if (CL && CL.isLoggedIn()) { try { await CL.push(); } catch (e) { /* nube best-effort */ } }
     });
   };
 
@@ -4875,8 +4950,11 @@
         <div class="flex gap wrap">
           <button class="btn btn-primary" id="se-save">${tr("settings.saveChanges")}</button>
           <button class="btn btn-ghost" id="se-newseason"><span class="ni-icon" data-icon="plus"></span> ${tr("settings.newSeason")}</button>
+          ${(!c.isNational && !S.linkedCareer(c)) ? `<button class="btn btn-ghost" id="se-natcall"><span class="ni-icon" data-icon="flag"></span> ${tr("natcall.button")}</button>` : ""}
+          ${S.linkedCareer(c) ? `<button class="btn btn-ghost" id="se-gotolinked"><span class="ni-icon" data-icon="play"></span> ${tr(c.isNational ? "natcall.gotoClub" : "natcall.gotoNational")}</button>` : ""}
           <button class="btn btn-danger" id="se-delete"><span class="ni-icon" data-icon="trash"></span> ${tr("settings.deleteCareer")}</button>
         </div>
+        ${S.linkedCareer(c) ? `<p class="muted" style="margin:10px 0 0;font-size:12.5px"><span class="ni-icon" data-icon="flag" style="width:13px;height:13px;vertical-align:-2px"></span> ${tr(c.isNational ? "natcall.linkedToClub" : "natcall.linkedToNational", { team: U.esc(S.linkedCareer(c).clubName) })}</p>` : ""}
       </div>
 
       <div class="section-title">${tr("settings.myCareersTitle")}</div>
@@ -4955,13 +5033,24 @@
       // carrera) y deshace el borrado en memoria justo antes de persistirlo.
       S.deleteCareer(c.id); S.flush(); FC.app.boot();
     }, true));
+    const seNatcall = document.getElementById("se-natcall");
+    if (seNatcall) seNatcall.addEventListener("click", () => UI.openNationalCallModal(c));
+    const seGoto = document.getElementById("se-gotolinked");
+    if (seGoto) seGoto.addEventListener("click", () => {
+      const linked = S.linkedCareer(c);
+      if (linked) { S.setActiveCareer(linked.id); FC.router.go("dashboard"); FC.app.refreshChrome(); }
+    });
     document.getElementById("se-new").addEventListener("click", () => { FC.views.onboarding(); });
     // careers list
     const cl = document.getElementById("se-careers");
-    cl.innerHTML = S.careersList().map(cc => `<div class="list-row">
+    cl.innerHTML = S.careersList().map(cc => {
+      const linkChip = (cc.linkedClubId || cc.linkedNationalId) ? `<span class="chip" style="margin-right:6px"><span class="ni-icon" data-icon="flag" style="width:11px;height:11px;vertical-align:-1px"></span> ${cc.isNational ? tr("natcall.chipNational") : tr("natcall.chipClub")}</span>` : "";
+      return `<div class="list-row">
       <div class="career-badge" style="background:${U.teamColors(cc.clubName,cc.badgeColor).bg};color:${U.teamColors(cc.clubName,cc.badgeColor).text}">${U.initials(cc.clubName)}</div>
       <div class="lr-main"><b>${U.esc(cc.clubName)}</b><small>${U.esc(cc.leagueName)} · ${(cc.seasons||[]).length} ${tr("settings.careerSeasonsAbbrev")}</small></div>
-      ${cc.id === c.id ? `<span class="chip accent">${tr("settings.careerActiveChip")}</span>` : `<button class="btn btn-ghost btn-sm" data-switch="${cc.id}">${tr("settings.openCareerButton")}</button>`}</div>`).join("");
+      ${linkChip}${cc.id === c.id ? `<span class="chip accent">${tr("settings.careerActiveChip")}</span>` : `<button class="btn btn-ghost btn-sm" data-switch="${cc.id}">${tr("settings.openCareerButton")}</button>`}</div>`;
+    }).join("");
+    U.hydrateIcons(cl);
     cl.querySelectorAll("[data-switch]").forEach(b => b.addEventListener("click", () => { S.setActiveCareer(b.dataset.switch); FC.router.go("dashboard"); FC.app.refreshChrome(); }));
     // export/import
     document.getElementById("se-export").addEventListener("click", () => {
