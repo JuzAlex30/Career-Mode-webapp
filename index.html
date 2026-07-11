@@ -1657,8 +1657,8 @@ body.tour-on { overflow: hidden; }
       // —— Academia (FC.views.youth) ——
       "youth.title": "Academia juvenil",
       "youth.statsLabel": "{academyN} en la academia · {promotedN} promovidas · {season}",
-      "youth.generateBtn": "Generar promesas",
-      "youth.emptyHint": "Genera una hornada de promesas de tu cantera. Las que promociones entran en tu Plantilla como jugadores <b>de cantera</b> y cuentan para el reto «Solo cantera» y el logro «Hacedor de leyendas».",
+      "youth.addBtn": "Añadir prospecto",
+      "youth.emptyHint": "Registra aquí los prospectos que EA FC te asigna en la academia. Los que promociones entran en tu Plantilla como jugadores <b>de cantera</b> y cuentan para el reto «Solo cantera» y el logro «Hacedor de leyendas».",
       "youth.filterAcademy": "En la academia",
       "youth.filterPromoted": "Promovidas",
       "youth.filterAll": "Todas",
@@ -1668,9 +1668,12 @@ body.tour-on { overflow: hidden; }
       "youth.promotedBadge": "Promovida",
       "youth.emptyPromotedTitle": "Sin promovidas todavía",
       "youth.emptyPromotedText": "Promueve promesas para verlas aquí.",
-      "youth.emptyAcademyTitle": "Sin promesas",
-      "youth.emptyAcademyText": "Pulsa «Generar promesas» para crear tu primera hornada.",
-      "youth.toastGenerated": "{count} promesas generadas 🌱",
+      "youth.emptyAcademyTitle": "Sin promesas registradas",
+      "youth.emptyAcademyText": "Pulsa «Añadir prospecto» para registrar los jugadores que EA FC te ha asignado en la academia.",
+      "youth.addModal.title": "Añadir prospecto de cantera",
+      "youth.addModal.hint": "Introduce los datos del jugador tal como aparecen en EA FC.",
+      "youth.addModal.scoutNote": "Nota del ojeador (opcional)",
+      "youth.toastAdded": "{name} añadido a la academia 🌱",
       "youth.toastPromoted": "¡{name} sube al primer equipo! 🎉",
       "youth.toastPromoteError": "No se pudo promover",
       "youth.confirmRelease": "¿Descartar esta promesa?",
@@ -3135,8 +3138,8 @@ body.tour-on { overflow: hidden; }
       // —— Youth academy (FC.views.youth) ——
       "youth.title": "Youth Academy",
       "youth.statsLabel": "{academyN} in academy · {promotedN} promoted · {season}",
-      "youth.generateBtn": "Generate Prospects",
-      "youth.emptyHint": "Generate a batch of academy prospects. The ones you promote join your Squad as <b>academy</b> players and count towards the \"Academy Only\" challenge and the \"Legend Maker\" achievement.",
+      "youth.addBtn": "Add Prospect",
+      "youth.emptyHint": "Register the prospects EA FC assigns to your academy. The ones you promote join your Squad as <b>academy</b> players and count towards the \"Academy Only\" challenge and the \"Legend Maker\" achievement.",
       "youth.filterAcademy": "In Academy",
       "youth.filterPromoted": "Promoted",
       "youth.filterAll": "All",
@@ -3146,9 +3149,12 @@ body.tour-on { overflow: hidden; }
       "youth.promotedBadge": "Promoted",
       "youth.emptyPromotedTitle": "No promoted players yet",
       "youth.emptyPromotedText": "Promote prospects to see them here.",
-      "youth.emptyAcademyTitle": "No prospects",
-      "youth.emptyAcademyText": "Press \"Generate Prospects\" to create your first batch.",
-      "youth.toastGenerated": "{count} prospects generated 🌱",
+      "youth.emptyAcademyTitle": "No prospects registered",
+      "youth.emptyAcademyText": "Press \"Add Prospect\" to register the players EA FC has assigned to your academy.",
+      "youth.addModal.title": "Add Academy Prospect",
+      "youth.addModal.hint": "Enter the player's data as shown in EA FC.",
+      "youth.addModal.scoutNote": "Scout note (optional)",
+      "youth.toastAdded": "{name} added to the academy 🌱",
       "youth.toastPromoted": "{name} steps up to the first team! 🎉",
       "youth.toastPromoteError": "Could not promote",
       "youth.confirmRelease": "Release this prospect?",
@@ -15763,7 +15769,7 @@ body.tour-on { overflow: hidden; }
       <div class="page-head">
         <div><h1>${tr("youth.title")}</h1>
           <div class="sub">${tr("youth.statsLabel", { academyN, promotedN, season: U.esc(season.label) })}</div></div>
-        <button class="btn btn-primary" id="yt-gen"><span class="ni-icon" data-icon="sprout"></span> ${tr("youth.generateBtn")}</button>
+        <button class="btn btn-primary" id="yt-add"><span class="ni-icon" data-icon="plus"></span> ${tr("youth.addBtn")}</button>
       </div>
       ${!all.length ? `<div class="card" style="margin-bottom:16px"><div class="flex gap center">
         <span class="ni-icon" data-icon="sprout" style="color:var(--accent);flex:none"></span>
@@ -15781,9 +15787,46 @@ body.tour-on { overflow: hidden; }
         </tr></thead><tbody id="yt-rows"></tbody></table></div>
       </div>
     `);
-    document.getElementById("yt-gen").addEventListener("click", () => {
-      const made = S.generateYouthIntake(c, 3);
-      UI.toast(tr("youth.toastGenerated", { count: made.length }), "ok");
+    document.getElementById("yt-add").addEventListener("click", () => {
+      const T = FC.t;
+      const cur = S.currentSeason(c);
+      const posOpts = D.POSITIONS.map(p => `<option>${p}</option>`).join("");
+      UI.openModal(T("youth.addModal.title"), `
+        <p class="muted" style="font-size:13px;margin:0 0 14px">${T("youth.addModal.hint")}</p>
+        <div class="field"><label>${T("player.name")}</label><input type="text" id="ya-name" autocomplete="off"/></div>
+        <div class="field-row three">
+          <div class="field"><label>${T("player.position")}</label><select id="ya-pos">${posOpts}</select></div>
+          <div class="field"><label>${T("player.age")}</label><input type="number" id="ya-age" min="15" max="21" value="16"/></div>
+          <div class="field"><label>${T("player.nationality")}</label><input type="text" id="ya-nat" autocomplete="off"/></div>
+        </div>
+        <div class="field-row two">
+          <div class="field"><label>${T("player.ovr")}</label><input type="number" id="ya-ovr" min="40" max="99"/></div>
+          <div class="field"><label>${T("player.potential")}</label><input type="number" id="ya-pot" min="40" max="99"/></div>
+        </div>
+        <div class="field"><label>${T("youth.addModal.scoutNote")}</label><input type="text" id="ya-note" autocomplete="off"/></div>
+      `, `<button class="btn btn-ghost" data-close>${T("common.cancel")}</button><button class="btn btn-primary" id="ya-save">${T("common.save")}</button>`);
+      document.getElementById("ya-save").addEventListener("click", () => {
+        const name = document.getElementById("ya-name").value.trim();
+        if (!name) { UI.toast(T("player.enterName"), "err"); return; }
+        const y = {
+          id: U.uid(),
+          name,
+          position: document.getElementById("ya-pos").value,
+          age: Number(document.getElementById("ya-age").value) || 16,
+          nationality: document.getElementById("ya-nat").value.trim(),
+          ovr: Number(document.getElementById("ya-ovr").value) || null,
+          potential: Number(document.getElementById("ya-pot").value) || null,
+          scoutNote: document.getElementById("ya-note").value.trim(),
+          year: cur ? cur.startYear : null,
+          seasonLabel: cur ? cur.label : "",
+          status: "academy",
+        };
+        (c.youth || (c.youth = [])).push(y);
+        S.emit();
+        UI.closeModal();
+        UI.toast(T("youth.toastAdded", { name }), "ok");
+        paint();
+      });
     });
     function paint() {
       const rows = (c.youth || []).filter(y => ytFilter === "all" || y.status === ytFilter)

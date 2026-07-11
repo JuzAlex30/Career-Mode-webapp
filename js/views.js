@@ -3697,7 +3697,7 @@
       <div class="page-head">
         <div><h1>${tr("youth.title")}</h1>
           <div class="sub">${tr("youth.statsLabel", { academyN, promotedN, season: U.esc(season.label) })}</div></div>
-        <button class="btn btn-primary" id="yt-gen"><span class="ni-icon" data-icon="sprout"></span> ${tr("youth.generateBtn")}</button>
+        <button class="btn btn-primary" id="yt-add"><span class="ni-icon" data-icon="plus"></span> ${tr("youth.addBtn")}</button>
       </div>
       ${!all.length ? `<div class="card" style="margin-bottom:16px"><div class="flex gap center">
         <span class="ni-icon" data-icon="sprout" style="color:var(--accent);flex:none"></span>
@@ -3715,9 +3715,46 @@
         </tr></thead><tbody id="yt-rows"></tbody></table></div>
       </div>
     `);
-    document.getElementById("yt-gen").addEventListener("click", () => {
-      const made = S.generateYouthIntake(c, 3);
-      UI.toast(tr("youth.toastGenerated", { count: made.length }), "ok");
+    document.getElementById("yt-add").addEventListener("click", () => {
+      const T = FC.t;
+      const cur = S.currentSeason(c);
+      const posOpts = D.POSITIONS.map(p => `<option>${p}</option>`).join("");
+      UI.openModal(T("youth.addModal.title"), `
+        <p class="muted" style="font-size:13px;margin:0 0 14px">${T("youth.addModal.hint")}</p>
+        <div class="field"><label>${T("player.name")}</label><input type="text" id="ya-name" autocomplete="off"/></div>
+        <div class="field-row three">
+          <div class="field"><label>${T("player.position")}</label><select id="ya-pos">${posOpts}</select></div>
+          <div class="field"><label>${T("player.age")}</label><input type="number" id="ya-age" min="15" max="21" value="16"/></div>
+          <div class="field"><label>${T("player.nationality")}</label><input type="text" id="ya-nat" autocomplete="off"/></div>
+        </div>
+        <div class="field-row two">
+          <div class="field"><label>${T("player.ovr")}</label><input type="number" id="ya-ovr" min="40" max="99"/></div>
+          <div class="field"><label>${T("player.potential")}</label><input type="number" id="ya-pot" min="40" max="99"/></div>
+        </div>
+        <div class="field"><label>${T("youth.addModal.scoutNote")}</label><input type="text" id="ya-note" autocomplete="off"/></div>
+      `, `<button class="btn btn-ghost" data-close>${T("common.cancel")}</button><button class="btn btn-primary" id="ya-save">${T("common.save")}</button>`);
+      document.getElementById("ya-save").addEventListener("click", () => {
+        const name = document.getElementById("ya-name").value.trim();
+        if (!name) { UI.toast(T("player.enterName"), "err"); return; }
+        const y = {
+          id: U.uid(),
+          name,
+          position: document.getElementById("ya-pos").value,
+          age: Number(document.getElementById("ya-age").value) || 16,
+          nationality: document.getElementById("ya-nat").value.trim(),
+          ovr: Number(document.getElementById("ya-ovr").value) || null,
+          potential: Number(document.getElementById("ya-pot").value) || null,
+          scoutNote: document.getElementById("ya-note").value.trim(),
+          year: cur ? cur.startYear : null,
+          seasonLabel: cur ? cur.label : "",
+          status: "academy",
+        };
+        (c.youth || (c.youth = [])).push(y);
+        S.emit();
+        UI.closeModal();
+        UI.toast(T("youth.toastAdded", { name }), "ok");
+        paint();
+      });
     });
     function paint() {
       const rows = (c.youth || []).filter(y => ytFilter === "all" || y.status === ytFilter)
