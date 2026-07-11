@@ -16221,7 +16221,10 @@ body.tour-on { overflow: hidden; }
       else UI.openNewSeasonModal(c);
     });
     document.getElementById("se-delete").addEventListener("click", () => UI.confirm(tr("settings.confirmDeleteCareerText"), () => {
-      S.deleteCareer(c.id); FC.app.boot();
+      // El guardado tras deleteCareer es debounced (120ms); sin flush(),
+      // el S.load() de boot() relee el localStorage viejo (aún con la
+      // carrera) y deshace el borrado en memoria justo antes de persistirlo.
+      S.deleteCareer(c.id); S.flush(); FC.app.boot();
     }, true));
     document.getElementById("se-new").addEventListener("click", () => { FC.views.onboarding(); });
     // careers list
