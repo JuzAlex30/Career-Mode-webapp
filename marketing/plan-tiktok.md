@@ -1,13 +1,14 @@
-# Boardroom — Brief estratégico de marketing (TikTok-first)
+# Boardhub — Brief estratégico de marketing (TikTok-first)
 
 > **Documento base.** Aquí está el ADN del producto traducido a estrategia.
 > La ejecución diaria (guiones concretos, sonidos/tendencias del momento,
 > miniaturas) se hace mejor en Claude chat, que tiene búsqueda web en tiempo
 > real y Artifacts. Este brief es lo que le das de contexto.
 
-- **Producto:** Boardroom — companion web del Modo Carrera de EA Sports FC.
-- **URL:** https://juzalex30.github.io/Career-Mode-webapp/
-- **Modelo:** 90-95% orgánico (algo de pago más adelante), contenido **sin rostro**, **español + inglés**.
+- **Producto:** Boardhub (antes "Boardroom"/"Carrera FC") — companion web del Modo Carrera de EA Sports FC 26.
+- **URL:** https://boardhubfc.com (PWA, sin tienda, HTTPS, dominio propio).
+- **Estado (2026-07-11):** app 100% lanzada en producción, ES+EN completos (i18n de toda la UI y modales), comunidad activa (cuentas, publicar carrera, ranking mundial, comentarios, feed), 0 bloqueantes legales/técnicos. Monetización actual = **capa de fundadores** (Ko-fi, `ko-fi.com/colonydevs`, un tier de ESTATUS: badge + voto en roadmap + Discord, no funciones de pago). El premium cosmético (temas/marcos) es Fase 2, solo cuando haya 5.000+ usuarios — ahora mismo el único objetivo es CRECER, no vender.
+- **Modelo de contenido:** 90-95% orgánico (algo de pago más adelante), contenido **sin rostro**, **español + inglés**.
 - **Tagline:** *"Tu Modo Carrera, contado como una historia."*
 
 ---
@@ -62,13 +63,25 @@ El gancho más viral. La curiosidad ("¿una casa de apuestas para tu Career Mode
 - "5 temporadas de mi carrera en 30 segundos"
 - Reveal satisfactorio de la vitrina de trofeos
 - Récords del club / máximo goleador histórico
+- Salón de la Fama (agrega TODAS tus carreras: mejor temporada, leyendas, ranking por títulos)
 
 **4. 🌍 La Comunidad (ranking + compartir) — EL BUCLE VIRAL**
 - "El ranking MUNDIAL de Modos Carrera existe. Aquí está el top 10."
 - "Sube tu carrera y compite" → **bait de UGC** (que la audiencia genere contenido)
 - "Valoro vuestras carreras" (reacción a las que envíen)
 
-**5. 😤 Dolores relatables del Modo Carrera (alcance)**
+**5. 🥊 Rivales y Modo en Vivo (drama en tiempo real) — NUEVO**
+- **Dossier táctico de rival:** la app te dice si un equipo es tu "bestia negra" o tu víctima propicia, con racha, goleadas, formación que mejor te funciona. Gancho: *"La app me dijo que este equipo es mi bestia negra... y tenía razón."*
+- **Rating dinámico de rivales:** no es un catálogo fijo — si le has dado una paliza reciente a un "grande", su fuerza baja en tu carrera. *"Le bajé el rating al Real Madrid a base de goles."*
+- **Modo en vivo:** pantalla a pantalla completa que se actualiza en directo mientras juegas (posición, puntos, forma) — ideal para grabar la partida real con overlay.
+- **xPts / "suerte":** compara tus puntos reales contra los que "deberías" tener según tus ocasiones (xG). *"Según las estadísticas llevo peor suerte que nadie en la Premier."*
+
+**6. ✈️ Viajes y vida de club (inmersión) — NUEVO**
+- Cabina animada (bus/avión) antes de cada desplazamiento + diario de viaje con postales por partido fuera de casa.
+- Rendimiento lejos de casa por distancia recorrida, logros de "trotamundos".
+- Ascenso/descenso real de equipos temporada a temporada (la clasificación ahora refleja subidas y bajadas de división, no un catálogo estático).
+
+**7. 😤 Dolores relatables del Modo Carrera (alcance)**
 - "La directiva te pide ganar la liga con el presupuesto del Getafe"
 - Momentos universales (regens, objetivos imposibles, ese jugador que nunca renueva)
 - Aquí NO vendes la app directamente — captas al jugador genérico de EA FC y lo llevas al perfil.
@@ -115,8 +128,8 @@ El 90% del éxito en TikTok es **el primer 1,5 segundos**. Fórmulas listas (ada
 
 **Cuentas SEPARADAS para ES y EN.** El algoritmo de TikTok segmenta por idioma/región; mezclar idiomas confunde el For You Page y frena el alcance.
 
-- `@boardroom.es` (o similar) — español
-- `@boardroom.app` / `@boardroom.fc` — inglés
+- `@boardhub.es` (o similar) — español
+- `@boardhub.app` / `@boardhub.fc` — inglés
 
 **Cadencia:** 1-2 vídeos/día por cuenta. La constancia diaria durante las primeras 3-4 semanas es lo que entrena al algoritmo. **El mismo guion sirve para las dos cuentas** (solo cambias idioma de voz/subtítulos) → produces para ambas en paralelo, doble alcance por el mismo esfuerzo.
 
@@ -181,7 +194,13 @@ Revisa analytics cada domingo. Identifica tu vídeo top de la semana y haz 2-3 v
 
 ---
 
-## 12. Qué llevar a Claude chat (ejecución)
+## 12. Restricciones de contenido (no negociable)
+
+- **BETMÁXIMA es SIEMPRE moneda virtual sin valor canjeable, dentro de una app fan-made.** En ningún guion/caption se debe sugerir dinero real, afiliación con casas de apuestas reales, ni "gana dinero". Frasear como juego/simulación ("simulación", "sin dinero real", sin cuentas la edad del público objetivo por si hay menores).
+- **Disclaimer de proyecto no afiliado a EA/FIFA/clubes** — usa nombres reales de ligas/jugadores/clubes con fines narrativos de fans; no reclamar licencia oficial en ningún vídeo o bio.
+- Estos dos puntos vienen de la auditoría legal pre-lanzamiento del producto; cualquier guion que Claude chat proponga debe respetarlos.
+
+## 13. Qué llevar a Claude chat (ejecución)
 
 Pega este documento como contexto y pide, según el día:
 - **Guiones concretos** vídeo a vídeo (gancho + texto en pantalla + voz en off, ES y EN)
