@@ -869,7 +869,7 @@
   // Importa partidos desde CSV a una temporada. Añade en bloque (un solo afterChange).
   S.importMatchesCSV = (c, text, seasonId) => {
     const rows = parseCSV(text);
-    if (rows.length < 2) return { added: 0, skipped: 0, total: 0, error: "Necesito una cabecera y al menos una fila." };
+    if (rows.length < 2) return { added: 0, skipped: 0, total: 0, error: FC.t("csv.needHeaderRow") };
     const norm = (s) => String(s || "").trim().toLowerCase();
     const header = rows[0].map(norm);
     const idx = (names) => { for (const n of names) { const i = header.indexOf(n); if (i >= 0) return i; } return -1; };
@@ -882,7 +882,7 @@
       gf: idx(["gf", "golesfavor", "goles_favor", "goles a favor", "favor"]),
       ga: idx(["ga", "golescontra", "goles_contra", "goles en contra", "contra"]),
     };
-    if (col.rival < 0 || col.gf < 0 || col.ga < 0) return { added: 0, skipped: 0, total: rows.length - 1, error: "Faltan columnas obligatorias: rival, gf, ga." };
+    if (col.rival < 0 || col.gf < 0 || col.ga < 0) return { added: 0, skipped: 0, total: rows.length - 1, error: FC.t("csv.missingColumns") };
     const season = S.getSeason(c, seasonId) || S.currentSeason(c);
     const sid = season ? season.id : seasonId;
     const T = c.clubName, cell = (r, i) => (i >= 0 && i < r.length) ? String(r[i]).trim() : "";

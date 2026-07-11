@@ -58,8 +58,9 @@
     return m;
   };
   UI.confirm = (msg, onYes, danger) => {
-    UI.openModal("Confirmar", `<p style="margin:0">${U.esc(msg)}</p>`,
-      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn ${danger ? "btn-danger" : "btn-primary"}" id="cfYes">Sí, continuar</button>`);
+    const t = FC.t;
+    UI.openModal(t("common.confirmTitle"), `<p style="margin:0">${U.esc(msg)}</p>`,
+      `<button class="btn btn-ghost" data-close>${U.esc(t("common.cancel"))}</button><button class="btn ${danger ? "btn-danger" : "btn-primary"}" id="cfYes">${U.esc(t("common.yesContinue"))}</button>`);
     document.getElementById("cfYes").addEventListener("click", () => { UI.closeModal(); onYes(); });
   };
 
@@ -67,86 +68,91 @@
   // si quieres mostrar un correo de contacto público (déjalo vacío para ocultarlo).
   const CONTACT_EMAIL = "nighlife.appdevelopments@gmail.com";
   UI.openPrivacy = () => {
+    const T = FC.t;
     const h = (t) => `<h4 style="margin:18px 0 6px;font-size:15px">${t}</h4>`;
     const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
+    const rightsClause = CONTACT_EMAIL ? T("legal.privacy.rightsEmailClause", { email: U.esc(CONTACT_EMAIL) }) : "";
     const body = `
-      <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">Última actualización: junio de 2026</p>
-      ${h("Qué es Boardhub")}
-      ${p("Boardhub es una aplicación web <b>gratuita y de fans</b>, companion del Modo Carrera de EA Sports FC. Funciona en tu navegador y guarda tus datos en este dispositivo; la nube y la comunidad son <b>opcionales</b>.")}
-      ${h("Aviso legal — proyecto no oficial")}
-      ${p("Boardhub es un proyecto <b>no oficial</b> sin afiliación, patrocinio ni licencia de Electronic Arts Inc., EA Sports, EA Sports FC, la FIFA, ni de los clubes, ligas, competiciones o jugadores mencionados. Todas las marcas, nombres y derechos pertenecen a sus respectivos propietarios y se usan solo con fines descriptivos para que registres tu propia carrera.")}
-      ${h("Qué datos tratamos y con qué fin")}
-      ${p("• <b>Tus carreras</b> (partidos, plantilla, etc.) se guardan en <b>tu navegador</b> (localStorage). No salen de tu dispositivo salvo que tú decidas subirlas a la nube.")}
-      ${p("• <b>Email</b>: solo si creas una cuenta. Se usa para enviarte un <b>código de acceso de un solo uso</b> (no usamos contraseñas). Base legal: tu consentimiento.")}
-      ${p("• <b>Copia en la nube</b> (opcional): si pulsas «Subir a la nube», tus carreras se guardan en tu cuenta de forma <b>privada</b> (solo tú las ves).")}
-      ${p("• <b>Comunidad</b> (opcional): si <b>publicas</b> una carrera, se hace público un <b>resumen</b> (club, liga, nombre de mánager, palmarés y récords). Si <b>comentas</b>, se publican el nombre que muestras y tu texto. No se publican notas, plantilla ni finanzas.")}
-      ${h("Dónde se guardan")}
-      ${p("La copia en la nube y los datos de comunidad se alojan en <b>Supabase</b> (proveedor de backend), en servidores de la <b>Unión Europea</b>. En tu dispositivo, los datos viven en el almacenamiento local del navegador.")}
-      ${h("Cookies y seguimiento")}
-      ${p("No usamos cookies de seguimiento ni analítica de terceros. Solo almacenamiento local técnico imprescindible para que la app funcione.")}
-      ${h("Cuánto tiempo conservamos tus datos")}
-      ${p("Hasta que los elimines: puedes retirar una publicación, cerrar sesión o <b>eliminar tu cuenta y datos</b> desde la sección <b>Comunidad</b>. Los datos locales los controlas tú desde <b>Ajustes</b> (exportar o borrar).")}
-      ${h("Tus derechos (RGPD)")}
-      ${p("Tienes derecho de acceso, rectificación, supresión y portabilidad. Para <b>portabilidad</b>, exporta tus datos en JSON desde Ajustes. Para <b>supresión</b>, usa «Eliminar mi cuenta y datos» en Comunidad" + (CONTACT_EMAIL ? ` o escríbenos a <b>${U.esc(CONTACT_EMAIL)}</b>` : "") + ".")}
-      ${h("Menores")}
-      ${p("La app no está dirigida a menores de 14 años. Si eres menor de esa edad, no crees una cuenta sin el consentimiento de tus padres o tutores.")}`;
-    UI.openModal("Privacidad y aviso legal", body, `<button class="btn btn-primary" data-close>Entendido</button>`, { lg: true });
+      <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">${T("legal.updated")}</p>
+      ${h(T("legal.privacy.h1"))}
+      ${p(T("legal.privacy.p1"))}
+      ${h(T("legal.privacy.h2"))}
+      ${p(T("legal.privacy.p2"))}
+      ${h(T("legal.privacy.h3"))}
+      ${p(T("legal.privacy.p3"))}
+      ${p(T("legal.privacy.p4"))}
+      ${p(T("legal.privacy.p5"))}
+      ${p(T("legal.privacy.p6"))}
+      ${h(T("legal.privacy.h4"))}
+      ${p(T("legal.privacy.p7"))}
+      ${h(T("legal.privacy.h5"))}
+      ${p(T("legal.privacy.p8"))}
+      ${h(T("legal.privacy.h6"))}
+      ${p(T("legal.privacy.p9"))}
+      ${h(T("legal.privacy.h7"))}
+      ${p(T("legal.privacy.rights", { emailClause: rightsClause }))}
+      ${h(T("legal.privacy.h8"))}
+      ${p(T("legal.privacy.p11"))}`;
+    UI.openModal(T("legal.privacyTitle"), body, `<button class="btn btn-primary" data-close>${U.esc(T("legal.understood"))}</button>`, { lg: true });
   };
 
   // Términos de uso (escudo legal para la comunidad + contenido de usuarios).
   UI.openTerms = () => {
+    const T = FC.t;
     const h = (t) => `<h4 style="margin:18px 0 6px;font-size:15px">${t}</h4>`;
     const p = (t) => `<p style="margin:0 0 8px;font-size:13.5px;color:var(--text-dim);line-height:1.55">${t}</p>`;
+    const lawClause = CONTACT_EMAIL ? T("legal.terms.lawEmailClause", { email: U.esc(CONTACT_EMAIL) }) : "";
     const body = `
-      <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">Última actualización: junio de 2026</p>
-      ${h("1. Aceptación")}
-      ${p("Al usar Boardhub aceptas estos términos. Si no estás de acuerdo, no uses la aplicación. El uso de las funciones de <b>cuenta</b> y <b>comunidad</b> requiere además aceptar estos términos y la Política de privacidad.")}
-      ${h("2. Qué es Boardhub")}
-      ${p("Boardhub es una herramienta <b>gratuita y de fans</b> para registrar tu Modo Carrera. Es un proyecto <b>no oficial</b>, sin afiliación ni licencia de Electronic Arts, EA Sports, EA Sports FC, la FIFA ni de los clubes, ligas o jugadores mencionados. El «mercado» y las cuotas son una <b>simulación sin dinero real</b> con fines de entretenimiento.")}
-      ${h("3. Uso aceptable")}
-      ${p("Te comprometes a <b>no</b>: publicar contenido ilegal, ofensivo, difamatorio, que incite al odio o vulnere derechos de terceros; suplantar a otras personas; enviar spam o publicidad; intentar vulnerar la seguridad del servicio o de otros usuarios; ni usar la app de forma que la dañe o interrumpa.")}
-      ${h("4. Tu contenido")}
-      ${p("Eres el <b>único responsable</b> de lo que publicas (carreras compartidas, nombre de mánager, comentarios). Conservas tus derechos sobre tu contenido, pero al publicarlo nos concedes una licencia <b>no exclusiva y gratuita</b> para alojarlo y mostrarlo dentro de la comunidad con el fin de operar el servicio. Puedes retirar tu contenido en cualquier momento desde la app.")}
-      ${h("5. Moderación")}
-      ${p("Podemos <b>retirar contenido o suspender el acceso</b>, sin previo aviso, si incumple estos términos o perjudica a la comunidad. Disponemos de límites automáticos anti-spam.")}
-      ${h("6. Disponibilidad del servicio")}
-      ${p("El servicio se ofrece «<b>tal cual</b>» y «según disponibilidad». La nube y la comunidad funcionan sobre infraestructura gratuita y <b>pueden pausarse, fallar o discontinuarse</b> en cualquier momento. Tus datos guardados en este dispositivo no dependen de la nube y siguen siendo tuyos (puedes exportarlos desde Ajustes).")}
-      ${h("7. Limitación de responsabilidad")}
-      ${p("En la medida que permita la ley, Boardhub y sus responsables <b>no se hacen responsables</b> de daños derivados del uso o de la imposibilidad de uso, ni de la pérdida de datos, ni del contenido publicado por otros usuarios. No ofrecemos ninguna garantía sobre la exactitud de cuotas, estadísticas o predicciones simuladas.")}
-      ${h("8. Propiedad intelectual")}
-      ${p("Las marcas, nombres de clubes, ligas, competiciones y jugadores pertenecen a sus respectivos titulares y se usan solo con fines descriptivos. Boardhub no reclama ningún derecho sobre ellos.")}
-      ${h("9. Cambios")}
-      ${p("Podemos actualizar estos términos. Los cambios relevantes se reflejarán en esta página con su fecha. El uso continuado tras un cambio implica su aceptación.")}
-      ${h("10. Ley aplicable")}
-      ${p("Estos términos se rigen por la <b>legislación española</b> y la normativa de la Unión Europea aplicable." + (CONTACT_EMAIL ? ` Para cualquier cuestión, escríbenos a <b>${U.esc(CONTACT_EMAIL)}</b>.` : "") + "")}`;
-    UI.openModal("Términos de uso", body, `<button class="btn btn-primary" data-close>Entendido</button>`, { lg: true });
+      <p style="margin:0 0 4px;font-size:12px;color:var(--text-dim)">${T("legal.updated")}</p>
+      ${h(T("legal.terms.h1"))}
+      ${p(T("legal.terms.p1"))}
+      ${h(T("legal.terms.h2"))}
+      ${p(T("legal.terms.p2"))}
+      ${h(T("legal.terms.h3"))}
+      ${p(T("legal.terms.p3"))}
+      ${h(T("legal.terms.h4"))}
+      ${p(T("legal.terms.p4"))}
+      ${h(T("legal.terms.h5"))}
+      ${p(T("legal.terms.p5"))}
+      ${h(T("legal.terms.h6"))}
+      ${p(T("legal.terms.p6"))}
+      ${h(T("legal.terms.h7"))}
+      ${p(T("legal.terms.p7"))}
+      ${h(T("legal.terms.h8"))}
+      ${p(T("legal.terms.p8"))}
+      ${h(T("legal.terms.h9"))}
+      ${p(T("legal.terms.p9"))}
+      ${h(T("legal.terms.h10"))}
+      ${p(T("legal.terms.law", { emailClause: lawClause }))}`;
+    UI.openModal(T("legal.termsTitle"), body, `<button class="btn btn-primary" data-close>${U.esc(T("legal.understood"))}</button>`, { lg: true });
   };
 
   // Confirmación fuerte e irreversible para el borrado de cuenta (RGPD).
   UI.confirmDeleteAccount = (after) => {
+    const T = FC.t;
     const body = `
-      <p style="margin-top:0">Esto eliminará de forma <b>permanente</b>:</p>
+      <p style="margin-top:0">${T("legal.deleteIntro")}</p>
       <ul style="margin:0 0 12px;padding-left:20px;color:var(--text-dim);font-size:14px;line-height:1.6">
-        <li>Tu cuenta de acceso (email).</li>
-        <li>Las carreras que hayas subido a la nube.</li>
-        <li>Tus carreras publicadas y comentarios en la comunidad.</li>
+        <li>${T("legal.deleteItem1")}</li>
+        <li>${T("legal.deleteItem2")}</li>
+        <li>${T("legal.deleteItem3")}</li>
       </ul>
-      <p style="font-size:13px;color:var(--text-dim);margin:0">Tus carreras guardadas en <b>este dispositivo</b> no se borran (puedes exportarlas o eliminarlas en Ajustes). <b>Esta acción no se puede deshacer.</b></p>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13.5px;cursor:pointer"><input type="checkbox" id="da-confirm" style="flex:none" /> Entiendo que es permanente y quiero continuar.</label>`;
-    UI.openModal("Eliminar mi cuenta y datos", body,
-      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-danger" id="da-go" disabled>Eliminar definitivamente</button>`);
+      <p style="font-size:13px;color:var(--text-dim);margin:0">${T("legal.deleteNote")}</p>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13.5px;cursor:pointer"><input type="checkbox" id="da-confirm" style="flex:none" /> ${U.esc(T("legal.deleteCheckbox"))}</label>`;
+    UI.openModal(T("legal.deleteTitle"), body,
+      `<button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button><button class="btn btn-danger" id="da-go" disabled>${U.esc(T("legal.deleteConfirmBtn"))}</button>`);
     const chk = document.getElementById("da-confirm"), go = document.getElementById("da-go");
     chk.addEventListener("change", () => { go.disabled = !chk.checked; });
     go.addEventListener("click", async () => {
-      go.disabled = true; go.textContent = "Eliminando…";
+      go.disabled = true; go.textContent = T("legal.deleting");
       try {
         const r = await FC.cloud.deleteAccount();
         UI.closeModal();
-        UI.toast(r.authDeleted ? "Cuenta y datos eliminados" : "Tus datos se han eliminado y se ha cerrado la sesión", "ok");
+        UI.toast(r.authDeleted ? T("legal.deletedFull") : T("legal.deletedPartial"), "ok");
         if (after) after();
       } catch (e) {
-        UI.toast(e.message || "No se pudo eliminar la cuenta", "err");
-        go.disabled = false; go.textContent = "Eliminar definitivamente";
+        UI.toast(e.message || T("legal.deleteError"), "err");
+        go.disabled = false; go.textContent = T("legal.deleteConfirmBtn");
       }
     });
   };
@@ -178,47 +184,50 @@
     ctx.fillStyle = DIM; ctx.font = font(30); ctx.fillText(String(spec.footer || "Mi Modo Carrera · Boardhub"), PAD, H - PAD + 8);
     const fn = (String(spec.filename || "carrera-fc").replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "carrera-fc") + ".png";
     const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = fn; a.click();
-    UI.toast("Imagen descargada", "ok");
+    UI.toast(FC.t("card.imageDownloaded"), "ok");
   };
   // Insignia de fundador (solo si el owner_id está en el set público de fundadores).
   UI.founderBadge = (ownerId) => FC.cloud.isFounder(ownerId)
     ? `<span class="founder-badge" title="${FC.t("support.founderBadgeTitle")}">★ ${FC.t("support.founderBadge")}</span>` : "";
   // Visor read-only de una carrera compartida (datos vienen de la nube → escapar todo)
   UI.sharedCardHTML = (row) => {
+    const T = FC.t;
     const s = (row && row.summary) || {};
-    const top = s.topScorer ? U.esc(s.topScorer.name) + " · " + (s.topScorer.goals || 0) + " goles" : "—";
+    const top = s.topScorer ? T("shared.topScorerLine", { name: U.esc(s.topScorer.name), goals: s.topScorer.goals || 0 }) : "—";
     const trophies = s.titlesList || [];
     const fb = UI.founderBadge(row && row.owner_id);
     return `<div class="flex gap center mb"><div class="career-badge" style="background:${U.teamColors(s.club||"").bg};color:${U.teamColors(s.club||"").text}">${U.initials(s.club||"?")}</div>
-        <div><b style="font-size:18px">${U.esc(s.club||"Club")}</b>${fb}<br><small class="faint">${U.esc(s.league||"")}${s.manager?" · "+U.esc(s.manager):""}</small></div></div>
+        <div><b style="font-size:18px">${U.esc(s.club||T("shared.clubFallback"))}</b>${fb}<br><small class="faint">${U.esc(s.league||"")}${s.manager?" · "+U.esc(s.manager):""}</small></div></div>
       <div class="grid cols-4 keep-2">
-        ${statTile("Títulos", s.titles||0, "")}
-        ${statTile("Temporadas", s.seasons||0, "")}
-        ${statTile("% Victorias", (s.winPct||0)+"%", (s.played||0)+" partidos")}
-        ${statTile("Mejor temp.", (s.bestPoints||0)+" pts", s.bestSeason?U.esc(s.bestSeason.label):"")}
+        ${statTile(T("shared.titles"), s.titles||0, "")}
+        ${statTile(T("shared.seasons"), s.seasons||0, "")}
+        ${statTile(T("shared.winPct"), (s.winPct||0)+"%", (s.played||0)+" "+T("shared.matchesSuffix"))}
+        ${statTile(T("shared.bestSeasonShort"), (s.bestPoints||0)+" pts", s.bestSeason?U.esc(s.bestSeason.label):"")}
       </div>
-      <div class="section-title">Palmarés</div>
-      ${trophies.length ? `<div class="cc-rules">${trophies.map(t=>`<span class="chip gold">🏆 ${U.esc(t.competition||"")}${t.season?" "+U.esc(t.season):""}</span>`).join("")}</div>` : `<p class="faint">Sin títulos todavía.</p>`}
-      <div class="section-title">Estrella del club</div>
-      <p style="margin:0">⚽ Máximo goleador del club: <b>${top}</b></p>
-      <p class="faint" style="font-size:12px;margin-top:16px">Carrera compartida desde Boardhub · solo lectura.</p>`;
+      <div class="section-title">${T("shared.trophiesTitle")}</div>
+      ${trophies.length ? `<div class="cc-rules">${trophies.map(t=>`<span class="chip gold">🏆 ${U.esc(t.competition||"")}${t.season?" "+U.esc(t.season):""}</span>`).join("")}</div>` : `<p class="faint">${T("shared.noTitlesYet")}</p>`}
+      <div class="section-title">${T("shared.clubStar")}</div>
+      <p style="margin:0">⚽ ${T("shared.topScorerLabel")}: <b>${top}</b></p>
+      <p class="faint" style="font-size:12px;margin-top:16px">${T("shared.readOnlyFooter")}</p>`;
   };
   UI.openSharedByCode = async (code, cfgOverride) => {
-    if (!code) { UI.toast("Indica un código", "err"); return; }
+    const T = FC.t;
+    if (!code) { UI.toast(T("shared.enterCode"), "err"); return; }
     try {
       const row = await FC.cloud.getShared(code, cfgOverride);
-      if (!row) { UI.toast("No se encontró esa carrera compartida", "err"); return; }
+      if (!row) { UI.toast(T("shared.notFound"), "err"); return; }
       await FC.cloud.loadFounders(cfgOverride);
       UI.openSharedModal(row, cfgOverride);
-    } catch (e) { UI.toast(e.message || "Error al cargar", "err"); }
+    } catch (e) { UI.toast(e.message || T("shared.loadError"), "err"); }
   };
   // Visor unificado: tarjeta + perfil del manager + comentarios. Lo usan el ranking, el código y los enlaces.
   UI.openSharedModal = (row, cfg) => {
+    const T = FC.t;
     if (!row) return;
     const shareId = row.share_id || "", ownerId = row.owner_id || "";
-    const extra = ownerId ? `<div style="margin-top:14px"><button class="btn btn-ghost btn-sm" id="sc-profile"><span class="ni-icon" data-icon="cloud"></span> Ver más carreras de este manager</button></div>` : "";
-    const body = UI.sharedCardHTML(row) + extra + `<div class="section-title">Comentarios</div><div id="sc-comments"><p class="faint">Cargando…</p></div>`;
-    UI.openModal("Carrera compartida", body, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
+    const extra = ownerId ? `<div style="margin-top:14px"><button class="btn btn-ghost btn-sm" id="sc-profile"><span class="ni-icon" data-icon="cloud"></span> ${U.esc(T("shared.viewMoreManager"))}</button></div>` : "";
+    const body = UI.sharedCardHTML(row) + extra + `<div class="section-title">${T("shared.comments")}</div><div id="sc-comments"><p class="faint">${T("common.loading")}</p></div>`;
+    UI.openModal(T("shared.title"), body, `<button class="btn btn-ghost" data-close>${U.esc(T("common.close"))}</button>`, { lg: true });
     const modal = document.getElementById("modal");
     const pb = modal && modal.querySelector("#sc-profile");
     if (pb) pb.addEventListener("click", () => UI.openProfileModal(ownerId, cfg));
@@ -226,53 +235,56 @@
   };
   // Render (+wiring) de comentarios dentro del visor. body remoto → escapar SIEMPRE con U.esc.
   UI.renderComments = async (shareId, cfg) => {
+    const T = FC.t;
     const box = document.getElementById("sc-comments");
     if (!box) return;
     const sameProject = !cfg || (FC.cloud.config().url === cfg.url);
     const canComment = FC.cloud.isLoggedIn() && sameProject;
     let list = [];
     try { list = (await FC.cloud.getComments(shareId, cfg)) || []; }
-    catch (e) { box.innerHTML = `<p class="faint">No se pudieron cargar los comentarios.</p>`; return; }
+    catch (e) { box.innerHTML = `<p class="faint">${T("shared.commentsLoadError")}</p>`; return; }
     const myId = FC.cloud.myOwnerId();
     const listHTML = list.length
-      ? `<div class="list">${list.map(c => `<div class="list-row"><div class="lr-main"><b>${U.esc(c.author || "Anónimo")}</b> <small class="faint">${U.fmtDate(c.created_at)}</small><div style="margin-top:4px;white-space:pre-wrap;word-break:break-word">${U.esc(c.body || "")}</div></div>${(myId && c.author_id === myId) ? `<button class="btn btn-ghost btn-sm" data-delc="${U.esc(c.id)}">Borrar</button>` : ""}</div>`).join("")}</div>`
-      : `<p class="faint">Sé el primero en comentar.</p>`;
+      ? `<div class="list">${list.map(c => `<div class="list-row"><div class="lr-main"><b>${U.esc(c.author || T("shared.anonymous"))}</b> <small class="faint">${U.fmtDate(c.created_at)}</small><div style="margin-top:4px;white-space:pre-wrap;word-break:break-word">${U.esc(c.body || "")}</div></div>${(myId && c.author_id === myId) ? `<button class="btn btn-ghost btn-sm" data-delc="${U.esc(c.id)}">${U.esc(T("shared.deleteBtn"))}</button>` : ""}</div>`).join("")}</div>`
+      : `<p class="faint">${T("shared.beFirstComment")}</p>`;
     const formHTML = canComment
-      ? `<div class="field" style="margin-top:12px"><textarea id="sc-input" rows="2" maxlength="500" placeholder="Escribe un comentario…"></textarea></div><button class="btn btn-primary btn-sm" id="sc-send"><span class="ni-icon" data-icon="check"></span> Comentar</button>`
-      : `<p class="faint" style="font-size:12px;margin-top:12px">${FC.cloud.isLoggedIn() ? "Solo puedes comentar en carreras de tu propia comunidad." : "Inicia sesión en Comunidad para comentar."}</p>`;
+      ? `<div class="field" style="margin-top:12px"><textarea id="sc-input" rows="2" maxlength="500" placeholder="${U.esc(T("shared.commentPh"))}"></textarea></div><button class="btn btn-primary btn-sm" id="sc-send"><span class="ni-icon" data-icon="check"></span> ${U.esc(T("shared.commentBtn"))}</button>`
+      : `<p class="faint" style="font-size:12px;margin-top:12px">${FC.cloud.isLoggedIn() ? T("shared.commentOwnOnly") : T("shared.commentLoginPrompt")}</p>`;
     box.innerHTML = listHTML + formHTML;
     U.hydrateIcons(box);
-    box.querySelectorAll("[data-delc]").forEach(b => b.addEventListener("click", () => UI.confirm("¿Borrar tu comentario?", async () => {
-      try { await FC.cloud.deleteComment(b.dataset.delc); UI.renderComments(shareId, cfg); } catch (e) { UI.toast(e.message || "Error", "err"); }
+    box.querySelectorAll("[data-delc]").forEach(b => b.addEventListener("click", () => UI.confirm(T("shared.confirmDeleteComment"), async () => {
+      try { await FC.cloud.deleteComment(b.dataset.delc); UI.renderComments(shareId, cfg); } catch (e) { UI.toast(e.message || T("common.error"), "err"); }
     }, true)));
     const send = document.getElementById("sc-send");
     if (send) send.addEventListener("click", async () => {
       const val = (document.getElementById("sc-input") || {}).value || "";
-      if (!val.trim()) { UI.toast("Escribe un comentario", "err"); return; }
+      if (!val.trim()) { UI.toast(T("shared.writeComment"), "err"); return; }
       send.disabled = true;
       try { await FC.cloud.addComment(shareId, val); UI.renderComments(shareId, cfg); }
-      catch (e) { UI.toast(e.message || "Error", "err"); send.disabled = false; }
+      catch (e) { UI.toast(e.message || T("common.error"), "err"); send.disabled = false; }
     });
   };
   // Perfil público: todas las carreras publicadas de un manager (por owner_id).
   UI.openProfileModal = async (ownerId, cfg) => {
+    const T = FC.t;
     if (!ownerId) return;
-    UI.openModal("Perfil del manager", `<div id="pf-body"><p class="faint">Cargando…</p></div>`, '<button class="btn btn-ghost" data-close>Cerrar</button>', { lg: true });
+    UI.openModal(T("shared.profileTitle"), `<div id="pf-body"><p class="faint">${T("common.loading")}</p></div>`, `<button class="btn btn-ghost" data-close>${U.esc(T("common.close"))}</button>`, { lg: true });
     let rows = [];
     try { rows = (await FC.cloud.profileCareers(ownerId, cfg)) || []; await FC.cloud.loadFounders(cfg); }
-    catch (e) { const b = document.getElementById("pf-body"); if (b) b.innerHTML = `<p class="faint">No se pudo cargar el perfil.</p>`; return; }
+    catch (e) { const b = document.getElementById("pf-body"); if (b) b.innerHTML = `<p class="faint">${T("shared.profileLoadError")}</p>`; return; }
     const box = document.getElementById("pf-body");
     if (!box) return;
-    if (!rows.length) { box.innerHTML = `<p class="faint">Este manager aún no tiene carreras publicadas.</p>`; return; }
+    if (!rows.length) { box.innerHTML = `<p class="faint">${T("shared.noPublishedCareers")}</p>`; return; }
     const manager = (rows[0].manager || "").trim();
     const totalTitles = rows.reduce((a, r) => a + (Number(r.titles) || 0), 0);
-    box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || "Manager")}</b>${UI.founderBadge(ownerId)}<br><small class="faint">${rows.length} carrera(s) · ${totalTitles} título(s) en total</small></div></div>
-      <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.teamColors(r.club||"").bg};color:${U.teamColors(r.club||"").text}">${U.initials(r.club||"?")}</span><div class="lr-main"><b>${U.esc(r.club || "Club")}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} títulos</small></div></div>`).join("")}</div>`;
+    box.innerHTML = `<div class="flex gap center mb"><div><b style="font-size:18px">${U.esc(manager || T("shared.managerFallback"))}</b>${UI.founderBadge(ownerId)}<br><small class="faint">${rows.length} ${T("shared.careerCountSuffix", { titles: totalTitles })}</small></div></div>
+      <div class="list">${rows.map((r, i) => `<div class="list-row" data-pf="${i}" style="cursor:pointer"><span class="career-badge" style="background:${U.teamColors(r.club||"").bg};color:${U.teamColors(r.club||"").text}">${U.initials(r.club||"?")}</span><div class="lr-main"><b>${U.esc(r.club || T("shared.clubFallback"))}</b><small class="faint">${U.esc(r.league || "")} · ${Number(r.titles) || 0} ${T("shared.titles").toLowerCase()}</small></div></div>`).join("")}</div>`;
     U.hydrateIcons(box);
     box.querySelectorAll("[data-pf]").forEach(el => el.addEventListener("click", () => UI.openSharedModal(rows[+el.dataset.pf], cfg)));
   };
   // Tarjeta compacta del feed de actividad. row de C.activityFeed; datos remotos escapados con U.esc.
   UI.activityCardHTML = (row, i) => {
+    const T = FC.t;
     const s = row.summary || {};
     const titles = s.titlesList || [];
     const chips = [];
@@ -280,9 +292,9 @@
     if (titles.length > 3) chips.push(`<span class="chip">+${titles.length - 3}</span>`);
     if (Number(s.bestPoints) > 0) chips.push(`<span class="chip">📈 ${Number(s.bestPoints) || 0} pts</span>`);
     if (s.topScorer && s.topScorer.name) chips.push(`<span class="chip">⚽ ${U.esc(s.topScorer.name)} · ${Number(s.topScorer.goals) || 0}</span>`);
-    const who = (s.manager && String(s.manager).trim()) ? U.esc(s.manager) : "Un mánager";
-    const club = U.esc(row.club || "su club");
-    const headline = (Number(row.titles) || 0) > 0 ? `${who} presume de <b>${club}</b>` : `${who} empieza su aventura con <b>${club}</b>`;
+    const who = (s.manager && String(s.manager).trim()) ? U.esc(s.manager) : T("shared.someManager");
+    const club = U.esc(row.club || T("shared.hisClub"));
+    const headline = (Number(row.titles) || 0) > 0 ? T("shared.showsOffClub", { who, club }) : T("shared.startsAdventure", { who, club });
     return `<div class="list-row" data-feed="${i}" style="cursor:pointer;align-items:flex-start">
       <span class="career-badge" style="background:${U.teamColors(row.club||"").bg};color:${U.teamColors(row.club||"").text}">${U.initials(row.club||"?")}</span>
       <div class="lr-main"><div>${headline}${UI.founderBadge(row.owner_id)}</div>
@@ -604,7 +616,7 @@
       const lu = (lineupArr || [])[i] || {};
       return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
         <span class="chip" style="min-width:36px;text-align:center;font-size:10px;flex-shrink:0">${U.esc(pos)}</span>
-        <input type="text" class="lu-inp" data-slot="${i}" ${dlId ? `list="${dlId}"` : ""} value="${U.esc(lu.name || "")}" placeholder="Jugador" style="flex:1;padding:3px 8px;font-size:13px"/>
+        <input type="text" class="lu-inp" data-slot="${i}" ${dlId ? `list="${dlId}"` : ""} value="${U.esc(lu.name || "")}" placeholder="${U.esc(FC.t("match.field.player"))}" style="flex:1;padding:3px 8px;font-size:13px"/>
       </div>`;
     }).join("");
     return `<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
@@ -867,6 +879,7 @@
   };
 
   UI.openMatchModal = function (c, existing, opts) {
+    const T = FC.t;
     opts = opts || {};
     const season = S.currentSeason(c);
     const teams = (season.teams || []).filter(t => t !== c.clubName);
@@ -893,16 +906,16 @@
       const r = S.userResult(c, existing);
       const pct = Math.round(userProb * 100);
       let icon, label, col;
-      if      (r === "W" && pct < 33)  { icon="⚡"; label="¡Diste la sorpresa!";         col="var(--accent-3)"; }
-      else if (r === "W")              { icon="✓";  label="Confirmaste el pronóstico";   col="var(--ok)"; }
-      else if (r === "D")              { icon="·";  label="Partido igualado";             col="var(--text-dim)"; }
-      else if (r === "L" && pct > 55)  { icon="💥"; label="Tropiezo inesperado";         col="var(--danger)"; }
-      else                             { icon="✗";  label="El mercado lo veía venir";    col="var(--danger)"; }
+      if      (r === "W" && pct < 33)  { icon="⚡"; label=T("match.odds.surprise");      col="var(--accent-3)"; }
+      else if (r === "W")              { icon="✓";  label=T("match.odds.confirmed");     col="var(--ok)"; }
+      else if (r === "D")              { icon="·";  label=T("match.odds.evenMatch");     col="var(--text-dim)"; }
+      else if (r === "L" && pct > 55)  { icon="💥"; label=T("match.odds.upset");         col="var(--danger)"; }
+      else                             { icon="✗";  label=T("match.odds.expected");      col="var(--danger)"; }
       return `<div style="background:var(--panel-2);border:1px solid var(--line);border-left:3px solid ${col};border-radius:11px;padding:10px 13px;margin-bottom:14px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px">Veredicto del mercado · pre-partido</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px">${T("match.odds.title")}</div>
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
           <div><span style="font-size:15px;font-weight:800;color:${col}">${icon} ${label}</span>
-            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">El mercado te daba un <b style="color:var(--text)">${pct}%</b> · cuota <b style="color:var(--text)">${foq(userOdd)}</b></div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">${T("match.odds.marketGave", { pct: pct, odd: foq(userOdd) })}</div>
           </div>
           <div style="display:flex;gap:6px;font-size:12px;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--text-dim)">
             <b style="color:var(--ok)">${foq(o.best.home)}</b><span>·</span>
@@ -915,69 +928,69 @@
     const body = `
       ${mktVerdict}
       ${playersDatalist(c, dlId)}
-      <div class="field"><label>Tipo de partido</label>
+      <div class="field"><label>${T("match.field.type")}</label>
         <div class="seg" id="m-mode">
-          <button type="button" data-m="result" class="${mode==="result"?"active":""}">Resultado</button>
-          <button type="button" data-m="schedule" class="${mode==="schedule"?"active":""}">Próximo (sin jugar)</button>
+          <button type="button" data-m="result" class="${mode==="result"?"active":""}">${T("match.mode.result")}</button>
+          <button type="button" data-m="schedule" class="${mode==="schedule"?"active":""}">${T("match.mode.schedule")}</button>
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Competición</label><select id="m-comp">${compSelectOptions(c, ex.competition)}</select></div>
-        <div class="field"><label>Jornada / ronda</label><input type="text" id="m-round" value="${U.esc(ex.round||"")}" placeholder="p.ej. J5 / Octavos"/></div>
+        <div class="field"><label>${T("match.field.competition")}</label><select id="m-comp">${compSelectOptions(c, ex.competition)}</select></div>
+        <div class="field"><label>${T("match.field.round")}</label><input type="text" id="m-round" value="${U.esc(ex.round||"")}" placeholder="${U.esc(T("match.field.roundPh"))}"/></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Fecha</label><input type="date" id="m-date" value="${ex.date||""}"/></div>
-        <div class="field"><label>Condición</label>
+        <div class="field"><label>${T("match.field.date")}</label><input type="date" id="m-date" value="${ex.date||""}"/></div>
+        <div class="field"><label>${T("match.field.condition")}</label>
           <div class="seg" id="m-venue">
-            <button type="button" data-v="home" class="${isHome?"active":""}">Local</button>
-            <button type="button" data-v="away" class="${!isHome?"active":""}">Visitante</button>
+            <button type="button" data-v="home" class="${isHome?"active":""}">${T("matchday.home")}</button>
+            <button type="button" data-v="away" class="${!isHome?"active":""}">${T("matchday.away")}</button>
           </div>
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Etiqueta</label>
+        <div class="field"><label>${T("match.field.tag")}</label>
           <div class="seg" id="m-tag-seg">
-            <button type="button" class="${!ex.tag?"active":""}" data-tag="">Ninguna</button>
-            <button type="button" class="${ex.tag==="derbi"?"active":""}" data-tag="derbi">🔥 Derbi</button>
-            <button type="button" class="${ex.tag==="final"?"active":""}" data-tag="final">🏆 Final</button>
-            <button type="button" class="${ex.tag==="clasico"?"active":""}" data-tag="clasico">⭐ Clásico</button>
+            <button type="button" class="${!ex.tag?"active":""}" data-tag="">${T("match.tag.none")}</button>
+            <button type="button" class="${ex.tag==="derbi"?"active":""}" data-tag="derbi">${T("match.tag.derby")}</button>
+            <button type="button" class="${ex.tag==="final"?"active":""}" data-tag="final">${T("match.tag.final")}</button>
+            <button type="button" class="${ex.tag==="clasico"?"active":""}" data-tag="clasico">${T("match.tag.classic")}</button>
           </div>
         </div>
       </div>
-      <div class="field"><label>Rival</label>
-        <input type="text" id="m-opp" list="dl-teams" value="${U.esc(oppName)}" placeholder="Nombre del rival"/>
+      <div class="field"><label>${T("match.field.rival")}</label>
+        <input type="text" id="m-opp" list="dl-teams" value="${U.esc(oppName)}" placeholder="${U.esc(T("match.field.rivalPh"))}"/>
         <datalist id="dl-teams">${teams.map(t => `<option value="${U.esc(t)}">`).join("")}</datalist>
       </div>
       <div id="m-result-fields"${mode==="schedule"?" hidden":""}>
       <div class="field-row">
-        <div class="field"><label>Goles ${U.esc(c.clubName)}</label><input type="number" id="m-gf" min="0" value="${gfVal!=null?gfVal:""}"/></div>
-        <div class="field"><label>Goles rival</label><input type="number" id="m-ga" min="0" value="${gaVal!=null?gaVal:""}"/></div>
+        <div class="field"><label>${T("match.field.yourGoals", { club: U.esc(c.clubName) })}</label><input type="number" id="m-gf" min="0" value="${gfVal!=null?gfVal:""}"/></div>
+        <div class="field"><label>${T("match.field.rivalGoals")}</label><input type="number" id="m-ga" min="0" value="${gaVal!=null?gaVal:""}"/></div>
       </div>
-      <div class="section-title" style="margin:8px 2px">Goleadores de tu equipo</div>
+      <div class="section-title" style="margin:8px 2px">${T("stand.topScorers")}</div>
       <div id="m-scorers"></div>
-      <button type="button" class="btn btn-ghost btn-sm" id="m-add-scorer"><span class="ni-icon" data-icon="plus"></span> Añadir gol</button>
-      <div class="section-title" style="margin:12px 2px 4px">Tarjetas</div>
+      <button type="button" class="btn btn-ghost btn-sm" id="m-add-scorer"><span class="ni-icon" data-icon="plus"></span> ${T("match.field.addGoalBtn")}</button>
+      <div class="section-title" style="margin:12px 2px 4px">${T("match.field.cardsTitle")}</div>
       <div id="m-cards"></div>
-      <button type="button" class="btn btn-ghost btn-sm" id="m-add-card"><span class="ni-icon" data-icon="plus"></span> Añadir tarjeta</button>
-      <div class="field" style="margin-top:16px"><label>Jugador del partido (MOTM)</label><input type="text" id="m-motm" list="${dlId}" value="${U.esc(ex.motm||"")}" placeholder="Nombre"/></div>
-      <div class="field" style="margin-top:12px"><label>Formación utilizada (opcional)</label>
-        <select id="m-formation"><option value="">— Sin especificar —</option>
+      <button type="button" class="btn btn-ghost btn-sm" id="m-add-card"><span class="ni-icon" data-icon="plus"></span> ${T("match.field.addCardBtn")}</button>
+      <div class="field" style="margin-top:16px"><label>${T("match.field.motm")}</label><input type="text" id="m-motm" list="${dlId}" value="${U.esc(ex.motm||"")}" placeholder="${U.esc(T("match.field.namePh"))}"/></div>
+      <div class="field" style="margin-top:12px"><label>${T("match.field.formation")}</label>
+        <select id="m-formation"><option value="">${T("match.field.formationNone")}</option>
           ${Object.keys(FC.data.FORMATIONS||{}).map(f => `<option value="${U.esc(f)}"${ex.formation===f?' selected':''}>▶ ${U.esc(f)}</option>`).join("")}
         </select></div>
       <details id="m-lineup-det" style="margin-top:16px"${(ex.lineup&&ex.lineup.length&&ex.formation)?' open':''}>
-        <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Alineación (opcional)</summary>
+        <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">${T("match.field.lineupSummary")}</summary>
         <div id="m-lineup-body" style="margin-top:10px">
-          <p class="faint" style="font-size:13px">Selecciona primero una formación.</p>
+          <p class="faint" style="font-size:13px">${T("match.field.selectFormationFirst")}</p>
         </div>
       </details>
       <details style="margin-top:16px">
-        <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Valoraciones de jugadores (opcional)</summary>
+        <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">${T("match.field.ratingsSummary")}</summary>
         <div style="margin-top:8px">
           <div style="display:flex;gap:4px;font-size:11px;color:var(--text2);padding:0 2px 6px;font-weight:600">
-            <span style="flex:3">Jugador</span><span style="flex:2">Nota (1-10)</span><span style="flex:1.5">Minutos</span><span style="width:34px"></span>
+            <span style="flex:3">${T("match.field.player")}</span><span style="flex:2">${T("match.field.ratingHeader")}</span><span style="flex:1.5">${T("match.field.minutesHeader")}</span><span style="width:34px"></span>
           </div>
           <div id="m-ratings"></div>
-          <button type="button" class="btn btn-ghost btn-sm" id="m-add-rating"><span class="ni-icon" data-icon="plus"></span> Añadir jugador</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="m-add-rating"><span class="ni-icon" data-icon="plus"></span> ${T("match.field.addPlayerBtn")}</button>
         </div>
       </details>
       ${(function(){
@@ -986,41 +999,41 @@
         const pair = (key, label, step) => {
           const p = Array.isArray(st[key]) ? st[key] : [];
           return `<div class="field-row">
-            <div class="field"><label>${label} · tú</label><input type="number" min="0" ${step?`step="${step}"`:""} id="ms-${key}-f" value="${v(p[0])}"/></div>
-            <div class="field"><label>${label} · rival</label><input type="number" min="0" ${step?`step="${step}"`:""} id="ms-${key}-a" value="${v(p[1])}"/></div>
+            <div class="field"><label>${label} · ${T("match.field.you")}</label><input type="number" min="0" ${step?`step="${step}"`:""} id="ms-${key}-f" value="${v(p[0])}"/></div>
+            <div class="field"><label>${label} · ${T("match.field.rivalShort")}</label><input type="number" min="0" ${step?`step="${step}"`:""} id="ms-${key}-a" value="${v(p[1])}"/></div>
           </div>`;
         };
         return `<details style="margin-top:16px">
-          <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">＋ Estadísticas avanzadas (opcional)</summary>
+          <summary style="cursor:pointer;user-select:none;font-weight:600;padding:6px 0;color:var(--accent)">${T("match.field.statsSummary")}</summary>
           <div style="margin-top:6px">
-            <div class="field-row"><div class="field"><label>Posesión tuya (%)</label><input type="number" min="0" max="100" id="ms-poss" value="${v(st.possession)}"/></div><div class="field"></div></div>
-            ${pair("shots","Remates")}
-            ${pair("sot","Tiros a puerta")}
-            ${pair("xg","xG","0.1")}
-            ${pair("corners","Córners")}
-            ${pair("fouls","Faltas")}
-            ${pair("yellow","Amarillas")}
-            ${pair("red","Rojas")}
-            ${pair("pens","Penaltis")}
+            <div class="field-row"><div class="field"><label>${T("match.field.possession")}</label><input type="number" min="0" max="100" id="ms-poss" value="${v(st.possession)}"/></div><div class="field"></div></div>
+            ${pair("shots",T("match.field.shots"))}
+            ${pair("sot",T("match.field.sot"))}
+            ${pair("xg",T("match.field.xgShort"),"0.1")}
+            ${pair("corners",T("match.field.corners"))}
+            ${pair("fouls",T("match.field.fouls"))}
+            ${pair("yellow",T("match.field.yellow"))}
+            ${pair("red",T("match.field.red"))}
+            ${pair("pens",T("match.field.pens"))}
           </div>
         </details>`;
       })()}
       </div>
     `;
     const title = mode === "schedule"
-      ? (existing ? "Editar próximo partido" : "Programar partido")
-      : (existing && !S.isPlayed(existing) ? "Registrar resultado" : existing ? "Editar partido" : "Registrar partido");
+      ? (existing ? T("match.title.editUpcoming") : T("match.title.schedule"))
+      : (existing && !S.isPlayed(existing) ? T("match.title.registerResult") : existing ? T("match.title.editMatch") : T("match.title.registerMatch"));
     UI.openModal(title, body,
-      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="m-save"><span class="ni-icon" data-icon="check"></span> Guardar</button>`, { lg: true });
+      `<button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button><button class="btn btn-primary" id="m-save"><span class="ni-icon" data-icon="check"></span> ${U.esc(T("common.save"))}</button>`, { lg: true });
 
     const scorersBox = document.getElementById("m-scorers");
     function addScorerRow(g) {
       g = g || {};
       const row = U.h("div", { class: "field-row three", style: "margin-bottom:8px" }, []);
       row.innerHTML = `
-        <input type="text" list="${dlId}" placeholder="Goleador" value="${U.esc(g.scorer||"")}"/>
-        <input type="text" list="${dlId}" placeholder="Asistente (opcional)" value="${U.esc(g.assist||"")}"/>
-        <button type="button" class="btn btn-ghost btn-sm" title="Quitar"><span class="ni-icon" data-icon="trash"></span></button>`;
+        <input type="text" list="${dlId}" placeholder="${U.esc(T("match.field.scorerPh"))}" value="${U.esc(g.scorer||"")}"/>
+        <input type="text" list="${dlId}" placeholder="${U.esc(T("match.field.assistPh"))}" value="${U.esc(g.assist||"")}"/>
+        <button type="button" class="btn btn-ghost btn-sm" title="${U.esc(T("match.field.removeTitle"))}"><span class="ni-icon" data-icon="trash"></span></button>`;
       row.querySelector("button").addEventListener("click", () => row.remove());
       scorersBox.appendChild(row);
       U.hydrateIcons(row);
@@ -1039,8 +1052,8 @@
           <button type="button" data-ct="yellow" class="${!isRed ? "active" : ""}">🟡</button>
           <button type="button" data-ct="red" class="${isRed ? "active" : ""}">🔴</button>
         </div>
-        <input type="text" list="${dlId}" placeholder="Jugador" value="${U.esc(card.player||"")}" style="flex:1;min-width:0"/>
-        <button type="button" class="btn btn-ghost btn-sm card-del" style="flex:none" title="Quitar"><span class="ni-icon" data-icon="trash"></span></button>`;
+        <input type="text" list="${dlId}" placeholder="${U.esc(T("match.field.player"))}" value="${U.esc(card.player||"")}" style="flex:1;min-width:0"/>
+        <button type="button" class="btn btn-ghost btn-sm card-del" style="flex:none" title="${U.esc(T("match.field.removeTitle"))}"><span class="ni-icon" data-icon="trash"></span></button>`;
       row.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
         row.querySelectorAll(".seg button").forEach(x => x.classList.toggle("active", x === b));
       }));
@@ -1056,10 +1069,10 @@
       r = r || {};
       const row = U.h("div", { style: "display:flex;gap:6px;margin-bottom:6px;align-items:center" }, []);
       row.innerHTML = `
-        <input type="text" list="${dlId}" placeholder="Jugador" value="${U.esc(r.name||"")}" style="flex:3;min-width:0"/>
-        <input type="number" min="1" max="10" step="0.1" placeholder="—" value="${r.rating!=null?r.rating:""}" style="flex:2;min-width:0" title="Nota (1-10)"/>
-        <input type="number" min="0" max="120" step="1" placeholder="90" value="${r.minutes!=null?r.minutes:""}" style="flex:1.5;min-width:0" title="Minutos jugados"/>
-        <button type="button" class="btn btn-ghost btn-sm" style="flex:none;width:34px;padding:0" title="Quitar"><span class="ni-icon" data-icon="trash"></span></button>`;
+        <input type="text" list="${dlId}" placeholder="${U.esc(T("match.field.player"))}" value="${U.esc(r.name||"")}" style="flex:3;min-width:0"/>
+        <input type="number" min="1" max="10" step="0.1" placeholder="—" value="${r.rating!=null?r.rating:""}" style="flex:2;min-width:0" title="${U.esc(T("match.field.ratingHeader"))}"/>
+        <input type="number" min="0" max="120" step="1" placeholder="90" value="${r.minutes!=null?r.minutes:""}" style="flex:1.5;min-width:0" title="${U.esc(T("match.field.minutesPlayedTitle"))}"/>
+        <button type="button" class="btn btn-ghost btn-sm" style="flex:none;width:34px;padding:0" title="${U.esc(T("match.field.removeTitle"))}"><span class="ni-icon" data-icon="trash"></span></button>`;
       row.querySelector("button").addEventListener("click", () => row.remove());
       ratingsBox.appendChild(row);
       U.hydrateIcons(row);
@@ -1088,7 +1101,7 @@
     function renderLineupPitch() {
       const f = formEl.value;
       const slots = f ? ((FC.data.FORMATIONS || {})[f] || []) : [];
-      if (!slots.length) { lineupBody.innerHTML = '<p class="faint" style="font-size:13px">Selecciona primero una formación.</p>'; return; }
+      if (!slots.length) { lineupBody.innerHTML = '<p class="faint" style="font-size:13px">' + U.esc(T("match.field.selectFormationFirst")) + '</p>'; return; }
       const current = slots.map((_, i) => (ex.lineup || [])[i] || {});
       lineupBody.innerHTML = _pitchUI(f, slots, current, dlId);
       lineupBody.querySelectorAll(".lu-inp").forEach(inp => {
@@ -1100,7 +1113,7 @@
 
     document.getElementById("m-save").addEventListener("click", () => {
       const opp = document.getElementById("m-opp").value.trim();
-      if (!opp) { UI.toast("Indica el rival", "err"); return; }
+      if (!opp) { UI.toast(T("match.toast.enterRival"), "err"); return; }
       const home = venue === "home" ? c.clubName : opp;
       const away = venue === "home" ? opp : c.clubName;
       const base = {
@@ -1114,13 +1127,13 @@
         const data = Object.assign({}, base, { homeScore: undefined, awayScore: undefined, events: undefined, motm: "", motmId: undefined, stats: undefined, ratings: undefined, formation: undefined, lineup: undefined });
         if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
         UI.closeModal();
-        UI.toast(existing ? "Partido actualizado" : "Partido programado 📅", "ok");
+        UI.toast(existing ? T("match.toast.updated") : T("match.toast.scheduled"), "ok");
         return;
       }
       const gf = document.getElementById("m-gf").value, ga = document.getElementById("m-ga").value;
-      if (gf === "" || ga === "") { UI.toast("Completa el marcador", "err"); return; }
+      if (gf === "" || ga === "") { UI.toast(T("match.toast.fillScore"), "err"); return; }
       const gfN = Number(gf), gaN = Number(ga);
-      if (!Number.isFinite(gfN) || !Number.isFinite(gaN) || gfN < 0 || gaN < 0) { UI.toast("El marcador debe ser un número de 0 o más", "err"); return; }
+      if (!Number.isFinite(gfN) || !Number.isFinite(gaN) || gfN < 0 || gaN < 0) { UI.toast(T("match.toast.scoreInvalid"), "err"); return; }
       const homeScore = venue === "home" ? gfN : gaN;
       const awayScore = venue === "home" ? gaN : gfN;
       const events = [];
@@ -1213,7 +1226,7 @@
       }
       if (existing) S.updateMatch(c, existing.id, data); else S.addMatch(c, data);
       UI.closeModal();
-      UI.toast(existing ? "Partido actualizado" : "Partido registrado ⚽", "ok");
+      UI.toast(existing ? T("match.toast.updated") : T("match.toast.registered"), "ok");
     });
   };
 
@@ -1568,17 +1581,18 @@
     }));
   }
   function objectiveModal(c, season) {
-    UI.openModal("Nuevo objetivo", `
-      <div class="field"><label>Objetivo</label><input type="text" id="o-text" placeholder="p.ej. Clasificar para Champions"/></div>
+    const T = FC.t;
+    UI.openModal(T("board.newObjective"), `
+      <div class="field"><label>${T("board.objectiveLabel")}</label><input type="text" id="o-text" placeholder="${U.esc(T("board.objectivePh"))}"/></div>
       <div class="field-row three">
-        <div class="field"><label>Progreso actual</label><input type="number" id="o-cur" value="0"/></div>
-        <div class="field"><label>Meta</label><input type="number" id="o-tar" placeholder="p.ej. 4"/></div>
-        <div class="field"><label>Unidad</label><input type="text" id="o-unit" placeholder="puntos / pos."/></div>
+        <div class="field"><label>${T("board.currentProgress")}</label><input type="number" id="o-cur" value="0"/></div>
+        <div class="field"><label>${T("board.target")}</label><input type="number" id="o-tar" placeholder="${U.esc(T("board.targetPh"))}"/></div>
+        <div class="field"><label>${T("board.unit")}</label><input type="text" id="o-unit" placeholder="${U.esc(T("board.unitPh"))}"/></div>
       </div>`,
-      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="o-save">Añadir</button>`);
+      `<button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button><button class="btn btn-primary" id="o-save">${U.esc(T("board.addBtn"))}</button>`);
     document.getElementById("o-save").addEventListener("click", () => {
       const text = document.getElementById("o-text").value.trim();
-      if (!text) { UI.toast("Escribe el objetivo", "err"); return; }
+      if (!text) { UI.toast(T("board.enterObjective"), "err"); return; }
       (season.boardObjectives || (season.boardObjectives = [])).push({
         id: U.uid(), text, current: Number(document.getElementById("o-cur").value) || 0,
         target: Number(document.getElementById("o-tar").value) || 0, unit: document.getElementById("o-unit").value.trim(),
@@ -2403,15 +2417,16 @@
 
   // Crónica del partido: modal ligero con las 3 frases generadas.
   UI.openCronica = function (c, m) {
+    const T = FC.t;
     if (!c || !m || !FC.store.isPlayed(m)) return;
     const lines = FC.trips.matchCronica(c, m);
-    if (!lines || !lines.length) { UI.toast("Sin datos suficientes para generar la crónica", "err"); return; }
+    if (!lines || !lines.length) { UI.toast(T("cronica.noData"), "err"); return; }
     const U = FC.util, S = FC.store;
     const g = S.userGoals(c, m) || { for: 0, against: 0 };
     const res = S.userResult(c, m);
     const rc = res === "W" ? "win" : res === "L" ? "loss" : "";
     const rival = m.home === c.clubName ? m.away : m.home;
-    const venue = m.home === c.clubName ? "Local" : "Visitante";
+    const venue = m.home === c.clubName ? T("matchday.home") : T("matchday.away");
     const scoreLine = `${Number(g.for)}-${Number(g.against)}`;
     const header = `<div style="text-align:center;margin-bottom:16px">
       <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${U.esc(m.competition || "")}${m.round ? " · " + U.esc(m.round) : ""} · ${venue}</div>
@@ -2422,19 +2437,19 @@
       const slots = (FC.data.FORMATIONS || {})[m.formation] || [];
       if (!slots.length) return "";
       return `<div style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
-        <div style="font-weight:700;font-size:11px;letter-spacing:.05em;color:var(--text2);margin-bottom:10px">ALINEACIÓN · ${U.esc(m.formation)}</div>
+        <div style="font-weight:700;font-size:11px;letter-spacing:.05em;color:var(--text2);margin-bottom:10px">${T("cronica.lineupLabel")} · ${U.esc(m.formation)}</div>
         ${_pitchSvgEl(m.formation, slots, m.lineup)}
       </div>`;
     })() : "";
     const body = header + lines.map((l, i) => `
       <p style="margin:${i===0?"0":"12px"} 0 0;line-height:1.6;${i===0?"font-weight:600":"color:var(--text2);"}">${l}</p>`).join("") + lineupSection;
-    UI.openModal("Crónica del partido", body, `<button class="btn btn-primary" data-close>Cerrar</button>`);
+    UI.openModal(T("cronica.title"), body, `<button class="btn btn-primary" data-close>${U.esc(T("common.close"))}</button>`);
   };
 
   UI.openTrip = function (c, m, opts) {
     if (document.querySelector(".trip-cabin")) return; // guarda anti doble-apertura
     const ctx = FC.trips.context(c, m);
-    if (!ctx || !ctx.isAway) { UI.toast("Este partido es en casa: no hay viaje", "err"); return; }
+    if (!ctx || !ctx.isAway) { UI.toast(FC.t("trip.homeMatchError"), "err"); return; }
     const played = S.isPlayed(m);
     const isReturn = !!(opts && opts.dir === "return") && played; // la vuelta solo existe con resultado
     const beats = isReturn ? FC.trips.returnBeats(ctx, c) : FC.trips.beats(ctx, c);
@@ -2747,6 +2762,12 @@
   };
   // Ficha completa de un jugador: atributos, contribución (temporada y carrera),
   // progresión de OVR e historial de lesiones. Botón "Editar" → playerModal.
+  // squadRole se guarda siempre en su forma canónica en español (comparada en core.js);
+  // aquí solo se traduce para mostrarla.
+  function squadRoleLabel(role) {
+    const map = { "Estrella": "player.role.star", "Titular": "player.role.starter", "Rotación": "player.role.rotation", "Promesa": "player.role.prospect" };
+    return map[role] ? FC.t(map[role]) : role;
+  }
   UI.openPlayerCard = function (c, p) {
     if (!p) return;
     const season = S.currentSeason(c);
@@ -2783,10 +2804,10 @@
         <div class="pc-id">
           <div class="pc-name"><b>${U.esc(p.name)}</b>
             <span class="chip">${U.esc(p.position||"—")}</span>
-            ${p.fromYouth ? '<span class="chip accent">cantera</span>' : ""}
-            ${activeInj.length ? '<span class="chip" style="background:var(--danger);color:#fff">lesión</span>' : ""}
+            ${p.fromYouth ? `<span class="chip accent">${U.esc(FC.t("player.youthChip"))}</span>` : ""}
+            ${activeInj.length ? `<span class="chip" style="background:var(--danger);color:#fff">${U.esc(FC.t("player.injuryChip"))}</span>` : ""}
           </div>
-          <div class="faint">${U.esc(p.nationality||"—")}${p.age ? " · " + p.age + " años" : ""}${p.squadRole ? " · " + U.esc(p.squadRole) : ""}</div>
+          <div class="faint">${U.esc(p.nationality||"—")}${p.age ? " · " + p.age + " " + U.esc(FC.t("player.yearsAbbrevLong")) : ""}${p.squadRole ? " · " + U.esc(squadRoleLabel(p.squadRole)) : ""}</div>
         </div>
       </div>
       <div class="grid cols-4 keep-2" style="margin:14px 0">
@@ -2853,13 +2874,14 @@
     }
 
     function renderCompare(p2) {
+      const T = FC.t;
       const st1 = getStats(p1);
       const st2 = p2 ? getStats(p2) : null;
 
       const pHead = (p, st) => `<div style="flex:1;text-align:center">
         <div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))};margin:0 auto 6px">${U.initials(p.name)}</div>
         <div style="font-weight:700;font-size:14px;margin-bottom:2px">${U.esc(p.name)}</div>
-        <div class="faint" style="font-size:12px">${U.esc(p.position||"—")}${p.age ? " · " + p.age + " a" : ""}</div>
+        <div class="faint" style="font-size:12px">${U.esc(p.position||"—")}${p.age ? " · " + p.age + " " + T("player.ageAbbrev") : ""}</div>
         <span class="ovr ${U.ovrClass(st.cur)}" style="font-size:20px;font-weight:800;display:block;margin-top:6px">${st.cur||"—"}</span>
       </div>`;
 
@@ -2871,19 +2893,19 @@
 
       // dir: 1 = higher is better, -1 = lower is better, 0 = no comparison
       const rows = [
-        { label: "Potencial",      v1: Number(p1.potential)||0, v2: p2 ? Number(p2.potential)||0 : null, fmt: v => v||"—" },
-        { label: "Valor",          v1: p1.value||0, v2: p2 ? p2.value||0 : null, fmt: v => v ? U.money(v) : "—" },
+        { label: T("cmp.potential"),      v1: Number(p1.potential)||0, v2: p2 ? Number(p2.potential)||0 : null, fmt: v => v||"—" },
+        { label: T("cmp.value"),          v1: p1.value||0, v2: p2 ? p2.value||0 : null, fmt: v => v ? U.money(v) : "—" },
         null,
-        { label: "Goles (temp.)",  v1: st1.sAgg.goals||0, v2: st2 ? st2.sAgg.goals||0 : null, fmt: v => v },
-        { label: "Asistencias",    v1: st1.sAgg.assists||0, v2: st2 ? st2.sAgg.assists||0 : null, fmt: v => v },
+        { label: T("cmp.goalsSeason"),  v1: st1.sAgg.goals||0, v2: st2 ? st2.sAgg.goals||0 : null, fmt: v => v },
+        { label: T("cmp.assists"),    v1: st1.sAgg.assists||0, v2: st2 ? st2.sAgg.assists||0 : null, fmt: v => v },
         { label: "MOTM",           v1: st1.sAgg.motm||0, v2: st2 ? st2.sAgg.motm||0 : null, fmt: v => v },
-        { label: "Partidos",       v1: st1.sAgg.apps||0, v2: st2 ? st2.sAgg.apps||0 : null, fmt: v => v },
-        { label: "Nota media",     v1: st1.sAgg.ratingN ? st1.sAgg.avg : null, v2: st2 && st2.sAgg.ratingN ? st2.sAgg.avg : null, fmt: v => v != null ? Number(v).toFixed(1) : "—" },
-        { label: "Minutos",        v1: st1.sAgg.minutes||0, v2: st2 ? st2.sAgg.minutes||0 : null, fmt: v => v ? v.toLocaleString("es-ES") : "—" },
+        { label: T("cmp.matches"),       v1: st1.sAgg.apps||0, v2: st2 ? st2.sAgg.apps||0 : null, fmt: v => v },
+        { label: T("cmp.avgRating"),     v1: st1.sAgg.ratingN ? st1.sAgg.avg : null, v2: st2 && st2.sAgg.ratingN ? st2.sAgg.avg : null, fmt: v => v != null ? Number(v).toFixed(1) : "—" },
+        { label: T("cmp.minutes"),        v1: st1.sAgg.minutes||0, v2: st2 ? st2.sAgg.minutes||0 : null, fmt: v => v ? v.toLocaleString(FC.i18n.get()==="en"?"en-US":"es-ES") : "—" },
         null,
-        { label: "Goles (carrera)", v1: st1.cAgg.goals||0, v2: st2 ? st2.cAgg.goals||0 : null, fmt: v => v },
-        { label: "Asist. (carrera)", v1: st1.cAgg.assists||0, v2: st2 ? st2.cAgg.assists||0 : null, fmt: v => v },
-        { label: "Partidos (carrera)", v1: st1.cAgg.apps||0, v2: st2 ? st2.cAgg.apps||0 : null, fmt: v => v },
+        { label: T("cmp.goalsCareer"), v1: st1.cAgg.goals||0, v2: st2 ? st2.cAgg.goals||0 : null, fmt: v => v },
+        { label: T("cmp.assistsCareer"), v1: st1.cAgg.assists||0, v2: st2 ? st2.cAgg.assists||0 : null, fmt: v => v },
+        { label: T("cmp.matchesCareer"), v1: st1.cAgg.apps||0, v2: st2 ? st2.cAgg.apps||0 : null, fmt: v => v },
       ];
 
       const tableRows = rows.map(row => {
@@ -2906,11 +2928,11 @@
 
     const dlHtml = `<datalist id="cmp-dl">${(c.players||[]).filter(q => q.id !== p1.id).map(q => `<option value="${U.esc(q.name)}">`).join("")}</datalist>`;
 
-    UI.openModal("Comparar jugadores",
-      `${dlHtml}<div class="field" style="margin-bottom:16px"><label>Comparar ${U.esc(p1.name)} con…</label>
-        <input type="text" id="cmp-pick" list="cmp-dl" placeholder="Escribe el nombre del jugador" style="font-size:14px"/>
+    UI.openModal(FC.t("cmp.title"),
+      `${dlHtml}<div class="field" style="margin-bottom:16px"><label>${FC.t("cmp.compareWith", { name: U.esc(p1.name) })}</label>
+        <input type="text" id="cmp-pick" list="cmp-dl" placeholder="${U.esc(FC.t("cmp.pickPh"))}" style="font-size:14px"/>
       </div><div id="cmp-body">${renderCompare(null)}</div>`,
-      `<button class="btn btn-ghost" id="cmp-back">← Volver a la ficha</button><button class="btn btn-primary" data-close>Cerrar</button>`, { lg: true });
+      `<button class="btn btn-ghost" id="cmp-back">${U.esc(FC.t("cmp.backBtn"))}</button><button class="btn btn-primary" data-close>${U.esc(FC.t("common.close"))}</button>`, { lg: true });
 
     document.getElementById("cmp-pick").addEventListener("input", function () {
       const name = this.value.trim().toLowerCase();
@@ -2921,18 +2943,19 @@
   };
 
   function importSquadModal(c) {
+    const T = FC.t;
     const roster = (D.SQUADS || {})[c.clubName];
-    if (!roster || !roster.length) { UI.toast("No hay plantilla disponible para este club", "err"); return; }
+    if (!roster || !roster.length) { UI.toast(T("squad.noRoster"), "err"); return; }
     const hasPlayers = (c.players || []).length > 0;
-    const body = `<p>Se importarán <b>${roster.length} jugadores</b> de <b>${U.esc(c.clubName)}</b> <span class="faint">(plantilla orientativa de referencia)</span>.</p>
-      <p class="muted" style="font-size:12px;margin:6px 0 0">Los OVR y edades son una base orientativa y pueden no coincidir con la temporada actual del juego; edítalos para que reflejen tu partida.</p>
-      ${hasPlayers ? `<div class="field" style="margin-top:12px"><label>Plantilla actual (${c.players.length} jugadores)</label>
+    const body = `<p>${T("squad.importWillImport", { n: roster.length, club: U.esc(c.clubName) })}</p>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">${T("squad.importNote")}</p>
+      ${hasPlayers ? `<div class="field" style="margin-top:12px"><label>${T("squad.currentSquadLabel", { n: c.players.length })}</label>
         <select id="imp-mode">
-          <option value="merge">Fusionar (mantener existentes, añadir nuevos)</option>
-          <option value="replace">Reemplazar (eliminar todos y cargar de nuevo)</option>
+          <option value="merge">${T("squad.mergeOpt")}</option>
+          <option value="replace">${T("squad.replaceOpt")}</option>
         </select></div>` : ""}`;
-    UI.openModal("Importar plantilla de referencia", body,
-      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="imp-confirm"><span class="ni-icon" data-icon="download"></span> Importar</button>`);
+    UI.openModal(T("squad.importTitle"), body,
+      `<button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button><button class="btn btn-primary" id="imp-confirm"><span class="ni-icon" data-icon="download"></span> ${U.esc(T("squad.importBtn"))}</button>`);
     document.getElementById("imp-confirm").addEventListener("click", () => {
       const mode = hasPlayers ? (document.getElementById("imp-mode").value) : "replace";
       if (mode === "replace") c.players = [];
@@ -2944,43 +2967,45 @@
         added++;
       });
       S.save(); UI.closeModal();
-      UI.toast(`${added} jugadores importados`, "ok");
+      UI.toast(T("squad.importedToast", { n: added }), "ok");
     });
   }
   function playerModal(c, ex) {
+    const T = FC.t;
     ex = ex || {};
     const posOpts = D.POSITIONS.map(p => `<option ${p === ex.position ? "selected" : ""}>${p}</option>`).join("");
-    UI.openModal(ex.id ? "Editar jugador" : "Añadir jugador", `
-      <div class="field"><label>Nombre</label><input type="text" id="p-name" value="${U.esc(ex.name||"")}"/></div>
+    const roleKeys = [["Estrella","player.role.star"],["Titular","player.role.starter"],["Rotación","player.role.rotation"],["Promesa","player.role.prospect"]];
+    UI.openModal(ex.id ? T("player.editTitle") : T("player.addTitle"), `
+      <div class="field"><label>${T("player.name")}</label><input type="text" id="p-name" value="${U.esc(ex.name||"")}"/></div>
       <div class="field-row three">
-        <div class="field"><label>Posición</label><select id="p-pos">${posOpts}</select></div>
-        <div class="field"><label>Edad</label><input type="number" id="p-age" value="${ex.age||""}"/></div>
-        <div class="field"><label>Nacionalidad</label><input type="text" id="p-nat" value="${U.esc(ex.nationality||"")}"/></div>
+        <div class="field"><label>${T("player.position")}</label><select id="p-pos">${posOpts}</select></div>
+        <div class="field"><label>${T("player.age")}</label><input type="number" id="p-age" value="${ex.age||""}"/></div>
+        <div class="field"><label>${T("player.nationality")}</label><input type="text" id="p-nat" value="${U.esc(ex.nationality||"")}"/></div>
       </div>
       <div class="field-row three">
-        <div class="field"><label>Media (OVR)</label><input type="number" id="p-ovr" min="40" max="99" value="${ex.ovr||""}"/></div>
-        <div class="field"><label>Potencial</label><input type="number" id="p-pot" min="40" max="99" value="${ex.potential||""}"/></div>
-        <div class="field"><label>Valor (€)</label><input type="number" id="p-val" value="${ex.value||""}"/></div>
+        <div class="field"><label>${T("player.ovr")}</label><input type="number" id="p-ovr" min="40" max="99" value="${ex.ovr||""}"/></div>
+        <div class="field"><label>${T("player.potential")}</label><input type="number" id="p-pot" min="40" max="99" value="${ex.potential||""}"/></div>
+        <div class="field"><label>${T("player.value")}</label><input type="number" id="p-val" value="${ex.value||""}"/></div>
       </div>
       <div class="field-row three">
-        <div class="field"><label>Fin de contrato (año)</label><input type="number" id="p-con" value="${ex.contractEnd||""}" placeholder="p.ej. 2028"/></div>
-        <div class="field"><label>Sueldo (€/año)</label><input type="number" id="p-wage" min="0" value="${ex.wage||""}" placeholder="opcional"/></div>
-        <div class="field"><label>Rol en plantilla</label><select id="p-role">
-          ${["Estrella","Titular","Rotación","Promesa"].map(r => `<option ${r === ex.squadRole ? "selected" : ""}>${r}</option>`).join("")}</select></div>
+        <div class="field"><label>${T("player.contractEnd")}</label><input type="number" id="p-con" value="${ex.contractEnd||""}" placeholder="${U.esc(T("player.contractEndPh"))}"/></div>
+        <div class="field"><label>${T("player.wage")}</label><input type="number" id="p-wage" min="0" value="${ex.wage||""}" placeholder="${U.esc(T("player.wagePh"))}"/></div>
+        <div class="field"><label>${T("player.squadRole")}</label><select id="p-role">
+          ${roleKeys.map(([es,key]) => `<option value="${U.esc(es)}" ${es === ex.squadRole ? "selected" : ""}>${U.esc(T(key))}</option>`).join("")}</select></div>
       </div>
-      <label class="inline-check" style="margin-top:4px"><input type="checkbox" id="p-youth" ${ex.fromYouth ? "checked" : ""}/> Procede de la cantera</label>
-      ${!ex.id ? `<div class="divider"></div><label class="inline-check"><input type="checkbox" id="p-sign"/> Registrar como incorporación (para finanzas y retos)</label>
+      <label class="inline-check" style="margin-top:4px"><input type="checkbox" id="p-youth" ${ex.fromYouth ? "checked" : ""}/> ${U.esc(T("player.fromYouth"))}</label>
+      ${!ex.id ? `<div class="divider"></div><label class="inline-check"><input type="checkbox" id="p-sign"/> ${U.esc(T("player.registerSigning"))}</label>
         <div id="p-sign-box" hidden style="margin-top:10px"><div class="field-row three">
-          <div class="field"><label>Tipo</label><select id="p-stype"><option value="transfer">Traspaso</option><option value="free">Libre</option><option value="loan">Cesión</option><option value="youth">Cantera</option></select></div>
-          <div class="field"><label>Coste (€)</label><input type="number" id="p-fee" value="0"/></div>
-          <div class="field"><label>Procedencia</label><input type="text" id="p-from" placeholder="Club"/></div>
+          <div class="field"><label>${T("player.signType")}</label><select id="p-stype"><option value="transfer">${T("player.signType.transfer")}</option><option value="free">${T("player.signType.free")}</option><option value="loan">${T("player.signType.loan")}</option><option value="youth">${T("player.signType.youth")}</option></select></div>
+          <div class="field"><label>${T("player.fee")}</label><input type="number" id="p-fee" value="0"/></div>
+          <div class="field"><label>${T("player.from")}</label><input type="text" id="p-from" placeholder="${U.esc(T("player.fromPh"))}"/></div>
         </div></div>` : ""}
-    `, `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="p-save">Guardar</button>`, { lg: true });
+    `, `<button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button><button class="btn btn-primary" id="p-save">${U.esc(T("common.save"))}</button>`, { lg: true });
     const signChk = document.getElementById("p-sign");
     if (signChk) signChk.addEventListener("change", () => { document.getElementById("p-sign-box").hidden = !signChk.checked; });
     document.getElementById("p-save").addEventListener("click", () => {
       const name = document.getElementById("p-name").value.trim();
-      if (!name) { UI.toast("Escribe el nombre", "err"); return; }
+      if (!name) { UI.toast(T("player.enterName"), "err"); return; }
       const data = {
         name, position: document.getElementById("p-pos").value, age: Number(document.getElementById("p-age").value) || null,
         nationality: document.getElementById("p-nat").value.trim(), ovr: Number(document.getElementById("p-ovr").value) || null,
@@ -2989,39 +3014,40 @@
         wage: Number(document.getElementById("p-wage").value) || 0,
         fromYouth: document.getElementById("p-youth").checked,
       };
-      if (ex.id) { S.updatePlayer(c, ex.id, data); UI.toast("Jugador actualizado", "ok"); }
+      if (ex.id) { S.updatePlayer(c, ex.id, data); UI.toast(T("player.updated"), "ok"); }
       else {
         if (signChk && signChk.checked) data._signing = {
           seasonId: S.currentSeason(c).id, direction: "in", player: name,
           type: document.getElementById("p-stype").value, fee: Number(document.getElementById("p-fee").value) || 0,
           club: document.getElementById("p-from").value.trim(), date: "",
         };
-        S.addPlayer(c, data); UI.toast("Jugador añadido", "ok");
+        S.addPlayer(c, data); UI.toast(T("player.added"), "ok");
       }
       UI.closeModal();
     });
   }
 
   function injuryModal(c) {
+    const T = FC.t;
     const players = (c.players || []).map(p => p.name).filter(Boolean);
-    UI.openModal("Registrar lesión", `
-      <div class="field"><label>Jugador</label>
-        <input type="text" id="inj-player" list="dl-inj-players" placeholder="Nombre del jugador"/>
+    UI.openModal(T("injury.title"), `
+      <div class="field"><label>${T("injury.player")}</label>
+        <input type="text" id="inj-player" list="dl-inj-players" placeholder="${U.esc(T("injury.playerPh"))}"/>
         <datalist id="dl-inj-players">${players.map(n => `<option value="${U.esc(n)}">`).join("")}</datalist>
       </div>
-      <div class="field"><label>Tipo de lesión (opcional)</label>
-        <input type="text" id="inj-type" placeholder="p.ej. Muscular, Rodilla, Tobillo..."/>
+      <div class="field"><label>${T("injury.type")}</label>
+        <input type="text" id="inj-type" placeholder="${U.esc(T("injury.typePh"))}"/>
       </div>
-      <div class="field"><label>Partidos de baja estimados</label>
+      <div class="field"><label>${T("injury.matchesOut")}</label>
         <input type="number" id="inj-out" min="0" value="0" placeholder="0"/>
       </div>`,
-      `<button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="inj-save">Añadir lesión</button>`);
+      `<button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button><button class="btn btn-primary" id="inj-save">${U.esc(T("injury.addBtn"))}</button>`);
     document.getElementById("inj-save").addEventListener("click", () => {
       const player = document.getElementById("inj-player").value.trim();
-      if (!player) { UI.toast("Indica el jugador", "err"); return; }
+      if (!player) { UI.toast(T("injury.enterPlayer"), "err"); return; }
       S.addInjury(c, { player, type: document.getElementById("inj-type").value.trim(), matchesOut: Number(document.getElementById("inj-out").value) || 0 });
       UI.closeModal();
-      UI.toast("Lesión registrada", "ok");
+      UI.toast(T("injury.registered"), "ok");
     });
   }
 
@@ -4134,7 +4160,7 @@
       <div class="field"><label>${tr("fin.table.player")}</label><input type="text" id="t-player" list="dl-tr-players" value="${U.esc(ex.player||"")}" placeholder="${tr("fin.modal.playerPlaceholder")}"/></div>
       <div class="field-row">
         <div class="field"><label id="t-fee-label">${dir0==="out"?tr("fin.modal.outFee"):tr("fin.modal.inFee")}</label><input type="number" id="t-fee" min="0" value="${ex.fee!=null?ex.fee:""}" placeholder="0"/></div>
-        <div class="field"><label id="t-club-label">${dir0==="out"?tr("fin.modal.outClub"):tr("fin.modal.inClub")}</label><input type="text" id="t-club" value="${U.esc(ex.club||"")}" placeholder="Club"/></div>
+        <div class="field"><label id="t-club-label">${dir0==="out"?tr("fin.modal.outClub"):tr("fin.modal.inClub")}</label><input type="text" id="t-club" value="${U.esc(ex.club||"")}" placeholder="${U.esc(tr("player.fromPh"))}"/></div>
       </div>
       <div class="field"><label>${tr("fin.table.date")}</label><input type="date" id="t-date" value="${ex.date||""}"/></div>
     `, `<button class="btn btn-ghost" data-close>${tr("common.cancel")}</button><button class="btn btn-primary" id="t-save"><span class="ni-icon" data-icon="check"></span> ${tr("common.save")}</button>`);
@@ -4560,7 +4586,7 @@
         <p class="muted" style="margin-top:0">${tr("settings.csvDescription")}</p>
         <div class="field"><label>${tr("settings.targetSeasonLabel")}</label>
           <select id="se-csv-season">${(c.seasons||[]).slice().sort(U.by("startYear")).reverse().map(s => `<option value="${s.id}" ${s.id===c.currentSeasonId?"selected":""}>${U.esc(s.label)}</option>`).join("")}</select></div>
-        <div class="field"><textarea id="se-csv-text" placeholder="fecha,competicion,condicion,rival,gf,ga&#10;2025-09-01,Liga,local,Rival CF,3,1&#10;2025-09-08,Liga,visitante,Otro CF,0,2"></textarea></div>
+        <div class="field"><textarea id="se-csv-text" placeholder="${U.esc(tr("settings.csvPlaceholder"))}"></textarea></div>
         <div class="flex gap wrap">
           <button class="btn" id="se-csv-upload"><span class="ni-icon" data-icon="upload"></span> ${tr("settings.uploadCSV")}</button>
           <button class="btn btn-primary" id="se-csv-import"><span class="ni-icon" data-icon="check"></span> ${tr("settings.importMatches")}</button>
