@@ -2762,12 +2762,7 @@
   };
   // Ficha completa de un jugador: atributos, contribución (temporada y carrera),
   // progresión de OVR e historial de lesiones. Botón "Editar" → playerModal.
-  // squadRole se guarda siempre en su forma canónica en español (comparada en core.js);
-  // aquí solo se traduce para mostrarla.
-  function squadRoleLabel(role) {
-    const map = { "Estrella": "player.role.star", "Titular": "player.role.starter", "Rotación": "player.role.rotation", "Promesa": "player.role.prospect" };
-    return map[role] ? FC.t(map[role]) : role;
-  }
+  const squadRoleLabel = S.squadRoleLabel;
   UI.openPlayerCard = function (c, p) {
     if (!p) return;
     const season = S.currentSeason(c);
@@ -3134,6 +3129,7 @@
   }
   // Tarjeta "Índice de adaptación al club" — usada en Plantilla (pestaña Análisis). "" si no hay jugadores.
   function adaptationCardHtml(c) {
+    const T = FC.t;
     const ad = S.playerAdaptation(c);
     if (!ad || !ad.players.length) return "";
     const toneCol = (t) => t === "ok" ? "var(--ok)" : t === "warn" ? "var(--warn)" : t === "danger" ? "var(--danger)" : "var(--text-dim)";
@@ -3141,22 +3137,23 @@
     const rows = ad.players.slice(0, 10).map(p =>
       `<div class="list-row">
         <div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
-        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${p.age ? U.esc(String(p.age)) + " a" : ""}${p.ovr ? " · " + U.esc(String(p.ovr)) + " OVR" : ""}${p.fromYouth ? " · <span style='color:var(--accent-2)'>Cantera</span>" : ""}</small></div>
+        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${p.age ? U.esc(String(p.age)) + " " + T("player.ageAbbrev") : ""}${p.ovr ? " · " + U.esc(String(p.ovr)) + " OVR" : ""}${p.fromYouth ? " · <span style='color:var(--accent-2)'>" + U.esc(T("player.youthChip")) + "</span>" : ""}</small></div>
         <div style="display:flex;align-items:center;gap:8px;min-width:110px">${bar(p.score)}<span style="font-size:12px;font-weight:700;min-width:28px;text-align:right;color:${toneCol(p.tone)}">${p.score}%</span></div>
-        <span class="chip" style="background:${toneCol(p.tone)};color:#03110c;font-size:10px;padding:2px 6px;flex-shrink:0">${U.esc(p.level)}</span>
+        <span class="chip" style="background:${toneCol(p.tone)};color:#03110c;font-size:10px;padding:2px 6px;flex-shrink:0">${U.esc(S.adaptLevelLabel(p.level))}</span>
       </div>`
     ).join("");
     const insightRows = ad.insights.map(i => alertRow(i.tone === "ok" ? "check" : "flag", i.text, i.tone, null)).join("");
     return `<div class="card" id="sq-adaptation" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Adaptación al club <span class="faint" style="font-weight:400">· integración de la plantilla</span></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> ${T("sqa.adapt.cardTitle")} <span class="faint" style="font-weight:400">· ${T("sqa.adapt.cardSubtitle")}</span></div>
       <div class="list">${rows}</div>
       ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
-      <p class="faint" style="font-size:11px;margin:8px 0 0">Derivado de apariciones totales, cantera y rol asignado.</p>
+      <p class="faint" style="font-size:11px;margin:8px 0 0">${T("sqa.adapt.footer")}</p>
     </div>`;
   }
 
   // Tarjeta "Pirámide de edad y recambio" — usada en Plantilla. "" si <5 jugadores con edad.
   function ageProfileCardHtml(c) {
+    const T = FC.t;
     const ap = S.squadAgeProfile(c);
     if (!ap || ap.count < 5) return "";
     const maxTot = Math.max(1, ...ap.hist.map(b => b.total));
@@ -3169,22 +3166,23 @@
         <small style="font-weight:700;font-size:12px;min-height:14px">${b.total || ""}</small>
       </div>`).join("");
     const chip = (n, label, col) => n ? `<span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;padding:1px 7px;font-size:11px">${n} ${label}</span>` : "";
+    const playerWord = (n) => T(n === 1 ? "w.player.one" : "w.player.other");
     const groupRows = ap.byGroup.map(g => `<div class="list-row">
-        <div class="lr-main"><b>${g.group}</b><small class="faint">${g.count} jugador${g.count > 1 ? "es" : ""} · media ${f1(g.avg)} años</small></div>
-        <span class="flex gap center" style="flex-shrink:0">${chip(g.young, "joven", "var(--accent-2)")}${chip(g.peak, "pico", "var(--ok)")}${chip(g.decline, "declive", "var(--warn)")}</span>
+        <div class="lr-main"><b>${U.esc(T("squad.group." + g.group))}</b><small class="faint">${T("ageP.groupRow", { n: g.count, playerWord: playerWord(g.count), avg: f1(g.avg), years: T("player.yearsAbbrevLong") })}</small></div>
+        <span class="flex gap center" style="flex-shrink:0">${chip(g.young, T("ageP.chipYoung"), "var(--accent-2)")}${chip(g.peak, T("ageP.chipPeak"), "var(--ok)")}${chip(g.decline, T("ageP.chipDecline"), "var(--warn)")}</span>
       </div>`).join("");
     const insightRows = ap.insights.map(it => alertRow(it.tone === "ok" ? "check" : it.tone === "danger" ? "flame" : "flag", it.text, it.tone, null)).join("");
     const legend = (col, txt) => `<span class="flex gap center"><i style="width:10px;height:10px;border-radius:2px;background:${col};display:inline-block"></i> ${txt}</span>`;
     return `<div class="card" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Pirámide de edad y recambio</div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> ${T("ageP.cardTitle")}</div>
       <div class="grid cols-3 keep-2" style="margin-bottom:14px">
-        ${statTile("Edad media", f1(ap.avg), ap.count + " jugadores")}
-        ${statTile("Once tipo", ap.xiAvg != null ? f1(ap.xiAvg) : "—", "media de tus 11 mejores")}
-        ${statTile("En declive", ap.phases.declive, "de " + ap.count + " jugadores")}
+        ${statTile(T("ageP.avgAge"), f1(ap.avg), ap.count + " " + playerWord(ap.count))}
+        ${statTile(T("ageP.xiAvg"), ap.xiAvg != null ? f1(ap.xiAvg) : "—", T("ageP.xiAvgSub"))}
+        ${statTile(T("ageP.declining"), ap.phases.declive, T("ageP.decliningSub", { n: ap.count, playerWord: playerWord(ap.count) }))}
       </div>
       <div class="flex" style="align-items:flex-end;gap:6px;margin-bottom:10px">${bars}</div>
       <div class="flex gap center wrap" style="font-size:12px;margin-bottom:14px">
-        ${legend("var(--accent-2)", "En desarrollo")}${legend("var(--ok)", "En su pico")}${legend("var(--warn)", "En declive")}
+        ${legend("var(--accent-2)", T("ageP.legendDeveloping"))}${legend("var(--ok)", T("ageP.legendPeak"))}${legend("var(--warn)", T("ageP.legendDecline"))}
       </div>
       <div class="list" style="margin-bottom:6px">${groupRows}</div>
       <div class="list">${insightRows}</div>
@@ -3192,6 +3190,7 @@
   }
   // Tarjeta "Jerarquía del vestuario" — usada en Plantilla (pestaña Análisis). "" si <2 jugadores.
   function squadHierarchyCardHtml(c) {
+    const T = FC.t;
     const h = S.squadHierarchy(c);
     if (!h) return "";
     const tierCol = { "Capitán": "var(--accent-3)", "Líder": "var(--accent)", "Referente": "var(--accent-2)", "Rotación": "var(--text-dim)", "Periferia": "var(--text-dim)" };
@@ -3201,20 +3200,21 @@
       const pct = Math.max(4, Math.round(p.score * 100));
       return `<div class="list-row" data-player="${U.esc(String(p.id))}" style="cursor:pointer">
         <div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>
-        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.age ? " · " + p.age + " a" : ""}${p.fromYouth ? " · cantera" : ""} · ${p.apps} part.</small>
+        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.age ? " · " + p.age + " " + T("player.ageAbbrev") : ""}${p.fromYouth ? " · " + U.esc(T("player.youthChip")) : ""} · ${p.apps} ${T("sqa.appsAbbrev")}</small>
           <div class="${barCls[p.tier] || "bar"}" style="margin-top:6px">${p.tier === "Rotación" || p.tier === "Periferia" ? `<i style="width:${pct}%;background:var(--text-dim)"></i>` : `<i style="width:${pct}%"></i>`}</div></div>
-        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${p.tier}</span>
+        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${U.esc(S.tierLabel(p.tier))}</span>
       </div>`;
     }).join("");
     const insightRows = h.insights.map(it => alertRow(it.tone === "warn" ? "flag" : "check", it.text, it.tone, null)).join("");
     return `<div class="card" id="sq-hier" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="shield"></span> Jerarquía del vestuario <span class="faint" style="font-weight:400">· influencia derivada</span></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="shield"></span> ${T("sqa.hier.cardTitle")} <span class="faint" style="font-weight:400">· ${T("sqa.hier.cardSubtitle")}</span></div>
       <div class="list">${rows}</div>
       ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
     </div>`;
   }
   // Tarjeta "Red de influencia" — usada en Plantilla (pestaña Análisis). "" si <3 jugadores o sin órbitas.
   function influenceNetworkCardHtml(c) {
+    const T = FC.t;
     const net = S.influenceNetwork(c);
     if (!net) return "";
     const av = (p) => `<div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>`;
@@ -3222,56 +3222,59 @@
     const groupHtml = net.groups.map(g => {
       const ldr = g.leader;
       const orbitRows = g.orbit.map(p => {
-        const tags = p.reasons.map(r => `<span class="chip" style="padding:1px 5px;font-size:10px;background:var(--panel-3)">${r}</span>`).join(" ");
+        const tags = p.reasons.map(r => `<span class="chip" style="padding:1px 5px;font-size:10px;background:var(--panel-3)">${U.esc(r)}</span>`).join(" ");
         return `<div class="list-row" style="padding-left:28px;opacity:.9">
           <span style="color:var(--text-dim);font-size:16px;flex-shrink:0">└</span>
           ${av(p)}
-          <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${p.age ? U.esc(String(p.age)) + " a" : ""}${p.ovr ? " · " + U.esc(String(p.ovr)) + " OVR" : ""} ${tags}</small></div>
+          <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${p.age ? U.esc(String(p.age)) + " " + T("player.ageAbbrev") : ""}${p.ovr ? " · " + U.esc(String(p.ovr)) + " OVR" : ""} ${tags}</small></div>
         </div>`;
       }).join("");
       return `<div class="list-row" style="border-top:1px solid var(--line);padding-top:8px;margin-top:4px">
         ${av(ldr)}
         <div class="lr-main"><b>${U.esc(ldr.name)}</b>
-          <small class="faint">${ldr.age ? U.esc(String(ldr.age)) + " a · " : ""}${U.esc(String(ldr.ovr || ""))} OVR</small></div>
-        <span class="chip" style="background:${tierCol(ldr.tier)};color:#03110c;flex-shrink:0">${U.esc(ldr.tier)}</span>
+          <small class="faint">${ldr.age ? U.esc(String(ldr.age)) + " " + T("player.ageAbbrev") + " · " : ""}${U.esc(String(ldr.ovr || ""))} OVR</small></div>
+        <span class="chip" style="background:${tierCol(ldr.tier)};color:#03110c;flex-shrink:0">${U.esc(S.tierLabel(ldr.tier))}</span>
       </div>${orbitRows}`;
     }).join("");
     return `<div class="card" id="sq-influence" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> Red de influencia <span class="faint" style="font-weight:400">· órbitas del vestuario</span></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="growth"></span> ${T("sqa.net.cardTitle")} <span class="faint" style="font-weight:400">· ${T("sqa.net.cardSubtitle")}</span></div>
       <div class="list">${groupHtml}</div>
-      <p class="faint" style="font-size:11px;margin:8px 0 0">Conexiones derivadas de línea, edad, cantera y mentorías asignadas.</p>
+      <p class="faint" style="font-size:11px;margin:8px 0 0">${T("sqa.net.footer")}</p>
     </div>`;
   }
 
   // Tarjeta "Carga y rotaciones" — usada en Plantilla (pestaña Análisis). Empty-state si no hay minutos.
   function loadCardHtml(c, seasonId) {
+    const T = FC.t;
     const l = S.loadReport(c, seasonId);
     if (!l) return "";
     if (!l.hasMinutes) return `<div class="card" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="bandage"></span> Carga y rotaciones</div>
-      <div class="empty" style="padding:24px"><div class="emoji">⏱️</div><h3>Sin minutos registrados</h3><p>Añade los minutos de tus jugadores en “Valoraciones” al registrar un partido para activar el control de carga y fatiga.</p></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="bandage"></span> ${T("sqa.load.cardTitle")}</div>
+      <div class="empty" style="padding:24px"><div class="emoji">⏱️</div><h3>${T("sqa.load.emptyTitle")}</h3><p>${T("sqa.load.emptyBody")}</p></div>
     </div>`;
     const maxMin = Math.max(1, ...l.players.map(p => p.minutes));
+    const locale = FC.i18n.get() === "en" ? "en-US" : "es-ES";
     const rows = l.players.slice(0, 14).map(p => {
       const pct = Math.max(3, Math.round(p.minutes / maxMin * 100));
       const heavy = p.recent >= 260, hot = p.share >= 85;
       const col = heavy ? "var(--warn)" : hot ? "var(--accent-3)" : "var(--accent)";
       return `<div class="list-row">
-        <div class="lr-main"><b>${U.esc(p.name)}${p.inSquad ? "" : ' <span class="faint" style="font-weight:400">(ya no en plantilla)</span>'}</b>
-          <small class="faint">${p.minutes.toLocaleString("es-ES")} min · ${p.apps} part.${p.recent ? " · " + p.recent + " min últimos 3" : ""}</small>
+        <div class="lr-main"><b>${U.esc(p.name)}${p.inSquad ? "" : ' <span class="faint" style="font-weight:400">' + U.esc(T("sqa.load.notInSquad")) + '</span>'}</b>
+          <small class="faint">${T("sqa.load.rowSub", { min: p.minutes.toLocaleString(locale), apps: p.apps, recent: p.recent ? T("sqa.load.recentSuffix", { n: p.recent }) : "" })}</small>
           <div class="bar" style="margin-top:6px"><i style="width:${pct}%;background:${col}"></i></div></div>
         <span class="chip" style="background:transparent;border:1px solid var(--line);color:var(--text-dim);font-weight:700;flex-shrink:0">${p.share}%</span>
       </div>`;
     }).join("");
     const insightRows = l.insights.map(it => alertRow(it.tone === "warn" ? "flag" : it.tone === "neutral" ? "calendar" : "check", it.text, it.tone, null)).join("");
     return `<div class="card" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="bandage"></span> Carga y rotaciones <span class="faint" style="font-weight:400">· minutos en ${l.matchesWithMin}/${l.totalMatches} partidos</span></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="bandage"></span> ${T("sqa.load.cardTitle")} <span class="faint" style="font-weight:400">· ${T("sqa.load.subtitle", { a: l.matchesWithMin, b: l.totalMatches })}</span></div>
       <div class="list">${rows}</div>
       ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
     </div>`;
   }
   // Sección "Contratos y masa salarial" — usada en Finanzas. "" si no hay datos.
   function contractSectionHtml(c) {
+    const T = FC.t;
     const cr = S.contractReport(c);
     if (!cr.hasContracts && !cr.hasWages) return "";
     const M = (n) => U.money(n);
@@ -3289,40 +3292,41 @@
     const expRows = cr.expiringSoon.slice(0, 8).map(p => {
       const col = p.year <= startY ? "var(--danger)" : "var(--warn)";
       return `<div class="list-row">
-        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.ovr ? " · " + p.ovr + " OVR" : ""}${p.wage ? " · " + M(p.wage) + "/año" : ""}</small></div>
-        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${p.year <= startY ? "último año" : "vence " + p.year}</span>
+        <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.ovr ? " · " + p.ovr + " OVR" : ""}${p.wage ? " · " + M(p.wage) + T("sqa.contract.perYear") : ""}</small></div>
+        <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${p.year <= startY ? T("sqa.contract.lastYear") : T("sqa.contract.expiresYear", { year: p.year })}</span>
       </div>`;
     }).join("");
     const earnRows = cr.topEarners.map(p => `<div class="list-row">
         <div class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${U.esc(p.position || "")}${p.ovr ? " · " + p.ovr + " OVR" : ""}</small></div>
         <b style="flex-shrink:0">${M(p.wage)}</b></div>`).join("");
     const insightRows = cr.insights.map(it => alertRow(it.tone === "danger" ? "flame" : it.tone === "warn" ? "flag" : "check", it.text, it.tone, null)).join("");
-    return `<div class="section-title">Contratos y masa salarial</div>
+    return `<div class="section-title">${T("sqa.contract.cardTitle")}</div>
       <div class="card">
         ${cr.hasWages ? `<div class="grid cols-3 keep-2" style="margin-bottom:14px">
-          ${statTile("Masa salarial", M(cr.wageBill), "anual" + (cr.noWage ? " · " + cr.noWage + " sin sueldo" : ""))}
-          ${statTile("Sueldo medio", M(cr.avgWage), "")}
-          ${statTile("Concentración top-3", cr.topConcentration + "%", "de la masa salarial")}
+          ${statTile(T("sqa.contract.wageBill"), M(cr.wageBill), T("sqa.contract.wageBillSub") + (cr.noWage ? T("sqa.contract.wageBillNoWage", { n: cr.noWage }) : ""))}
+          ${statTile(T("sqa.contract.avgWage"), M(cr.avgWage), "")}
+          ${statTile(T("sqa.contract.topConcentration"), cr.topConcentration + "%", T("sqa.contract.topConcentrationSub"))}
         </div>` : ""}
-        ${cr.timeline.length ? `<div class="section-title" style="margin-top:0">Vencimientos por año</div>
+        ${cr.timeline.length ? `<div class="section-title" style="margin-top:0">${T("sqa.contract.timelineTitle")}</div>
           <div class="flex" style="align-items:flex-end;gap:6px;margin-bottom:14px">${timelineBars}</div>` : ""}
-        ${expRows ? `<div class="section-title">Vencimientos próximos</div><div class="list" style="margin-bottom:6px">${expRows}</div>` : ""}
-        ${earnRows ? `<div class="section-title">Mayores sueldos</div><div class="list" style="margin-bottom:6px">${earnRows}</div>` : ""}
+        ${expRows ? `<div class="section-title">${T("sqa.contract.expiringTitle")}</div><div class="list" style="margin-bottom:6px">${expRows}</div>` : ""}
+        ${earnRows ? `<div class="section-title">${T("sqa.contract.topEarnersTitle")}</div><div class="list" style="margin-bottom:6px">${earnRows}</div>` : ""}
         ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
       </div>`;
   }
   // Tarjeta "Estado del vestuario" — previa del partido, usada en Partidos cuando hay próximos.
   function matchDayReportHtml(c, seasonId) {
+    const T = FC.t;
     const rep = S.matchDayReport(c, seasonId);
     if (!rep) return "";
     const moodCol   = rep.mood === "critical" ? "var(--danger)" : rep.mood === "bad" ? "var(--warn)" : rep.mood === "caution" ? "var(--accent-3)" : "var(--ok)";
-    const moodLabel = rep.mood === "critical" ? "Estado crítico" : rep.mood === "bad" ? "Día complicado" : rep.mood === "caution" ? "Con reservas" : "Equipo listo";
+    const moodLabel = rep.mood === "critical" ? T("sqa.mdr.moodCritical") : rep.mood === "bad" ? T("sqa.mdr.moodBad") : rep.mood === "caution" ? T("sqa.mdr.moodCaution") : T("sqa.mdr.moodGood");
     const moodTextCol = (rep.mood === "caution" || rep.mood === "good") ? "#03110c" : "#fff";
     const last5Html = rep.last5.length ? `<span class="flex gap center" style="flex-shrink:0">${CH.formBar(rep.last5)}</span>` : "";
     const signalRows = rep.signals.map(s => alertRow(s.icon, s.text, s.tone, null)).join("");
     return `<div class="card" style="border-left:3px solid ${moodCol};margin-bottom:4px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${rep.signals.length ? "12px" : "0"}">
-        <div class="section-title" style="margin:0"><span class="ni-icon" data-icon="shirt"></span> Estado del vestuario</div>
+        <div class="section-title" style="margin:0"><span class="ni-icon" data-icon="shirt"></span> ${T("sqa.mdr.cardTitle")}</div>
         <div class="flex gap center">${last5Html}<span class="chip" style="background:${moodCol};color:${moodTextCol};font-weight:700">${moodLabel}</span></div>
       </div>
       ${signalRows ? `<div class="list">${signalRows}</div>` : ""}
@@ -3331,56 +3335,58 @@
 
   // Tarjeta "Perfil goleador" — usada en Partidos. "" si <3 partidos.
   function scoringProfileCardHtml(c, seasonId) {
+    const T = FC.t;
     const sp = S.scoringProfile(c, seasonId);
     if (!sp) return "";
     const haRows = (sp.home.pj && sp.away.pj) ? `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-        ${statTile("En casa", f1(sp.home.avgGf) + " goles/p", sp.home.pj + " partidos · " + f1(sp.home.avgGa) + " enc.")}
-        ${statTile("Fuera", f1(sp.away.avgGf) + " goles/p", sp.away.pj + " partidos · " + f1(sp.away.avgGa) + " enc.")}
+        ${statTile(T("sqa.score.home"), T("sqa.score.perMatchGoals", { n: f1(sp.home.avgGf) }), T("sqa.score.matchesConcededSub", { n: sp.home.pj, ga: f1(sp.home.avgGa) }))}
+        ${statTile(T("sqa.score.away"), T("sqa.score.perMatchGoals", { n: f1(sp.away.avgGf) }), T("sqa.score.matchesConcededSub", { n: sp.away.pj, ga: f1(sp.away.avgGa) }))}
       </div>` : "";
     const streakLabel = sp.currentScoringStreak > 0
-      ? sp.currentScoringStreak + " con gol"
-      : (sp.currentDrought > 0 ? sp.currentDrought + " sin gol" : "—");
+      ? T("sqa.score.streakScoring", { n: sp.currentScoringStreak })
+      : (sp.currentDrought > 0 ? T("sqa.score.streakNoGoal", { n: sp.currentDrought }) : "—");
     const streakTone = sp.currentDrought >= 2 ? "var(--warn)" : sp.currentScoringStreak >= 3 ? "var(--ok)" : "var(--text)";
     const kpiRow = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-      ${statTile("Marcan", sp.scoredPct + "%", "partidos con gol")}
-      ${statTile("Portería a 0", sp.cleanSheetPct + "%", "partidos sin encajar")}
-      <div class="stat-tile"><div class="st-value" style="color:${streakTone}">${streakLabel}</div><div class="st-label">racha actual</div></div>
+      ${statTile(T("sqa.score.scored"), sp.scoredPct + "%", T("sqa.score.scoredSub"))}
+      ${statTile(T("sqa.score.cleanSheet"), sp.cleanSheetPct + "%", T("sqa.score.cleanSheetSub"))}
+      <div class="stat-tile"><div class="st-value" style="color:${streakTone}">${streakLabel}</div><div class="st-label">${T("sqa.score.currentStreak")}</div></div>
     </div>`;
     const resRows = ["W","D","L"].filter(r => sp.byResult[r].n > 0).map(r => {
-      const label = r === "W" ? "Victorias" : r === "D" ? "Empates" : "Derrotas";
+      const label = r === "W" ? T("sqa.score.wins") : r === "D" ? T("sqa.score.draws") : T("sqa.score.losses");
       const col = r === "W" ? "var(--ok)" : r === "D" ? "var(--warn)" : "var(--danger)";
       return `<div class="list-row"><span class="chip" style="background:${col};color:${r==="D"?"#000":"#fff"};flex-shrink:0">${label}</span>
-        <div class="lr-main faint" style="font-size:13px">${sp.byResult[r].n} partidos</div>
-        <b>${f1(sp.byResult[r].avgGf)} goles/p</b></div>`;
+        <div class="lr-main faint" style="font-size:13px">${T("sqa.score.matchesSub", { n: sp.byResult[r].n })}</div>
+        <b>${T("sqa.score.perMatchGoals", { n: f1(sp.byResult[r].avgGf) })}</b></div>`;
     }).join("");
     const compEntries = Object.entries(sp.byComp).sort((a, b) => b[1].pj - a[1].pj);
     const compRows = compEntries.length > 1 ? compEntries.map(([comp, v]) =>
       `<div class="list-row"><div class="lr-main"><b>${U.esc(comp)}</b>
-        <small class="faint">${v.pj} part. · ${f1(v.avgGf)} goles/p · ${v.ga} encajados</small></div></div>`
+        <small class="faint">${T("sqa.score.compRowSub", { n: v.pj, avg: f1(v.avgGf), ga: v.ga })}</small></div></div>`
     ).join("") : "";
     const insightRows = sp.insights.map(it =>
       alertRow(it.tone === "warn" ? "flag" : it.tone === "ok" ? "check" : "table", it.text, it.tone, null)
     ).join("");
     return `<div class="card">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="ball"></span> Perfil goleador <span class="faint" style="font-weight:400">· ${sp.count} partidos</span></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="ball"></span> ${T("sqa.score.cardTitle")} <span class="faint" style="font-weight:400">· ${T("sqa.score.cardSubtitle", { n: sp.count })}</span></div>
       ${haRows}${kpiRow}
-      ${resRows ? `<div class="section-title" style="font-size:11px;margin:0 0 4px">GOLES POR RESULTADO</div><div class="list" style="margin-bottom:14px">${resRows}</div>` : ""}
-      ${compRows ? `<div class="section-title" style="font-size:11px;margin:0 0 4px">POR COMPETICIÓN</div><div class="list" style="margin-bottom:14px">${compRows}</div>` : ""}
+      ${resRows ? `<div class="section-title" style="font-size:11px;margin:0 0 4px">${T("sqa.score.byResultTitle")}</div><div class="list" style="margin-bottom:14px">${resRows}</div>` : ""}
+      ${compRows ? `<div class="section-title" style="font-size:11px;margin:0 0 4px">${T("sqa.score.byCompTitle")}</div><div class="list" style="margin-bottom:14px">${compRows}</div>` : ""}
       ${insightRows ? `<div class="list">${insightRows}</div>` : ""}
     </div>`;
   }
 
   // Tarjeta "Familiaridad táctica" — usada en Partidos. "" si <2 partidos con formación.
   function formationFamiliarityCardHtml(c, seasonId) {
+    const T = FC.t;
     const ff = S.formationFamiliarity(c, seasonId);
     if (!ff) return "";
     const rows = ff.formations.map(o => {
       const isCur = o.name === ff.current;
       const col = o.familiarity >= 70 ? "var(--ok)" : o.familiarity >= 40 ? "var(--warn)" : "var(--danger)";
       return `<div class="list-row">
-        <div class="lr-main"><b>${U.esc(o.name)}${isCur ? ' <span class="chip accent" style="padding:1px 6px;font-size:10px">actual</span>' : ""}</b>
-          <small class="faint">${o.uses} part. · ${o.w}V ${o.d}E ${o.l}D · ${f1(o.ppg)} pts/p</small>
+        <div class="lr-main"><b>${U.esc(o.name)}${isCur ? ' <span class="chip accent" style="padding:1px 6px;font-size:10px">' + U.esc(T("sqa.form.current")) + '</span>' : ""}</b>
+          <small class="faint">${T("sqa.form.rowSub", { n: o.uses, w: o.w, wl: T("res.W"), d: o.d, dl: T("res.D"), l: o.l, ll: T("res.L"), ppg: f1(o.ppg) })}</small>
           <div class="bar" style="margin-top:6px"><i style="width:${o.familiarity}%;background:${col}"></i></div></div>
         <span class="flex gap center" style="flex-shrink:0">${CH.formBar(o.form)}</span>
         <span class="chip" style="background:transparent;border:1px solid ${col};color:${col};font-weight:700;flex-shrink:0">${o.familiarity}</span>
@@ -3388,55 +3394,58 @@
     }).join("");
     const insightRows = ff.insights.map(it => alertRow(it.tone === "warn" ? "flag" : it.tone === "ok" ? "check" : "table", it.text, it.tone, null)).join("");
     return `<div class="card">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="table"></span> Familiaridad táctica <span class="faint" style="font-weight:400">· cohesión por sistema</span></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="table"></span> ${T("sqa.form.cardTitle")} <span class="faint" style="font-weight:400">· ${T("sqa.form.cardSubtitle")}</span></div>
       <div class="list">${rows}</div>
       ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
     </div>`;
   }
   // Tarjeta "Mentorías sugeridas" — usada en Desarrollo. "" si no hay material.
   function mentoringCardHtml(c) {
+    const T = FC.t;
     const m = S.mentoringSuggestions(c);
     if (!m) return "";
     const av = (p) => `<div class="avatar" style="background:${U.safeColor(p.badge, U.colorFor(p.name))}">${U.initials(p.name)}</div>`;
     const half = (p, role, sub) => `<span data-ment="${U.esc(String(p.id))}" style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;min-width:0">${av(p)}<span class="lr-main"><b>${U.esc(p.name)}</b><small class="faint">${role}${sub}</small></span></span>`;
     const pairRows = m.pairs.map(pr => `<div class="list-row" style="gap:10px">
-      ${half(pr.mentor, "mentor", " · " + U.esc(String(pr.mentor.age)) + " a" + (pr.mentor.ovr ? " · " + U.esc(String(pr.mentor.ovr)) + " OVR" : ""))}
+      ${half(pr.mentor, T("sqa.mentor.mentorRole"), " · " + U.esc(String(pr.mentor.age)) + " " + T("player.ageAbbrev") + (pr.mentor.ovr ? " · " + U.esc(String(pr.mentor.ovr)) + " OVR" : ""))}
       <span class="ni-icon" data-icon="chevron" style="color:var(--accent);flex-shrink:0"></span>
-      ${half(pr.mentee, "promesa", " · " + U.esc(String(pr.mentee.age)) + " a" + (pr.mentee.fromYouth ? " · cantera" : ""))}
+      ${half(pr.mentee, T("sqa.mentor.menteeRole"), " · " + U.esc(String(pr.mentee.age)) + " " + T("player.ageAbbrev") + (pr.mentee.fromYouth ? " · " + U.esc(T("player.youthChip")) : ""))}
     </div>`).join("");
     const insightRows = m.insights.map(it => alertRow("growth", it.text, it.tone, null)).join("");
     return `<div class="card" id="dev-mentor" style="margin-top:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="sprout"></span> Mentorías sugeridas</div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="sprout"></span> ${T("sqa.mentor.cardTitle")}</div>
       ${pairRows ? `<div class="list">${pairRows}</div>` : ""}
       ${insightRows ? `<div class="list" style="margin-top:6px">${insightRows}</div>` : ""}
     </div>`;
   }
   // Tarjeta "Especialistas a balón parado" — usada en Plantilla (pestaña Análisis).
   function setPieceCardHtml(c) {
+    const T = FC.t;
     const players = (c.players || []).filter(p => p && p.name);
     if (players.length < 1) return "";
     const sug = S.setPieceSuggestions(c);
     const sp = c.setPieces || {};
     const validIds = new Set(players.map(p => p.id));
-    const roles = [["penalty", "Penaltis", "⚽"], ["freekick", "Faltas directas", "🎯"], ["corner", "Córners", "🚩"]];
-    const opts = (selId, sugId) => `<option value="">— sin asignar —</option>` + players.map(p =>
-      `<option value="${U.esc(String(p.id))}"${(selId === p.id || (!selId && sugId === p.id)) ? " selected" : ""}>${U.esc(p.name)}${p.position ? " (" + U.esc(p.position) + ")" : ""}${(!selId && sugId === p.id) ? " — sugerido" : ""}</option>`).join("");
+    const roles = [["penalty", T("sqa.setpiece.penalty"), "⚽"], ["freekick", T("sqa.setpiece.freekick"), "🎯"], ["corner", T("sqa.setpiece.corner"), "🚩"]];
+    const opts = (selId, sugId) => `<option value="">${T("sqa.setpiece.none")}</option>` + players.map(p =>
+      `<option value="${U.esc(String(p.id))}"${(selId === p.id || (!selId && sugId === p.id)) ? " selected" : ""}>${U.esc(p.name)}${p.position ? " (" + U.esc(p.position) + ")" : ""}${(!selId && sugId === p.id) ? U.esc(T("sqa.setpiece.suggested")) : ""}</option>`).join("");
     const rows = roles.map(([key, label, emoji]) => {
       const selId = sp[key] && validIds.has(sp[key]) ? sp[key] : null;
       return `<div class="list-row">
-        <div class="lr-main"><b>${emoji} ${label}</b>${sug[key] && !selId ? `<small class="faint">sugerencia: ${U.esc(sug[key].name)}</small>` : ""}</div>
+        <div class="lr-main"><b>${emoji} ${U.esc(label)}</b>${sug[key] && !selId ? `<small class="faint">${T("sqa.setpiece.suggestion", { name: U.esc(sug[key].name) })}</small>` : ""}</div>
         <select class="sp-sel" data-role="${key}" style="flex:1;max-width:220px;padding:5px 8px">${opts(selId, sug[key] && sug[key].id)}</select>
       </div>`;
     }).join("");
     return `<div class="card" id="sq-setpiece" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="target"></span> Especialistas a balón parado</div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="target"></span> ${T("sqa.setpiece.cardTitle")}</div>
       <div class="list">${rows}</div>
-      <p class="faint" style="font-size:11px;margin:10px 0 0">Apunte de planificación (el juego no lo aplica). Sugerencias según goles/asistencias que registres.</p>
+      <p class="faint" style="font-size:11px;margin:10px 0 0">${T("sqa.setpiece.footer")}</p>
     </div>`;
   }
 
   // Tarjeta "Clima político" — usada en Plantilla (pestaña Análisis).
   function politicalCapitalCardHtml(c, seasonId) {
+    const T = FC.t;
     const pol = S.politicalCapital(c, seasonId);
     if (!pol) return "";
     const col = pol.levelTone === "danger" ? "var(--danger)" : pol.levelTone === "warn" ? "var(--warn)" : "var(--ok)";
@@ -3447,11 +3456,11 @@
       alertRow(it.tone === "danger" ? "bell" : it.tone === "warn" ? "flag" : "check", it.text, it.tone, null)
     ).join("");
     return `<div class="card" id="sq-political" style="margin-bottom:16px">
-      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="shield"></span> Clima político <span class="faint" style="font-weight:400">· capital del mánager</span></div>
+      <div class="section-title" style="margin-top:0"><span class="ni-icon" data-icon="shield"></span> ${T("sqa.pol.cardTitle")} <span class="faint" style="font-weight:400">· ${T("sqa.pol.cardSubtitle")}</span></div>
       <div style="margin:0 0 14px">
         <div class="flex between" style="font-size:12px;margin-bottom:6px">
-          <span class="faint">Tensión</span>
-          <span class="chip" style="background:${col};color:${pol.levelTone === 'ok' ? '#03110c' : '#fff'};font-weight:700">${pol.level} · ${pol.tension}/100</span>
+          <span class="faint">${T("sqa.pol.tensionLabel")}</span>
+          <span class="chip" style="background:${col};color:${pol.levelTone === 'ok' ? '#03110c' : '#fff'};font-weight:700">${U.esc(S.politicalLevelLabel(pol.level))} · ${pol.tension}/100</span>
         </div>
         <div class="bar"><i style="width:${pol.tension}%;background:${col}"></i></div>
       </div>
@@ -4959,7 +4968,7 @@
       <div class="st-value">${value}</div><div class="st-sub">${sub||""}</div></div>`;
   }
   // Un decimal con coma (formato español): 1.75 → "1,8".
-  function f1(n) { return (Math.round(n * 10) / 10).toFixed(1).replace(".", ","); }
+  function f1(n) { const s = (Math.round(n * 10) / 10).toFixed(1); return (FC.i18n && FC.i18n.get() === "en") ? s : s.replace(".", ","); }
   // Fila de la lista de rivales: balance global + forma reciente + pts/partido.
   function rivalRow(c, o) {
     const ppgCol = o.ppg >= 2 ? "var(--ok)" : o.ppg >= 1 ? "var(--warn)" : "var(--danger)";

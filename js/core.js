@@ -449,12 +449,26 @@
      Curva de edad real por demarcación: extremos/banda pican antes y caen
      pronto; centrales y porteros aguantan más. Solo usa age + position. */
   const AGE_PEAK = { "Portería": [28, 34], "Defensa": [27, 32], "Medio": [25, 30], "Banda": [24, 28], "Ataque": [25, 30], default: [25, 30] };
+  // squadRole se guarda siempre en su forma canónica en español (comparada
+  // en varias funciones de este archivo); esto solo la traduce para mostrarla.
+  const SQUAD_ROLE_KEY = { "Estrella": "player.role.star", "Titular": "player.role.starter", "Rotación": "player.role.rotation", "Promesa": "player.role.prospect" };
+  const squadRoleLabel = (role) => SQUAD_ROLE_KEY[role] ? FC.t(SQUAD_ROLE_KEY[role]) : role;
+  S.squadRoleLabel = squadRoleLabel;
+  // Mismo patrón para otras etiquetas derivadas que se guardan/comparan en español
+  // (tier de jerarquía, nivel de adaptación, nivel de clima político).
+  const TIER_KEY = { "Capitán": "sqa.tier.captain", "Líder": "sqa.tier.leader", "Referente": "sqa.tier.reference", "Rotación": "sqa.tier.rotation", "Periferia": "sqa.tier.periphery" };
+  S.tierLabel = (tier) => TIER_KEY[tier] ? FC.t(TIER_KEY[tier]) : tier;
+  const ADAPT_LEVEL_KEY = { "Arraigado": "sqa.adaptLevel.rooted", "Integrado": "sqa.adaptLevel.integrated", "Adaptándose": "sqa.adaptLevel.adapting", "Recién llegado": "sqa.adaptLevel.newcomer" };
+  S.adaptLevelLabel = (level) => ADAPT_LEVEL_KEY[level] ? FC.t(ADAPT_LEVEL_KEY[level]) : level;
+  const POL_LEVEL_KEY = { "Crisis": "sqa.polLevel.crisis", "Tensión": "sqa.polLevel.tension", "Estable": "sqa.polLevel.stable" };
+  S.politicalLevelLabel = (level) => POL_LEVEL_KEY[level] ? FC.t(POL_LEVEL_KEY[level]) : level;
+
   S.squadAgeProfile = (c) => {
     const players = (c.players || []).filter(p => Number(p.age) > 0);
     if (!players.length) return null;
     const peakOf = (p) => AGE_PEAK[FC.data.POS_GROUP[p.position] || "default"] || AGE_PEAK.default;
     const phaseOf = (p) => { const pk = peakOf(p), a = Number(p.age); return a < pk[0] ? "joven" : a > pk[1] ? "declive" : "pico"; };
-    const fmt = (n) => (Math.round(n * 10) / 10).toString().replace(".", ",");
+    const fmt = (n) => { const s = (Math.round(n * 10) / 10).toString(); return (FC.i18n && FC.i18n.get() === "en") ? s : s.replace(".", ","); };
     const BANDS = [[0, 20, "≤20"], [21, 23, "21-23"], [24, 26, "24-26"], [27, 29, "27-29"], [30, 32, "30-32"], [33, 99, "33+"]];
     const hist = BANDS.map(b => ({ label: b[2], joven: 0, pico: 0, declive: 0, total: 0 }));
     const phases = { joven: 0, pico: 0, declive: 0 };
@@ -481,17 +495,18 @@
     // Avisos de entrenador (priorizados).
     const insights = [];
     const refAge = xiAvg != null ? xiAvg : avg;
-    if (refAge >= 30) insights.push({ tone: "danger", text: "Tu once tipo es muy veterano (media " + fmt(refAge) + " años): el recambio es urgente." });
-    else if (refAge >= 28.5) insights.push({ tone: "warn", text: "Tu once tipo envejece (media " + fmt(refAge) + " años): planifica el recambio." });
+    if (refAge >= 30) insights.push({ tone: "danger", text: FC.t("ageP.veryVeteran", { avg: fmt(refAge) }) });
+    else if (refAge >= 28.5) insights.push({ tone: "warn", text: FC.t("ageP.aging", { avg: fmt(refAge) }) });
     byGroup.forEach(g => {
-      if (g.count >= 3 && g.decline >= Math.ceil(g.count / 2)) insights.push({ tone: "warn", text: g.group + ": " + g.decline + " de " + g.count + " en fase de declive — prioriza fichar o promocionar." });
-      else if (g.count >= 3 && g.young === 0 && g.avg >= 29) insights.push({ tone: "warn", text: g.group + ": sin relevo joven y edad media " + fmt(g.avg) + " — busca futuro." });
+      const groupLabel = FC.t("squad.group." + g.group);
+      if (g.count >= 3 && g.decline >= Math.ceil(g.count / 2)) insights.push({ tone: "warn", text: FC.t("ageP.groupDecline", { group: groupLabel, n: g.decline, total: g.count }) });
+      else if (g.count >= 3 && g.young === 0 && g.avg >= 29) insights.push({ tone: "warn", text: FC.t("ageP.groupNoYouth", { group: groupLabel, avg: fmt(g.avg) }) });
     });
-    if (phases.joven === 0 && players.length >= 10) insights.push({ tone: "warn", text: "No tienes jugadores jóvenes en desarrollo: la plantilla no se está renovando." });
-    if (proj2 >= 3) insights.push({ tone: "warn", text: "En 2 temporadas, " + proj2 + (proj2 > 1 ? " jugadores actuales entrarán" : " jugador actual entrará") + " en declive." });
+    if (phases.joven === 0 && players.length >= 10) insights.push({ tone: "warn", text: FC.t("ageP.noYoung") });
+    if (proj2 >= 3) insights.push({ tone: "warn", text: FC.t(proj2 > 1 ? "ageP.declineSoon.other" : "ageP.declineSoon.one", { n: proj2 }) });
     if (!insights.length) insights.push(avg <= 23.5
-      ? { tone: "ok", text: "Plantilla muy joven (media " + fmt(avg) + "): poca veteranía pero enorme margen de crecimiento." }
-      : { tone: "ok", text: "Pirámide de edad equilibrada (media " + fmt(avg) + "): base joven con un núcleo en su pico." });
+      ? { tone: "ok", text: FC.t("ageP.veryYoung", { avg: fmt(avg) }) }
+      : { tone: "ok", text: FC.t("ageP.balanced", { avg: fmt(avg) }) });
     return { count: players.length, avg, xiAvg, hist, phases, byGroup, insights, proj2 };
   };
 
@@ -532,9 +547,9 @@
     const leaders = scored.filter(p => p.tier === "Capitán" || p.tier === "Líder");
     const youngLeader = leaders.some(p => p.age && p.age <= 23);
     const insights = [];
-    if (captain) insights.push({ tone: "ok", text: captain.name + " es tu jugador más influyente: el líder natural del vestuario." });
-    if (captain && captain.squadRole && captain.squadRole !== "Estrella") insights.push({ tone: "neutral", text: "Plantéate darle galones de capitán a " + captain.name + " (rol actual: " + captain.squadRole + ")." });
-    if (!youngLeader) insights.push({ tone: "warn", text: "No hay liderazgo joven (≤23 años): el vestuario se apoya solo en veteranos." });
+    if (captain) insights.push({ tone: "ok", text: FC.t("sqa.hier.captainInfluential", { name: captain.name }) });
+    if (captain && captain.squadRole && captain.squadRole !== "Estrella") insights.push({ tone: "neutral", text: FC.t("sqa.hier.suggestCaptain", { name: captain.name, role: squadRoleLabel(captain.squadRole) }) });
+    if (!youngLeader) insights.push({ tone: "warn", text: FC.t("sqa.hier.noYoungLeader") });
     return { count: n, captain, leaders, youngLeader, players: scored, insights };
   };
 
@@ -562,11 +577,11 @@
     const high = results.filter(p => p.score >= 80);
     const insights = [];
     if (low.length)
-      insights.push({ tone: "warn", text: low.length + " jugador" + (low.length > 1 ? "es" : "") + " aún no " + (low.length > 1 ? "están" : "está") + " integrado" + (low.length > 1 ? "s" : "") + ": " + low.slice(0, 3).map(p => p.name).join(", ") + "." });
+      insights.push({ tone: "warn", text: FC.t(low.length > 1 ? "sqa.adapt.notIntegrated.other" : "sqa.adapt.notIntegrated.one", { n: low.length, names: low.slice(0, 3).map(p => p.name).join(", ") }) });
     if (high.length >= 5)
-      insights.push({ tone: "ok", text: "Núcleo sólido: " + high.length + " jugadores con alta adaptación al club." });
+      insights.push({ tone: "ok", text: FC.t("sqa.adapt.solidCore", { n: high.length }) });
     if (!insights.length)
-      insights.push({ tone: "neutral", text: "Plantilla en proceso de consolidación. Dale tiempo para que los fichajes se asienten." });
+      insights.push({ tone: "neutral", text: FC.t("sqa.adapt.settling") });
     return { players: results, insights };
   };
 
@@ -602,11 +617,11 @@
     up.forEach(m => { if (prev) { const days = Math.round((new Date(m.date) - new Date(prev.date)) / 86400000); if (days >= 0 && days < 4) upcomingTight.push({ a: prev, b: m, days }); } prev = m; });
     const insights = [];
     const top = players.find(p => p.inSquad) || players[0];
-    if (top && top.inSquad && top.share >= 92 && players.length > 1) insights.push({ tone: "warn", text: top.name + " ha jugado el " + top.share + "% de los minutos registrados: riesgo de sobrecarga, plantéate rotarlo." });
-    players.filter(p => p.recent >= 260 && p.inSquad).slice(0, 2).forEach(p => insights.push({ tone: "warn", text: p.name + " acumula " + p.recent + " min en los últimos 3 partidos: vigila su fatiga." }));
-    if (upcomingTight.length) insights.push({ tone: "warn", text: "Calendario apretado a la vista: " + upcomingTight.length + " partido(s) con menos de 4 días de descanso — prepara rotaciones." });
-    else if (congestion.length) insights.push({ tone: "neutral", text: congestion.length + " tramo(s) de calendario apretado esta temporada (<4 días entre partidos)." });
-    if (!insights.length) insights.push({ tone: "ok", text: "Reparto de minutos saludable, sin sobrecargas evidentes." });
+    if (top && top.inSquad && top.share >= 92 && players.length > 1) insights.push({ tone: "warn", text: FC.t("sqa.load.overload", { name: top.name, pct: top.share }) });
+    players.filter(p => p.recent >= 260 && p.inSquad).slice(0, 2).forEach(p => insights.push({ tone: "warn", text: FC.t("sqa.load.fatigue", { name: p.name, min: p.recent }) }));
+    if (upcomingTight.length) insights.push({ tone: "warn", text: FC.t("sqa.load.tightUpcoming", { n: upcomingTight.length }) });
+    else if (congestion.length) insights.push({ tone: "neutral", text: FC.t("sqa.load.tightPast", { n: congestion.length }) });
+    if (!insights.length) insights.push({ tone: "ok", text: FC.t("sqa.load.healthy") });
     return { hasMinutes: true, totalMatches: ms.length, matchesWithMin: matchesWithMin.length, totalMin, players, congestion, upcomingTight, insights };
   };
 
@@ -635,10 +650,10 @@
     const nextYear = startYear + 1;
     const expThis = withContract.filter(p => yearOf(p) === startYear).length;
     const expNext = withContract.filter(p => yearOf(p) === nextYear).length;
-    if (expThis) insights.push({ tone: "danger", text: expThis + " jugador(es) acaban contrato este año: renueva o traspasa antes de perderlos gratis." });
-    if (expNext >= 3) insights.push({ tone: "warn", text: "Ola de vencimientos: " + expNext + " contratos expiran en " + nextYear + " (riesgo Bosman)." });
-    if (withWage.length && topConcentration >= 50) insights.push({ tone: "warn", text: "El " + topConcentration + "% de tu masa salarial se concentra en solo 3 jugadores." });
-    if (players.length - withContract.length) insights.push({ tone: "neutral", text: (players.length - withContract.length) + " jugador(es) sin fin de contrato registrado." });
+    if (expThis) insights.push({ tone: "danger", text: FC.t("sqa.contract.expiringNow", { n: expThis }) });
+    if (expNext >= 3) insights.push({ tone: "warn", text: FC.t("sqa.contract.bosmanWave", { n: expNext, year: nextYear }) });
+    if (withWage.length && topConcentration >= 50) insights.push({ tone: "warn", text: FC.t("sqa.contract.wageConcentration", { pct: topConcentration }) });
+    if (players.length - withContract.length) insights.push({ tone: "neutral", text: FC.t("sqa.contract.noEndDate", { n: players.length - withContract.length }) });
     return {
       hasContracts: withContract.length > 0, hasWages: withWage.length > 0,
       startYear, timeline, expiringSoon,
@@ -678,10 +693,10 @@
     const main = list[0];
     const cur = list.find(o => o.name === last);
     const insights = [];
-    if (main && main.uses >= 4 && main.familiarity >= 70) insights.push({ tone: "ok", text: "Tu equipo domina el " + main.name + " (" + main.uses + " partidos): automatismos asentados." });
-    if (list.length >= 4 && ms.length <= list.length * 2) insights.push({ tone: "warn", text: "Cambias mucho de sistema (" + list.length + " formaciones distintas): a tu equipo le cuesta asentar automatismos." });
-    if (cur && cur.uses <= 1) insights.push({ tone: "warn", text: "Estrenas el " + last + ": familiaridad baja, dale continuidad para que cuaje." });
-    if (!insights.length && main) insights.push({ tone: "neutral", text: "Tu sistema de referencia es el " + main.name + "." });
+    if (main && main.uses >= 4 && main.familiarity >= 70) insights.push({ tone: "ok", text: FC.t("sqa.form.mastery", { formation: main.name, n: main.uses }) });
+    if (list.length >= 4 && ms.length <= list.length * 2) insights.push({ tone: "warn", text: FC.t("sqa.form.tooMuchChange", { n: list.length }) });
+    if (cur && cur.uses <= 1) insights.push({ tone: "warn", text: FC.t("sqa.form.newSystem", { formation: last }) });
+    if (!insights.length && main) insights.push({ tone: "neutral", text: FC.t("sqa.form.reference", { formation: main.name }) });
     return { current: last, streak, total: ms.length, formations: list, insights };
   };
 
@@ -722,15 +737,15 @@
     const awayAvg = away.pj ? away.gf / away.pj : 0;
     const insights = [];
     if (home.pj >= 3 && away.pj >= 3) {
-      if (homeAvg >= awayAvg + 0.5) insights.push({ tone: "ok", text: "Marcas más en casa (" + r1(homeAvg) + " goles/p) que fuera (" + r1(awayAvg) + "). Fuerte fortín local." });
-      else if (awayAvg >= homeAvg + 0.5) insights.push({ tone: "ok", text: "Marcas más fuera (" + r1(awayAvg) + " goles/p) que en casa (" + r1(homeAvg) + "). Equipo que sale a proponer." });
+      if (homeAvg >= awayAvg + 0.5) insights.push({ tone: "ok", text: FC.t("sqa.score.strongerHome", { h: r1(homeAvg), a: r1(awayAvg) }) });
+      else if (awayAvg >= homeAvg + 0.5) insights.push({ tone: "ok", text: FC.t("sqa.score.strongerAway", { a: r1(awayAvg), h: r1(homeAvg) }) });
     }
-    if (bestStreak >= 5) insights.push({ tone: "ok", text: "Racha de " + bestStreak + " partidos consecutivos marcando: gran fluidez ofensiva." });
-    if (curDrought >= 3) insights.push({ tone: "warn", text: "Llevas " + curDrought + " partidos sin marcar. El ataque necesita reactivarse." });
-    else if (curDrought >= 2) insights.push({ tone: "warn", text: "Llevas " + curDrought + " partidos sin anotar. Vigila el ataque." });
-    if (curStreak >= 4) insights.push({ tone: "ok", text: "Llevas " + curStreak + " partidos seguidos marcando. Buen momento goleador." });
-    if (longestDrought >= 4) insights.push({ tone: "warn", text: "Tu peor sequía fue de " + longestDrought + " partidos sin marcar. El ataque tiene altibajos." });
-    if (!insights.length) insights.push({ tone: "neutral", text: "Perfil goleador equilibrado para el volumen de partidos registrados." });
+    if (bestStreak >= 5) insights.push({ tone: "ok", text: FC.t("sqa.score.greatStreak", { n: bestStreak }) });
+    if (curDrought >= 3) insights.push({ tone: "warn", text: FC.t("sqa.score.droughtBad", { n: curDrought }) });
+    else if (curDrought >= 2) insights.push({ tone: "warn", text: FC.t("sqa.score.droughtWarn", { n: curDrought }) });
+    if (curStreak >= 4) insights.push({ tone: "ok", text: FC.t("sqa.score.hotStreak", { n: curStreak }) });
+    if (longestDrought >= 4) insights.push({ tone: "warn", text: FC.t("sqa.score.worstDrought", { n: longestDrought }) });
+    if (!insights.length) insights.push({ tone: "neutral", text: FC.t("sqa.score.balanced") });
     return {
       home: { ...home, avgGf: r1(home.pj ? home.gf / home.pj : 0), avgGa: r1(home.pj ? home.ga / home.pj : 0) },
       away: { ...away, avgGf: r1(away.pj ? away.gf / away.pj : 0), avgGa: r1(away.pj ? away.ga / away.pj : 0) },
@@ -764,7 +779,7 @@
     const mentees = players.filter(p => (Number(p.age) <= 21 || p.fromYouth) && ((Number(p.potential) || 0) - (Number(p.ovr) || 0) >= 3))
       .sort((a, b) => ((Number(b.potential) || 0) - (Number(b.ovr) || 0)) - ((Number(a.potential) || 0) - (Number(a.ovr) || 0)));
     if (!mentors.length || !mentees.length) {
-      return { pairs: [], insights: [{ tone: "neutral", text: !mentors.length ? "Sin veteranos de referencia (28+ años o estrellas con OVR alto) para ejercer de mentores." : "Sin jóvenes con margen de mejora para tutelar ahora mismo." }] };
+      return { pairs: [], insights: [{ tone: "neutral", text: !mentors.length ? FC.t("sqa.mentor.noMentors") : FC.t("sqa.mentor.noMentees") }] };
     }
     const used = {}, pairs = [];
     mentees.slice(0, 8).forEach(mentee => {
@@ -775,9 +790,9 @@
       used[mentor.id] = (used[mentor.id] || 0) + 1;
       const sameLine = grp(mentor) === line;
       const gap = (Number(mentee.potential) || 0) - (Number(mentee.ovr) || 0);
-      pairs.push({ mentor, mentee, sameLine, gap, reason: (sameLine ? "Misma línea (" + line + "). " : "") + "Margen de +" + gap + " hasta su potencial." });
+      pairs.push({ mentor, mentee, sameLine, gap, reason: (sameLine ? FC.t("sqa.mentor.reasonSameLine", { line: FC.t("squad.group." + line) }) : "") + FC.t("sqa.mentor.reasonGap", { gap }) });
     });
-    return { pairs, insights: [{ tone: "neutral", text: "Las mentorías son una guía de planificación: el juego no las aplica, pero te orientan sobre quién debe formar a tus promesas." }] };
+    return { pairs, insights: [{ tone: "neutral", text: FC.t("sqa.mentor.guideNote") }] };
   };
 
   /* ---------- RED DE INFLUENCIA ----------
@@ -812,9 +827,9 @@
         const sameLine   = grp(p) === ldrGrp && Number(p.age) <= 23;
         const isYouthAny = !!p.fromYouth && Number(p.age) <= 24;
         const reasons = [];
-        if (isMentee)              reasons.push("mentoría");
-        if (sameLine)              reasons.push("línea");
-        if (isYouthAny && !sameLine) reasons.push("cantera");
+        if (isMentee)              reasons.push(FC.t("sqa.net.reasonMentorship"));
+        if (sameLine)              reasons.push(FC.t("sqa.net.reasonLine"));
+        if (isYouthAny && !sameLine) reasons.push(FC.t("player.youthChip"));
         return { id: p.id, name: p.name, tier: p.tier, age: p.age, ovr: p.ovr, badge: p.badge, reasons };
       });
       return { leader: ldr, orbit };
@@ -2060,16 +2075,14 @@
         tension += lp.tier === "Capitán" ? 30 : 18;
         events.push({
           tone: lp.tier === "Capitán" ? "danger" : "warn",
-          text: lp.tier === "Capitán"
-            ? lp.name + " (Capitán) lleva 3 partidos fuera del XI. El vestuario está al rojo vivo."
-            : lp.name + " (Líder) ha desaparecido de las alineaciones. Hay rumores de tensión."
+          text: FC.t(lp.tier === "Capitán" ? "sqa.pol.captainAbsent" : "sqa.pol.leaderAbsent", { name: lp.name })
         });
       } else if (inPrev !== null && inPrev >= 2 && inRecent === 1) {
         // Perdiendo protagonismo: antes fijo, ahora residual
         tension += lp.tier === "Capitán" ? 15 : 8;
         events.push({
           tone: "warn",
-          text: lp.name + " está perdiendo protagonismo. Era titular fijo y ahora apenas juega."
+          text: FC.t("sqa.pol.losingSpotlight", { name: lp.name })
         });
       }
     });
@@ -2089,7 +2102,7 @@
           tension += 10;
           events.push({
             tone: "warn",
-            text: p.name + " acaba contrato este año y no está jugando. El vestuario lo interpreta como una señal."
+            text: FC.t("sqa.pol.contractSignal", { name: p.name })
           });
         }
       });
@@ -2101,13 +2114,13 @@
 
     const insights = [];
     if (tension >= 60)
-      insights.push({ tone: "danger", text: "El vestuario está en crisis. La directiva podría intervenir si no atajas la situación." });
+      insights.push({ tone: "danger", text: FC.t("sqa.pol.crisis") });
     else if (tension >= 25)
-      insights.push({ tone: "warn", text: "Hay tensión en el ambiente. Da minutos a tus referentes antes de que escale." });
+      insights.push({ tone: "warn", text: FC.t("sqa.pol.tension") });
     else if (!events.length)
-      insights.push({ tone: "ok", text: "El clima político es estable. Tus referentes tienen el protagonismo que merecen." });
+      insights.push({ tone: "ok", text: FC.t("sqa.pol.stableGood") });
     else
-      insights.push({ tone: "neutral", text: "Situación bajo control, pero vigila la gestión de tus figuras de peso." });
+      insights.push({ tone: "neutral", text: FC.t("sqa.pol.underControl") });
 
     return { tension, level, levelTone, events, insights };
   };
@@ -2134,15 +2147,15 @@
     const scoringStreak = sp ? sp.currentScoringStreak : 0;
     const signals = [];
     if (pol && pol.tension >= 25)
-      signals.push({ tone: pol.levelTone, icon: "shield", text: pol.level + " política: " + (pol.events[0] ? pol.events[0].text : "Tensión en el vestuario.") });
+      signals.push({ tone: pol.levelTone, icon: "shield", text: FC.t("sqa.mdr.politicalSignal", { level: S.politicalLevelLabel(pol.level), detail: pol.events[0] ? pol.events[0].text : FC.t("sqa.mdr.politicalFallback") }) });
     if (overloaded.length)
-      signals.push({ tone: "warn", icon: "bandage", text: "Sobrecarga: " + overloaded.map(p => p.name).join(", ") + " acumulan demasiados minutos." });
+      signals.push({ tone: "warn", icon: "bandage", text: FC.t("sqa.mdr.overload", { names: overloaded.map(p => p.name).join(", ") }) });
     if (activeInjured.length)
-      signals.push({ tone: "danger", icon: "bandage", text: activeInjured.length + " jugador" + (activeInjured.length > 1 ? "es" : "") + " en enfermería: " + activeInjured.map(i => i.player).join(", ") + "." });
+      signals.push({ tone: "danger", icon: "bandage", text: FC.t(activeInjured.length > 1 ? "sqa.mdr.injuries.other" : "sqa.mdr.injuries.one", { n: activeInjured.length, names: activeInjured.map(i => i.player).join(", ") }) });
     if (drought >= 2)
-      signals.push({ tone: "warn", icon: "ball", text: "Sequía de " + drought + " partidos sin marcar. El ataque necesita activarse." });
+      signals.push({ tone: "warn", icon: "ball", text: FC.t("sqa.mdr.drought", { n: drought }) });
     else if (scoringStreak >= 3)
-      signals.push({ tone: "ok", icon: "ball", text: "Llevas " + scoringStreak + " partidos consecutivos marcando. Buen momento ofensivo." });
+      signals.push({ tone: "ok", icon: "ball", text: FC.t("sqa.mdr.hotStreak", { n: scoringStreak }) });
     if (!last5.length && !signals.length) return null;
     const warns = signals.filter(s => s.tone === "warn" || s.tone === "danger").length;
     const mood  = warns >= 3 ? "critical" : warns >= 2 ? "bad" : warns === 1 ? "caution" : "good";
