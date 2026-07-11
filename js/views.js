@@ -1033,6 +1033,57 @@
     });
   };
 
+  UI.openEuropeanGroupSetupModal = function (c, seasonId, existing, onDone) {
+    const T = FC.t;
+    const g = existing || {};
+    const isEdit = !!g.id;
+    const body = `
+      <p style="margin:0 0 14px;font-size:13px;color:var(--text-dim);line-height:1.5">${U.esc(T("group.setupHint"))}</p>
+      <div class="field"><label>${U.esc(T("group.competition"))}</label>
+        <input type="text" id="eg-comp" placeholder="${U.esc(T("group.competitionPh"))}" value="${U.esc(g.competition||"")}"/></div>
+      <div class="field"><label>${U.esc(T("group.groupName"))}</label>
+        <input type="text" id="eg-name" placeholder="${U.esc(T("group.groupNamePh"))}" value="${U.esc(g.groupName||"")}"/></div>
+      <div class="field"><label>${U.esc(T("group.phase"))}</label>
+        <select id="eg-phase">
+          <option value="groups" ${g.phase!=="league"?"selected":""}>${U.esc(T("group.phase.groups"))}</option>
+          <option value="league" ${g.phase==="league"?"selected":""}>${U.esc(T("group.phase.league"))}</option>
+        </select></div>
+      <div class="field"><label>${U.esc(T("group.teams"))}</label>
+        <p class="muted" style="margin:0 0 6px;font-size:12px">${U.esc(T("group.teamsHint"))}</p>
+        <textarea id="eg-teams" rows="6" placeholder="${U.esc(c.clubName)}">${(g.teams||[]).join("\n")}</textarea></div>`;
+    const foot = `${isEdit?`<button class="btn btn-ghost" id="eg-del" style="margin-right:auto;color:var(--danger)">${U.esc(T("common.delete"))}</button>`:""}
+      <button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button>
+      <button class="btn btn-primary" id="eg-save">${U.esc(T("common.save"))}</button>`;
+    const m = UI.openModal(T(isEdit ? "group.editTitle" : "group.setupTitle"), body, foot);
+
+    m.querySelector("#eg-save").addEventListener("click", () => {
+      const comp = m.querySelector("#eg-comp").value.trim();
+      const groupName = m.querySelector("#eg-name").value.trim();
+      const phase = m.querySelector("#eg-phase").value;
+      const teams = parseTeamLines(m.querySelector("#eg-teams").value);
+      if (!comp) { UI.toast(T("group.selectCompetition"), "err"); return; }
+      if (teams.length < 2) { UI.toast(T("group.needTeams"), "err"); return; }
+      if (isEdit) {
+        S.updateEuropeanGroup(c, seasonId, g.id, { competition: comp, groupName, phase, teams });
+        UI.toast(T("group.toastUpdated"), "ok");
+      } else {
+        S.addEuropeanGroup(c, seasonId, { competition: comp, groupName, phase, teams });
+        UI.toast(T("group.toastCreated"), "ok");
+      }
+      UI.closeModal();
+      if (onDone) onDone();
+    });
+
+    const delBtn = m.querySelector("#eg-del");
+    if (delBtn) delBtn.addEventListener("click", () => {
+      if (!confirm(T("group.confirmDelete"))) return;
+      S.deleteEuropeanGroup(c, seasonId, g.id);
+      UI.toast(T("group.toastDeleted"), "ok");
+      UI.closeModal();
+      if (onDone) onDone();
+    });
+  };
+
   UI.openMatchModal = function (c, existing, opts) {
     const T = FC.t;
     opts = opts || {};
@@ -2431,11 +2482,62 @@
         ${rankCard(T("stand.topAssists"), assisters, "assists", "🅰️")}
       </div>
 
+      <div class="section-title" style="margin-top:24px;display:flex;align-items:center;justify-content:space-between">
+        <span>${T("stand.europeanGroups")}</span>
+        <button class="btn btn-ghost btn-sm" id="st-addgroup"><span class="ni-icon" data-icon="plus"></span> ${T("group.addBtn")}</button>
+      </div>
+      <div id="eu-groups-list"></div>
+
       <div class="section-title">${T("stand.bracketGenerator")}</div>
       <div class="card" id="bracket-card"></div>
     `);
     document.getElementById("st-fill").addEventListener("click", () => UI.openMatchdayModal(c));
     document.getElementById("st-editteams").addEventListener("click", () => UI.openEditTeamsModal(c));
+
+    const renderEuGroups = () => {
+      const box = document.getElementById("eu-groups-list");
+      if (!box) return;
+      const groups = (season.europeanGroups || []);
+      if (!groups.length) {
+        box.innerHTML = `<p class="muted" style="margin-top:0;font-size:13px">${T("group.emptyHint")}</p>`;
+      } else {
+        box.innerHTML = groups.map(g => {
+          const tbl = S.computeGroupStandings(c, g);
+          const isLeague = g.phase === "league";
+          const cutPass = isLeague ? 8 : 2;
+          const cutPlay = isLeague ? 24 : Math.ceil(tbl.length / 2);
+          const zoneClass = (i) => i < cutPass ? "zone-eu-pass" : i < cutPlay ? "zone-eu-play" : "zone-eu-out";
+          const zoneLabel = (i) => i < cutPass ? T("group.zone.pass") : i < cutPlay ? T("group.zone.play") : T("group.zone.out");
+          const rows = tbl.map((r, i) => `<tr class="${r.team === c.clubName ? "is-user" : ""}">
+            <td>${i+1}</td><td>${U.esc(r.team)} ${r.team === c.clubName ? `<span class="zone-eu-pass" style="margin-left:6px;font-size:10px">${U.esc(zoneLabel(i))}</span>` : ""}</td>
+            <td class="num">${r.pj}</td><td class="num">${r.pg}</td><td class="num">${r.pe}</td><td class="num">${r.pp}</td>
+            <td class="num">${r.gf}</td><td class="num">${r.gc}</td><td class="num">${(r.gf-r.gc>=0?"+":"")+(r.gf-r.gc)}</td>
+            <td class="num"><b>${r.pts}</b></td>
+            <td><span class="${zoneClass(i)} zone-eu-badge" style="font-size:10px">${U.esc(zoneLabel(i))}</span></td></tr>`).join("");
+          return `<div class="card tight" style="margin-bottom:14px">
+            <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
+              <div><b>${U.esc(g.competition)}</b>${g.groupName ? ` · <span class="faint">${U.esc(g.groupName)}</span>` : ""}</div>
+              <button class="btn btn-ghost btn-sm eg-edit" data-gid="${U.esc(g.id)}"><span class="ni-icon" data-icon="edit-2"></span></button>
+            </div>
+            <div class="table-wrap"><table class="tbl"><thead><tr>
+              <th>#</th><th>${T("stand.th.team")}</th><th class="num">${T("stand.th.pj")}</th><th class="num">${T("stand.th.g")}</th><th class="num">${T("stand.th.e")}</th><th class="num">${T("stand.th.p")}</th>
+              <th class="num">${T("stand.th.gf")}</th><th class="num">${T("stand.th.gc")}</th><th class="num">${T("stand.th.dg")}</th><th class="num">${T("stand.th.pts")}</th><th></th>
+            </tr></thead><tbody>${rows}</tbody></table></div>
+          </div>`;
+        }).join("");
+        box.querySelectorAll(".eg-edit").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const gid = btn.dataset.gid;
+            const grp = (season.europeanGroups || []).find(g => g.id === gid);
+            if (grp) UI.openEuropeanGroupSetupModal(c, season.id, grp, () => FC.views.standings());
+          });
+        });
+        U.hydrateIcons(box);
+      }
+    };
+    renderEuGroups();
+
+    document.getElementById("st-addgroup").addEventListener("click", () => UI.openEuropeanGroupSetupModal(c, season.id, null, () => FC.views.standings()));
     renderBracket(c);
   };
   function rankCard(title, rows, key, emoji) {

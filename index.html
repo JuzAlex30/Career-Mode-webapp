@@ -318,6 +318,10 @@ textarea { resize: vertical; min-height: 80px; }
 .td-team-flag.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
 .td-est-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent-3) 18%, transparent); color: var(--accent-3); vertical-align: middle; cursor: help; }
 .bm-est { display: inline-block; font-size: 10px; font-weight: 700; padding: 0 5px; margin-left: 4px; border-radius: 999px; background: rgba(255,255,255,0.12); color: var(--bm-amber); vertical-align: middle; cursor: help; }
+/* European group zone badges */
+.zone-eu-pass { background: color-mix(in srgb, #22c55e 18%, transparent); color: #22c55e; border: 1px solid color-mix(in srgb, #22c55e 40%, transparent); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+.zone-eu-play { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #f59e0b; border: 1px solid color-mix(in srgb, #f59e0b 40%, transparent); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+.zone-eu-out  { background: color-mix(in srgb, #ef4444 18%, transparent); color: #ef4444; border: 1px solid color-mix(in srgb, #ef4444 40%, transparent); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
 
 /* ===================== Progress / bars ===================== */
 .bar { height: 9px; border-radius: 999px; background: var(--bg-2); overflow: hidden; }
@@ -1261,6 +1265,7 @@ body.tour-on { overflow: hidden; }
       "stand.topScorers": "Goleadores de tu equipo",
       "stand.topAssists": "Asistentes de tu equipo",
       "stand.scorersEmpty": "Registra goleadores/asistentes en tus partidos.",
+      "stand.europeanGroups": "Competiciones Europeas",
       "stand.bracketGenerator": "Generador de cuadros de copa",
       "stand.bracketDescription": "Crea un cuadro eliminatorio (copa, torneo ficticio o reto con amigos).",
       "stand.bracketTeamsLabel": "Equipos (separados por comas) — potencias de 2 ideal (4, 8, 16)",
@@ -1678,6 +1683,35 @@ body.tour-on { overflow: hidden; }
       "youth.toastPromoteError": "No se pudo promover",
       "youth.confirmRelease": "¿Descartar esta promesa?",
       "youth.toastReleased": "Promesa descartada",
+      // —— Grupos europeos ——
+      "group.setupTitle": "Nuevo grupo europeo",
+      "group.editTitle": "Editar grupo europeo",
+      "group.setupHint": "Define la competición y los equipos de tu grupo. Los partidos ya registrados en tu calendario se usarán para calcular la clasificación.",
+      "group.competition": "Competición",
+      "group.competitionPh": "Ej: Champions League",
+      "group.groupName": "Nombre del grupo",
+      "group.groupNamePh": "Ej: Grupo A",
+      "group.phase": "Formato",
+      "group.phase.groups": "Fase de grupos (eliminan top 2)",
+      "group.phase.league": "Liga de campeones (eliminan top 8 / playoffs top 24)",
+      "group.teams": "Equipos del grupo",
+      "group.teamsHint": "Un equipo por línea. Tu club debe estar incluido.",
+      "group.addMatch": "Añadir resultado",
+      "group.roundPh": "Jornada / ronda (opcional)",
+      "group.matchAdded": "Resultado añadido",
+      "group.sameTeamErr": "Los dos equipos no pueden ser el mismo",
+      "group.enterScore": "Introduce el marcador antes de guardar",
+      "group.selectCompetition": "Elige una competición primero",
+      "group.needTeams": "Añade al menos 2 equipos al grupo",
+      "group.toastCreated": "Grupo creado",
+      "group.toastUpdated": "Grupo actualizado",
+      "group.toastDeleted": "Grupo eliminado",
+      "group.confirmDelete": "¿Eliminar este grupo europeo?",
+      "group.emptyHint": "Sin competición europea esta temporada. Añade un grupo si estás en Champions League, Europa League u otra competición continental.",
+      "group.addBtn": "Añadir grupo",
+      "group.zone.pass": "Clasificado",
+      "group.zone.play": "Playoff",
+      "group.zone.out": "Eliminado",
       // —— Modo en vivo (FC.views.live) ——
       "live.exit": "Salir",
       "live.next": "Próximo:",
@@ -2744,6 +2778,7 @@ body.tour-on { overflow: hidden; }
       "stand.topScorers": "Your squad's scorers",
       "stand.topAssists": "Your squad's assists",
       "stand.scorersEmpty": "Log scorers and assisters in your matches.",
+      "stand.europeanGroups": "European Competitions",
       "stand.bracketGenerator": "Cup bracket generator",
       "stand.bracketDescription": "Create a knockout bracket (cup, fictional tournament, or challenge with friends).",
       "stand.bracketTeamsLabel": "Teams (comma-separated) — powers of 2 are ideal (4, 8, 16)",
@@ -3159,6 +3194,35 @@ body.tour-on { overflow: hidden; }
       "youth.toastPromoteError": "Could not promote",
       "youth.confirmRelease": "Release this prospect?",
       "youth.toastReleased": "Prospect released",
+      // —— European groups ——
+      "group.setupTitle": "New European group",
+      "group.editTitle": "Edit European group",
+      "group.setupHint": "Define the competition and teams in your group. Matches already logged in your calendar will be used to calculate the standings.",
+      "group.competition": "Competition",
+      "group.competitionPh": "E.g. Champions League",
+      "group.groupName": "Group name",
+      "group.groupNamePh": "E.g. Group A",
+      "group.phase": "Format",
+      "group.phase.groups": "Group stage (top 2 advance)",
+      "group.phase.league": "League phase (top 8 advance / top 24 playoffs)",
+      "group.teams": "Group teams",
+      "group.teamsHint": "One team per line. Your club must be included.",
+      "group.addMatch": "Add result",
+      "group.roundPh": "Round (optional)",
+      "group.matchAdded": "Result added",
+      "group.sameTeamErr": "The two teams cannot be the same",
+      "group.enterScore": "Enter the score before saving",
+      "group.selectCompetition": "Select a competition first",
+      "group.needTeams": "Add at least 2 teams to the group",
+      "group.toastCreated": "Group created",
+      "group.toastUpdated": "Group updated",
+      "group.toastDeleted": "Group deleted",
+      "group.confirmDelete": "Delete this European group?",
+      "group.emptyHint": "No European competition this season. Add a group if you are in the Champions League, Europa League or another continental competition.",
+      "group.addBtn": "Add group",
+      "group.zone.pass": "Through",
+      "group.zone.play": "Playoff",
+      "group.zone.out": "Eliminated",
       // —— Live mode (FC.views.live) ——
       "live.exit": "Exit",
       "live.next": "Next:",
@@ -5492,6 +5556,30 @@ body.tour-on { overflow: hidden; }
         "Final continental en {city}. El {team} ante la historia.",
         "{comp}: el {team} viaja a {city} a por la gloria eterna.",
       ],
+      eu_lider: [
+        "El {team} lidera el grupo en {comp}: ganar en {city} sería otro clavo más en el ataúd rival.",
+        "Primeros del grupo y sin intención de ceder: el {team} va a {city} a sentenciar.",
+        "Líderes europeos en {comp}; el {team} quiere certificar el primer puesto en {city}.",
+        "{comp}: el {team} manda en la tabla y sale a {city} a consolidarlo.",
+      ],
+      eu_zona: [
+        "El {team} está en zona de clasificación en {comp}: no perder en {city} mantiene la senda.",
+        "Bien colocados en el grupo, el {team} viaja a {city} sin ceder terreno.",
+        "El {team} tiene la clasificación en la mano: no fallar en {city} es el plan.",
+        "{comp}: el {team} gestiona bien el grupo y busca otro resultado en {city}.",
+      ],
+      eu_necesita: [
+        "La situación en el grupo aprieta: el {team} necesita ganar en {city} para seguir en {comp}.",
+        "Sin margen para más errores en {comp}; el {team} se la juega en {city}.",
+        "Los puntos en {city} son vitales: el {team} no puede fallar o la eliminación se acerca en {comp}.",
+        "Momento clave en {comp}: el {team} tiene que puntuar en {city} o el grupo se le escapa.",
+      ],
+      eu_crisis: [
+        "El {team} está en puestos de eliminación en {comp}: solo una victoria en {city} puede salvarlo.",
+        "Crisis en el grupo: el {team} necesita un milagro en {city} para seguir vivo en {comp}.",
+        "Es ahora o nunca en {comp}: el {team} llega a {city} con la espalda contra la pared.",
+        "La última oportunidad: el {team} viaja a {city} sabiendo que perder significa el final en {comp}.",
+      ],
     },
     atmosfera: {
       nieve: [
@@ -6707,6 +6795,30 @@ body.tour-on { overflow: hidden; }
       final_euro: [
         "Continental final in {city}. {team} stand before history.",
         "{comp}: {team} travel to {city} in pursuit of eternal glory.",
+      ],
+      eu_lider: [
+        "{team} top the group in {comp}: winning in {city} would be another nail in the coffin.",
+        "Top of the group and not planning to let go — {team} head to {city} to seal the deal.",
+        "European group leaders in {comp}; {team} want to wrap up first place in {city}.",
+        "{comp}: {team} command the table and travel to {city} to cement it.",
+      ],
+      eu_zona: [
+        "{team} sit in a qualification spot in {comp}: avoiding defeat in {city} keeps them on track.",
+        "Well placed in the group, {team} travel to {city} without conceding ground.",
+        "{team} have qualification in their own hands — not slipping up in {city} is the plan.",
+        "{comp}: {team} are managing the group well and hunt another result in {city}.",
+      ],
+      eu_necesita: [
+        "The group picture is tightening: {team} need to win in {city} to stay alive in {comp}.",
+        "No margin for more mistakes in {comp}; {team} put everything on the line in {city}.",
+        "Points in {city} are vital: {team} cannot afford to slip or elimination looms in {comp}.",
+        "A pivotal moment in {comp}: {team} must take something from {city} or the group slips away.",
+      ],
+      eu_crisis: [
+        "{team} sit in an elimination spot in {comp}: only a win in {city} can save them.",
+        "Crisis in the group: {team} need a miracle in {city} to stay alive in {comp}.",
+        "Now or never in {comp}: {team} arrive in {city} with their backs against the wall.",
+        "The last chance — {team} travel to {city} knowing that defeat means the end in {comp}.",
       ],
     },
     atmosfera: {
@@ -9511,6 +9623,78 @@ body.tour-on { overflow: hidden; }
     return i >= 0 ? { pos: i + 1, total: t.length } : null;
   };
 
+  /* ---------- GRUPOS EUROPEOS ------------------------------------------- */
+  S.computeGroupStandings = (c, group) => {
+    const teams = group.teams || [];
+    const tbl = {};
+    const ensure = n => tbl[n] || (tbl[n] = { team: n, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 });
+    teams.forEach(ensure);
+    const gc = group.competition.toLowerCase();
+    (c.matches || []).forEach(m => {
+      if (!m.competition || !S.isPlayed(m)) return;
+      const mc = m.competition.toLowerCase();
+      if (!mc.includes(gc) && !gc.includes(mc)) return;
+      const { home, away } = m;
+      if (!tbl[home] && !teams.includes(home)) return;
+      if (!tbl[away] && !teams.includes(away)) return;
+      if (home === away) return;
+      const hs = Number(m.homeScore), as = Number(m.awayScore);
+      const H = ensure(home), A = ensure(away);
+      H.pj++; A.pj++; H.gf += hs; H.gc += as; A.gf += as; A.gc += hs;
+      if (hs > as) { H.pg++; A.pp++; H.pts += 3; }
+      else if (hs < as) { A.pg++; H.pp++; A.pts += 3; }
+      else { H.pe++; A.pe++; H.pts++; A.pts++; }
+    });
+    return Object.values(tbl).sort((a, b) =>
+      b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc) || b.gf - a.gf || a.team.localeCompare(b.team));
+  };
+
+  S.europeanPosition = (c, seasonId) => {
+    const season = S.getSeason(c, seasonId);
+    const groups = (season && season.europeanGroups) || [];
+    for (const g of groups) {
+      if (!g.teams.includes(c.clubName)) continue;
+      const tbl = S.computeGroupStandings(c, g);
+      const i = tbl.findIndex(r => r.team === c.clubName);
+      if (i < 0) continue;
+      const n = tbl.length;
+      const isLeague = g.phase === "league";
+      const cutPass = isLeague ? 8 : 2;
+      const cutPlay = isLeague ? 24 : (n > 4 ? Math.ceil(n / 2) : 3);
+      const zone = i < cutPass ? "pass" : i < cutPlay ? "playoff" : "out";
+      return { competition: g.competition, groupName: g.groupName, pos: i + 1, total: n, zone, groupId: g.id };
+    }
+    return null;
+  };
+
+  S.addEuropeanGroup = (c, seasonId, data) => {
+    const season = S.getSeason(c, seasonId);
+    if (!season) return null;
+    if (!season.europeanGroups) season.europeanGroups = [];
+    const g = { id: U.uid(), competition: data.competition || "", phase: data.phase || "groups", groupName: data.groupName || "", teams: (data.teams || []).slice() };
+    season.europeanGroups.push(g);
+    emit();
+    return g;
+  };
+
+  S.updateEuropeanGroup = (c, seasonId, id, data) => {
+    const season = S.getSeason(c, seasonId);
+    const g = ((season && season.europeanGroups) || []).find(x => x.id === id);
+    if (!g) return;
+    if (data.competition !== undefined) g.competition = data.competition;
+    if (data.phase !== undefined) g.phase = data.phase;
+    if (data.groupName !== undefined) g.groupName = data.groupName;
+    if (data.teams !== undefined) g.teams = data.teams.slice();
+    emit();
+  };
+
+  S.deleteEuropeanGroup = (c, seasonId, id) => {
+    const season = S.getSeason(c, seasonId);
+    if (!season || !season.europeanGroups) return;
+    season.europeanGroups = season.europeanGroups.filter(g => g.id !== id);
+    emit();
+  };
+
   /* ---------- RIVALES (historial cara a cara + dossier táctico) ----------
      Todo derivado de c.matches (nunca se persiste). El "rival" de un partido
      tuyo es el equipo que no eres tú. El historial es VITALICIO (todas las
@@ -11424,7 +11608,14 @@ body.tour-on { overflow: hidden; }
     const before = played.filter(x => !m.date || new Date(x.date || 0) <= new Date(m.date)).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     let unbeaten = 0; for (let i = 0; i < before.length; i++) { if (S.userResult(c, before[i]) === "L") break; unbeaten++; }
     let stake = "media";
-    if (continental) stake = /final/i.test(m.round || "") ? "final_euro" : "continental";
+    if (continental) {
+      if (/final/i.test(m.round || "")) { stake = "final_euro"; }
+      else {
+        const euPos = S.europeanPosition(c, m.seasonId);
+        if (euPos) { stake = euPos.zone === "out" ? "eu_crisis" : euPos.zone === "playoff" ? "eu_necesita" : euPos.pos === 1 ? "eu_lider" : "eu_zona"; }
+        else { stake = "continental"; }
+      }
+    }
     else if (FC.data.isDomesticCup(m.competition)) stake = "copa";
     else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
     // Rivalidad all-time (ambas sedes) con nivel de intensidad acumulado.
@@ -13105,6 +13296,57 @@ body.tour-on { overflow: hidden; }
     });
   };
 
+  UI.openEuropeanGroupSetupModal = function (c, seasonId, existing, onDone) {
+    const T = FC.t;
+    const g = existing || {};
+    const isEdit = !!g.id;
+    const body = `
+      <p style="margin:0 0 14px;font-size:13px;color:var(--text-dim);line-height:1.5">${U.esc(T("group.setupHint"))}</p>
+      <div class="field"><label>${U.esc(T("group.competition"))}</label>
+        <input type="text" id="eg-comp" placeholder="${U.esc(T("group.competitionPh"))}" value="${U.esc(g.competition||"")}"/></div>
+      <div class="field"><label>${U.esc(T("group.groupName"))}</label>
+        <input type="text" id="eg-name" placeholder="${U.esc(T("group.groupNamePh"))}" value="${U.esc(g.groupName||"")}"/></div>
+      <div class="field"><label>${U.esc(T("group.phase"))}</label>
+        <select id="eg-phase">
+          <option value="groups" ${g.phase!=="league"?"selected":""}>${U.esc(T("group.phase.groups"))}</option>
+          <option value="league" ${g.phase==="league"?"selected":""}>${U.esc(T("group.phase.league"))}</option>
+        </select></div>
+      <div class="field"><label>${U.esc(T("group.teams"))}</label>
+        <p class="muted" style="margin:0 0 6px;font-size:12px">${U.esc(T("group.teamsHint"))}</p>
+        <textarea id="eg-teams" rows="6" placeholder="${U.esc(c.clubName)}">${(g.teams||[]).join("\n")}</textarea></div>`;
+    const foot = `${isEdit?`<button class="btn btn-ghost" id="eg-del" style="margin-right:auto;color:var(--danger)">${U.esc(T("common.delete"))}</button>`:""}
+      <button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button>
+      <button class="btn btn-primary" id="eg-save">${U.esc(T("common.save"))}</button>`;
+    const m = UI.openModal(T(isEdit ? "group.editTitle" : "group.setupTitle"), body, foot);
+
+    m.querySelector("#eg-save").addEventListener("click", () => {
+      const comp = m.querySelector("#eg-comp").value.trim();
+      const groupName = m.querySelector("#eg-name").value.trim();
+      const phase = m.querySelector("#eg-phase").value;
+      const teams = parseTeamLines(m.querySelector("#eg-teams").value);
+      if (!comp) { UI.toast(T("group.selectCompetition"), "err"); return; }
+      if (teams.length < 2) { UI.toast(T("group.needTeams"), "err"); return; }
+      if (isEdit) {
+        S.updateEuropeanGroup(c, seasonId, g.id, { competition: comp, groupName, phase, teams });
+        UI.toast(T("group.toastUpdated"), "ok");
+      } else {
+        S.addEuropeanGroup(c, seasonId, { competition: comp, groupName, phase, teams });
+        UI.toast(T("group.toastCreated"), "ok");
+      }
+      UI.closeModal();
+      if (onDone) onDone();
+    });
+
+    const delBtn = m.querySelector("#eg-del");
+    if (delBtn) delBtn.addEventListener("click", () => {
+      if (!confirm(T("group.confirmDelete"))) return;
+      S.deleteEuropeanGroup(c, seasonId, g.id);
+      UI.toast(T("group.toastDeleted"), "ok");
+      UI.closeModal();
+      if (onDone) onDone();
+    });
+  };
+
   UI.openMatchModal = function (c, existing, opts) {
     const T = FC.t;
     opts = opts || {};
@@ -14503,11 +14745,62 @@ body.tour-on { overflow: hidden; }
         ${rankCard(T("stand.topAssists"), assisters, "assists", "🅰️")}
       </div>
 
+      <div class="section-title" style="margin-top:24px;display:flex;align-items:center;justify-content:space-between">
+        <span>${T("stand.europeanGroups")}</span>
+        <button class="btn btn-ghost btn-sm" id="st-addgroup"><span class="ni-icon" data-icon="plus"></span> ${T("group.addBtn")}</button>
+      </div>
+      <div id="eu-groups-list"></div>
+
       <div class="section-title">${T("stand.bracketGenerator")}</div>
       <div class="card" id="bracket-card"></div>
     `);
     document.getElementById("st-fill").addEventListener("click", () => UI.openMatchdayModal(c));
     document.getElementById("st-editteams").addEventListener("click", () => UI.openEditTeamsModal(c));
+
+    const renderEuGroups = () => {
+      const box = document.getElementById("eu-groups-list");
+      if (!box) return;
+      const groups = (season.europeanGroups || []);
+      if (!groups.length) {
+        box.innerHTML = `<p class="muted" style="margin-top:0;font-size:13px">${T("group.emptyHint")}</p>`;
+      } else {
+        box.innerHTML = groups.map(g => {
+          const tbl = S.computeGroupStandings(c, g);
+          const isLeague = g.phase === "league";
+          const cutPass = isLeague ? 8 : 2;
+          const cutPlay = isLeague ? 24 : Math.ceil(tbl.length / 2);
+          const zoneClass = (i) => i < cutPass ? "zone-eu-pass" : i < cutPlay ? "zone-eu-play" : "zone-eu-out";
+          const zoneLabel = (i) => i < cutPass ? T("group.zone.pass") : i < cutPlay ? T("group.zone.play") : T("group.zone.out");
+          const rows = tbl.map((r, i) => `<tr class="${r.team === c.clubName ? "is-user" : ""}">
+            <td>${i+1}</td><td>${U.esc(r.team)} ${r.team === c.clubName ? `<span class="zone-eu-pass" style="margin-left:6px;font-size:10px">${U.esc(zoneLabel(i))}</span>` : ""}</td>
+            <td class="num">${r.pj}</td><td class="num">${r.pg}</td><td class="num">${r.pe}</td><td class="num">${r.pp}</td>
+            <td class="num">${r.gf}</td><td class="num">${r.gc}</td><td class="num">${(r.gf-r.gc>=0?"+":"")+(r.gf-r.gc)}</td>
+            <td class="num"><b>${r.pts}</b></td>
+            <td><span class="${zoneClass(i)} zone-eu-badge" style="font-size:10px">${U.esc(zoneLabel(i))}</span></td></tr>`).join("");
+          return `<div class="card tight" style="margin-bottom:14px">
+            <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
+              <div><b>${U.esc(g.competition)}</b>${g.groupName ? ` · <span class="faint">${U.esc(g.groupName)}</span>` : ""}</div>
+              <button class="btn btn-ghost btn-sm eg-edit" data-gid="${U.esc(g.id)}"><span class="ni-icon" data-icon="edit-2"></span></button>
+            </div>
+            <div class="table-wrap"><table class="tbl"><thead><tr>
+              <th>#</th><th>${T("stand.th.team")}</th><th class="num">${T("stand.th.pj")}</th><th class="num">${T("stand.th.g")}</th><th class="num">${T("stand.th.e")}</th><th class="num">${T("stand.th.p")}</th>
+              <th class="num">${T("stand.th.gf")}</th><th class="num">${T("stand.th.gc")}</th><th class="num">${T("stand.th.dg")}</th><th class="num">${T("stand.th.pts")}</th><th></th>
+            </tr></thead><tbody>${rows}</tbody></table></div>
+          </div>`;
+        }).join("");
+        box.querySelectorAll(".eg-edit").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const gid = btn.dataset.gid;
+            const grp = (season.europeanGroups || []).find(g => g.id === gid);
+            if (grp) UI.openEuropeanGroupSetupModal(c, season.id, grp, () => FC.views.standings());
+          });
+        });
+        U.hydrateIcons(box);
+      }
+    };
+    renderEuGroups();
+
+    document.getElementById("st-addgroup").addEventListener("click", () => UI.openEuropeanGroupSetupModal(c, season.id, null, () => FC.views.standings()));
     renderBracket(c);
   };
   function rankCard(title, rows, key, emoji) {

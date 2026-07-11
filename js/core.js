@@ -1045,6 +1045,78 @@
     return i >= 0 ? { pos: i + 1, total: t.length } : null;
   };
 
+  /* ---------- GRUPOS EUROPEOS ------------------------------------------- */
+  S.computeGroupStandings = (c, group) => {
+    const teams = group.teams || [];
+    const tbl = {};
+    const ensure = n => tbl[n] || (tbl[n] = { team: n, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 });
+    teams.forEach(ensure);
+    const gc = group.competition.toLowerCase();
+    (c.matches || []).forEach(m => {
+      if (!m.competition || !S.isPlayed(m)) return;
+      const mc = m.competition.toLowerCase();
+      if (!mc.includes(gc) && !gc.includes(mc)) return;
+      const { home, away } = m;
+      if (!tbl[home] && !teams.includes(home)) return;
+      if (!tbl[away] && !teams.includes(away)) return;
+      if (home === away) return;
+      const hs = Number(m.homeScore), as = Number(m.awayScore);
+      const H = ensure(home), A = ensure(away);
+      H.pj++; A.pj++; H.gf += hs; H.gc += as; A.gf += as; A.gc += hs;
+      if (hs > as) { H.pg++; A.pp++; H.pts += 3; }
+      else if (hs < as) { A.pg++; H.pp++; A.pts += 3; }
+      else { H.pe++; A.pe++; H.pts++; A.pts++; }
+    });
+    return Object.values(tbl).sort((a, b) =>
+      b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc) || b.gf - a.gf || a.team.localeCompare(b.team));
+  };
+
+  S.europeanPosition = (c, seasonId) => {
+    const season = S.getSeason(c, seasonId);
+    const groups = (season && season.europeanGroups) || [];
+    for (const g of groups) {
+      if (!g.teams.includes(c.clubName)) continue;
+      const tbl = S.computeGroupStandings(c, g);
+      const i = tbl.findIndex(r => r.team === c.clubName);
+      if (i < 0) continue;
+      const n = tbl.length;
+      const isLeague = g.phase === "league";
+      const cutPass = isLeague ? 8 : 2;
+      const cutPlay = isLeague ? 24 : (n > 4 ? Math.ceil(n / 2) : 3);
+      const zone = i < cutPass ? "pass" : i < cutPlay ? "playoff" : "out";
+      return { competition: g.competition, groupName: g.groupName, pos: i + 1, total: n, zone, groupId: g.id };
+    }
+    return null;
+  };
+
+  S.addEuropeanGroup = (c, seasonId, data) => {
+    const season = S.getSeason(c, seasonId);
+    if (!season) return null;
+    if (!season.europeanGroups) season.europeanGroups = [];
+    const g = { id: U.uid(), competition: data.competition || "", phase: data.phase || "groups", groupName: data.groupName || "", teams: (data.teams || []).slice() };
+    season.europeanGroups.push(g);
+    emit();
+    return g;
+  };
+
+  S.updateEuropeanGroup = (c, seasonId, id, data) => {
+    const season = S.getSeason(c, seasonId);
+    const g = ((season && season.europeanGroups) || []).find(x => x.id === id);
+    if (!g) return;
+    if (data.competition !== undefined) g.competition = data.competition;
+    if (data.phase !== undefined) g.phase = data.phase;
+    if (data.groupName !== undefined) g.groupName = data.groupName;
+    if (data.teams !== undefined) g.teams = data.teams.slice();
+    emit();
+  };
+
+  S.deleteEuropeanGroup = (c, seasonId, id) => {
+    const season = S.getSeason(c, seasonId);
+    if (!season || !season.europeanGroups) return;
+    season.europeanGroups = season.europeanGroups.filter(g => g.id !== id);
+    emit();
+  };
+
   /* ---------- RIVALES (historial cara a cara + dossier táctico) ----------
      Todo derivado de c.matches (nunca se persiste). El "rival" de un partido
      tuyo es el equipo que no eres tú. El historial es VITALICIO (todas las
@@ -2958,7 +3030,14 @@
     const before = played.filter(x => !m.date || new Date(x.date || 0) <= new Date(m.date)).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     let unbeaten = 0; for (let i = 0; i < before.length; i++) { if (S.userResult(c, before[i]) === "L") break; unbeaten++; }
     let stake = "media";
-    if (continental) stake = /final/i.test(m.round || "") ? "final_euro" : "continental";
+    if (continental) {
+      if (/final/i.test(m.round || "")) { stake = "final_euro"; }
+      else {
+        const euPos = S.europeanPosition(c, m.seasonId);
+        if (euPos) { stake = euPos.zone === "out" ? "eu_crisis" : euPos.zone === "playoff" ? "eu_necesita" : euPos.pos === 1 ? "eu_lider" : "eu_zona"; }
+        else { stake = "continental"; }
+      }
+    }
     else if (FC.data.isDomesticCup(m.competition)) stake = "copa";
     else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
     // Rivalidad all-time (ambas sedes) con nivel de intensidad acumulado.

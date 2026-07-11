@@ -1492,6 +1492,30 @@
         "Final continental en {city}. El {team} ante la historia.",
         "{comp}: el {team} viaja a {city} a por la gloria eterna.",
       ],
+      eu_lider: [
+        "El {team} lidera el grupo en {comp}: ganar en {city} sería otro clavo más en el ataúd rival.",
+        "Primeros del grupo y sin intención de ceder: el {team} va a {city} a sentenciar.",
+        "Líderes europeos en {comp}; el {team} quiere certificar el primer puesto en {city}.",
+        "{comp}: el {team} manda en la tabla y sale a {city} a consolidarlo.",
+      ],
+      eu_zona: [
+        "El {team} está en zona de clasificación en {comp}: no perder en {city} mantiene la senda.",
+        "Bien colocados en el grupo, el {team} viaja a {city} sin ceder terreno.",
+        "El {team} tiene la clasificación en la mano: no fallar en {city} es el plan.",
+        "{comp}: el {team} gestiona bien el grupo y busca otro resultado en {city}.",
+      ],
+      eu_necesita: [
+        "La situación en el grupo aprieta: el {team} necesita ganar en {city} para seguir en {comp}.",
+        "Sin margen para más errores en {comp}; el {team} se la juega en {city}.",
+        "Los puntos en {city} son vitales: el {team} no puede fallar o la eliminación se acerca en {comp}.",
+        "Momento clave en {comp}: el {team} tiene que puntuar en {city} o el grupo se le escapa.",
+      ],
+      eu_crisis: [
+        "El {team} está en puestos de eliminación en {comp}: solo una victoria en {city} puede salvarlo.",
+        "Crisis en el grupo: el {team} necesita un milagro en {city} para seguir vivo en {comp}.",
+        "Es ahora o nunca en {comp}: el {team} llega a {city} con la espalda contra la pared.",
+        "La última oportunidad: el {team} viaja a {city} sabiendo que perder significa el final en {comp}.",
+      ],
     },
     atmosfera: {
       nieve: [
@@ -2707,6 +2731,30 @@
       final_euro: [
         "Continental final in {city}. {team} stand before history.",
         "{comp}: {team} travel to {city} in pursuit of eternal glory.",
+      ],
+      eu_lider: [
+        "{team} top the group in {comp}: winning in {city} would be another nail in the coffin.",
+        "Top of the group and not planning to let go — {team} head to {city} to seal the deal.",
+        "European group leaders in {comp}; {team} want to wrap up first place in {city}.",
+        "{comp}: {team} command the table and travel to {city} to cement it.",
+      ],
+      eu_zona: [
+        "{team} sit in a qualification spot in {comp}: avoiding defeat in {city} keeps them on track.",
+        "Well placed in the group, {team} travel to {city} without conceding ground.",
+        "{team} have qualification in their own hands — not slipping up in {city} is the plan.",
+        "{comp}: {team} are managing the group well and hunt another result in {city}.",
+      ],
+      eu_necesita: [
+        "The group picture is tightening: {team} need to win in {city} to stay alive in {comp}.",
+        "No margin for more mistakes in {comp}; {team} put everything on the line in {city}.",
+        "Points in {city} are vital: {team} cannot afford to slip or elimination looms in {comp}.",
+        "A pivotal moment in {comp}: {team} must take something from {city} or the group slips away.",
+      ],
+      eu_crisis: [
+        "{team} sit in an elimination spot in {comp}: only a win in {city} can save them.",
+        "Crisis in the group: {team} need a miracle in {city} to stay alive in {comp}.",
+        "Now or never in {comp}: {team} arrive in {city} with their backs against the wall.",
+        "The last chance — {team} travel to {city} knowing that defeat means the end in {comp}.",
       ],
     },
     atmosfera: {
