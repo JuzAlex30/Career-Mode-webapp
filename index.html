@@ -296,6 +296,29 @@ textarea { resize: vertical; min-height: 80px; }
 .seg button { border: none; background: transparent; color: var(--text-dim); padding: 7px 13px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
 .seg button.active { background: var(--panel); color: var(--text); box-shadow: var(--shadow-sm); }
 
+/* ===================== Editor de datos de equipo ===================== */
+.td-tiers { display: flex; }
+.td-tiers .td-tier { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 8px; border: 1px solid var(--line); background: var(--bg-2); color: var(--text-dim); border-radius: 9px; cursor: pointer; font-size: 12.5px; font-weight: 600; transition: border-color .1s, color .1s; }
+.td-tiers .td-tier:hover { border-color: var(--accent); color: var(--text); }
+.td-tiers .td-tier .td-tier-n { font-size: 10.5px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.td-city-results { display: flex; flex-direction: column; gap: 4px; }
+.td-city-opt { text-align: left; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg-2); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text); }
+.td-city-opt:hover { border-color: var(--accent); background: var(--panel); }
+.td-color { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim); }
+.td-color input[type="color"] { width: 40px; height: 32px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-2); cursor: pointer; }
+.td-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--line)); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; line-height: 1.4; }
+.td-chip:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); border-style: solid; }
+.td-chip .ni-icon { width: 13px; height: 13px; }
+.td-team-list { display: flex; flex-direction: column; gap: 5px; max-height: 300px; overflow-y: auto; }
+.td-team-row { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 7px 10px; border: 1px solid var(--line); background: var(--bg-2); border-radius: 9px; cursor: pointer; color: var(--text); }
+.td-team-row:hover { border-color: var(--accent); background: var(--panel); }
+.td-team-row .td-team-name { flex: 1; font-size: 13.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-team-row .ni-icon { width: 15px; height: 15px; color: var(--text-dim); flex-shrink: 0; }
+.td-team-flag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent-3) 18%, transparent); color: var(--accent-3); flex-shrink: 0; }
+.td-team-flag.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.td-est-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent-3) 18%, transparent); color: var(--accent-3); vertical-align: middle; cursor: help; }
+.bm-est { display: inline-block; font-size: 10px; font-weight: 700; padding: 0 5px; margin-left: 4px; border-radius: 999px; background: rgba(255,255,255,0.12); color: var(--bm-amber); vertical-align: middle; cursor: help; }
+
 /* ===================== Progress / bars ===================== */
 .bar { height: 9px; border-radius: 999px; background: var(--bg-2); overflow: hidden; }
 .bar > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #ffffff)); }
@@ -1385,6 +1408,39 @@ body.tour-on { overflow: hidden; }
       "season.teamsUpdated": "Equipos de la liga actualizados",
       "season.teamsEmpty": "Añade al menos un par de equipos.",
       "stand.editTeams": "Editar equipos",
+      // —— Editor de datos de equipo sin catalogar (fuerza/ciudad/colores) ——
+      "teamData.title": "Datos de {team}",
+      "teamData.intro": "Este equipo no está en el catálogo. Fija sus datos para que las cuotas, el mapa de viaje y los colores sean fiables en tu carrera.",
+      "teamData.introKnown": "Ajusta los datos de este equipo para tu partida. Tus valores mandan sobre la estimación automática.",
+      "teamData.strengthTitle": "Fuerza del equipo",
+      "teamData.strengthHint": "Nivel general (OVR aprox.). Afecta a las cuotas de BETMÁXIMA y a la dificultad prevista.",
+      "teamData.strengthAuto": "Estimación actual de la app: {val}",
+      "teamData.tier.weak": "Débil",
+      "teamData.tier.medium": "Media",
+      "teamData.tier.strong": "Fuerte",
+      "teamData.tier.top": "Top",
+      "teamData.cityTitle": "Ciudad (mapa de viaje)",
+      "teamData.cityHint": "Busca la ciudad del estadio. Se usa para el mapa y los kilómetros de desplazamiento.",
+      "teamData.citySearchPh": "Buscar ciudad… (p.ej. Riad, Oporto, Tokio)",
+      "teamData.cityCurrent": "Ciudad fijada:",
+      "teamData.cityNone": "Sin ciudad fijada (se usa una posición aproximada).",
+      "teamData.cityNoResults": "Sin resultados. Prueba con otro nombre.",
+      "teamData.colorsTitle": "Colores del escudo",
+      "teamData.colorsHint": "Color principal y secundario del equipo. Se usan en el punto, el escudo y las cuotas.",
+      "teamData.colorPrimary": "Principal",
+      "teamData.colorSecondary": "Secundario",
+      "teamData.preview": "Vista previa",
+      "teamData.saved": "Datos de {team} guardados",
+      "teamData.reset": "Borrar mis datos",
+      "teamData.resetDone": "Se han borrado tus datos de {team}",
+      "teamData.needsDataChip": "Completar datos de {team}",
+      "teamData.estimatedBadge": "≈ estimado",
+      "teamData.estimatedHint": "Datos estimados automáticamente. Pulsa para fijarlos y hacerlos fiables.",
+      "teamData.confirmedBadge": "✓ datos",
+      "teamData.editCta": "Completar datos",
+      "teamData.editCtaKnown": "Editar datos",
+      "teamData.sectionTitle": "Datos de equipos externos",
+      "teamData.sectionHint": "Fija fuerza, ciudad y colores de rivales fuera del catálogo (europeas, copas, otras ligas) para que las cuotas y el mapa sean fiables.",
       // —— Resultado en minúscula (palabra) ——
       "res.WLower": "victoria",
       "res.DLower": "empate",
@@ -2832,6 +2888,39 @@ body.tour-on { overflow: hidden; }
       "season.teamsUpdated": "League teams updated",
       "season.teamsEmpty": "Add at least a couple of teams.",
       "stand.editTeams": "Edit teams",
+      // —— Uncatalogued team data editor (strength/city/colours) ——
+      "teamData.title": "{team} data",
+      "teamData.intro": "This team isn't in the catalogue. Set its data so odds, the travel map and colours are reliable in your career.",
+      "teamData.introKnown": "Adjust this team's data for your save. Your values override the automatic estimate.",
+      "teamData.strengthTitle": "Team strength",
+      "teamData.strengthHint": "Overall level (approx. OVR). Affects BETMÁXIMA odds and expected difficulty.",
+      "teamData.strengthAuto": "App's current estimate: {val}",
+      "teamData.tier.weak": "Weak",
+      "teamData.tier.medium": "Average",
+      "teamData.tier.strong": "Strong",
+      "teamData.tier.top": "Top",
+      "teamData.cityTitle": "City (travel map)",
+      "teamData.cityHint": "Search for the stadium's city. Used for the map and travel distances.",
+      "teamData.citySearchPh": "Search city… (e.g. Riyadh, Porto, Tokyo)",
+      "teamData.cityCurrent": "City set:",
+      "teamData.cityNone": "No city set (an approximate position is used).",
+      "teamData.cityNoResults": "No results. Try another name.",
+      "teamData.colorsTitle": "Crest colours",
+      "teamData.colorsHint": "Team's primary and secondary colour. Used for the dot, the crest and the odds.",
+      "teamData.colorPrimary": "Primary",
+      "teamData.colorSecondary": "Secondary",
+      "teamData.preview": "Preview",
+      "teamData.saved": "{team} data saved",
+      "teamData.reset": "Clear my data",
+      "teamData.resetDone": "Your {team} data has been cleared",
+      "teamData.needsDataChip": "Complete {team} data",
+      "teamData.estimatedBadge": "≈ estimated",
+      "teamData.estimatedHint": "Automatically estimated data. Tap to set it and make it reliable.",
+      "teamData.confirmedBadge": "✓ data",
+      "teamData.editCta": "Complete data",
+      "teamData.editCtaKnown": "Edit data",
+      "teamData.sectionTitle": "External team data",
+      "teamData.sectionHint": "Set strength, city and colours for rivals outside the catalogue (European ties, cups, other leagues) so odds and the map stay reliable.",
       // —— Result word (lowercase) ——
       "res.WLower": "win",
       "res.DLower": "draw",
@@ -4580,19 +4669,19 @@ body.tour-on { overflow: hidden; }
     // Logros de viajero (sección Viajes). Distancias por FC.trips (Haversine); equipos
     // sin coordenadas usan el fallback determinista, así que son logros de inmersión.
     { id:"trip-long-haul", name:"Sin escalas", emoji:"🛫", tier:"bronze", desc:"Juega un desplazamiento de 1.000+ km.",
-      check:(c)=> { const home = FC.trips.cityOf(c.clubName);
-        return FC.store.userMatches(c).some(m => m.away === c.clubName && m.home && FC.trips.distance(home, FC.trips.cityOf(m.home)) >= 1000); } },
+      check:(c)=> { const home = FC.trips.cityOf(c.clubName, c);
+        return FC.store.userMatches(c).some(m => m.away === c.clubName && m.home && FC.trips.distance(home, FC.trips.cityOf(m.home, c)) >= 1000); } },
     { id:"trip-marathon", name:"Maratoniano", emoji:"🧳", tier:"silver", desc:"Recorre 10.000+ km de viajes en una sola temporada.",
-      check:(c)=> { const home = FC.trips.cityOf(c.clubName); const km = {};
-        FC.store.userMatches(c).forEach(m => { if (m.away === c.clubName && m.home) km[m.seasonId] = (km[m.seasonId]||0) + FC.trips.distance(home, FC.trips.cityOf(m.home))*2; });
+      check:(c)=> { const home = FC.trips.cityOf(c.clubName, c); const km = {};
+        FC.store.userMatches(c).forEach(m => { if (m.away === c.clubName && m.home) km[m.seasonId] = (km[m.seasonId]||0) + FC.trips.distance(home, FC.trips.cityOf(m.home, c))*2; });
         return Object.values(km).some(v => v >= 10000); } },
     { id:"trip-globetrotter", name:"Trotamundos", emoji:"🌍", tier:"gold", desc:"Visita el estadio de todos los rivales de tu liga en una temporada.",
       check:(c)=> (c.seasons||[]).some(s => { const rivals = (s.teams||[]).filter(t => t !== c.clubName); if (!rivals.length) return false;
         const visited = new Set(); FC.store.userMatches(c, s.id).forEach(m => { if (m.away === c.clubName && m.home) visited.add(m.home); });
         return rivals.every(t => visited.has(t)); }) },
     { id:"trip-world-lap", name:"La vuelta al mundo", emoji:"🌐", tier:"legend", desc:"Acumula 40.075 km de viajes en tu carrera (una vuelta al mundo).",
-      check:(c)=> { const home = FC.trips.cityOf(c.clubName); let km = 0;
-        FC.store.userMatches(c).forEach(m => { if (m.away === c.clubName && m.home) km += FC.trips.distance(home, FC.trips.cityOf(m.home))*2; });
+      check:(c)=> { const home = FC.trips.cityOf(c.clubName, c); let km = 0;
+        FC.store.userMatches(c).forEach(m => { if (m.away === c.clubName && m.home) km += FC.trips.distance(home, FC.trips.cityOf(m.home, c))*2; });
         return km >= 40075; } },
   ];
 
@@ -5057,6 +5146,217 @@ body.tour-on { overflow: hidden; }
     "Drogheda United":[53.718,-6.355,"Drogheda"], "Sligo Rovers":[54.269,-8.470,"Sligo"],
     "Waterford":[52.258,-7.110,"Waterford"], "Cork City":[51.893,-8.492,"Cork"],
   };
+
+  /* ============================================================
+     WORLD_CITIES — catálogo global de ciudades para el buscador del
+     editor de datos de equipo (equipos sin catalogar). Permite fijar
+     la ciudad de un rival europeo, sudamericano, árabe, asiático, etc.
+     para que el mapa de viaje y las distancias funcionen.
+     Formato: { city, country, lat, lon, alt? }. 'alt' = nombre en
+     inglés/local para que la búsqueda sea bilingüe (ES/EN). La búsqueda
+     normaliza acentos y busca subcadena en city+alt+country.
+     ============================================================ */
+  D.WORLD_CITIES = [
+    // --- España (capitales de provincia y ciudades futbolísticas) ---
+    { city:"Madrid", country:"España", lat:40.417, lon:-3.703 },
+    { city:"Barcelona", country:"España", lat:41.385, lon:2.173 },
+    { city:"Valencia", country:"España", lat:39.470, lon:-0.377 },
+    { city:"Sevilla", country:"España", lat:37.389, lon:-5.984, alt:"Seville" },
+    { city:"Bilbao", country:"España", lat:43.263, lon:-2.935 },
+    { city:"Málaga", country:"España", lat:36.721, lon:-4.421 },
+    { city:"Zaragoza", country:"España", lat:41.649, lon:-0.888 },
+    { city:"Vigo", country:"España", lat:42.231, lon:-8.713 },
+    { city:"Gijón", country:"España", lat:43.536, lon:-5.661 },
+    { city:"La Coruña", country:"España", lat:43.362, lon:-8.412, alt:"A Coruna" },
+    { city:"Las Palmas", country:"España", lat:28.124, lon:-15.430 },
+    { city:"Santa Cruz de Tenerife", country:"España", lat:28.469, lon:-16.255, alt:"Tenerife" },
+    { city:"Palma", country:"España", lat:39.570, lon:2.650, alt:"Palma de Mallorca" },
+    { city:"San Sebastián", country:"España", lat:43.318, lon:-1.981, alt:"San Sebastian Donostia" },
+    { city:"Pamplona", country:"España", lat:42.812, lon:-1.645 },
+    { city:"Valladolid", country:"España", lat:41.652, lon:-4.724 },
+    { city:"Granada", country:"España", lat:37.177, lon:-3.598 },
+    { city:"Córdoba", country:"España", lat:37.889, lon:-4.779, alt:"Cordoba" },
+    // --- Inglaterra / Reino Unido ---
+    { city:"Londres", country:"Inglaterra", lat:51.507, lon:-0.128, alt:"London" },
+    { city:"Mánchester", country:"Inglaterra", lat:53.481, lon:-2.242, alt:"Manchester" },
+    { city:"Liverpool", country:"Inglaterra", lat:53.408, lon:-2.991 },
+    { city:"Birmingham", country:"Inglaterra", lat:52.489, lon:-1.898 },
+    { city:"Leeds", country:"Inglaterra", lat:53.801, lon:-1.549 },
+    { city:"Newcastle", country:"Inglaterra", lat:54.978, lon:-1.618 },
+    { city:"Sheffield", country:"Inglaterra", lat:53.383, lon:-1.470 },
+    { city:"Nottingham", country:"Inglaterra", lat:52.954, lon:-1.158 },
+    { city:"Bristol", country:"Inglaterra", lat:51.454, lon:-2.588 },
+    { city:"Southampton", country:"Inglaterra", lat:50.909, lon:-1.404 },
+    { city:"Glasgow", country:"Escocia", lat:55.860, lon:-4.252 },
+    { city:"Edimburgo", country:"Escocia", lat:55.953, lon:-3.188, alt:"Edinburgh" },
+    { city:"Cardiff", country:"Gales", lat:51.481, lon:-3.179 },
+    { city:"Belfast", country:"Irlanda del Norte", lat:54.597, lon:-5.930 },
+    { city:"Dublín", country:"Irlanda", lat:53.350, lon:-6.260, alt:"Dublin" },
+    // --- Francia ---
+    { city:"París", country:"Francia", lat:48.857, lon:2.352, alt:"Paris" },
+    { city:"Marsella", country:"Francia", lat:43.296, lon:5.370, alt:"Marseille" },
+    { city:"Lyon", country:"Francia", lat:45.764, lon:4.836 },
+    { city:"Lille", country:"Francia", lat:50.629, lon:3.057 },
+    { city:"Niza", country:"Francia", lat:43.710, lon:7.262, alt:"Nice" },
+    { city:"Toulouse", country:"Francia", lat:43.605, lon:1.444 },
+    { city:"Burdeos", country:"Francia", lat:44.838, lon:-0.579, alt:"Bordeaux" },
+    { city:"Nantes", country:"Francia", lat:47.218, lon:-1.554 },
+    { city:"Estrasburgo", country:"Francia", lat:48.573, lon:7.752, alt:"Strasbourg" },
+    { city:"Saint-Étienne", country:"Francia", lat:45.440, lon:4.387, alt:"Saint Etienne" },
+    { city:"Mónaco", country:"Mónaco", lat:43.738, lon:7.424, alt:"Monaco" },
+    // --- Italia ---
+    { city:"Roma", country:"Italia", lat:41.903, lon:12.496, alt:"Rome" },
+    { city:"Milán", country:"Italia", lat:45.464, lon:9.190, alt:"Milan Milano" },
+    { city:"Nápoles", country:"Italia", lat:40.852, lon:14.268, alt:"Naples Napoli" },
+    { city:"Turín", country:"Italia", lat:45.070, lon:7.687, alt:"Turin Torino" },
+    { city:"Florencia", country:"Italia", lat:43.770, lon:11.256, alt:"Florence Firenze" },
+    { city:"Génova", country:"Italia", lat:44.406, lon:8.946, alt:"Genoa Genova" },
+    { city:"Bolonia", country:"Italia", lat:44.494, lon:11.343, alt:"Bologna" },
+    { city:"Venecia", country:"Italia", lat:45.440, lon:12.316, alt:"Venice Venezia" },
+    { city:"Palermo", country:"Italia", lat:38.116, lon:13.361 },
+    { city:"Bari", country:"Italia", lat:41.117, lon:16.872 },
+    // --- Alemania ---
+    { city:"Berlín", country:"Alemania", lat:52.520, lon:13.405, alt:"Berlin" },
+    { city:"Múnich", country:"Alemania", lat:48.137, lon:11.575, alt:"Munich Munchen" },
+    { city:"Hamburgo", country:"Alemania", lat:53.551, lon:9.993, alt:"Hamburg" },
+    { city:"Fráncfort", country:"Alemania", lat:50.110, lon:8.682, alt:"Frankfurt" },
+    { city:"Colonia", country:"Alemania", lat:50.937, lon:6.960, alt:"Cologne Koln" },
+    { city:"Stuttgart", country:"Alemania", lat:48.776, lon:9.182 },
+    { city:"Dortmund", country:"Alemania", lat:51.514, lon:7.466 },
+    { city:"Düsseldorf", country:"Alemania", lat:51.228, lon:6.773, alt:"Dusseldorf" },
+    { city:"Leipzig", country:"Alemania", lat:51.340, lon:12.375 },
+    { city:"Bremen", country:"Alemania", lat:53.079, lon:8.802 },
+    // --- Portugal / Países Bajos / Bélgica ---
+    { city:"Lisboa", country:"Portugal", lat:38.722, lon:-9.139, alt:"Lisbon" },
+    { city:"Oporto", country:"Portugal", lat:41.158, lon:-8.629, alt:"Porto" },
+    { city:"Braga", country:"Portugal", lat:41.545, lon:-8.426 },
+    { city:"Funchal", country:"Portugal", lat:32.651, lon:-16.909, alt:"Madeira" },
+    { city:"Ámsterdam", country:"Países Bajos", lat:52.370, lon:4.895, alt:"Amsterdam" },
+    { city:"Róterdam", country:"Países Bajos", lat:51.924, lon:4.478, alt:"Rotterdam" },
+    { city:"Eindhoven", country:"Países Bajos", lat:51.442, lon:5.478 },
+    { city:"Bruselas", country:"Bélgica", lat:50.851, lon:4.352, alt:"Brussels Bruxelles" },
+    { city:"Amberes", country:"Bélgica", lat:51.222, lon:4.400, alt:"Antwerp Antwerpen" },
+    { city:"Brujas", country:"Bélgica", lat:51.209, lon:3.224, alt:"Bruges Brugge" },
+    // --- Europa central y del este ---
+    { city:"Viena", country:"Austria", lat:48.208, lon:16.373, alt:"Vienna Wien" },
+    { city:"Zúrich", country:"Suiza", lat:47.377, lon:8.540, alt:"Zurich" },
+    { city:"Ginebra", country:"Suiza", lat:46.204, lon:6.143, alt:"Geneva Geneve" },
+    { city:"Berna", country:"Suiza", lat:46.948, lon:7.447, alt:"Bern" },
+    { city:"Copenhague", country:"Dinamarca", lat:55.676, lon:12.568, alt:"Copenhagen" },
+    { city:"Estocolmo", country:"Suecia", lat:59.329, lon:18.069, alt:"Stockholm" },
+    { city:"Gotemburgo", country:"Suecia", lat:57.709, lon:11.974, alt:"Gothenburg Goteborg" },
+    { city:"Oslo", country:"Noruega", lat:59.914, lon:10.752 },
+    { city:"Helsinki", country:"Finlandia", lat:60.170, lon:24.938 },
+    { city:"Reikiavik", country:"Islandia", lat:64.147, lon:-21.942, alt:"Reykjavik" },
+    { city:"Varsovia", country:"Polonia", lat:52.230, lon:21.012, alt:"Warsaw Warszawa" },
+    { city:"Cracovia", country:"Polonia", lat:50.065, lon:19.945, alt:"Krakow Cracow" },
+    { city:"Praga", country:"Chequia", lat:50.076, lon:14.438, alt:"Prague Praha" },
+    { city:"Budapest", country:"Hungría", lat:47.498, lon:19.040 },
+    { city:"Bucarest", country:"Rumanía", lat:44.427, lon:26.103, alt:"Bucharest" },
+    { city:"Belgrado", country:"Serbia", lat:44.787, lon:20.449, alt:"Belgrade Beograd" },
+    { city:"Zagreb", country:"Croacia", lat:45.815, lon:15.982 },
+    { city:"Split", country:"Croacia", lat:43.508, lon:16.440 },
+    { city:"Sofía", country:"Bulgaria", lat:42.698, lon:23.322, alt:"Sofia" },
+    { city:"Atenas", country:"Grecia", lat:37.984, lon:23.728, alt:"Athens" },
+    { city:"Salónica", country:"Grecia", lat:40.640, lon:22.944, alt:"Thessaloniki Salonica" },
+    { city:"Moscú", country:"Rusia", lat:55.756, lon:37.617, alt:"Moscow Moskva" },
+    { city:"San Petersburgo", country:"Rusia", lat:59.931, lon:30.361, alt:"Saint Petersburg" },
+    { city:"Kiev", country:"Ucrania", lat:50.450, lon:30.523, alt:"Kyiv Kiev" },
+    { city:"Estambul", country:"Turquía", lat:41.008, lon:28.978, alt:"Istanbul" },
+    { city:"Ankara", country:"Turquía", lat:39.933, lon:32.859 },
+    // --- Oriente Medio / Golfo (muy relevante: fichajes y clubes) ---
+    { city:"Riad", country:"Arabia Saudí", lat:24.774, lon:46.738, alt:"Riyadh" },
+    { city:"Yeda", country:"Arabia Saudí", lat:21.543, lon:39.173, alt:"Jeddah Jedda" },
+    { city:"Dammam", country:"Arabia Saudí", lat:26.421, lon:50.088 },
+    { city:"Doha", country:"Catar", lat:25.286, lon:51.534, alt:"Qatar" },
+    { city:"Dubái", country:"Emiratos Árabes Unidos", lat:25.205, lon:55.271, alt:"Dubai" },
+    { city:"Abu Dabi", country:"Emiratos Árabes Unidos", lat:24.453, lon:54.377, alt:"Abu Dhabi" },
+    { city:"Kuwait", country:"Kuwait", lat:29.375, lon:47.977, alt:"Kuwait City" },
+    { city:"Manama", country:"Baréin", lat:26.229, lon:50.586, alt:"Bahrain" },
+    { city:"Teherán", country:"Irán", lat:35.689, lon:51.389, alt:"Tehran" },
+    { city:"Tel Aviv", country:"Israel", lat:32.085, lon:34.782 },
+    // --- África ---
+    { city:"El Cairo", country:"Egipto", lat:30.044, lon:31.236, alt:"Cairo" },
+    { city:"Casablanca", country:"Marruecos", lat:33.573, lon:-7.590 },
+    { city:"Rabat", country:"Marruecos", lat:34.021, lon:-6.836 },
+    { city:"Túnez", country:"Túnez", lat:36.807, lon:10.181, alt:"Tunis" },
+    { city:"Argel", country:"Argelia", lat:36.754, lon:3.059, alt:"Algiers" },
+    { city:"Lagos", country:"Nigeria", lat:6.524, lon:3.379 },
+    { city:"Accra", country:"Ghana", lat:5.560, lon:-0.205 },
+    { city:"Abiyán", country:"Costa de Marfil", lat:5.360, lon:-4.008, alt:"Abidjan" },
+    { city:"Dakar", country:"Senegal", lat:14.716, lon:-17.467 },
+    { city:"Nairobi", country:"Kenia", lat:-1.286, lon:36.817 },
+    { city:"Johannesburgo", country:"Sudáfrica", lat:-26.205, lon:28.050, alt:"Johannesburg" },
+    { city:"Ciudad del Cabo", country:"Sudáfrica", lat:-33.925, lon:18.424, alt:"Cape Town" },
+    // --- Asia oriental y sudeste ---
+    { city:"Tokio", country:"Japón", lat:35.690, lon:139.692, alt:"Tokyo" },
+    { city:"Osaka", country:"Japón", lat:34.694, lon:135.502 },
+    { city:"Yokohama", country:"Japón", lat:35.444, lon:139.638 },
+    { city:"Seúl", country:"Corea del Sur", lat:37.566, lon:126.978, alt:"Seoul" },
+    { city:"Busan", country:"Corea del Sur", lat:35.180, lon:129.076 },
+    { city:"Pekín", country:"China", lat:39.904, lon:116.407, alt:"Beijing Pekin" },
+    { city:"Shanghái", country:"China", lat:31.230, lon:121.474, alt:"Shanghai" },
+    { city:"Cantón", country:"China", lat:23.129, lon:113.264, alt:"Guangzhou Canton" },
+    { city:"Hong Kong", country:"China", lat:22.319, lon:114.170 },
+    { city:"Bangkok", country:"Tailandia", lat:13.756, lon:100.502 },
+    { city:"Singapur", country:"Singapur", lat:1.352, lon:103.820, alt:"Singapore" },
+    { city:"Kuala Lumpur", country:"Malasia", lat:3.139, lon:101.687 },
+    { city:"Yakarta", country:"Indonesia", lat:-6.208, lon:106.846, alt:"Jakarta" },
+    { city:"Manila", country:"Filipinas", lat:14.600, lon:120.984 },
+    { city:"Ciudad Ho Chi Minh", country:"Vietnam", lat:10.823, lon:106.630, alt:"Ho Chi Minh Saigon" },
+    { city:"Bombay", country:"India", lat:19.076, lon:72.878, alt:"Mumbai" },
+    { city:"Nueva Delhi", country:"India", lat:28.614, lon:77.209, alt:"New Delhi Delhi" },
+    // --- Oceanía ---
+    { city:"Sídney", country:"Australia", lat:-33.869, lon:151.209, alt:"Sydney" },
+    { city:"Melbourne", country:"Australia", lat:-37.814, lon:144.963 },
+    { city:"Brisbane", country:"Australia", lat:-27.470, lon:153.021 },
+    { city:"Perth", country:"Australia", lat:-31.953, lon:115.857 },
+    { city:"Auckland", country:"Nueva Zelanda", lat:-36.848, lon:174.763 },
+    { city:"Wellington", country:"Nueva Zelanda", lat:-41.286, lon:174.776 },
+    // --- Norteamérica (MLS / Liga MX / Canadá) ---
+    { city:"Nueva York", country:"Estados Unidos", lat:40.713, lon:-74.006, alt:"New York" },
+    { city:"Los Ángeles", country:"Estados Unidos", lat:34.052, lon:-118.244, alt:"Los Angeles LA" },
+    { city:"Miami", country:"Estados Unidos", lat:25.762, lon:-80.192, alt:"Inter Miami" },
+    { city:"Chicago", country:"Estados Unidos", lat:41.878, lon:-87.630 },
+    { city:"Seattle", country:"Estados Unidos", lat:47.606, lon:-122.332 },
+    { city:"Atlanta", country:"Estados Unidos", lat:33.749, lon:-84.388 },
+    { city:"Dallas", country:"Estados Unidos", lat:32.777, lon:-96.797 },
+    { city:"Houston", country:"Estados Unidos", lat:29.760, lon:-95.370 },
+    { city:"Boston", country:"Estados Unidos", lat:42.360, lon:-71.058 },
+    { city:"Washington", country:"Estados Unidos", lat:38.907, lon:-77.037, alt:"Washington DC" },
+    { city:"Portland", country:"Estados Unidos", lat:45.512, lon:-122.658 },
+    { city:"Nashville", country:"Estados Unidos", lat:36.163, lon:-86.781 },
+    { city:"Orlando", country:"Estados Unidos", lat:28.538, lon:-81.379 },
+    { city:"Austin", country:"Estados Unidos", lat:30.267, lon:-97.743 },
+    { city:"Toronto", country:"Canadá", lat:43.653, lon:-79.383 },
+    { city:"Montreal", country:"Canadá", lat:45.502, lon:-73.567 },
+    { city:"Vancouver", country:"Canadá", lat:49.283, lon:-123.121 },
+    { city:"Ciudad de México", country:"México", lat:19.433, lon:-99.133, alt:"Mexico City CDMX" },
+    { city:"Guadalajara", country:"México", lat:20.677, lon:-103.347 },
+    { city:"Monterrey", country:"México", lat:25.687, lon:-100.317 },
+    // --- Sudamérica ---
+    { city:"Buenos Aires", country:"Argentina", lat:-34.604, lon:-58.382 },
+    { city:"Rosario", country:"Argentina", lat:-32.958, lon:-60.639 },
+    { city:"Córdoba (Arg.)", country:"Argentina", lat:-31.420, lon:-64.189, alt:"Cordoba Argentina" },
+    { city:"Río de Janeiro", country:"Brasil", lat:-22.907, lon:-43.173, alt:"Rio de Janeiro" },
+    { city:"São Paulo", country:"Brasil", lat:-23.551, lon:-46.633, alt:"Sao Paulo" },
+    { city:"Belo Horizonte", country:"Brasil", lat:-19.917, lon:-43.934 },
+    { city:"Porto Alegre", country:"Brasil", lat:-30.033, lon:-51.230 },
+    { city:"Curitiba", country:"Brasil", lat:-25.428, lon:-49.273 },
+    { city:"Salvador", country:"Brasil", lat:-12.971, lon:-38.501 },
+    { city:"Recife", country:"Brasil", lat:-8.048, lon:-34.877 },
+    { city:"Montevideo", country:"Uruguay", lat:-34.901, lon:-56.164 },
+    { city:"Santiago", country:"Chile", lat:-33.449, lon:-70.669, alt:"Santiago de Chile" },
+    { city:"Lima", country:"Perú", lat:-12.046, lon:-77.043 },
+    { city:"Bogotá", country:"Colombia", lat:4.711, lon:-74.072, alt:"Bogota" },
+    { city:"Medellín", country:"Colombia", lat:6.244, lon:-75.581, alt:"Medellin" },
+    { city:"Cali", country:"Colombia", lat:3.452, lon:-76.532 },
+    { city:"Quito", country:"Ecuador", lat:-0.181, lon:-78.468 },
+    { city:"Guayaquil", country:"Ecuador", lat:-2.170, lon:-79.922 },
+    { city:"Asunción", country:"Paraguay", lat:-25.264, lon:-57.576, alt:"Asuncion" },
+    { city:"La Paz", country:"Bolivia", lat:-16.500, lon:-68.150 },
+    { city:"Caracas", country:"Venezuela", lat:10.481, lon:-66.904 },
+  ];
 
   /* Pools narrativos de la cabina. Plantillas con {slots} que el motor
      (FC.trips) rellena con datos vivos y escapa con U.esc. Slots:
@@ -8211,7 +8511,38 @@ body.tour-on { overflow: hidden; }
     for (const k in map) { const kn = U._normTeam(k); if (kn.length >= 5 && (n.includes(kn) || kn.includes(n))) return map[k]; }
     return null;
   };
-  U._tcFind = (name) => U._findTeam(FC.data && FC.data.TEAM_COLORS, name);
+  U._tcFind = (name, c) => {
+    if (c) { const ov = U.teamOverride(c, name); if (ov && ov.primary) return { primary: ov.primary, secondary: ov.secondary || "#ffffff" }; }
+    return U._findTeam(FC.data && FC.data.TEAM_COLORS, name);
+  };
+  // Override de datos de equipo por CARRERA (fuerza/ciudad/colores) que el usuario
+  // confirma para equipos sin catalogar. Se guarda en c.teams; búsqueda difusa por
+  // nombre (mismas reglas que _findTeam). Devuelve el registro o null.
+  U.teamOverride = (c, name) => {
+    const t = c && c.teams; if (!t || !name) return null;
+    if (t[name]) return t[name];
+    const n = U._normTeam(name);
+    for (const k in t) { if (U._normTeam(k) === n) return t[k]; }
+    return null;
+  };
+  // Buscador de ciudades del editor de datos de equipo. Filtra D.WORLD_CITIES
+  // por subcadena normalizada (ES/EN vía alt) en ciudad+país. Prioriza los que
+  // empiezan por la consulta. Devuelve hasta 'limit' resultados.
+  U.searchCities = (query, limit) => {
+    const list = (FC.data && FC.data.WORLD_CITIES) || [];
+    const q = U._normTeam(query);
+    if (!q) return list.slice(0, limit || 8);
+    const scored = [];
+    for (const ci of list) {
+      const hay = U._normTeam(ci.city + " " + (ci.alt || "") + " " + (ci.country || ""));
+      const idx = hay.indexOf(q);
+      if (idx < 0) continue;
+      // 0 = empieza por la consulta; si no, penaliza por posición.
+      scored.push({ ci, rank: hay.startsWith(q) ? 0 : idx + 1 });
+    }
+    scored.sort((a, b) => a.rank - b.rank || a.ci.city.localeCompare(b.ci.city));
+    return scored.slice(0, limit || 8).map(s => s.ci);
+  };
   // Devuelve "#ffffff" o "#111111" según la luminancia percibida del color de fondo.
   U.textOn = (bg) => {
     const m = String(bg).match(/^#([0-9a-f]{3,6})$/i);
@@ -8220,17 +8551,17 @@ body.tour-on { overflow: hidden; }
     return 0.2126*(parseInt(h.slice(0,2),16)/255)+0.7152*(parseInt(h.slice(2,4),16)/255)+0.0722*(parseInt(h.slice(4,6),16)/255) < 0.5 ? "#ffffff" : "#111111";
   };
   // {bg, text} para un equipo. badgeOverride respeta el color guardado por el usuario.
-  U.teamColors = (name, badgeOverride) => {
-    const tc = U._tcFind(name) || {};
+  // c (opcional): carrera activa, para aplicar el color override de c.teams.
+  U.teamColors = (name, badgeOverride, c) => {
+    const tc = U._tcFind(name, c) || {};
     const bg = U.safeColor(badgeOverride, U.safeColor(tc.primary, U.colorFor(name)));
     return {bg, text: U.textOn(bg)};
   };
-  // Genera un escudo SVG con forma de escudo, colores oficiales del equipo e iniciales.
-  U.teamCrest = (clubName, size) => {
+  // Escudo SVG con colores EXPLÍCITOS (para la vista previa del editor de datos).
+  U.teamCrestColors = (clubName, primary, secondary, size) => {
     size = size || 36;
-    const tc = U._tcFind(clubName) || {};
-    const primary = U.safeColor(tc.primary, U.colorFor(clubName));
-    const secondary = U.safeColor(tc.secondary, "#ffffff");
+    primary = U.safeColor(primary, U.colorFor(clubName));
+    secondary = U.safeColor(secondary, "#ffffff");
     const ini = U.initials(clubName);
     const fs = ini.length > 2 ? 10 : 13;
     return `<svg viewBox="0 0 40 46" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;flex-shrink:0">
@@ -8238,6 +8569,12 @@ body.tour-on { overflow: hidden; }
       <path d="M20 7 L32 11 L32 26 Q32 35 20 39 Q8 35 8 26 L8 11 Z" fill="none" stroke="${secondary}" stroke-width="0.8" opacity="0.4"/>
       <text x="20" y="${ini.length > 2 ? 27 : 28}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${secondary}" font-family="system-ui,sans-serif" letter-spacing="-0.5">${ini}</text>
     </svg>`;
+  };
+  // Genera un escudo SVG con forma de escudo, colores oficiales del equipo e iniciales.
+  // c (opcional): carrera activa, para aplicar el color override de c.teams.
+  U.teamCrest = (clubName, size, c) => {
+    const tc = U._tcFind(clubName, c) || {};
+    return U.teamCrestColors(clubName, tc.primary, tc.secondary, size);
   };
   U.fmtDate = (d) => {
     if (!d) return "";
@@ -9430,8 +9767,14 @@ body.tour-on { overflow: hidden; }
 
   S.teamStrength = (c, teamName) => {
     if (teamName === c.clubName) return S.selfStrength(c);
+    const ov = U.teamOverride(c, teamName);
     const base = U._findTeam((FC.data || {}).TEAM_STRENGTH, teamName);
-    const prior = base != null ? base : 72;
+    // Prior en cascada: override confirmado por ti → catálogo → auto. El auto
+    // ancla al rival sin catalogar cerca de TU fuerza (prior neutro mucho mejor
+    // que el 72 plano); el Elo/tabla siguen afinándolo con tus resultados.
+    const prior = (ov && ov.strength != null) ? Number(ov.strength)
+      : (base != null) ? base
+      : S.selfStrength(c);
     const { elo, table } = S.teamRatings(c);
     const r = elo[teamName], t = table[teamName];
     // Paso 1 — mezcla Elo: prior↔observado por confianza Elo.
@@ -9441,6 +9784,24 @@ body.tour-on { overflow: hidden; }
     const tableConf = t ? t.conf * ELO.TABLE_BLEND : 0;
     const strength = tableConf > 0 ? eloBased * (1 - tableConf) + t.obs * tableConf : eloBased;
     return Math.max(45, Math.min(96, strength));
+  };
+
+  // ¿Tenemos fuerza REAL de este equipo (catálogo o confirmada por ti) o es una
+  // auto-estimación pendiente? Sirve para el marcador honesto "≈ estimado".
+  S.teamStrengthKnown = (c, teamName) => {
+    if (!teamName || teamName === c.clubName) return true;
+    const ov = U.teamOverride(c, teamName);
+    if (ov && ov.strength != null) return true;
+    return U._findTeam((FC.data || {}).TEAM_STRENGTH, teamName) != null;
+  };
+  // Un equipo "necesita datos" si no está en el catálogo (fuerza+ciudad) y tú no lo
+  // has confirmado. Dispara el chip contextual para completar sus datos.
+  S.teamNeedsData = (c, teamName) => {
+    if (!teamName || teamName === c.clubName) return false;
+    if (U.teamOverride(c, teamName)) return false;
+    const DD = FC.data || {};
+    return U._findTeam(DD.TEAM_STRENGTH, teamName) == null
+        && U._findTeam(DD.CITIES, teamName) == null;
   };
 
   // Mercado completo de un partido (jugado o programado): 1X2, comparativa de
@@ -10977,10 +11338,14 @@ body.tour-on { overflow: hidden; }
     return tpl.replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
   };
 
-  TRIPS.cityOf = (teamName) => {
-    const row = (FC.data.CITIES || {})[teamName];
+  TRIPS.cityOf = (teamName, c) => {
+    // 1) Ciudad confirmada por ti (override de carrera).
+    const ov = U.teamOverride(c, teamName);
+    if (ov && ov.lat != null && ov.lon != null) return { lat: Number(ov.lat), lon: Number(ov.lon), city: ov.city || teamName, approx: false };
+    // 2) Catálogo (búsqueda difusa, consistente con fuerza/colores).
+    const row = U._findTeam(FC.data.CITIES, teamName);
     if (row) return { lat: row[0], lon: row[1], city: row[2], approx: false };
-    // Fallback determinista para equipos personalizados: pseudo-coordenadas
+    // 3) Fallback determinista para equipos sin datos: pseudo-coordenadas
     // estables dentro de Europa por hash del nombre (ruta plausible, no real).
     const h = hashCab(teamName || "?");
     return { lat: 36 + (h % 1000) / 1000 * 18, lon: -9 + (Math.floor(h / 7) % 1000) / 1000 * 25, city: teamName || "—", approx: true };
@@ -11039,7 +11404,7 @@ body.tour-on { overflow: hidden; }
     if (m.home !== club && m.away !== club) return null;
     if (m.away !== club) return { isAway: false };
     const rival = m.home;
-    const origin = TRIPS.cityOf(club), dest = TRIPS.cityOf(rival);
+    const origin = TRIPS.cityOf(club, c), dest = TRIPS.cityOf(rival, c);
     const dist = Math.round(TRIPS.distance(origin, dest));
     const continental = FC.data.isContinental(m.competition) || FC.data.isInternational(m.competition);
     const mode = (continental || dist >= 300) ? "avion" : "bus";
@@ -11064,7 +11429,7 @@ body.tour-on { overflow: hidden; }
     const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
     const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
     let miles = 0; const seenRiv = {}; let passport = 0;
-    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; if (!seenRiv[x.home]) { seenRiv[x.home] = 1; passport++; } } });
+    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { miles += TRIPS.distance(origin, TRIPS.cityOf(x.home, c)) * 2; if (!seenRiv[x.home]) { seenRiv[x.home] = 1; passport++; } } });
     const awayAll = (c.matches || []).filter(x => x.away === club && x.home).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
     const tripNo = Math.max(1, awayAll.findIndex(x => x.id === m.id) + 1);
     const hero = TRIPS.pickHero(c, m);
@@ -12517,13 +12882,35 @@ body.tour-on { overflow: hidden; }
     return teams;
   }
 
+  // Lista de equipos de la temporada (salvo el club propio) con acceso al editor de datos.
+  function externalTeamsSectionHtml(c, season) {
+    const t = FC.t;
+    const teams = (season.teams || []).filter(n => !(c.clubName && n.toLowerCase() === c.clubName.toLowerCase()));
+    if (!teams.length) return "";
+    const rows = teams.map(n => {
+      const needs = S.teamNeedsData(c, n);
+      const flag = needs
+        ? '<span class="td-team-flag">' + U.esc(t("teamData.estimatedBadge")) + '</span>'
+        : '<span class="td-team-flag ok">' + U.esc(t("teamData.confirmedBadge")) + '</span>';
+      return '<button type="button" class="td-team-row" data-team-edit="' + U.esc(n) + '">' +
+        U.teamCrest(n, 22, c) +
+        '<span class="td-team-name">' + U.esc(n) + '</span>' + flag +
+        '<span class="ni-icon" data-icon="edit"></span></button>';
+    }).join("");
+    return '<div class="section-title" style="margin-top:16px">' + U.esc(t("teamData.sectionTitle")) + '</div>' +
+      '<p class="muted" style="font-size:12px;margin:0 0 8px">' + U.esc(t("teamData.sectionHint")) + '</p>' +
+      '<div class="td-team-list">' + rows + '</div>';
+  }
+
   // Editar los equipos de la temporada EN CURSO (sin avanzar de año).
   UI.openEditTeamsModal = function (c) {
     const t = FC.t;
     const season = S.currentSeason(c);
     const foot = '<button class="btn btn-ghost" data-close>' + U.esc(t("common.cancel")) + '</button>' +
       '<button class="btn btn-primary" id="et-save">' + U.esc(t("common.save")) + '</button>';
-    const m = UI.openModal(t("season.editTeamsTitle", { label: season.label }), teamsFieldHtml(season.teams || []), foot, { lg: true });
+    const m = UI.openModal(t("season.editTeamsTitle", { label: season.label }), teamsFieldHtml(season.teams || []) + externalTeamsSectionHtml(c, season), foot, { lg: true });
+    U.hydrateIcons(m);
+    m.querySelectorAll("[data-team-edit]").forEach(el => el.addEventListener("click", () => UI.openTeamDataModal(c, el.dataset.teamEdit, { after: () => UI.openEditTeamsModal(c) })));
     m.querySelector("#et-save").addEventListener("click", () => {
       const teams = finalizeTeams(c, m.querySelector("#teamsEditorTa").value);
       if (!teams) { UI.toast(t("season.teamsEmpty"), "err"); return; }
@@ -12576,6 +12963,139 @@ body.tour-on { overflow: hidden; }
       const teams = finalizeTeams(c, m.querySelector("#teamsEditorTa").value);
       if (!teams) { UI.toast(t("season.teamsEmpty"), "err"); return; }
       finishAdvance({ leagueId, leagueName, teams });
+    });
+  };
+
+  /* Editor de datos de equipo sin catalogar: fuerza (dificultad/OVR), ciudad
+     (buscador global → mapa de viaje) y colores del escudo. Se guarda en
+     c.teams[teamName] (override por carrera). opts.after → callback tras guardar
+     (p.ej. re-render de la vista que abrió el editor). */
+  UI.openTeamDataModal = function (c, teamName, opts) {
+    const T = FC.t;
+    opts = opts || {};
+    if (!teamName) return;
+    const ov = U.teamOverride(c, teamName) || {};
+    const known = S.teamStrengthKnown(c, teamName);
+    const autoEst = Math.round(S.teamStrength(c, teamName));
+    // Prefill: override → catálogo/estimación. La cascada de teamStrength ya
+    // resuelve el mejor valor de partida para el campo de fuerza.
+    const curStrength = (ov.strength != null) ? Number(ov.strength) : autoEst;
+    const curCity = FC.trips.cityOf(teamName, c); // {lat, lon, city, approx}
+    const cityFixed = (ov.lat != null && ov.lon != null) || !curCity.approx;
+    const tc = U._tcFind(teamName, c) || {};
+    const curPrimary = U.safeColor(ov.primary || tc.primary || U.colorFor(teamName), "#3aa0ff");
+    const curSecondary = U.safeColor(ov.secondary || tc.secondary || "#ffffff", "#ffffff");
+
+    // Estado en vivo del editor.
+    let picked = cityFixed ? { lat: (ov.lat != null ? ov.lat : curCity.lat), lon: (ov.lon != null ? ov.lon : curCity.lon), city: (ov.city || curCity.city) } : null;
+
+    const TIERS = [
+      { key: "weak", val: 63, label: T("teamData.tier.weak") },
+      { key: "medium", val: 72, label: T("teamData.tier.medium") },
+      { key: "strong", val: 81, label: T("teamData.tier.strong") },
+      { key: "top", val: 89, label: T("teamData.tier.top") },
+    ];
+    const tierBtns = TIERS.map(t => `<button type="button" class="seg-btn td-tier" data-val="${t.val}">${U.esc(t.label)}<span class="td-tier-n">${t.val}</span></button>`).join("");
+
+    const cityLine = (p) => p
+      ? `<span style="color:var(--ok)"><span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> ${T("teamData.cityCurrent")} <b>${U.esc(p.city)}</b></span>`
+      : `<span class="faint">${T("teamData.cityNone")}</span>`;
+
+    const body = `
+      <p style="margin:0 0 14px;font-size:13px;color:var(--text-dim);line-height:1.5">${known ? T("teamData.introKnown") : T("teamData.intro")}</p>
+
+      <div class="section-title" style="margin-top:0">${T("teamData.strengthTitle")}</div>
+      <p class="muted" style="margin:0 0 8px;font-size:12px">${T("teamData.strengthHint")}</p>
+      <div class="seg td-tiers" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${tierBtns}</div>
+      <div class="field-row" style="align-items:center;gap:12px">
+        <input type="range" id="td-strength-range" min="45" max="96" value="${curStrength}" style="flex:1"/>
+        <input type="number" id="td-strength-num" min="45" max="96" value="${curStrength}" style="width:74px;text-align:center"/>
+      </div>
+      <p class="muted" style="margin:4px 0 0;font-size:11.5px">${T("teamData.strengthAuto", { val: autoEst })}</p>
+
+      <div class="section-title">${T("teamData.cityTitle")}</div>
+      <p class="muted" style="margin:0 0 8px;font-size:12px">${T("teamData.cityHint")}</p>
+      <input type="text" id="td-city-search" placeholder="${U.esc(T("teamData.citySearchPh"))}" autocomplete="off"/>
+      <div id="td-city-results" class="td-city-results" style="margin-top:6px"></div>
+      <div id="td-city-current" style="margin-top:8px;font-size:13px">${cityLine(picked)}</div>
+
+      <div class="section-title">${T("teamData.colorsTitle")}</div>
+      <p class="muted" style="margin:0 0 8px;font-size:12px">${T("teamData.colorsHint")}</p>
+      <div class="flex gap wrap center">
+        <label class="td-color"><span>${T("teamData.colorPrimary")}</span><input type="color" id="td-color-1" value="${curPrimary}"/></label>
+        <label class="td-color"><span>${T("teamData.colorSecondary")}</span><input type="color" id="td-color-2" value="${curSecondary}"/></label>
+        <div style="margin-left:auto;text-align:center">
+          <div id="td-preview" style="display:inline-flex;align-items:center;gap:8px">${U.teamCrestColors(teamName, curPrimary, curSecondary, 40)}
+            <span class="td-dot" id="td-preview-dot" style="width:12px;height:12px;border-radius:50%;background:${curPrimary};display:inline-block"></span></div>
+          <div class="muted" style="font-size:10.5px;margin-top:2px">${T("teamData.preview")}</div>
+        </div>
+      </div>`;
+
+    const foot = `${(ov && (ov.strength != null || ov.lat != null || ov.primary)) ? `<button class="btn btn-ghost" id="td-reset" style="margin-right:auto">${U.esc(T("teamData.reset"))}</button>` : ""}
+      <button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button>
+      <button class="btn btn-primary" id="td-save">${U.esc(T("common.save"))}</button>`;
+
+    const m = UI.openModal(T("teamData.title", { team: teamName }), body, foot);
+    U.hydrateIcons(m);
+
+    const rangeEl = m.querySelector("#td-strength-range");
+    const numEl = m.querySelector("#td-strength-num");
+    const syncStrength = (v) => { const n = Math.max(45, Math.min(96, parseInt(v, 10) || 45)); rangeEl.value = n; numEl.value = n; };
+    rangeEl.addEventListener("input", () => syncStrength(rangeEl.value));
+    numEl.addEventListener("input", () => { if (numEl.value !== "") syncStrength(numEl.value); });
+    m.querySelectorAll(".td-tier").forEach(b => b.addEventListener("click", () => syncStrength(b.dataset.val)));
+
+    // Colores: preview en vivo.
+    const c1 = m.querySelector("#td-color-1"), c2 = m.querySelector("#td-color-2");
+    const prev = m.querySelector("#td-preview"), prevDot = m.querySelector("#td-preview-dot");
+    const refreshPreview = () => { prev.innerHTML = U.teamCrestColors(teamName, c1.value, c2.value, 40) + `<span class="td-dot" id="td-preview-dot" style="width:12px;height:12px;border-radius:50%;background:${c1.value};display:inline-block"></span>`; };
+    c1.addEventListener("input", refreshPreview);
+    c2.addEventListener("input", refreshPreview);
+
+    // Buscador de ciudad.
+    const searchEl = m.querySelector("#td-city-search");
+    const resultsEl = m.querySelector("#td-city-results");
+    const currentEl = m.querySelector("#td-city-current");
+    const renderResults = () => {
+      const q = searchEl.value.trim();
+      if (!q) { resultsEl.innerHTML = ""; return; }
+      const hits = U.searchCities(q, 6);
+      if (!hits.length) { resultsEl.innerHTML = `<div class="faint" style="font-size:12px;padding:4px 2px">${T("teamData.cityNoResults")}</div>`; return; }
+      resultsEl.innerHTML = hits.map((h, i) => `<button type="button" class="td-city-opt" data-i="${i}"><b>${U.esc(h.city)}</b> <span class="faint">${U.esc(h.country)}</span></button>`).join("");
+      resultsEl.querySelectorAll(".td-city-opt").forEach((btn, i) => btn.addEventListener("click", () => {
+        const h = hits[i];
+        picked = { lat: h.lat, lon: h.lon, city: h.city };
+        currentEl.innerHTML = cityLine(picked); U.hydrateIcons(currentEl);
+        resultsEl.innerHTML = ""; searchEl.value = "";
+      }));
+    };
+    searchEl.addEventListener("input", renderResults);
+
+    // Guardar / borrar.
+    m.querySelector("#td-save").addEventListener("click", () => {
+      const entry = Object.assign({}, ov);
+      entry.strength = Math.max(45, Math.min(96, parseInt(numEl.value, 10) || autoEst));
+      if (picked) { entry.lat = picked.lat; entry.lon = picked.lon; entry.city = picked.city; }
+      entry.primary = U.safeColor(c1.value, curPrimary);
+      entry.secondary = U.safeColor(c2.value, curSecondary);
+      c.teams = c.teams || {};
+      c.teams[teamName] = entry;
+      S.emit(); S.flush();
+      UI.closeModal();
+      UI.toast(T("teamData.saved", { team: teamName }), "ok");
+      if (opts.after) opts.after();
+    });
+    const resetBtn = m.querySelector("#td-reset");
+    if (resetBtn) resetBtn.addEventListener("click", () => {
+      if (c.teams) {
+        delete c.teams[teamName];
+        const n = U._normTeam(teamName);
+        for (const k in c.teams) { if (U._normTeam(k) === n) delete c.teams[k]; }
+      }
+      S.emit(); S.flush();
+      UI.closeModal();
+      UI.toast(T("teamData.resetDone", { team: teamName }), "ok");
+      if (opts.after) opts.after();
     });
   };
 
@@ -13394,7 +13914,7 @@ body.tour-on { overflow: hidden; }
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const T = c.clubName;
-    const home = FC.trips.cityOf(T);
+    const home = FC.trips.cityOf(T, c);
     const leagueTeams = (season.teams || []).filter(t => t !== T);
     const seasonAway = (c.matches || []).filter(m => m.seasonId === season.id && m.away === T && m.home);
     const playedAway = seasonAway.filter(m => S.isPlayed(m)).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
@@ -13405,15 +13925,15 @@ body.tour-on { overflow: hidden; }
     // Métricas (temporada + vitalicio)
     const allAway = S.userMatches(c).filter(m => m.away === T && m.home);
     let lifeKm = 0, longest = 0, longestCity = "", awayRivals = {}, passport = 0;
-    allAway.forEach(m => { const cc = FC.trips.cityOf(m.home), dk = FC.trips.distance(home, cc); lifeKm += dk * 2; if (dk > longest) { longest = dk; longestCity = cc.city; } if (!awayRivals[m.home]) { awayRivals[m.home] = 1; passport++; } });
-    let seasonKm = 0; playedAway.forEach(m => seasonKm += FC.trips.distance(home, FC.trips.cityOf(m.home)) * 2);
+    allAway.forEach(m => { const cc = FC.trips.cityOf(m.home, c), dk = FC.trips.distance(home, cc); lifeKm += dk * 2; if (dk > longest) { longest = dk; longestCity = cc.city; } if (!awayRivals[m.home]) { awayRivals[m.home] = 1; passport++; } });
+    let seasonKm = 0; playedAway.forEach(m => seasonKm += FC.trips.distance(home, FC.trips.cityOf(m.home, c)) * 2);
     const laps = lifeKm / 40075;
     const estVis = leagueTeams.filter(t => visited[t]).length; // rivales de liga visitados esta temporada
 
     // Proyección equirectangular auto-ajustada a los equipos de la liga.
     const W = 820, H = 500, px = 30, py = 26;
     const cl = (v, a, b) => Math.max(a, Math.min(b, v));
-    const allCCs = [home, ...leagueTeams.map(t => FC.trips.cityOf(t))];
+    const allCCs = [home, ...leagueTeams.map(t => FC.trips.cityOf(t, c))];
     // Excluir outliers geográficos (ej. islas remotas) del bbox para que la zona continental llene el mapa.
     // Se usan los equipos dentro de 2.2× el percentil 75 de distancia al club home.
     const rivalDists = allCCs.slice(1).map(cc => FC.trips.distance(home, cc)).sort((a, b) => a - b);
@@ -13437,19 +13957,19 @@ body.tour-on { overflow: hidden; }
     for (let lat = Math.ceil(LAT0 / latStep) * latStep; lat <= LAT1; lat += latStep) { const a = proj(lat, LON0), b = proj(lat, LON1); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
 
     let faint = "", arcs = "", dots = "", labels = "";
-    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t), p = proj(cc.lat, cc.lon); faint += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${COL.faint}"/>`; });
-    Object.keys(visited).forEach(riv => { const cc = FC.trips.cityOf(riv), p = proj(cc.lat, cc.lon), col = COL[visited[riv].r] || COL.faint;
+    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t, c), p = proj(cc.lat, cc.lon); faint += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${COL.faint}"/>`; });
+    Object.keys(visited).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon), col = COL[visited[riv].r] || COL.faint;
       arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${col}" stroke-width="1.8" stroke-opacity=".55" stroke-linecap="round"/>`;
       dots += `<g data-match="${visited[riv].id}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="6" fill="${col}" fill-opacity=".18"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="${col}"/></g>`;
       labels += `<text x="${(p[0] + 6).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="#cdd9e6" font-size="10.5">${U.esc(cc.city)}</text>`; });
-    Object.keys(upcoming).forEach(riv => { const cc = FC.trips.cityOf(riv), p = proj(cc.lat, cc.lon);
+    Object.keys(upcoming).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon);
       arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${COL.up}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>`;
       dots += `<g data-trip="${upcoming[riv]}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="7" fill="${COL.up}" fill-opacity=".2"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${COL.up}"/></g>`;
       labels += `<text x="${(p[0] + 7).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="${COL.up}" font-size="10.5">${U.esc(cc.city)}</text>`; });
     const homeNode = `<circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="9" fill="${acc}" fill-opacity=".16"/><circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text x="${(hp[0] + 9).toFixed(1)}" y="${(hp[1] + 4).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(home.city)}</text>`;
 
     const codeOf = (s) => (s || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "···";
-    const stamps = leagueTeams.map(t => { const cc = FC.trips.cityOf(t), on = visited[t]; return `<div class="vstamp${on ? " on" : ""}" title="${U.esc(t)}">${on ? '<span class="ni-icon" data-icon="check"></span>' : ""}${codeOf(cc.city)}</div>`; }).join("");
+    const stamps = leagueTeams.map(t => { const cc = FC.trips.cityOf(t, c), on = visited[t]; return `<div class="vstamp${on ? " on" : ""}" title="${U.esc(t)}">${on ? '<span class="ni-icon" data-icon="check"></span>' : ""}${codeOf(cc.city)}</div>`; }).join("");
 
     const dot = (col) => `<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${col}"></i>`;
     function tile(label, val, sub) { return `<div class="card stat-tile"><div class="st-glow"></div><div class="st-label">${label}</div><div class="st-value">${val}</div><div class="st-sub">${U.esc(sub)}</div></div>`; }
@@ -13463,7 +13983,7 @@ body.tour-on { overflow: hidden; }
     ];
     const buckets = RANGES.map(r => ({ ...r, n: 0, w: 0, d: 0, l: 0 }));
     allAway.forEach(m => {
-      const dk = Math.round(FC.trips.distance(home, FC.trips.cityOf(m.home))); // redondeo: casa con la regla de la cabina
+      const dk = Math.round(FC.trips.distance(home, FC.trips.cityOf(m.home, c))); // redondeo: casa con la regla de la cabina
       const b = buckets.find(x => dk >= x.lo && dk < x.hi); if (!b) return;
       b.n++; const res = S.userResult(c, m);
       if (res === "W") b.w++; else if (res === "D") b.d++; else if (res === "L") b.l++;
@@ -13506,7 +14026,7 @@ body.tour-on { overflow: hidden; }
     // cronológica (playedAway ya viene ordenado asc). El badge V/E/D desambigua el marcador.
     const RESLAB = { W: tr("res.W"), D: tr("res.D"), L: tr("res.L") };
     const postcard = (m) => {
-      const cc = FC.trips.cityOf(m.home);
+      const cc = FC.trips.cityOf(m.home, c);
       const km = Math.round(FC.trips.distance(home, cc));
       const continental = D.isContinental(m.competition) || D.isInternational(m.competition);
       const avion = continental || km >= 300;
@@ -13514,7 +14034,7 @@ body.tour-on { overflow: hidden; }
       const resWord = res === "W" ? tr("res.WLower") : res === "D" ? tr("res.DLower") : res === "L" ? tr("res.LLower") : "";
       return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="${tr("travel.reviveReturnTrip", { city: U.esc(cc.city) })}${resWord ? ", " + resWord : ""}">
         <div class="pc-top"><span class="pc-stamp">${codeOf(cc.city)}</span>
-          <span class="pc-mode"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${km.toLocaleString(FC.i18n.get() === "en" ? "en-US" : "es-ES")} km</span></div>
+          <span class="pc-mode"${cc.approx ? ` title="${U.esc(tr("teamData.estimatedHint"))}"` : ""}><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${cc.approx ? "≈" : ""}${km.toLocaleString(FC.i18n.get() === "en" ? "en-US" : "es-ES")} km</span></div>
         <div class="pc-city">${U.esc(cc.city)}</div>
         <div class="pc-rival">${tr("common.vs")} ${U.esc(m.home)}${m.competition ? " · " + U.esc(m.competition) : ""}</div>
         <div class="pc-foot"><span class="pc-res">${RESLAB[res] || "·"}</span><span class="pc-score">${Number(m.homeScore)}-${Number(m.awayScore)}</span><span class="pc-date faint">${U.fmtDate(m.date) || tr("common.noDate")}</span></div>
@@ -13578,11 +14098,13 @@ body.tour-on { overflow: hidden; }
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const nextHist = nextRival ? S.rivalHistory(c, nextRival) : null;
 
+    const nextNeedsData = nextRival ? S.teamNeedsData(c, nextRival) : false;
     const nextCard = nextRival ? `<div class="card next-match">
       <div class="nm-left"><span class="ni-icon" data-icon="shield"></span>
         <div><div class="nm-label">${T("rival.nextRival")}${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
           <div class="nm-teams">${U.esc(nextRival)}</div>
-          <small class="faint">${nextHist ? `${nextHist.all.pj} ${nextHist.all.pj === 1 ? T("rival.prevMeeting.one") : T("rival.prevMeeting.other")} · ${nextHist.all.w}${T("res.W")}-${nextHist.all.d}${T("res.D")}-${nextHist.all.l}${T("res.L")}` : T("rival.firstMeeting")}</small></div>
+          <small class="faint">${nextHist ? `${nextHist.all.pj} ${nextHist.all.pj === 1 ? T("rival.prevMeeting.one") : T("rival.prevMeeting.other")} · ${nextHist.all.w}${T("res.W")}-${nextHist.all.d}${T("res.D")}-${nextHist.all.l}${T("res.L")}` : T("rival.firstMeeting")}</small>
+          ${nextNeedsData ? `<div style="margin-top:6px"><button class="td-chip" id="rv-next-data"><span class="ni-icon" data-icon="edit"></span> ${T("teamData.needsDataChip", { team: nextRival })}</button></div>` : ""}</div>
       </div>
       ${nextHist ? `<button class="btn btn-primary btn-sm" id="rv-next-scout"><span class="ni-icon" data-icon="search"></span> ${T("rival.scoutRival")}</button>` : ""}
     </div>` : "";
@@ -13598,6 +14120,8 @@ body.tour-on { overflow: hidden; }
     content().querySelectorAll("[data-rival]").forEach(el => el.addEventListener("click", () => UI.openRivalDossier(c, el.dataset.rival)));
     const sb = document.getElementById("rv-next-scout");
     if (sb) sb.addEventListener("click", () => UI.openRivalDossier(c, nextRival));
+    const db = document.getElementById("rv-next-data");
+    if (db) db.addEventListener("click", () => UI.openTeamDataModal(c, nextRival, { after: () => FC.views.rivales() }));
   };
 
   // Dossier táctico de un rival: veredicto + balance + análisis + splits + últimos duelos.
@@ -13623,8 +14147,8 @@ body.tour-on { overflow: hidden; }
 
     const body = `
       <div class="flex gap center mb">
-        <span class="career-badge" style="background:${U.teamColors(rival).bg};color:${U.teamColors(rival).text}">${U.initials(rival)}</span>
-        <div><b style="font-size:18px">${U.esc(rival)}</b><br><small class="faint">${a.pj} ${a.pj === 1 ? T("rival.meeting.one") : T("rival.meeting.other")} · ${a.w}${T("res.W")}-${a.d}${T("res.D")}-${a.l}${T("res.L")} · ${a.gf}:${a.ga}</small></div>
+        <span class="career-badge" style="background:${U.teamColors(rival, null, c).bg};color:${U.teamColors(rival, null, c).text}">${U.initials(rival)}</span>
+        <div><b style="font-size:18px">${U.esc(rival)}</b>${S.teamNeedsData(c, rival) ? ` <span class="td-est-badge" title="${U.esc(T("teamData.estimatedHint"))}">${T("teamData.estimatedBadge")}</span>` : ""}<br><small class="faint">${a.pj} ${a.pj === 1 ? T("rival.meeting.one") : T("rival.meeting.other")} · ${a.w}${T("res.W")}-${a.d}${T("res.D")}-${a.l}${T("res.L")} · ${a.gf}:${a.ga}</small></div>
       </div>
       <div style="border-left:3px solid ${vtone};background:var(--panel);padding:12px 14px;border-radius:8px;margin-bottom:14px">
         <b style="color:${vtone}">${U.esc(d.verdict.title)}</b>
@@ -13659,9 +14183,12 @@ body.tour-on { overflow: hidden; }
       <div class="section-title">${T("rival.recentMeetings")}</div>
       <div class="card" style="margin:0">${lastMeetings}</div>
     `;
-    UI.openModal(T("rival.dossierTitle", { rival }), body, `<button class="btn btn-ghost" data-close>${T("common.close")}</button>`, { lg: true });
+    const editBtn = `<button class="btn btn-ghost" data-edit-team>${S.teamNeedsData(c, rival) ? T("teamData.editCta") : T("teamData.editCtaKnown")}</button>`;
+    UI.openModal(T("rival.dossierTitle", { rival }), body, `${editBtn}<button class="btn btn-ghost" data-close>${T("common.close")}</button>`, { lg: true });
     const modal = document.getElementById("modal");
     modal.querySelectorAll("[data-rmatch]").forEach(el => el.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, el.dataset.rmatch))));
+    const eb = modal.querySelector("[data-edit-team]");
+    if (eb) eb.addEventListener("click", () => UI.openTeamDataModal(c, rival, { after: () => UI.openRivalDossier(c, rival) }));
   };
 
   /* Mercado de apuestas simulado: overlay con marca propia "BETMÁXIMA",
@@ -13672,8 +14199,10 @@ body.tour-on { overflow: hidden; }
     if (!o) { UI.toast(T("betting.noOdds"), "err"); return; }
     const fo = (x) => x >= 10 ? x.toFixed(1).replace(".", ",") : x.toFixed(2).replace(".", ",");
     const eur = (x) => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
-    const dot = (name) => `<span class="bm-dot" style="background:${U.teamColors(name).bg}"></span>`;
-    const hc = U.teamColors(o.home), ac = U.teamColors(o.away);
+    const dot = (name) => `<span class="bm-dot" style="background:${U.teamColors(name, null, c).bg}"></span>`;
+    // Honestidad: marca la fuerza que es estimación automática (equipo sin catalogar ni override).
+    const estMark = (name) => S.teamStrengthKnown(c, name) ? "" : ` <span class="bm-est" title="${U.esc(T("teamData.estimatedHint"))}">${T("teamData.estimatedBadge")}</span>`;
+    const hc = U.teamColors(o.home, null, c), ac = U.teamColors(o.away, null, c);
     const favSide = o.fav.even ? (o.public.home >= o.public.away ? "home" : "away") : o.fav.side;
     const favName = favSide === "home" ? o.home : o.away;
     const favPub = o.public[favSide];
@@ -13700,9 +14229,9 @@ body.tour-on { overflow: hidden; }
         <div class="bm-scroll">
           <div class="bm-pad">
             <div class="bm-head">
-              <span class="bm-team">${dot(o.home)}<span style="min-width:0"><span class="nm">${U.esc(o.home)}</span><span class="fz">${T("betting.homeStrength", { n: o.strength.home })}</span></span></span>
+              <span class="bm-team">${dot(o.home)}<span style="min-width:0"><span class="nm">${U.esc(o.home)}</span><span class="fz">${T("betting.homeStrength", { n: o.strength.home })}${estMark(o.home)}</span></span></span>
               <span class="bm-vs">${T("betting.vs")}</span>
-              <span class="bm-team" style="justify-content:flex-end;text-align:right"><span style="min-width:0"><span class="nm">${U.esc(o.away)}</span><span class="fz">${T("betting.awayStrength", { n: o.strength.away })}</span></span>${dot(o.away)}</span>
+              <span class="bm-team" style="justify-content:flex-end;text-align:right"><span style="min-width:0"><span class="nm">${U.esc(o.away)}</span><span class="fz">${T("betting.awayStrength", { n: o.strength.away })}${estMark(o.away)}</span></span>${dot(o.away)}</span>
             </div>
             <div class="bm-meta">${meta}</div>
 
@@ -16677,7 +17206,7 @@ body.tour-on { overflow: hidden; }
   function rivalRow(c, o) {
     const ppgCol = o.ppg >= 2 ? "var(--ok)" : o.ppg >= 1 ? "var(--warn)" : "var(--danger)";
     return `<div class="list-row" data-rival="${U.esc(o.rival)}" style="cursor:pointer">
-      <span class="career-badge" style="background:${U.teamColors(o.rival).bg};color:${U.teamColors(o.rival).text}">${U.initials(o.rival)}</span>
+      <span class="career-badge" style="background:${U.teamColors(o.rival, null, c).bg};color:${U.teamColors(o.rival, null, c).text}">${U.initials(o.rival)}</span>
       <div class="lr-main"><b>${U.esc(o.rival)}</b>
         <small class="faint">${o.played} ${o.played === 1 ? FC.t("w.meeting.one") : FC.t("w.meeting.other")} · <span style="color:var(--ok);font-weight:700">${o.w}${FC.t("res.W")}</span> <span style="color:var(--warn);font-weight:700">${o.d}${FC.t("res.D")}</span> <span style="color:var(--danger);font-weight:700">${o.l}${FC.t("res.L")}</span> · ${o.gf}:${o.ga}</small></div>
       <span class="flex gap center" style="flex-shrink:0">${CH.formBar(o.form)}</span>
@@ -16700,7 +17229,7 @@ body.tour-on { overflow: hidden; }
       <span class="ni-icon" data-icon="${icon}" style="color:${col}"></span><div class="lr-main"><b style="font-weight:500;font-size:13px">${U.esc(text)}</b></div>
       ${route ? '<span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>' : ""}</div>`;
   }
-  const teamDot = n => { const tc=U.teamColors(n||""); return `<span aria-hidden="true" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${tc.bg};margin-right:4px;vertical-align:middle;flex-shrink:0;box-shadow:0 0 0 1.5px rgba(255,255,255,0.18)"></span>`; };
+  const teamDot = n => { const tc=U.teamColors(n||"", null, S.getActiveCareer()); return `<span aria-hidden="true" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${tc.bg};margin-right:4px;vertical-align:middle;flex-shrink:0;box-shadow:0 0 0 1.5px rgba(255,255,255,0.18)"></span>`; };
   function fixtureRow(c, m, withDelete) {
     const g = S.userGoals(c, m); const r = S.userResult(c, m);
     const cls = r === "W" ? "win" : r === "L" ? "loss" : "";

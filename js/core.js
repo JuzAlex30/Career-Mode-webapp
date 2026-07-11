@@ -51,7 +51,38 @@
     for (const k in map) { const kn = U._normTeam(k); if (kn.length >= 5 && (n.includes(kn) || kn.includes(n))) return map[k]; }
     return null;
   };
-  U._tcFind = (name) => U._findTeam(FC.data && FC.data.TEAM_COLORS, name);
+  U._tcFind = (name, c) => {
+    if (c) { const ov = U.teamOverride(c, name); if (ov && ov.primary) return { primary: ov.primary, secondary: ov.secondary || "#ffffff" }; }
+    return U._findTeam(FC.data && FC.data.TEAM_COLORS, name);
+  };
+  // Override de datos de equipo por CARRERA (fuerza/ciudad/colores) que el usuario
+  // confirma para equipos sin catalogar. Se guarda en c.teams; búsqueda difusa por
+  // nombre (mismas reglas que _findTeam). Devuelve el registro o null.
+  U.teamOverride = (c, name) => {
+    const t = c && c.teams; if (!t || !name) return null;
+    if (t[name]) return t[name];
+    const n = U._normTeam(name);
+    for (const k in t) { if (U._normTeam(k) === n) return t[k]; }
+    return null;
+  };
+  // Buscador de ciudades del editor de datos de equipo. Filtra D.WORLD_CITIES
+  // por subcadena normalizada (ES/EN vía alt) en ciudad+país. Prioriza los que
+  // empiezan por la consulta. Devuelve hasta 'limit' resultados.
+  U.searchCities = (query, limit) => {
+    const list = (FC.data && FC.data.WORLD_CITIES) || [];
+    const q = U._normTeam(query);
+    if (!q) return list.slice(0, limit || 8);
+    const scored = [];
+    for (const ci of list) {
+      const hay = U._normTeam(ci.city + " " + (ci.alt || "") + " " + (ci.country || ""));
+      const idx = hay.indexOf(q);
+      if (idx < 0) continue;
+      // 0 = empieza por la consulta; si no, penaliza por posición.
+      scored.push({ ci, rank: hay.startsWith(q) ? 0 : idx + 1 });
+    }
+    scored.sort((a, b) => a.rank - b.rank || a.ci.city.localeCompare(b.ci.city));
+    return scored.slice(0, limit || 8).map(s => s.ci);
+  };
   // Devuelve "#ffffff" o "#111111" según la luminancia percibida del color de fondo.
   U.textOn = (bg) => {
     const m = String(bg).match(/^#([0-9a-f]{3,6})$/i);
@@ -60,17 +91,17 @@
     return 0.2126*(parseInt(h.slice(0,2),16)/255)+0.7152*(parseInt(h.slice(2,4),16)/255)+0.0722*(parseInt(h.slice(4,6),16)/255) < 0.5 ? "#ffffff" : "#111111";
   };
   // {bg, text} para un equipo. badgeOverride respeta el color guardado por el usuario.
-  U.teamColors = (name, badgeOverride) => {
-    const tc = U._tcFind(name) || {};
+  // c (opcional): carrera activa, para aplicar el color override de c.teams.
+  U.teamColors = (name, badgeOverride, c) => {
+    const tc = U._tcFind(name, c) || {};
     const bg = U.safeColor(badgeOverride, U.safeColor(tc.primary, U.colorFor(name)));
     return {bg, text: U.textOn(bg)};
   };
-  // Genera un escudo SVG con forma de escudo, colores oficiales del equipo e iniciales.
-  U.teamCrest = (clubName, size) => {
+  // Escudo SVG con colores EXPLÍCITOS (para la vista previa del editor de datos).
+  U.teamCrestColors = (clubName, primary, secondary, size) => {
     size = size || 36;
-    const tc = U._tcFind(clubName) || {};
-    const primary = U.safeColor(tc.primary, U.colorFor(clubName));
-    const secondary = U.safeColor(tc.secondary, "#ffffff");
+    primary = U.safeColor(primary, U.colorFor(clubName));
+    secondary = U.safeColor(secondary, "#ffffff");
     const ini = U.initials(clubName);
     const fs = ini.length > 2 ? 10 : 13;
     return `<svg viewBox="0 0 40 46" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;flex-shrink:0">
@@ -78,6 +109,12 @@
       <path d="M20 7 L32 11 L32 26 Q32 35 20 39 Q8 35 8 26 L8 11 Z" fill="none" stroke="${secondary}" stroke-width="0.8" opacity="0.4"/>
       <text x="20" y="${ini.length > 2 ? 27 : 28}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${secondary}" font-family="system-ui,sans-serif" letter-spacing="-0.5">${ini}</text>
     </svg>`;
+  };
+  // Genera un escudo SVG con forma de escudo, colores oficiales del equipo e iniciales.
+  // c (opcional): carrera activa, para aplicar el color override de c.teams.
+  U.teamCrest = (clubName, size, c) => {
+    const tc = U._tcFind(clubName, c) || {};
+    return U.teamCrestColors(clubName, tc.primary, tc.secondary, size);
   };
   U.fmtDate = (d) => {
     if (!d) return "";
@@ -1270,8 +1307,14 @@
 
   S.teamStrength = (c, teamName) => {
     if (teamName === c.clubName) return S.selfStrength(c);
+    const ov = U.teamOverride(c, teamName);
     const base = U._findTeam((FC.data || {}).TEAM_STRENGTH, teamName);
-    const prior = base != null ? base : 72;
+    // Prior en cascada: override confirmado por ti → catálogo → auto. El auto
+    // ancla al rival sin catalogar cerca de TU fuerza (prior neutro mucho mejor
+    // que el 72 plano); el Elo/tabla siguen afinándolo con tus resultados.
+    const prior = (ov && ov.strength != null) ? Number(ov.strength)
+      : (base != null) ? base
+      : S.selfStrength(c);
     const { elo, table } = S.teamRatings(c);
     const r = elo[teamName], t = table[teamName];
     // Paso 1 — mezcla Elo: prior↔observado por confianza Elo.
@@ -1281,6 +1324,24 @@
     const tableConf = t ? t.conf * ELO.TABLE_BLEND : 0;
     const strength = tableConf > 0 ? eloBased * (1 - tableConf) + t.obs * tableConf : eloBased;
     return Math.max(45, Math.min(96, strength));
+  };
+
+  // ¿Tenemos fuerza REAL de este equipo (catálogo o confirmada por ti) o es una
+  // auto-estimación pendiente? Sirve para el marcador honesto "≈ estimado".
+  S.teamStrengthKnown = (c, teamName) => {
+    if (!teamName || teamName === c.clubName) return true;
+    const ov = U.teamOverride(c, teamName);
+    if (ov && ov.strength != null) return true;
+    return U._findTeam((FC.data || {}).TEAM_STRENGTH, teamName) != null;
+  };
+  // Un equipo "necesita datos" si no está en el catálogo (fuerza+ciudad) y tú no lo
+  // has confirmado. Dispara el chip contextual para completar sus datos.
+  S.teamNeedsData = (c, teamName) => {
+    if (!teamName || teamName === c.clubName) return false;
+    if (U.teamOverride(c, teamName)) return false;
+    const DD = FC.data || {};
+    return U._findTeam(DD.TEAM_STRENGTH, teamName) == null
+        && U._findTeam(DD.CITIES, teamName) == null;
   };
 
   // Mercado completo de un partido (jugado o programado): 1X2, comparativa de
@@ -2817,10 +2878,14 @@
     return tpl.replace(/\{(\w+)\}/g, (_, key) => _esc(vars[key] != null ? vars[key] : ""));
   };
 
-  TRIPS.cityOf = (teamName) => {
-    const row = (FC.data.CITIES || {})[teamName];
+  TRIPS.cityOf = (teamName, c) => {
+    // 1) Ciudad confirmada por ti (override de carrera).
+    const ov = U.teamOverride(c, teamName);
+    if (ov && ov.lat != null && ov.lon != null) return { lat: Number(ov.lat), lon: Number(ov.lon), city: ov.city || teamName, approx: false };
+    // 2) Catálogo (búsqueda difusa, consistente con fuerza/colores).
+    const row = U._findTeam(FC.data.CITIES, teamName);
     if (row) return { lat: row[0], lon: row[1], city: row[2], approx: false };
-    // Fallback determinista para equipos personalizados: pseudo-coordenadas
+    // 3) Fallback determinista para equipos sin datos: pseudo-coordenadas
     // estables dentro de Europa por hash del nombre (ruta plausible, no real).
     const h = hashCab(teamName || "?");
     return { lat: 36 + (h % 1000) / 1000 * 18, lon: -9 + (Math.floor(h / 7) % 1000) / 1000 * 25, city: teamName || "—", approx: true };
@@ -2879,7 +2944,7 @@
     if (m.home !== club && m.away !== club) return null;
     if (m.away !== club) return { isAway: false };
     const rival = m.home;
-    const origin = TRIPS.cityOf(club), dest = TRIPS.cityOf(rival);
+    const origin = TRIPS.cityOf(club, c), dest = TRIPS.cityOf(rival, c);
     const dist = Math.round(TRIPS.distance(origin, dest));
     const continental = FC.data.isContinental(m.competition) || FC.data.isInternational(m.competition);
     const mode = (continental || dist >= 300) ? "avion" : "bus";
@@ -2904,7 +2969,7 @@
     const won = (c.trophies || []).filter(t => t.result === "winner").length, seasons = (c.seasons || []).length;
     const tier = (won >= 8 || seasons >= 8) ? "gigante" : (won >= 3 || seasons >= 4) ? "potencia" : (won >= 1 || seasons >= 2) ? "consolidado" : "recien";
     let miles = 0; const seenRiv = {}; let passport = 0;
-    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { miles += TRIPS.distance(origin, TRIPS.cityOf(x.home)) * 2; if (!seenRiv[x.home]) { seenRiv[x.home] = 1; passport++; } } });
+    S.userMatches(c).forEach(x => { if (x.away === club && x.home) { miles += TRIPS.distance(origin, TRIPS.cityOf(x.home, c)) * 2; if (!seenRiv[x.home]) { seenRiv[x.home] = 1; passport++; } } });
     const awayAll = (c.matches || []).filter(x => x.away === club && x.home).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
     const tripNo = Math.max(1, awayAll.findIndex(x => x.id === m.id) + 1);
     const hero = TRIPS.pickHero(c, m);

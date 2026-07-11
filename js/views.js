@@ -816,13 +816,35 @@
     return teams;
   }
 
+  // Lista de equipos de la temporada (salvo el club propio) con acceso al editor de datos.
+  function externalTeamsSectionHtml(c, season) {
+    const t = FC.t;
+    const teams = (season.teams || []).filter(n => !(c.clubName && n.toLowerCase() === c.clubName.toLowerCase()));
+    if (!teams.length) return "";
+    const rows = teams.map(n => {
+      const needs = S.teamNeedsData(c, n);
+      const flag = needs
+        ? '<span class="td-team-flag">' + U.esc(t("teamData.estimatedBadge")) + '</span>'
+        : '<span class="td-team-flag ok">' + U.esc(t("teamData.confirmedBadge")) + '</span>';
+      return '<button type="button" class="td-team-row" data-team-edit="' + U.esc(n) + '">' +
+        U.teamCrest(n, 22, c) +
+        '<span class="td-team-name">' + U.esc(n) + '</span>' + flag +
+        '<span class="ni-icon" data-icon="edit"></span></button>';
+    }).join("");
+    return '<div class="section-title" style="margin-top:16px">' + U.esc(t("teamData.sectionTitle")) + '</div>' +
+      '<p class="muted" style="font-size:12px;margin:0 0 8px">' + U.esc(t("teamData.sectionHint")) + '</p>' +
+      '<div class="td-team-list">' + rows + '</div>';
+  }
+
   // Editar los equipos de la temporada EN CURSO (sin avanzar de año).
   UI.openEditTeamsModal = function (c) {
     const t = FC.t;
     const season = S.currentSeason(c);
     const foot = '<button class="btn btn-ghost" data-close>' + U.esc(t("common.cancel")) + '</button>' +
       '<button class="btn btn-primary" id="et-save">' + U.esc(t("common.save")) + '</button>';
-    const m = UI.openModal(t("season.editTeamsTitle", { label: season.label }), teamsFieldHtml(season.teams || []), foot, { lg: true });
+    const m = UI.openModal(t("season.editTeamsTitle", { label: season.label }), teamsFieldHtml(season.teams || []) + externalTeamsSectionHtml(c, season), foot, { lg: true });
+    U.hydrateIcons(m);
+    m.querySelectorAll("[data-team-edit]").forEach(el => el.addEventListener("click", () => UI.openTeamDataModal(c, el.dataset.teamEdit, { after: () => UI.openEditTeamsModal(c) })));
     m.querySelector("#et-save").addEventListener("click", () => {
       const teams = finalizeTeams(c, m.querySelector("#teamsEditorTa").value);
       if (!teams) { UI.toast(t("season.teamsEmpty"), "err"); return; }
@@ -875,6 +897,139 @@
       const teams = finalizeTeams(c, m.querySelector("#teamsEditorTa").value);
       if (!teams) { UI.toast(t("season.teamsEmpty"), "err"); return; }
       finishAdvance({ leagueId, leagueName, teams });
+    });
+  };
+
+  /* Editor de datos de equipo sin catalogar: fuerza (dificultad/OVR), ciudad
+     (buscador global → mapa de viaje) y colores del escudo. Se guarda en
+     c.teams[teamName] (override por carrera). opts.after → callback tras guardar
+     (p.ej. re-render de la vista que abrió el editor). */
+  UI.openTeamDataModal = function (c, teamName, opts) {
+    const T = FC.t;
+    opts = opts || {};
+    if (!teamName) return;
+    const ov = U.teamOverride(c, teamName) || {};
+    const known = S.teamStrengthKnown(c, teamName);
+    const autoEst = Math.round(S.teamStrength(c, teamName));
+    // Prefill: override → catálogo/estimación. La cascada de teamStrength ya
+    // resuelve el mejor valor de partida para el campo de fuerza.
+    const curStrength = (ov.strength != null) ? Number(ov.strength) : autoEst;
+    const curCity = FC.trips.cityOf(teamName, c); // {lat, lon, city, approx}
+    const cityFixed = (ov.lat != null && ov.lon != null) || !curCity.approx;
+    const tc = U._tcFind(teamName, c) || {};
+    const curPrimary = U.safeColor(ov.primary || tc.primary || U.colorFor(teamName), "#3aa0ff");
+    const curSecondary = U.safeColor(ov.secondary || tc.secondary || "#ffffff", "#ffffff");
+
+    // Estado en vivo del editor.
+    let picked = cityFixed ? { lat: (ov.lat != null ? ov.lat : curCity.lat), lon: (ov.lon != null ? ov.lon : curCity.lon), city: (ov.city || curCity.city) } : null;
+
+    const TIERS = [
+      { key: "weak", val: 63, label: T("teamData.tier.weak") },
+      { key: "medium", val: 72, label: T("teamData.tier.medium") },
+      { key: "strong", val: 81, label: T("teamData.tier.strong") },
+      { key: "top", val: 89, label: T("teamData.tier.top") },
+    ];
+    const tierBtns = TIERS.map(t => `<button type="button" class="seg-btn td-tier" data-val="${t.val}">${U.esc(t.label)}<span class="td-tier-n">${t.val}</span></button>`).join("");
+
+    const cityLine = (p) => p
+      ? `<span style="color:var(--ok)"><span class="ni-icon" data-icon="check" style="width:14px;height:14px;vertical-align:-2px"></span> ${T("teamData.cityCurrent")} <b>${U.esc(p.city)}</b></span>`
+      : `<span class="faint">${T("teamData.cityNone")}</span>`;
+
+    const body = `
+      <p style="margin:0 0 14px;font-size:13px;color:var(--text-dim);line-height:1.5">${known ? T("teamData.introKnown") : T("teamData.intro")}</p>
+
+      <div class="section-title" style="margin-top:0">${T("teamData.strengthTitle")}</div>
+      <p class="muted" style="margin:0 0 8px;font-size:12px">${T("teamData.strengthHint")}</p>
+      <div class="seg td-tiers" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${tierBtns}</div>
+      <div class="field-row" style="align-items:center;gap:12px">
+        <input type="range" id="td-strength-range" min="45" max="96" value="${curStrength}" style="flex:1"/>
+        <input type="number" id="td-strength-num" min="45" max="96" value="${curStrength}" style="width:74px;text-align:center"/>
+      </div>
+      <p class="muted" style="margin:4px 0 0;font-size:11.5px">${T("teamData.strengthAuto", { val: autoEst })}</p>
+
+      <div class="section-title">${T("teamData.cityTitle")}</div>
+      <p class="muted" style="margin:0 0 8px;font-size:12px">${T("teamData.cityHint")}</p>
+      <input type="text" id="td-city-search" placeholder="${U.esc(T("teamData.citySearchPh"))}" autocomplete="off"/>
+      <div id="td-city-results" class="td-city-results" style="margin-top:6px"></div>
+      <div id="td-city-current" style="margin-top:8px;font-size:13px">${cityLine(picked)}</div>
+
+      <div class="section-title">${T("teamData.colorsTitle")}</div>
+      <p class="muted" style="margin:0 0 8px;font-size:12px">${T("teamData.colorsHint")}</p>
+      <div class="flex gap wrap center">
+        <label class="td-color"><span>${T("teamData.colorPrimary")}</span><input type="color" id="td-color-1" value="${curPrimary}"/></label>
+        <label class="td-color"><span>${T("teamData.colorSecondary")}</span><input type="color" id="td-color-2" value="${curSecondary}"/></label>
+        <div style="margin-left:auto;text-align:center">
+          <div id="td-preview" style="display:inline-flex;align-items:center;gap:8px">${U.teamCrestColors(teamName, curPrimary, curSecondary, 40)}
+            <span class="td-dot" id="td-preview-dot" style="width:12px;height:12px;border-radius:50%;background:${curPrimary};display:inline-block"></span></div>
+          <div class="muted" style="font-size:10.5px;margin-top:2px">${T("teamData.preview")}</div>
+        </div>
+      </div>`;
+
+    const foot = `${(ov && (ov.strength != null || ov.lat != null || ov.primary)) ? `<button class="btn btn-ghost" id="td-reset" style="margin-right:auto">${U.esc(T("teamData.reset"))}</button>` : ""}
+      <button class="btn btn-ghost" data-close>${U.esc(T("common.cancel"))}</button>
+      <button class="btn btn-primary" id="td-save">${U.esc(T("common.save"))}</button>`;
+
+    const m = UI.openModal(T("teamData.title", { team: teamName }), body, foot);
+    U.hydrateIcons(m);
+
+    const rangeEl = m.querySelector("#td-strength-range");
+    const numEl = m.querySelector("#td-strength-num");
+    const syncStrength = (v) => { const n = Math.max(45, Math.min(96, parseInt(v, 10) || 45)); rangeEl.value = n; numEl.value = n; };
+    rangeEl.addEventListener("input", () => syncStrength(rangeEl.value));
+    numEl.addEventListener("input", () => { if (numEl.value !== "") syncStrength(numEl.value); });
+    m.querySelectorAll(".td-tier").forEach(b => b.addEventListener("click", () => syncStrength(b.dataset.val)));
+
+    // Colores: preview en vivo.
+    const c1 = m.querySelector("#td-color-1"), c2 = m.querySelector("#td-color-2");
+    const prev = m.querySelector("#td-preview"), prevDot = m.querySelector("#td-preview-dot");
+    const refreshPreview = () => { prev.innerHTML = U.teamCrestColors(teamName, c1.value, c2.value, 40) + `<span class="td-dot" id="td-preview-dot" style="width:12px;height:12px;border-radius:50%;background:${c1.value};display:inline-block"></span>`; };
+    c1.addEventListener("input", refreshPreview);
+    c2.addEventListener("input", refreshPreview);
+
+    // Buscador de ciudad.
+    const searchEl = m.querySelector("#td-city-search");
+    const resultsEl = m.querySelector("#td-city-results");
+    const currentEl = m.querySelector("#td-city-current");
+    const renderResults = () => {
+      const q = searchEl.value.trim();
+      if (!q) { resultsEl.innerHTML = ""; return; }
+      const hits = U.searchCities(q, 6);
+      if (!hits.length) { resultsEl.innerHTML = `<div class="faint" style="font-size:12px;padding:4px 2px">${T("teamData.cityNoResults")}</div>`; return; }
+      resultsEl.innerHTML = hits.map((h, i) => `<button type="button" class="td-city-opt" data-i="${i}"><b>${U.esc(h.city)}</b> <span class="faint">${U.esc(h.country)}</span></button>`).join("");
+      resultsEl.querySelectorAll(".td-city-opt").forEach((btn, i) => btn.addEventListener("click", () => {
+        const h = hits[i];
+        picked = { lat: h.lat, lon: h.lon, city: h.city };
+        currentEl.innerHTML = cityLine(picked); U.hydrateIcons(currentEl);
+        resultsEl.innerHTML = ""; searchEl.value = "";
+      }));
+    };
+    searchEl.addEventListener("input", renderResults);
+
+    // Guardar / borrar.
+    m.querySelector("#td-save").addEventListener("click", () => {
+      const entry = Object.assign({}, ov);
+      entry.strength = Math.max(45, Math.min(96, parseInt(numEl.value, 10) || autoEst));
+      if (picked) { entry.lat = picked.lat; entry.lon = picked.lon; entry.city = picked.city; }
+      entry.primary = U.safeColor(c1.value, curPrimary);
+      entry.secondary = U.safeColor(c2.value, curSecondary);
+      c.teams = c.teams || {};
+      c.teams[teamName] = entry;
+      S.emit(); S.flush();
+      UI.closeModal();
+      UI.toast(T("teamData.saved", { team: teamName }), "ok");
+      if (opts.after) opts.after();
+    });
+    const resetBtn = m.querySelector("#td-reset");
+    if (resetBtn) resetBtn.addEventListener("click", () => {
+      if (c.teams) {
+        delete c.teams[teamName];
+        const n = U._normTeam(teamName);
+        for (const k in c.teams) { if (U._normTeam(k) === n) delete c.teams[k]; }
+      }
+      S.emit(); S.flush();
+      UI.closeModal();
+      UI.toast(T("teamData.resetDone", { team: teamName }), "ok");
+      if (opts.after) opts.after();
     });
   };
 
@@ -1693,7 +1848,7 @@
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
     const T = c.clubName;
-    const home = FC.trips.cityOf(T);
+    const home = FC.trips.cityOf(T, c);
     const leagueTeams = (season.teams || []).filter(t => t !== T);
     const seasonAway = (c.matches || []).filter(m => m.seasonId === season.id && m.away === T && m.home);
     const playedAway = seasonAway.filter(m => S.isPlayed(m)).slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
@@ -1704,15 +1859,15 @@
     // Métricas (temporada + vitalicio)
     const allAway = S.userMatches(c).filter(m => m.away === T && m.home);
     let lifeKm = 0, longest = 0, longestCity = "", awayRivals = {}, passport = 0;
-    allAway.forEach(m => { const cc = FC.trips.cityOf(m.home), dk = FC.trips.distance(home, cc); lifeKm += dk * 2; if (dk > longest) { longest = dk; longestCity = cc.city; } if (!awayRivals[m.home]) { awayRivals[m.home] = 1; passport++; } });
-    let seasonKm = 0; playedAway.forEach(m => seasonKm += FC.trips.distance(home, FC.trips.cityOf(m.home)) * 2);
+    allAway.forEach(m => { const cc = FC.trips.cityOf(m.home, c), dk = FC.trips.distance(home, cc); lifeKm += dk * 2; if (dk > longest) { longest = dk; longestCity = cc.city; } if (!awayRivals[m.home]) { awayRivals[m.home] = 1; passport++; } });
+    let seasonKm = 0; playedAway.forEach(m => seasonKm += FC.trips.distance(home, FC.trips.cityOf(m.home, c)) * 2);
     const laps = lifeKm / 40075;
     const estVis = leagueTeams.filter(t => visited[t]).length; // rivales de liga visitados esta temporada
 
     // Proyección equirectangular auto-ajustada a los equipos de la liga.
     const W = 820, H = 500, px = 30, py = 26;
     const cl = (v, a, b) => Math.max(a, Math.min(b, v));
-    const allCCs = [home, ...leagueTeams.map(t => FC.trips.cityOf(t))];
+    const allCCs = [home, ...leagueTeams.map(t => FC.trips.cityOf(t, c))];
     // Excluir outliers geográficos (ej. islas remotas) del bbox para que la zona continental llene el mapa.
     // Se usan los equipos dentro de 2.2× el percentil 75 de distancia al club home.
     const rivalDists = allCCs.slice(1).map(cc => FC.trips.distance(home, cc)).sort((a, b) => a - b);
@@ -1736,19 +1891,19 @@
     for (let lat = Math.ceil(LAT0 / latStep) * latStep; lat <= LAT1; lat += latStep) { const a = proj(lat, LON0), b = proj(lat, LON1); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
 
     let faint = "", arcs = "", dots = "", labels = "";
-    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t), p = proj(cc.lat, cc.lon); faint += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${COL.faint}"/>`; });
-    Object.keys(visited).forEach(riv => { const cc = FC.trips.cityOf(riv), p = proj(cc.lat, cc.lon), col = COL[visited[riv].r] || COL.faint;
+    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t, c), p = proj(cc.lat, cc.lon); faint += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${COL.faint}"/>`; });
+    Object.keys(visited).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon), col = COL[visited[riv].r] || COL.faint;
       arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${col}" stroke-width="1.8" stroke-opacity=".55" stroke-linecap="round"/>`;
       dots += `<g data-match="${visited[riv].id}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="6" fill="${col}" fill-opacity=".18"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="${col}"/></g>`;
       labels += `<text x="${(p[0] + 6).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="#cdd9e6" font-size="10.5">${U.esc(cc.city)}</text>`; });
-    Object.keys(upcoming).forEach(riv => { const cc = FC.trips.cityOf(riv), p = proj(cc.lat, cc.lon);
+    Object.keys(upcoming).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon);
       arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${COL.up}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>`;
       dots += `<g data-trip="${upcoming[riv]}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="7" fill="${COL.up}" fill-opacity=".2"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${COL.up}"/></g>`;
       labels += `<text x="${(p[0] + 7).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="${COL.up}" font-size="10.5">${U.esc(cc.city)}</text>`; });
     const homeNode = `<circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="9" fill="${acc}" fill-opacity=".16"/><circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text x="${(hp[0] + 9).toFixed(1)}" y="${(hp[1] + 4).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(home.city)}</text>`;
 
     const codeOf = (s) => (s || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "···";
-    const stamps = leagueTeams.map(t => { const cc = FC.trips.cityOf(t), on = visited[t]; return `<div class="vstamp${on ? " on" : ""}" title="${U.esc(t)}">${on ? '<span class="ni-icon" data-icon="check"></span>' : ""}${codeOf(cc.city)}</div>`; }).join("");
+    const stamps = leagueTeams.map(t => { const cc = FC.trips.cityOf(t, c), on = visited[t]; return `<div class="vstamp${on ? " on" : ""}" title="${U.esc(t)}">${on ? '<span class="ni-icon" data-icon="check"></span>' : ""}${codeOf(cc.city)}</div>`; }).join("");
 
     const dot = (col) => `<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${col}"></i>`;
     function tile(label, val, sub) { return `<div class="card stat-tile"><div class="st-glow"></div><div class="st-label">${label}</div><div class="st-value">${val}</div><div class="st-sub">${U.esc(sub)}</div></div>`; }
@@ -1762,7 +1917,7 @@
     ];
     const buckets = RANGES.map(r => ({ ...r, n: 0, w: 0, d: 0, l: 0 }));
     allAway.forEach(m => {
-      const dk = Math.round(FC.trips.distance(home, FC.trips.cityOf(m.home))); // redondeo: casa con la regla de la cabina
+      const dk = Math.round(FC.trips.distance(home, FC.trips.cityOf(m.home, c))); // redondeo: casa con la regla de la cabina
       const b = buckets.find(x => dk >= x.lo && dk < x.hi); if (!b) return;
       b.n++; const res = S.userResult(c, m);
       if (res === "W") b.w++; else if (res === "D") b.d++; else if (res === "L") b.l++;
@@ -1805,7 +1960,7 @@
     // cronológica (playedAway ya viene ordenado asc). El badge V/E/D desambigua el marcador.
     const RESLAB = { W: tr("res.W"), D: tr("res.D"), L: tr("res.L") };
     const postcard = (m) => {
-      const cc = FC.trips.cityOf(m.home);
+      const cc = FC.trips.cityOf(m.home, c);
       const km = Math.round(FC.trips.distance(home, cc));
       const continental = D.isContinental(m.competition) || D.isInternational(m.competition);
       const avion = continental || km >= 300;
@@ -1813,7 +1968,7 @@
       const resWord = res === "W" ? tr("res.WLower") : res === "D" ? tr("res.DLower") : res === "L" ? tr("res.LLower") : "";
       return `<div class="postcard res-${res}" data-match="${U.esc(m.id)}" role="button" tabindex="0" aria-label="${tr("travel.reviveReturnTrip", { city: U.esc(cc.city) })}${resWord ? ", " + resWord : ""}">
         <div class="pc-top"><span class="pc-stamp">${codeOf(cc.city)}</span>
-          <span class="pc-mode"><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${km.toLocaleString(FC.i18n.get() === "en" ? "en-US" : "es-ES")} km</span></div>
+          <span class="pc-mode"${cc.approx ? ` title="${U.esc(tr("teamData.estimatedHint"))}"` : ""}><span class="ni-icon" data-icon="${avion ? "plane" : "bus"}"></span> ${cc.approx ? "≈" : ""}${km.toLocaleString(FC.i18n.get() === "en" ? "en-US" : "es-ES")} km</span></div>
         <div class="pc-city">${U.esc(cc.city)}</div>
         <div class="pc-rival">${tr("common.vs")} ${U.esc(m.home)}${m.competition ? " · " + U.esc(m.competition) : ""}</div>
         <div class="pc-foot"><span class="pc-res">${RESLAB[res] || "·"}</span><span class="pc-score">${Number(m.homeScore)}-${Number(m.awayScore)}</span><span class="pc-date faint">${U.fmtDate(m.date) || tr("common.noDate")}</span></div>
@@ -1877,11 +2032,13 @@
     const nextRival = nextM ? S.opponentOf(c, nextM) : null;
     const nextHist = nextRival ? S.rivalHistory(c, nextRival) : null;
 
+    const nextNeedsData = nextRival ? S.teamNeedsData(c, nextRival) : false;
     const nextCard = nextRival ? `<div class="card next-match">
       <div class="nm-left"><span class="ni-icon" data-icon="shield"></span>
         <div><div class="nm-label">${T("rival.nextRival")}${nextM.date ? " · " + U.fmtDate(nextM.date) : ""}${nextM.competition ? " · " + U.esc(nextM.competition) : ""}${nextM.round ? " " + U.esc(nextM.round) : ""}</div>
           <div class="nm-teams">${U.esc(nextRival)}</div>
-          <small class="faint">${nextHist ? `${nextHist.all.pj} ${nextHist.all.pj === 1 ? T("rival.prevMeeting.one") : T("rival.prevMeeting.other")} · ${nextHist.all.w}${T("res.W")}-${nextHist.all.d}${T("res.D")}-${nextHist.all.l}${T("res.L")}` : T("rival.firstMeeting")}</small></div>
+          <small class="faint">${nextHist ? `${nextHist.all.pj} ${nextHist.all.pj === 1 ? T("rival.prevMeeting.one") : T("rival.prevMeeting.other")} · ${nextHist.all.w}${T("res.W")}-${nextHist.all.d}${T("res.D")}-${nextHist.all.l}${T("res.L")}` : T("rival.firstMeeting")}</small>
+          ${nextNeedsData ? `<div style="margin-top:6px"><button class="td-chip" id="rv-next-data"><span class="ni-icon" data-icon="edit"></span> ${T("teamData.needsDataChip", { team: nextRival })}</button></div>` : ""}</div>
       </div>
       ${nextHist ? `<button class="btn btn-primary btn-sm" id="rv-next-scout"><span class="ni-icon" data-icon="search"></span> ${T("rival.scoutRival")}</button>` : ""}
     </div>` : "";
@@ -1897,6 +2054,8 @@
     content().querySelectorAll("[data-rival]").forEach(el => el.addEventListener("click", () => UI.openRivalDossier(c, el.dataset.rival)));
     const sb = document.getElementById("rv-next-scout");
     if (sb) sb.addEventListener("click", () => UI.openRivalDossier(c, nextRival));
+    const db = document.getElementById("rv-next-data");
+    if (db) db.addEventListener("click", () => UI.openTeamDataModal(c, nextRival, { after: () => FC.views.rivales() }));
   };
 
   // Dossier táctico de un rival: veredicto + balance + análisis + splits + últimos duelos.
@@ -1922,8 +2081,8 @@
 
     const body = `
       <div class="flex gap center mb">
-        <span class="career-badge" style="background:${U.teamColors(rival).bg};color:${U.teamColors(rival).text}">${U.initials(rival)}</span>
-        <div><b style="font-size:18px">${U.esc(rival)}</b><br><small class="faint">${a.pj} ${a.pj === 1 ? T("rival.meeting.one") : T("rival.meeting.other")} · ${a.w}${T("res.W")}-${a.d}${T("res.D")}-${a.l}${T("res.L")} · ${a.gf}:${a.ga}</small></div>
+        <span class="career-badge" style="background:${U.teamColors(rival, null, c).bg};color:${U.teamColors(rival, null, c).text}">${U.initials(rival)}</span>
+        <div><b style="font-size:18px">${U.esc(rival)}</b>${S.teamNeedsData(c, rival) ? ` <span class="td-est-badge" title="${U.esc(T("teamData.estimatedHint"))}">${T("teamData.estimatedBadge")}</span>` : ""}<br><small class="faint">${a.pj} ${a.pj === 1 ? T("rival.meeting.one") : T("rival.meeting.other")} · ${a.w}${T("res.W")}-${a.d}${T("res.D")}-${a.l}${T("res.L")} · ${a.gf}:${a.ga}</small></div>
       </div>
       <div style="border-left:3px solid ${vtone};background:var(--panel);padding:12px 14px;border-radius:8px;margin-bottom:14px">
         <b style="color:${vtone}">${U.esc(d.verdict.title)}</b>
@@ -1958,9 +2117,12 @@
       <div class="section-title">${T("rival.recentMeetings")}</div>
       <div class="card" style="margin:0">${lastMeetings}</div>
     `;
-    UI.openModal(T("rival.dossierTitle", { rival }), body, `<button class="btn btn-ghost" data-close>${T("common.close")}</button>`, { lg: true });
+    const editBtn = `<button class="btn btn-ghost" data-edit-team>${S.teamNeedsData(c, rival) ? T("teamData.editCta") : T("teamData.editCtaKnown")}</button>`;
+    UI.openModal(T("rival.dossierTitle", { rival }), body, `${editBtn}<button class="btn btn-ghost" data-close>${T("common.close")}</button>`, { lg: true });
     const modal = document.getElementById("modal");
     modal.querySelectorAll("[data-rmatch]").forEach(el => el.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, el.dataset.rmatch))));
+    const eb = modal.querySelector("[data-edit-team]");
+    if (eb) eb.addEventListener("click", () => UI.openTeamDataModal(c, rival, { after: () => UI.openRivalDossier(c, rival) }));
   };
 
   /* Mercado de apuestas simulado: overlay con marca propia "BETMÁXIMA",
@@ -1971,8 +2133,10 @@
     if (!o) { UI.toast(T("betting.noOdds"), "err"); return; }
     const fo = (x) => x >= 10 ? x.toFixed(1).replace(".", ",") : x.toFixed(2).replace(".", ",");
     const eur = (x) => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
-    const dot = (name) => `<span class="bm-dot" style="background:${U.teamColors(name).bg}"></span>`;
-    const hc = U.teamColors(o.home), ac = U.teamColors(o.away);
+    const dot = (name) => `<span class="bm-dot" style="background:${U.teamColors(name, null, c).bg}"></span>`;
+    // Honestidad: marca la fuerza que es estimación automática (equipo sin catalogar ni override).
+    const estMark = (name) => S.teamStrengthKnown(c, name) ? "" : ` <span class="bm-est" title="${U.esc(T("teamData.estimatedHint"))}">${T("teamData.estimatedBadge")}</span>`;
+    const hc = U.teamColors(o.home, null, c), ac = U.teamColors(o.away, null, c);
     const favSide = o.fav.even ? (o.public.home >= o.public.away ? "home" : "away") : o.fav.side;
     const favName = favSide === "home" ? o.home : o.away;
     const favPub = o.public[favSide];
@@ -1999,9 +2163,9 @@
         <div class="bm-scroll">
           <div class="bm-pad">
             <div class="bm-head">
-              <span class="bm-team">${dot(o.home)}<span style="min-width:0"><span class="nm">${U.esc(o.home)}</span><span class="fz">${T("betting.homeStrength", { n: o.strength.home })}</span></span></span>
+              <span class="bm-team">${dot(o.home)}<span style="min-width:0"><span class="nm">${U.esc(o.home)}</span><span class="fz">${T("betting.homeStrength", { n: o.strength.home })}${estMark(o.home)}</span></span></span>
               <span class="bm-vs">${T("betting.vs")}</span>
-              <span class="bm-team" style="justify-content:flex-end;text-align:right"><span style="min-width:0"><span class="nm">${U.esc(o.away)}</span><span class="fz">${T("betting.awayStrength", { n: o.strength.away })}</span></span>${dot(o.away)}</span>
+              <span class="bm-team" style="justify-content:flex-end;text-align:right"><span style="min-width:0"><span class="nm">${U.esc(o.away)}</span><span class="fz">${T("betting.awayStrength", { n: o.strength.away })}${estMark(o.away)}</span></span>${dot(o.away)}</span>
             </div>
             <div class="bm-meta">${meta}</div>
 
@@ -4976,7 +5140,7 @@
   function rivalRow(c, o) {
     const ppgCol = o.ppg >= 2 ? "var(--ok)" : o.ppg >= 1 ? "var(--warn)" : "var(--danger)";
     return `<div class="list-row" data-rival="${U.esc(o.rival)}" style="cursor:pointer">
-      <span class="career-badge" style="background:${U.teamColors(o.rival).bg};color:${U.teamColors(o.rival).text}">${U.initials(o.rival)}</span>
+      <span class="career-badge" style="background:${U.teamColors(o.rival, null, c).bg};color:${U.teamColors(o.rival, null, c).text}">${U.initials(o.rival)}</span>
       <div class="lr-main"><b>${U.esc(o.rival)}</b>
         <small class="faint">${o.played} ${o.played === 1 ? FC.t("w.meeting.one") : FC.t("w.meeting.other")} · <span style="color:var(--ok);font-weight:700">${o.w}${FC.t("res.W")}</span> <span style="color:var(--warn);font-weight:700">${o.d}${FC.t("res.D")}</span> <span style="color:var(--danger);font-weight:700">${o.l}${FC.t("res.L")}</span> · ${o.gf}:${o.ga}</small></div>
       <span class="flex gap center" style="flex-shrink:0">${CH.formBar(o.form)}</span>
@@ -4999,7 +5163,7 @@
       <span class="ni-icon" data-icon="${icon}" style="color:${col}"></span><div class="lr-main"><b style="font-weight:500;font-size:13px">${U.esc(text)}</b></div>
       ${route ? '<span class="ni-icon" data-icon="chevron" style="color:var(--text-dim)"></span>' : ""}</div>`;
   }
-  const teamDot = n => { const tc=U.teamColors(n||""); return `<span aria-hidden="true" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${tc.bg};margin-right:4px;vertical-align:middle;flex-shrink:0;box-shadow:0 0 0 1.5px rgba(255,255,255,0.18)"></span>`; };
+  const teamDot = n => { const tc=U.teamColors(n||"", null, S.getActiveCareer()); return `<span aria-hidden="true" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${tc.bg};margin-right:4px;vertical-align:middle;flex-shrink:0;box-shadow:0 0 0 1.5px rgba(255,255,255,0.18)"></span>`; };
   function fixtureRow(c, m, withDelete) {
     const g = S.userGoals(c, m); const r = S.userResult(c, m);
     const cls = r === "W" ? "win" : r === "L" ? "loss" : "";
