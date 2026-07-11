@@ -4047,11 +4047,11 @@ body.tour-on { overflow: hidden; }
      Alimenta el simulador del mercado de apuestas: a mayor fuerza, más favorito.
      Mismas claves que TEAM_COLORS (búsqueda difusa). Clubes no catalogados → 72. */
   D.TEAM_STRENGTH = {
-    // Premier League
-    "Arsenal":88,"Aston Villa":82,"Bournemouth":78,"Brentford":77,"Brighton":80,"Burnley":73,
-    "Chelsea":84,"Crystal Palace":78,"Everton":76,"Fulham":77,"Leeds United":75,"Liverpool":88,
-    "Manchester City":90,"Manchester United":83,"Newcastle United":83,"Nottingham Forest":78,
-    "Sunderland":73,"Tottenham Hotspur":83,"West Ham United":78,"Wolverhampton Wanderers":76,
+    // Premier League (EPL bottom half ajustado +2/+3 para separar de LaLiga mid-table)
+    "Arsenal":90,"Aston Villa":84,"Bournemouth":80,"Brentford":79,"Brighton":82,"Burnley":75,
+    "Chelsea":86,"Crystal Palace":81,"Everton":78,"Fulham":79,"Leeds United":77,"Liverpool":90,
+    "Manchester City":92,"Manchester United":85,"Newcastle United":85,"Nottingham Forest":80,
+    "Sunderland":75,"Tottenham Hotspur":85,"West Ham United":81,"Wolverhampton Wanderers":78,
     // LaLiga
     "Alavés":73,"Athletic Club":81,"Atlético de Madrid":85,"Barcelona":88,"Celta de Vigo":76,
     "Elche":72,"Espanyol":74,"Getafe":75,"Levante":72,"Osasuna":75,
@@ -4073,6 +4073,55 @@ body.tour-on { overflow: hidden; }
     "Paris Saint-Germain":89,"Marsella":82,"Mónaco":82,"Niza":79,"Lille":80,"Lyon":80,"Lens":78,
     "Rennes":78,"Estrasburgo":76,"Nantes":75,"Brest":76,"Toulouse":76,"Auxerre":73,"Le Havre":73,
     "Angers":72,"Lorient":73,"Paris FC":73,"Metz":72,
+    // Eredivisie
+    "Ajax":82,"PSV":83,"Feyenoord":82,"AZ Alkmaar":78,"FC Twente":77,"FC Utrecht":75,
+    "Heerenveen":73,"Go Ahead Eagles":72,"Sparta Rotterdam":73,"NEC Nijmegen":72,
+    "FC Groningen":71,"Fortuna Sittard":71,"PEC Zwolle":70,"Heracles Almelo":71,
+    "Telstar":68,"NAC Breda":70,"Excelsior":69,"FC Volendam":69,
+    // Liga Portugal
+    "Benfica":84,"Porto":83,"Sporting CP":83,"Braga":79,"Vitória SC":74,"Famalicão":70,
+    "Moreirense":70,"Gil Vicente":71,"Santa Clara":71,"Rio Ave":71,"Estoril":70,
+    "Casa Pia":70,"Arouca":69,"Estrela Amadora":69,"Nacional":68,"AVS":68,"Tondela":68,"Alverca":68,
+    // Scottish Premiership
+    "Celtic":80,"Rangers":78,"Aberdeen":73,"Heart of Midlothian":73,"Hibernian":73,
+    "Dundee United":70,"Dundee":69,"Motherwell":69,"St Mirren":70,"Kilmarnock":70,
+    "Falkirk":68,"Livingston":69,
+    // Belgian Pro League
+    "Club Brugge":79,"Anderlecht":77,"Royal Antwerp":77,"Genk":76,"Gent":75,
+    "Union Saint-Gilloise":76,"Standard Liège":73,"Cercle Brugge":72,"Charleroi":72,
+    "Mechelen":71,"Westerlo":70,"OH Leuven":70,"Sint-Truiden":69,"Dender":68,
+    "Zulte Waregem":69,"RAAL La Louvière":67,
+    // Turkish Süper Lig
+    "Galatasaray":81,"Fenerbahçe":80,"Beşiktaş":78,"Trabzonspor":76,"Başakşehir":75,
+    "Konyaspor":71,"Antalyaspor":71,"Alanyaspor":72,"Kayserispor":70,"Samsunspor":71,
+    "Çaykur Rizespor":70,"Göztepe":70,"Kasımpaşa":70,"Gaziantep FK":70,
+    "Eyüpspor":72,"Karagümrük":70,"Kocaelispor":69,"Gençlerbirliği":70,
+    // Superliga (Dinamarca)
+    "FC Copenhagen":77,"FC Midtjylland":76,"Brøndby":74,"AGF":72,"Nordsjælland":73,
+    "Silkeborg":71,"Viborg":71,"Randers":70,"SønderjyskE":69,"Vejle":69,"OB":70,"Fredericia":68,
+    // Allsvenskan (Suecia)
+    "Malmö FF":75,"AIK":73,"Djurgården":73,"Hammarby":73,"IFK Göteborg":71,
+    "IF Elfsborg":72,"BK Häcken":72,"IFK Norrköping":71,"Öster":68,"Halmstad":68,
+    "Mjällby":69,"GAIS":67,"IK Sirius":68,"Värnamo":67,"Brommapojkarna":67,"Degerfors":67,
+    // Eliteserien (Noruega)
+    "Bodø/Glimt":76,"Molde":74,"Rosenborg":73,"Brann":72,"Viking":71,"Bryne":69,
+    "Vålerenga":70,"Strømsgodset":70,"Sarpsborg 08":70,"Tromsø":70,
+    "Haugesund":69,"Fredrikstad":70,"KFUM Oslo":68,"Kristiansund":68,"Sandefjord":68,"HamKam":67,
+    // Bundesliga (Austria)
+    "Red Bull Salzburg":79,"Sturm Graz":76,"Rapid Wien":74,"Austria Wien":73,"LASK":73,
+    "Wolfsberger AC":70,"TSV Hartberg":70,"WSG Tirol":70,"SV Ried":69,"Blau-Weiß Linz":70,
+    "Grazer AK":68,"SCR Altach":68,
+    // Super League (Suiza)
+    "Young Boys":77,"Basel":76,"Servette":74,"Lugano":73,"FC Zürich":74,
+    "Lausanne-Sport":71,"St. Gallen":72,"Luzern":71,"Sion":70,"Grasshopper":70,"Thun":69,"Winterthur":69,
+    // Ekstraklasa (Polonia)
+    "Lech Poznań":75,"Legia Warszawa":75,"Jagiellonia Białystok":74,"Raków Częstochowa":74,
+    "Pogoń Szczecin":73,"Górnik Zabrze":70,"Wisła Płock":70,"Cracovia":70,"Widzew Łódź":70,
+    "Piast Gliwice":70,"Korona Kielce":69,"Zagłębie Lubin":70,"Lechia Gdańsk":70,
+    "Motor Lublin":69,"Radomiak Radom":69,"GKS Katowice":68,"Arka Gdynia":68,"Bruk-Bet Termalica":67,
+    // League of Ireland
+    "Shamrock Rovers":72,"Shelbourne":70,"Derry City":70,"Bohemians":69,"St Patrick's Athletic":69,
+    "Galway United":68,"Drogheda United":68,"Sligo Rovers":68,"Waterford":67,"Cork City":68,
   };
 
   /* ---------- Casas de apuestas ficticias (pool rotativo, sin repeticiones) ---------- */
@@ -4927,6 +4976,86 @@ body.tour-on { overflow: hidden; }
     "Málaga":[36.720,-4.420,"Málaga"], "Racing de Santander":[43.427,-3.829,"Santander"], "Deportivo":[43.348,-8.412,"A Coruña"],
     "Deportivo de La Coruña":[43.348,-8.412,"A Coruña"], "Burgos":[42.341,-3.700,"Burgos"], "Huesca":[42.137,-0.409,"Huesca"],
     "Castellón":[39.986,-0.037,"Castellón"], "Mirandés":[42.687,-2.945,"Miranda de Ebro"], "Córdoba":[37.879,-4.779,"Córdoba"],
+    // Eredivisie
+    "Ajax":[52.314,4.942,"Ámsterdam"], "PSV":[51.442,5.467,"Eindhoven"], "Feyenoord":[51.893,4.524,"Róterdam"],
+    "AZ Alkmaar":[52.626,4.750,"Alkmaar"], "FC Twente":[52.238,6.851,"Enschede"], "FC Utrecht":[52.080,5.118,"Utrecht"],
+    "Heerenveen":[52.959,5.399,"Heerenveen"], "Go Ahead Eagles":[52.254,6.157,"Deventer"], "Sparta Rotterdam":[51.920,4.468,"Róterdam"],
+    "NEC Nijmegen":[51.840,5.852,"Nijmegen"], "FC Groningen":[53.215,6.574,"Groninga"], "Fortuna Sittard":[51.007,5.869,"Sittard"],
+    "PEC Zwolle":[52.514,6.091,"Zwolle"], "Heracles Almelo":[52.363,6.669,"Almelo"], "Telstar":[52.461,4.617,"Velsen"],
+    "NAC Breda":[51.588,4.782,"Breda"], "Excelsior":[51.907,4.504,"Róterdam"], "FC Volendam":[52.499,5.076,"Volendam"],
+    // Liga Portugal
+    "Benfica":[38.752,-9.185,"Lisboa"], "Porto":[41.162,-8.584,"Oporto"], "Sporting CP":[38.761,-9.161,"Lisboa"],
+    "Braga":[41.566,-8.435,"Braga"], "Vitória SC":[41.441,-8.296,"Guimarães"], "Famalicão":[41.408,-8.523,"Famalicão"],
+    "Moreirense":[41.424,-8.366,"Moreira de Cónegos"], "Gil Vicente":[41.536,-8.488,"Barcelos"], "Santa Clara":[37.731,-25.664,"Ponta Delgada"],
+    "Rio Ave":[41.340,-8.750,"Vila do Conde"], "Estoril":[38.706,-9.397,"Estoril"], "Casa Pia":[38.730,-9.155,"Lisboa"],
+    "Arouca":[40.928,-8.249,"Arouca"], "Estrela Amadora":[38.754,-9.238,"Amadora"], "Nacional":[32.646,-16.913,"Funchal"],
+    "AVS":[41.365,-8.747,"Vila do Conde"], "Tondela":[40.518,-8.076,"Tondela"], "Alverca":[38.895,-8.985,"Alverca"],
+    // Scottish Premiership
+    "Celtic":[55.849,-4.065,"Glasgow"], "Rangers":[55.860,-4.309,"Glasgow"], "Aberdeen":[57.157,-2.097,"Aberdeen"],
+    "Heart of Midlothian":[55.938,-3.233,"Edimburgo"], "Hibernian":[55.961,-3.166,"Edimburgo"],
+    "Dundee United":[56.454,-2.968,"Dundee"], "Dundee":[56.454,-2.969,"Dundee"], "Motherwell":[55.785,-3.975,"Motherwell"],
+    "St Mirren":[55.847,-4.399,"Paisley"], "Kilmarnock":[55.611,-4.498,"Kilmarnock"], "Falkirk":[55.996,-3.789,"Falkirk"],
+    "Livingston":[55.882,-3.522,"Livingston"],
+    // Belgian Pro League
+    "Club Brugge":[51.209,3.175,"Brujas"], "Anderlecht":[50.832,4.297,"Bruselas"], "Royal Antwerp":[51.210,4.418,"Amberes"],
+    "Genk":[50.967,5.500,"Genk"], "Gent":[51.030,3.713,"Gante"], "Union Saint-Gilloise":[50.839,4.332,"Bruselas"],
+    "Standard Liège":[50.608,5.541,"Lieja"], "Cercle Brugge":[51.193,3.199,"Brujas"], "Charleroi":[50.411,4.444,"Charleroi"],
+    "Mechelen":[51.026,4.480,"Malinas"], "Westerlo":[51.089,4.912,"Westerlo"], "OH Leuven":[50.880,4.701,"Lovaina"],
+    "Sint-Truiden":[50.816,5.188,"Sint-Truiden"], "Dender":[50.912,4.051,"Dendermonde"],
+    "Zulte Waregem":[50.872,3.394,"Waregem"], "RAAL La Louvière":[50.476,4.189,"La Louvière"],
+    // Turkish Süper Lig
+    "Galatasaray":[41.073,29.023,"Estambul"], "Fenerbahçe":[40.978,29.033,"Estambul"], "Beşiktaş":[41.043,29.010,"Estambul"],
+    "Trabzonspor":[41.000,39.733,"Trabzon"], "Başakşehir":[41.092,28.798,"Estambul"],
+    "Konyaspor":[37.866,32.493,"Konya"], "Antalyaspor":[36.904,30.701,"Antalya"], "Alanyaspor":[36.550,31.999,"Alanya"],
+    "Kayserispor":[38.718,35.496,"Kayseri"], "Samsunspor":[41.293,36.331,"Samsun"],
+    "Çaykur Rizespor":[41.025,40.521,"Rize"], "Göztepe":[38.412,27.140,"Esmirna"], "Kasımpaşa":[41.053,28.968,"Estambul"],
+    "Gaziantep FK":[37.066,37.384,"Gaziantep"], "Eyüpspor":[41.055,28.935,"Estambul"],
+    "Karagümrük":[41.017,28.944,"Estambul"], "Kocaelispor":[40.765,29.941,"Kocaeli"], "Gençlerbirliği":[39.947,32.861,"Ankara"],
+    // Superliga (Dinamarca)
+    "FC Copenhagen":[55.702,12.571,"Copenhague"], "FC Midtjylland":[56.083,9.017,"Herning"], "Brøndby":[55.663,12.436,"Brøndby"],
+    "AGF":[56.151,10.183,"Aarhus"], "Nordsjælland":[55.914,12.108,"Farum"], "Silkeborg":[56.170,9.549,"Silkeborg"],
+    "Viborg":[56.449,9.406,"Viborg"], "Randers":[56.464,10.036,"Randers"], "SønderjyskE":[55.256,9.476,"Haderslev"],
+    "Vejle":[55.706,9.536,"Vejle"], "OB":[55.366,10.373,"Odense"], "Fredericia":[55.567,9.751,"Fredericia"],
+    // Allsvenskan (Suecia)
+    "Malmö FF":[55.570,13.002,"Malmö"], "AIK":[59.372,17.993,"Estocolmo"], "Djurgården":[59.370,18.090,"Estocolmo"],
+    "Hammarby":[59.305,18.084,"Estocolmo"], "IFK Göteborg":[57.697,11.987,"Gotemburgo"],
+    "IF Elfsborg":[57.724,12.933,"Borås"], "BK Häcken":[57.744,11.946,"Gotemburgo"], "IFK Norrköping":[58.597,16.186,"Norrköping"],
+    "Öster":[56.878,14.802,"Växjö"], "Halmstad":[56.664,12.868,"Halmstad"], "Mjällby":[56.120,14.671,"Sölvesborg"],
+    "GAIS":[57.700,11.983,"Gotemburgo"], "IK Sirius":[59.872,17.640,"Uppsala"], "Värnamo":[57.181,14.043,"Värnamo"],
+    "Brommapojkarna":[59.363,17.901,"Estocolmo"], "Degerfors":[59.238,14.426,"Degerfors"],
+    // Eliteserien (Noruega)
+    "Bodø/Glimt":[67.288,14.369,"Bodø"], "Molde":[62.737,7.162,"Molde"], "Rosenborg":[63.423,10.394,"Trondheim"],
+    "Brann":[60.359,5.324,"Bergen"], "Viking":[58.964,5.731,"Stavanger"], "Bryne":[58.737,5.641,"Bryne"],
+    "Vålerenga":[59.912,10.779,"Oslo"], "Strømsgodset":[59.745,10.199,"Drammen"], "Sarpsborg 08":[59.285,11.109,"Sarpsborg"],
+    "Tromsø":[69.640,18.990,"Tromsø"], "Haugesund":[59.415,5.267,"Haugesund"], "Fredrikstad":[59.211,10.940,"Fredrikstad"],
+    "KFUM Oslo":[59.930,10.742,"Oslo"], "Kristiansund":[63.109,7.726,"Kristiansund"], "Sandefjord":[59.130,10.216,"Sandefjord"],
+    "HamKam":[60.782,11.061,"Hamar"],
+    // Bundesliga (Austria)
+    "Red Bull Salzburg":[47.822,13.064,"Salzburgo"], "Sturm Graz":[47.053,15.435,"Graz"],
+    "Rapid Wien":[48.198,16.328,"Viena"], "Austria Wien":[48.158,16.398,"Viena"], "LASK":[48.334,14.319,"Linz"],
+    "Wolfsberger AC":[46.838,14.842,"Wolfsberg"], "TSV Hartberg":[47.286,15.971,"Hartberg"],
+    "WSG Tirol":[47.242,11.390,"Wattens"], "SV Ried":[48.212,13.493,"Ried"], "Blau-Weiß Linz":[48.317,14.280,"Linz"],
+    "Grazer AK":[47.059,15.450,"Graz"], "SCR Altach":[47.366,9.658,"Altach"],
+    // Super League (Suiza)
+    "Young Boys":[46.963,7.465,"Berna"], "Basel":[47.542,7.621,"Basilea"], "Servette":[46.181,6.113,"Ginebra"],
+    "Lugano":[46.022,8.962,"Lugano"], "FC Zürich":[47.385,8.504,"Zúrich"], "Lausanne-Sport":[46.537,6.615,"Lausana"],
+    "St. Gallen":[47.413,9.309,"San Galo"], "Luzern":[47.040,8.310,"Lucerna"], "Sion":[46.228,7.376,"Sion"],
+    "Grasshopper":[47.385,8.504,"Zúrich"], "Thun":[46.752,7.640,"Thun"], "Winterthur":[47.500,8.724,"Winterthur"],
+    // Ekstraklasa (Polonia)
+    "Lech Poznań":[52.396,16.878,"Poznań"], "Legia Warszawa":[52.219,21.001,"Varsovia"],
+    "Jagiellonia Białystok":[53.126,23.150,"Białystok"], "Raków Częstochowa":[50.801,19.120,"Częstochowa"],
+    "Pogoń Szczecin":[53.428,14.553,"Szczecin"], "Górnik Zabrze":[50.294,18.773,"Zabrze"],
+    "Wisła Płock":[52.546,19.706,"Płock"], "Cracovia":[50.049,19.947,"Cracovia"], "Widzew Łódź":[51.771,19.497,"Łódź"],
+    "Piast Gliwice":[50.283,18.672,"Gliwice"], "Korona Kielce":[50.861,20.628,"Kielce"], "Zagłębie Lubin":[51.404,16.208,"Lubin"],
+    "Lechia Gdańsk":[54.382,18.582,"Gdańsk"], "Motor Lublin":[51.249,22.580,"Lublin"],
+    "Radomiak Radom":[51.403,21.146,"Radom"], "GKS Katowice":[50.258,19.018,"Katowice"],
+    "Arka Gdynia":[54.518,18.531,"Gdynia"], "Bruk-Bet Termalica":[49.889,20.618,"Nieciecza"],
+    // League of Ireland
+    "Shamrock Rovers":[53.319,-6.294,"Dublín"], "Shelbourne":[53.371,-6.241,"Dublín"],
+    "Derry City":[54.997,-7.309,"Derry"], "Bohemians":[53.368,-6.276,"Dublín"],
+    "St Patrick's Athletic":[53.341,-6.292,"Dublín"], "Galway United":[53.270,-9.063,"Galway"],
+    "Drogheda United":[53.718,-6.355,"Drogheda"], "Sligo Rovers":[54.269,-8.470,"Sligo"],
+    "Waterford":[52.258,-7.110,"Waterford"], "Cork City":[51.893,-8.492,"Cork"],
   };
 
   /* Pools narrativos de la cabina. Plantillas con {slots} que el motor
@@ -5557,22 +5686,19 @@ body.tour-on { overflow: hidden; }
       {name:"Adrián Embarba",pos:"LW",age:32,ovr:72,nat:"España"},
     ],
     "Getafe": [
-      {name:"David Soria",pos:"GK",age:31,ovr:79,nat:"España"},
-      {name:"Damián Suárez",pos:"RB",age:35,ovr:77,nat:"Uruguay"},
-      {name:"Domingos Duarte",pos:"CB",age:30,ovr:76,nat:"Portugal"},
-      {name:"Stefan Mitrovic",pos:"CB",age:31,ovr:74,nat:"Serbia"},
-      {name:"Juan Iglesias",pos:"LB",age:25,ovr:72,nat:"España"},
-      {name:"Mauro Arambarri",pos:"CDM",age:28,ovr:79,nat:"Uruguay"},
-      {name:"Okay Yokuslu",pos:"CDM",age:30,ovr:77,nat:"Turquía"},
-      {name:"Enes Ünal",pos:"ST",age:27,ovr:79,nat:"Turquía"},
-      {name:"Borja Mayoral",pos:"ST",age:27,ovr:78,nat:"España"},
-      {name:"Mason Greenwood",pos:"RW",age:22,ovr:79,nat:"Inglaterra"},
-      {name:"Álvaro Rodríguez",pos:"ST",age:21,ovr:73,nat:"España"},
-      {name:"Yellu Santiago",pos:"LW",age:20,ovr:70,nat:"España"},
-      {name:"Juan Pérez",pos:"CM",age:24,ovr:72,nat:"España"},
-      {name:"Gastón Álvarez",pos:"CB",age:22,ovr:71,nat:"Uruguay"},
-      {name:"Diego Rico",pos:"LB",age:31,ovr:73,nat:"España"},
-      {name:"Jaime Mata",pos:"ST",age:36,ovr:73,nat:"España"},
+      {name:"David Soria",pos:"GK",age:33,ovr:78,nat:"España"},
+      {name:"Domingos Duarte",pos:"CB",age:32,ovr:76,nat:"Portugal"},
+      {name:"Stefan Mitrovic",pos:"CB",age:33,ovr:73,nat:"Serbia"},
+      {name:"Djené Dakonam",pos:"CB",age:36,ovr:74,nat:"Togo"},
+      {name:"Gastón Álvarez",pos:"CB",age:24,ovr:73,nat:"Uruguay"},
+      {name:"Juan Iglesias",pos:"LB",age:27,ovr:73,nat:"España"},
+      {name:"Diego Rico",pos:"LB",age:33,ovr:72,nat:"España"},
+      {name:"Okay Yokuslu",pos:"CDM",age:32,ovr:76,nat:"Turquía"},
+      {name:"Carles Aleñá",pos:"CM",age:27,ovr:75,nat:"España"},
+      {name:"Juan Pérez",pos:"CM",age:26,ovr:72,nat:"España"},
+      {name:"Christantus Uche",pos:"RW",age:24,ovr:76,nat:"Nigeria"},
+      {name:"Yellu Santiago",pos:"LW",age:22,ovr:72,nat:"España"},
+      {name:"Álvaro Rodríguez",pos:"ST",age:23,ovr:74,nat:"España"},
     ],
     "Girona": [
       {name:"Paulo Gazzaniga",pos:"GK",age:32,ovr:79,nat:"Argentina"},
