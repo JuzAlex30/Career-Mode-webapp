@@ -2687,17 +2687,132 @@
      Es una ruta normal: tras registrar, S.emit re-renderiza y todo se
      actualiza en el sitio (sin salir del modo).
      ============================================================ */
+  const STAKE_TONE = { liderato:"hot", eu_lider:"hot", final_euro:"hot", descenso:"hot", eu_crisis:"hot",
+    eu_necesita:"warm", copa:"warm", continental:"warm", europa_zona:"warm", eu_zona:"warm", media:"cool" };
+
   FC.views.live = function () {
     const tr = FC.t;
     const c = S.getActiveCareer();
     const season = S.currentSeason(c);
+    const isNat = !!c.isNational;
     const table = S.computeStandings(c, season.id);
     const sum = S.seasonSummary(c, season);
     const pos = S.userPosition(c, season.id);
     const ms = S.userMatches(c, season.id).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-    const last5 = ms.slice(0, 5).map(m => S.userResult(c, m)).reverse();
+    const recent = ms.slice(0, 5);                                    // más recientes primero
     const nextM = S.nextMatch(c, season.id);
     const n = table.length;
+
+    // —— Racha actual (victorias / derrotas seguidas o "sin perder") ——
+    const streak = (() => {
+      if (!ms.length) return null;
+      const r0 = S.userResult(c, ms[0]);
+      const count = (pred) => { let k = 0; for (const m of ms) { if (pred(S.userResult(c, m))) k++; else break; } return k; };
+      if (r0 === "W") return { type: "win", n: count(r => r === "W") };
+      if (r0 === "L") return { type: "loss", n: count(r => r === "L") };
+      return { type: "unbeaten", n: count(r => r !== "L") };
+    })();
+    const streakLabel = streak && streak.n > 1
+      ? tr("live.streak." + streak.type, { n: streak.n }) : null;
+
+    // —— Previa del próximo partido (el corazón del modo en vivo) ——
+    const heroHtml = (() => {
+      if (!nextM) return `<div class="live-hero live-hero-empty">
+        <div class="lh-empty-emoji">🗓️</div>
+        <b>${tr("live.noNext.title")}</b>
+        <p>${tr("live.noNext.sub")}</p>
+        <button class="btn btn-primary" id="live-schedule"><span class="ni-icon" data-icon="plus"></span> ${tr("live.noNext.cta")}</button>
+      </div>`;
+      const rival = S.opponentOf(c, nextM);
+      const isHome = nextM.home === c.clubName;
+      const odds = S.matchOdds(c, nextM);
+      const stake = S.matchStake(c, nextM);
+      const tone = STAKE_TONE[stake] || "cool";
+      const vs = S.userMatches(c).filter(x => x.id !== nextM.id && (x.home === rival || x.away === rival));
+      let hw = 0, hd = 0, hl = 0; vs.forEach(x => { const r = S.userResult(c, x); if (r === "W") hw++; else if (r === "D") hd++; else hl++; });
+      let probsHtml = "";
+      if (odds) {
+        const pW = isHome ? odds.prob.home : odds.prob.away, pD = odds.prob.draw, pL = isHome ? odds.prob.away : odds.prob.home;
+        const pc = x => Math.round(x * 100);
+        probsHtml = `<div class="lh-odds">
+          <div class="lh-bar"><span class="lh-seg win" style="width:${pc(pW)}%"></span><span class="lh-seg draw" style="width:${pc(pD)}%"></span><span class="lh-seg loss" style="width:${pc(pL)}%"></span></div>
+          <div class="lh-legend"><span><i class="dot win"></i>${tr("live.win")} ${pc(pW)}%</span><span><i class="dot draw"></i>${tr("live.draw")} ${pc(pD)}%</span><span><i class="dot loss"></i>${tr("live.loss")} ${pc(pL)}%</span></div>
+        </div>`;
+      }
+      const venueBadge = `<span class="lh-venue ${isHome?'home':'away'}">${isHome?tr("live.home"):tr("live.away")}</span>`;
+      const compLine = `${U.esc(nextM.competition||tr("live.match"))}${nextM.round?` · ${U.esc(nextM.round)}`:""}${nextM.date?` · ${U.fmtDate(nextM.date)}`:""}`;
+      const h2hHtml = vs.length
+        ? `<div class="lh-h2h"><span class="lh-h2h-lbl">${tr("live.h2h")}</span> <b class="hh-w">${hw}</b><span class="hh-sep">·</span><b class="hh-d">${hd}</b><span class="hh-sep">·</span><b class="hh-l">${hl}</b> <span class="faint">(${vs.length})</span></div>`
+        : `<div class="lh-h2h faint">${tr("live.firstMeeting")}</div>`;
+      const canScout = rival && S.rivalHistory(c, rival);
+      return `<div class="live-hero">
+        <div class="lh-top"><span class="lh-comp">${compLine}</span><span class="lh-stake tone-${tone}">${tr("live.stake." + stake)}</span></div>
+        <div class="lh-teams">
+          <span class="lh-team">${teamDot(c.clubName)}<b>${U.esc(c.clubName)}</b></span>
+          <span class="lh-vs">${tr("common.vs")} ${venueBadge}</span>
+          <span class="lh-team rival">${teamDot(rival||"")}<b>${U.esc(rival||"—")}</b></span>
+        </div>
+        ${probsHtml}
+        ${h2hHtml}
+        <div class="lh-actions">
+          <button class="btn btn-primary btn-sm" id="lh-play"><span class="ni-icon" data-icon="ball"></span> ${tr("dash.registerResult")}</button>
+          ${odds ? `<button class="btn btn-ghost btn-sm" id="lh-odds"><span class="ni-icon" data-icon="coin"></span> ${tr("dash.odds")}</button>` : ""}
+          ${canScout ? `<button class="btn btn-ghost btn-sm" id="lh-scout"><span class="ni-icon" data-icon="shield"></span> ${tr("dash.analyze")}</button>` : ""}
+          ${!isHome ? `<button class="btn btn-ghost btn-sm" id="lh-trip"><span class="ni-icon" data-icon="plane"></span> ${tr("dash.trip")}</button>` : ""}
+        </div>
+      </div>`;
+    })();
+
+    // —— Momentum: pills de los últimos resultados con marcador ——
+    const resultPills = recent.slice().reverse().map(m => {
+      const r = S.userResult(c, m), g = S.userGoals(c, m), opp = S.opponentOf(c, m);
+      const cls = r === "W" ? "pill-w" : r === "D" ? "pill-d" : "pill-l";
+      const score = g ? `${g.for}-${g.against}` : "";
+      return `<span class="lm-pill ${cls}" title="${U.esc(opp||"")} ${score}"><b>${r}</b><small>${score}</small></span>`;
+    }).join("");
+
+    // —— Pulso de temporada (consciente de selección) ——
+    const gd = (sum.gd >= 0 ? "+" : "") + sum.gd;
+    const pulseTiles = [
+      !isNat ? `<div class="live-stat"><span class="ls-val">${pos ? pos.pos + "º" : "—"}</span><span class="ls-lbl">${tr("season.position")}</span></div>` : "",
+      !isNat ? `<div class="live-stat"><span class="ls-val">${sum.points}</span><span class="ls-lbl">${tr("dash.stat.points")}</span></div>` : "",
+      `<div class="live-stat"><span class="ls-val">${sum.w}-${sum.d}-${sum.l}</span><span class="ls-lbl">${tr("live.record")}</span></div>`,
+      `<div class="live-stat"><span class="ls-val">${sum.gf}·${sum.ga}</span><span class="ls-lbl">${tr("live.goals")} (${gd})</span></div>`,
+      `<div class="live-stat"><span class="ls-val">${sum.cleanSheets}</span><span class="ls-lbl">${tr("live.cleanSheets")}</span></div>`,
+      `<div class="live-stat"><span class="ls-val">${sum.winPct}%</span><span class="ls-lbl">${tr("live.winPct")}</span></div>`,
+    ].filter(Boolean).join("");
+
+    // —— Carrera por la tabla (club): ventana ±2 con diferencia de puntos.
+    //     Selección: no hay liga → próximos partidos internacionales. ——
+    let raceHtml = "";
+    if (!isNat && table.length) {
+      const ui = table.findIndex(r => r.team === c.clubName);
+      let hi = Math.min(table.length, Math.max(5, (ui < 0 ? 0 : ui) + 3));
+      let lo = Math.max(0, hi - 5); hi = Math.min(table.length, lo + 5);
+      const rows = table.slice(lo, hi).map((r, k) => {
+        const idx = lo + k;
+        const zone = idx < 4 ? "zone-ucl" : idx < 6 ? "zone-uel" : idx >= n - 3 ? "zone-rel" : "";
+        const gap = (ui >= 0 && idx !== ui) ? (r.pts - table[ui].pts) : null;
+        const gapTxt = gap == null ? "—" : (gap > 0 ? "+" + gap : "" + gap);
+        return `<tr class="${r.team === c.clubName ? "is-user" : ""}">
+          <td><span class="pos-cell"><span class="zone-bar ${zone}"></span>${idx + 1}</span></td>
+          <td>${teamDot(r.team)}${U.esc(r.team)}</td><td class="num">${r.pj}</td>
+          <td class="num"><b>${r.pts}</b></td><td class="num gap">${gapTxt}</td></tr>`;
+      }).join("");
+      raceHtml = `<div class="card tight live-table"><div class="lm-title" style="padding:12px 14px 0">${tr("live.race")}</div>
+        <div class="table-wrap"><table class="tbl"><thead><tr>
+          <th>#</th><th>${tr("stand.th.team")}</th><th class="num">${tr("stand.th.pj")}</th><th class="num">${tr("stand.th.pts")}</th><th class="num">${tr("live.gap")}</th>
+        </tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    } else if (!isNat) {
+      raceHtml = `<div class="card tight"><div class="empty" style="padding:26px"><div class="emoji">📊</div><p>${tr("live.emptyStandings")}</p></div></div>`;
+    } else {
+      const up = S.upcomingMatches(c, season.id).slice(0, 4);
+      if (up.length) raceHtml = `<div class="card tight"><div class="lm-title" style="padding:12px 14px 0">${tr("live.upcoming")}</div>
+        <div class="list" style="padding:6px 4px 4px">${up.map(m => `<div class="list-row">
+          <div class="lr-main"><b>${teamDot(m.home||"")}${U.esc(m.home||"—")} ${tr("common.vs")} ${teamDot(m.away||"")}${U.esc(m.away||"—")}</b>
+          <small>${U.esc(m.competition||"")}${m.date?" · "+U.fmtDate(m.date):""}</small></div></div>`).join("")}</div></div>`;
+    }
+
     UI.mount(`
       <div class="live-screen">
         <div class="live-top">
@@ -2708,33 +2823,25 @@
           <button class="btn btn-ghost" id="live-exit"><span class="ni-icon" data-icon="close"></span> ${tr("live.exit")}</button>
         </div>
 
-        ${nextM ? `<div class="live-next"><span class="ni-icon" data-icon="calendar"></span> ${tr("live.next")} <b>${U.esc(nextM.home||"—")} ${tr("common.vs")} ${U.esc(nextM.away||"—")}</b>${nextM.competition?` · ${U.esc(nextM.competition)}`:""}${nextM.date?` · ${U.fmtDate(nextM.date)}`:""}</div>` : ""}
-        <button class="live-add" id="live-add"><span class="ni-icon" data-icon="plus"></span> ${tr("dash.registerResult")}</button>
+        ${heroHtml}
 
-        <div class="live-stats">
-          <div class="live-stat"><span class="ls-val">${pos ? pos.pos + "º" : "—"}</span><span class="ls-lbl">${tr("season.position")}</span></div>
-          <div class="live-stat"><span class="ls-val">${sum.points}</span><span class="ls-lbl">${tr("dash.stat.points")}</span></div>
-          <div class="live-stat"><span class="ls-val">${sum.w}-${sum.d}-${sum.l}</span><span class="ls-lbl">${tr("live.record")}</span></div>
-          <div class="live-stat"><span class="ls-form">${last5.length ? CH.formBar(last5) : '<span class="faint">—</span>'}</span><span class="ls-lbl">${tr("rival.form")}</span></div>
-        </div>
+        ${recent.length ? `<div class="live-momentum">
+          <div class="lm-head"><span class="lm-title">${tr("live.momentum")}</span>${streakLabel ? `<span class="lm-streak streak-${streak.type}">${streakLabel}</span>` : ""}</div>
+          <div class="lm-pills">${resultPills}</div>
+        </div>` : ""}
 
-        <div class="card tight live-table">
-          <div class="table-wrap"><table class="tbl"><thead><tr>
-            <th>#</th><th>${tr("stand.th.team")}</th><th class="num">${tr("stand.th.pj")}</th><th class="num">${tr("stand.th.dg")}</th><th class="num">${tr("stand.th.pts")}</th>
-          </tr></thead><tbody>
-          ${table.length ? table.map((r, i) => {
-            const zone = i < 4 ? "zone-ucl" : i < 6 ? "zone-uel" : i >= n - 3 ? "zone-rel" : "";
-            return `<tr class="${r.team === c.clubName ? "is-user" : ""}">
-              <td><span class="pos-cell"><span class="zone-bar ${zone}"></span>${i + 1}</span></td>
-              <td>${U.esc(r.team)}</td><td class="num">${r.pj}</td>
-              <td class="num">${(r.gf - r.gc >= 0 ? "+" : "") + (r.gf - r.gc)}</td><td class="num"><b>${r.pts}</b></td></tr>`;
-          }).join("") : `<tr><td colspan="5"><div class="empty" style="padding:26px"><div class="emoji">📊</div><p>${tr("live.emptyStandings")}</p></div></td></tr>`}
-          </tbody></table></div>
-        </div>
+        <div class="live-stats">${pulseTiles}</div>
+
+        ${raceHtml}
       </div>
     `);
     document.getElementById("live-exit").addEventListener("click", () => FC.router.go("dashboard"));
-    document.getElementById("live-add").addEventListener("click", () => UI.openMatchModal(c, nextM || undefined, nextM ? { mode: "result" } : undefined));
+    const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("click", fn); };
+    on("live-schedule", () => UI.openMatchModal(c));
+    on("lh-play", () => UI.openMatchModal(c, nextM || undefined, nextM ? { mode: "result" } : undefined));
+    on("lh-odds", () => UI.openBettingMarket(c, nextM));
+    on("lh-scout", () => UI.openRivalDossier(c, S.opponentOf(c, nextM)));
+    on("lh-trip", () => UI.openTrip(c, nextM));
   };
 
   /* ============================================================

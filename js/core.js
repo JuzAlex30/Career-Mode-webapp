@@ -1065,6 +1065,24 @@
     const i = t.findIndex(r => r.team === c.clubName);
     return i >= 0 ? { pos: i + 1, total: t.length } : null;
   };
+  // Qué se juega el usuario en un partido (clave de stake). Es la misma lógica
+  // que usa TRIPS.context para la narrativa; centralizada aquí para reutilizarla
+  // en la previa del modo en vivo (partidos en casa y fuera por igual).
+  S.matchStake = (c, m) => {
+    if (!c || !m) return "media";
+    const comp = m.competition || "";
+    const continental = FC.data.isContinental(comp) || FC.data.isInternational(comp);
+    if (continental) {
+      if (/final/i.test(m.round || "")) return "final_euro";
+      const euPos = S.europeanPosition(c, m.seasonId);
+      if (euPos) return euPos.zone === "out" ? "eu_crisis" : euPos.zone === "playoff" ? "eu_necesita" : euPos.pos === 1 ? "eu_lider" : "eu_zona";
+      return "continental";
+    }
+    if (FC.data.isDomesticCup(comp)) return "copa";
+    const p = S.userPosition(c, m.seasonId);
+    if (p) return p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media";
+    return "media";
+  };
 
   /* ---------- GRUPOS EUROPEOS ------------------------------------------- */
   S.computeGroupStandings = (c, group) => {
@@ -3050,17 +3068,7 @@
     if (atVenue.length) h2hType = (v === 0 && d >= 2) ? "bestia" : (v >= 2 && d === 0) ? "fortin" : "equilibrado";
     const before = played.filter(x => !m.date || new Date(x.date || 0) <= new Date(m.date)).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     let unbeaten = 0; for (let i = 0; i < before.length; i++) { if (S.userResult(c, before[i]) === "L") break; unbeaten++; }
-    let stake = "media";
-    if (continental) {
-      if (/final/i.test(m.round || "")) { stake = "final_euro"; }
-      else {
-        const euPos = S.europeanPosition(c, m.seasonId);
-        if (euPos) { stake = euPos.zone === "out" ? "eu_crisis" : euPos.zone === "playoff" ? "eu_necesita" : euPos.pos === 1 ? "eu_lider" : "eu_zona"; }
-        else { stake = "continental"; }
-      }
-    }
-    else if (FC.data.isDomesticCup(m.competition)) stake = "copa";
-    else { const p = S.userPosition(c, m.seasonId); if (p) stake = p.pos === 1 ? "liderato" : p.pos <= 4 ? "europa_zona" : p.pos >= p.total - 2 ? "descenso" : "media"; }
+    const stake = S.matchStake(c, m);
     // Rivalidad all-time (ambas sedes) con nivel de intensidad acumulado.
     const allVs = played.filter(x => x.home === rival || x.away === rival);
     let av = 0, ae = 0, al = 0; allVs.forEach(x => { const r = S.userResult(c, x); if (r === "W") av++; else if (r === "D") ae++; else al++; });
