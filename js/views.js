@@ -2031,14 +2031,26 @@
       }
       svg.classList.toggle("vmap-far", vw > 620); // oculta etiquetas cuando se ve muy lejos
     }
-    function fit() {
+    function fitTarget() {
       const s = size(), a = s.h / s.w;
       const bw = Math.max(fx1 - fx0, 20), bh = Math.max(fy1 - fy0, 20);
-      vw = Math.max(bw, bh / a) * 1.16;
-      vw = Math.max(vw, 120);
-      cx = (fx0 + fx1) / 2; cy = (fy0 + fy1) / 2;
-      apply();
+      return { cx: (fx0 + fx1) / 2, cy: (fy0 + fy1) / 2, vw: Math.max(Math.max(bw, bh / a) * 1.16, 120) };
     }
+    // Transición suave del viewBox (easeOutCubic) para botones, encaje y entrada.
+    let anim = null;
+    function stopAnim() { if (anim) { cancelAnimationFrame(anim); anim = null; } }
+    function animateTo(tcx, tcy, tvw, dur) {
+      stopAnim();
+      const scx = cx, scy = cy, svw = vw, t0 = performance.now(); dur = dur || 380;
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        cx = scx + (tcx - scx) * e; cy = scy + (tcy - scy) * e; vw = svw + (tvw - svw) * e;
+        apply();
+        anim = k < 1 ? requestAnimationFrame(step) : null;
+      };
+      anim = requestAnimationFrame(step);
+    }
+    function fit(animate) { const t = fitTarget(); if (animate) animateTo(t.cx, t.cy, t.vw, 480); else { cx = t.cx; cy = t.cy; vw = t.vw; apply(); } }
     function zoomAt(fracX, fracY, factor) {
       const vh = vw * (size().h / size().w);
       const wx = cx - vw / 2 + fracX * vw, wy = cy - vh / 2 + fracY * vh;
@@ -2047,22 +2059,64 @@
       cx = wx - (fracX - 0.5) * vw; cy = wy - (fracY - 0.5) * nvh;
       apply();
     }
+
+    // ---- Tooltip flotante + resalte al pasar el ratón ----
+    const wrap = svg.parentNode;
+    let tip = wrap.querySelector(".vmap-tip");
+    if (!tip) { tip = document.createElement("div"); tip.className = "vmap-tip"; wrap.appendChild(tip); }
+    const acc = (getComputedStyle(document.body).getPropertyValue("--accent") || "").trim() || "#00e1a0";
+    const RESDOT = { W: acc, D: "#ffd02e", L: "#ff5470", up: "#1f8fff", home: acc, faint: "#7c8ba0" };
+    let hoverPin = null, hoverArc = null;
+    function clearHover() {
+      if (hoverPin) { hoverPin.classList.remove("on"); hoverPin = null; }
+      if (hoverArc) { hoverArc.classList.remove("on"); hoverArc = null; }
+    }
+    function hideTip() { tip.classList.remove("on"); clearHover(); }
+    function showHover(pin, clientX, clientY) {
+      if (pin !== hoverPin) {
+        clearHover(); hoverPin = pin; pin.classList.add("on");
+        try { pin.parentNode.appendChild(pin); } catch (_) {} // traer al frente
+        const ak = pin.getAttribute("data-arc");
+        if (ak) { hoverArc = svg.querySelector('.vp-arc[data-arc="' + ak + '"]'); if (hoverArc) hoverArc.classList.add("on"); }
+        const g = (n) => pin.getAttribute(n) || "", res = g("data-tt-res");
+        const meta = g("data-tt-meta");
+        tip.innerHTML = '<div class="vtt-title">' + g("data-tt-title") + "</div>" +
+          (g("data-tt-sub") ? '<div class="vtt-sub">' + g("data-tt-sub") + "</div>" : "") +
+          (meta ? '<div class="vtt-meta"><span class="vtt-dot" style="background:' + (RESDOT[res] || RESDOT.faint) + '"></span>' + meta + "</div>" : "");
+        tip.classList.add("on");
+      }
+      const r = wrap.getBoundingClientRect();
+      let x = clientX - r.left + 16, y = clientY - r.top + 16;
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      if (x + tw > r.width - 6) x = clientX - r.left - tw - 16;
+      if (y + th > r.height - 6) y = r.height - th - 6;
+      tip.style.left = Math.max(6, x) + "px"; tip.style.top = Math.max(6, y) + "px";
+    }
+
     // Rueda: zoom hacia el cursor
     svg.addEventListener("wheel", (e) => {
-      e.preventDefault();
+      e.preventDefault(); stopAnim(); hideTip();
       const r = svg.getBoundingClientRect();
       zoomAt((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, e.deltaY > 0 ? 1.2 : 1 / 1.2);
     }, { passive: false });
-    // Puntero: arrastre (pan) + pinza (zoom con 2 dedos)
+    // Puntero: arrastre (pan) + pinza (zoom con 2 dedos); sin arrastre → hover
     const active = new Map();
     let moved = 0, pinchDist = 0;
     svg.addEventListener("pointerdown", (e) => {
+      stopAnim(); hideTip();
       try { svg.setPointerCapture(e.pointerId); } catch (_) {}
       active.set(e.pointerId, { x: e.clientX, y: e.clientY });
       moved = 0;
       if (active.size === 2) { const p = [...active.values()]; pinchDist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
     });
     svg.addEventListener("pointermove", (e) => {
+      if (active.size === 0) { // no hay arrastre → hover (solo ratón)
+        if (e.pointerType === "touch") return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const pin = el && el.closest && el.closest(".vpin");
+        if (pin) showHover(pin, e.clientX, e.clientY); else hideTip();
+        return;
+      }
       const prev = active.get(e.pointerId); if (!prev) return;
       const s = size();
       if (active.size === 2) {
@@ -2089,6 +2143,7 @@
     };
     svg.addEventListener("pointerup", endPtr);
     svg.addEventListener("pointercancel", endPtr);
+    svg.addEventListener("pointerleave", hideTip);
     // Distingue click de arrastre: si hubo arrastre, no se abre nada. En un click
     // limpio se busca el pin bajo el cursor (elementFromPoint es fiable aunque la
     // captura de puntero haya cambiado el target del evento click).
@@ -2098,16 +2153,24 @@
       const pin = el && el.closest && el.closest(".vpin[data-match],.vpin[data-trip]");
       if (pin && onPin) onPin(pin);
     });
-    // Botones
+    // Botones (con transición suave)
     const ctrl = svg.parentNode.querySelector(".vmap-ctrl");
     if (ctrl) ctrl.addEventListener("click", (e) => {
       const b = e.target.closest("[data-vz]"); if (!b) return;
-      if (b.dataset.vz === "in") zoomAt(0.5, 0.5, 1 / 1.5);
-      else if (b.dataset.vz === "out") zoomAt(0.5, 0.5, 1.5);
-      else fit();
+      hideTip();
+      if (b.dataset.vz === "in") animateTo(cx, cy, vw / 1.6, 300);
+      else if (b.dataset.vz === "out") animateTo(cx, cy, vw * 1.6, 300);
+      else fit(true);
     });
     let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(apply, 120); });
-    fit();
+    // Entrada: la primera vez en la sesión, "vuela" desde una vista más amplia
+    // hasta encuadrar tus rivales. Después, encaje instantáneo (sin repetir).
+    const t = fitTarget();
+    if (!FC._vmapIntroDone) {
+      FC._vmapIntroDone = true;
+      cx = t.cx; cy = t.cy; vw = t.vw * 2; apply();
+      animateTo(t.cx, t.cy, t.vw, 900);
+    } else { cx = t.cx; cy = t.cy; vw = t.vw; apply(); }
   }
 
   FC.views.viajes = function () {
@@ -2159,17 +2222,31 @@
     for (let lat = -75; lat <= 75; lat += 15) { const a = proj(lat, -180), b = proj(lat, 180); grat += `<line x1="${a[0]}" y1="${a[1].toFixed(1)}" x2="${b[0]}" y2="${b[1].toFixed(1)}"/>`; }
 
     // Pines (grupos .vpin translate(wx,wy)): contenido en px, contra-escalado por
-    // initVMap para tamaño constante en pantalla a cualquier zoom.
-    const pin = (p, attrs, inner) => `<g class="vpin" data-wx="${p[0].toFixed(1)}" data-wy="${p[1].toFixed(1)}"${attrs}>${inner}</g>`;
-    let faint = "", arcs = "", dots = "";
-    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t, c), p = proj(cc.lat, cc.lon); faint += pin(p, "", `<circle r="2.6" fill="${COL.faint}"/>`); });
+    // initVMap para tamaño constante en pantalla a cualquier zoom. Cada pin lleva
+    // datos de tooltip (data-tt-*), un círculo transparente grande (vp-hit) para
+    // hover cómodo, un anillo de resalte (vp-ring) y, si tiene ruta, un data-arc
+    // que lo enlaza con su arco para iluminarlo al pasar el ratón.
+    const kmTo = (cc) => Math.round(FC.trips.distance(home, cc)).toLocaleString(FC.i18n.get() === "en" ? "en-US" : "es-ES") + " km";
+    const tt = (title, sub, meta, res) => ` data-tt-title="${U.esc(title)}" data-tt-sub="${U.esc(sub || "")}" data-tt-meta="${U.esc(meta || "")}" data-tt-res="${res || ""}"`;
+    const HIT = `<circle class="vp-hit" r="13" fill="transparent"/>`;
+    const XY = (p) => `data-wx="${p[0].toFixed(1)}" data-wy="${p[1].toFixed(1)}"`;
+    let faint = "", arcs = "", dots = "", arcId = 0;
+    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t, c), p = proj(cc.lat, cc.lon);
+      faint += `<g class="vpin vpin-faint" ${XY(p)}${tt(cc.city, t, tr("travel.notVisited") + " · " + kmTo(cc), "faint")}>${HIT}<circle class="vp-ring" r="6" fill="none" stroke="${COL.faint}"/><circle r="2.6" fill="${COL.faint}"/></g>`; });
     Object.keys(visited).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon), col = COL[visited[riv].r] || COL.faint;
-      arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${col}" stroke-width="1.8" stroke-opacity=".55" stroke-linecap="round"/>`;
-      dots += pin(p, ` data-match="${visited[riv].id}" style="cursor:pointer"`, `<circle r="6" fill="${col}" fill-opacity=".18"/><circle r="3.6" fill="${col}"/><text class="vp-lbl" x="7" y="3.5" fill="#cdd9e6">${U.esc(cc.city)}</text>`); });
+      const mm = (c.matches || []).find(x => x.id === visited[riv].id) || {};
+      const rw = visited[riv].r === "W" ? tr("res.WLower") : visited[riv].r === "D" ? tr("res.DLower") : tr("res.LLower");
+      const score = (mm.homeScore != null ? Number(mm.homeScore) : "") + "–" + (mm.awayScore != null ? Number(mm.awayScore) : "");
+      const ak = "a" + (arcId++);
+      arcs += `<path class="vp-arc" data-arc="${ak}" d="${arc(hp, p)}" fill="none" stroke="${col}" stroke-width="1.8" stroke-opacity=".5" stroke-linecap="round"/>`;
+      dots += `<g class="vpin vpin-res" ${XY(p)} data-arc="${ak}" data-match="${visited[riv].id}"${tt(cc.city, riv + (mm.competition ? " · " + mm.competition : ""), rw + " " + score + " · " + kmTo(cc), visited[riv].r)}>${HIT}<circle class="vp-ring" r="9" fill="none" stroke="${col}"/><circle r="6" fill="${col}" fill-opacity=".18"/><circle r="3.6" fill="${col}"/><text class="vp-lbl" x="7" y="3.5" fill="#cdd9e6">${U.esc(cc.city)}</text></g>`; });
     Object.keys(upcoming).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon);
-      arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${COL.up}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>`;
-      dots += pin(p, ` data-trip="${upcoming[riv]}" style="cursor:pointer"`, `<circle r="7" fill="${COL.up}" fill-opacity=".2"/><circle r="4" fill="${COL.up}"/><text class="vp-lbl" x="8" y="3.5" fill="${COL.up}">${U.esc(cc.city)}</text>`); });
-    const homeNode = `<g class="vpin vpin-home" data-wx="${hp[0].toFixed(1)}" data-wy="${hp[1].toFixed(1)}"><circle r="9" fill="${acc}" fill-opacity=".16"/><circle r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text class="vp-lbl vp-lbl-home" x="9" y="4" fill="#eaf1f8">${U.esc(home.city)}</text></g>`;
+      const mm = (c.matches || []).find(x => x.id === upcoming[riv]) || {};
+      const when = U.fmtDate(mm.date) || tr("common.noDate");
+      const ak = "a" + (arcId++);
+      arcs += `<path class="vp-arc vp-arc-up" data-arc="${ak}" d="${arc(hp, p)}" fill="none" stroke="${COL.up}" stroke-width="2" stroke-dasharray="6 6" stroke-linecap="round"/>`;
+      dots += `<g class="vpin vpin-up" ${XY(p)} data-arc="${ak}" data-trip="${upcoming[riv]}"${tt(cc.city, riv + (mm.competition ? " · " + mm.competition : ""), tr("travel.next") + " · " + when + " · " + kmTo(cc), "up")}>${HIT}<circle class="vp-pulse" r="4" fill="none" stroke="${COL.up}" stroke-width="2"><animate attributeName="r" values="4;15" dur="1.9s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.75;0" dur="1.9s" repeatCount="indefinite"/></circle><circle class="vp-ring" r="10" fill="none" stroke="${COL.up}"/><circle r="7" fill="${COL.up}" fill-opacity=".2"/><circle r="4" fill="${COL.up}"/><text class="vp-lbl" x="8" y="3.5" fill="${COL.up}">${U.esc(cc.city)}</text></g>`; });
+    const homeNode = `<g class="vpin vpin-home" ${XY(hp)}${tt(home.city, T + " · " + tr("travel.yourClub"), tr("travel.homeBase"), "home")}>${HIT}<circle class="vp-ring" r="12" fill="none" stroke="${acc}"/><circle r="9" fill="${acc}" fill-opacity=".16"/><circle r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text class="vp-lbl vp-lbl-home" x="9" y="4" fill="#eaf1f8">${U.esc(home.city)}</text></g>`;
     const countryLayer = worldPathsSvg(proj);
 
     const codeOf = (s) => (s || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "···";
