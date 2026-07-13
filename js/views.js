@@ -1969,61 +1969,25 @@
      dependencias) con cada ciudad en su lat/lon, rutas de la
      temporada por resultado, métricas y pasaporte de estadios.
      ============================================================ */
-  // Recorte de Sutherland-Hodgman de un anillo contra un rectángulo
-  // [x0,x1]×[y0,y1]. Necesario porque `proj` pinza (clamp) los puntos fuera
-  // de rango a los bordes del lienzo: un país solo parcialmente visible (ej.
-  // Suiza asomando por el borde de una vista centrada en España) tendría la
-  // mayoría de sus puntos pinzados al mismo borde, y al unirlos con líneas
-  // rectas se dibujaría una mancha o astilla que no corresponde a ninguna
-  // costa real. Recortando en coordenadas lon/lat ANTES de proyectar, el
-  // contorno se corta limpio en el borde de la vista.
-  function clipRingToBox(ring, x0, y0, x1, y1) {
-    const clipEdge = (pts, inside, intersect) => {
-      if (!pts.length) return pts;
-      const out = [];
-      for (let i = 0; i < pts.length; i++) {
-        const cur = pts[i], prev = pts[(i - 1 + pts.length) % pts.length];
-        const curIn = inside(cur), prevIn = inside(prev);
-        if (curIn) { if (!prevIn) out.push(intersect(prev, cur)); out.push(cur); }
-        else if (prevIn) out.push(intersect(prev, cur));
-      }
-      return out;
-    };
-    const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-    let pts = ring;
-    pts = clipEdge(pts, p => p[0] >= x0, (p, q) => lerp(p, q, (x0 - p[0]) / (q[0] - p[0])));
-    pts = clipEdge(pts, p => p[0] <= x1, (p, q) => lerp(p, q, (x1 - p[0]) / (q[0] - p[0])));
-    pts = clipEdge(pts, p => p[1] >= y0, (p, q) => lerp(p, q, (y0 - p[1]) / (q[1] - p[1])));
-    pts = clipEdge(pts, p => p[1] <= y1, (p, q) => lerp(p, q, (y1 - p[1]) / (q[1] - p[1])));
-    return pts;
-  }
-
-  // Contornos de países (fondo del mapa de Viajes). Filtra por solape de bbox
-  // contra la zona visible (con margen), recorta cada anillo a esa ventana y
-  // proyecta con `proj` (misma función que usan los puntos/rutas, así todo
-  // queda alineado). El bbox es POR POLÍGONO, no por país: un país con
-  // territorios de ultramar muy alejados (ej. Francia incluye la Guayana
-  // Francesa) o que cruza el antimeridiano (ej. Rusia) arrastraría ese trozo
-  // lejano si se filtrase por el bbox agregado del país entero. fill-rule
-  // evenodd: los agujeros (p.ej. Lesoto dentro de Sudáfrica) se recortan
-  // solos sin tener que distinguir anillo exterior de interior.
-  function countryPathsSvg(LON0, LAT0, LON1, LAT1, proj) {
+  // Contornos de TODOS los países, proyectados una sola vez a un lienzo de
+  // mundo fijo (equirectangular, 10 uds por grado → 3600×1800). El mapa de
+  // Viajes es interactivo: se navega con pan/zoom moviendo el viewBox del SVG,
+  // así que no se recorta ni se filtra nada — el mundo entero está dibujado y
+  // el viewBox decide qué se ve. `proj(lat,lon)` es la misma función que usan
+  // ciudades y rutas, todo queda alineado. fill-rule evenodd: los agujeros
+  // (p.ej. Lesoto dentro de Sudáfrica) se recortan solos.
+  function worldPathsSvg(proj) {
     const all = (FC.data && FC.data.WORLD_COUNTRIES) || [];
     if (!all.length) return "";
-    const mLon = (LON1 - LON0) * 0.25, mLat = (LAT1 - LAT0) * 0.25;
-    const vx0 = LON0 - mLon, vx1 = LON1 + mLon, vy0 = LAT0 - mLat, vy1 = LAT1 + mLat;
     let out = "";
     for (const [, , polys] of all) {
-      for (const [bbox, rings] of polys) {
-        const [bx0, by0, bx1, by1] = bbox;
-        if (bx1 < vx0 || bx0 > vx1 || by1 < vy0 || by0 > vy1) continue; // sin solape
+      for (const [, rings] of polys) {
         let d = "";
         for (const ring of rings) {
-          const clipped = clipRingToBox(ring, vx0, vy0, vx1, vy1);
-          if (clipped.length < 3) continue;
+          if (ring.length < 3) continue;
           let seg = "";
-          for (let i = 0; i < clipped.length; i++) {
-            const [lon, lat] = clipped[i];
+          for (let i = 0; i < ring.length; i++) {
+            const [lon, lat] = ring[i];
             const p = proj(lat, lon);
             seg += (i === 0 ? "M" : "L") + p[0].toFixed(1) + "," + p[1].toFixed(1);
           }
@@ -2033,6 +1997,117 @@
       }
     }
     return out;
+  }
+
+  // Controlador del mapa interactivo de Viajes: pan (arrastrar), zoom (rueda,
+  // pinza táctil, botones ±) y "encajar" (⤢). El estado es {centro cx,cy en
+  // coords de mundo, ancho de viewBox vw}; la altura se deriva del aspecto real
+  // del elemento para no deformar. Los pines se contra-escalan (scale = vw/ancho
+  // en px) para mantener un tamaño constante en pantalla a cualquier zoom.
+  function initVMap(svg, onPin) {
+    const WORLD_W = 3600, WORLD_H = 1800, MIN_VW = 45;
+    const pins = Array.prototype.slice.call(svg.querySelectorAll(".vpin"));
+    const fx0 = +svg.dataset.fx0, fy0 = +svg.dataset.fy0, fx1 = +svg.dataset.fx1, fy1 = +svg.dataset.fy1;
+    let cx = 0, cy = 0, vw = WORLD_W;
+    const size = () => { const r = svg.getBoundingClientRect(); return { w: r.width || 820, h: r.height || 500 }; };
+    function clampView() {
+      const s = size(), a = s.h / s.w;
+      let vh = vw * a;
+      if (vw > WORLD_W) { vw = WORLD_W; vh = vw * a; }
+      if (vh > WORLD_H) { vh = WORLD_H; vw = vh / a; }
+      if (vw < MIN_VW) { vw = MIN_VW; vh = vw * a; }
+      const hw = vw / 2, hh = vh / 2;
+      cx = vw >= WORLD_W ? WORLD_W / 2 : Math.max(hw, Math.min(WORLD_W - hw, cx));
+      cy = vh >= WORLD_H ? WORLD_H / 2 : Math.max(hh, Math.min(WORLD_H - hh, cy));
+      return vh;
+    }
+    function apply() {
+      const vh = clampView(), x = cx - vw / 2, y = cy - vh / 2;
+      svg.setAttribute("viewBox", x.toFixed(1) + " " + y.toFixed(1) + " " + vw.toFixed(1) + " " + vh.toFixed(1));
+      const s = vw / (size().w || 820);
+      for (let i = 0; i < pins.length; i++) {
+        const p = pins[i];
+        p.setAttribute("transform", "translate(" + p.dataset.wx + "," + p.dataset.wy + ") scale(" + s.toFixed(4) + ")");
+      }
+      svg.classList.toggle("vmap-far", vw > 620); // oculta etiquetas cuando se ve muy lejos
+    }
+    function fit() {
+      const s = size(), a = s.h / s.w;
+      const bw = Math.max(fx1 - fx0, 20), bh = Math.max(fy1 - fy0, 20);
+      vw = Math.max(bw, bh / a) * 1.16;
+      vw = Math.max(vw, 120);
+      cx = (fx0 + fx1) / 2; cy = (fy0 + fy1) / 2;
+      apply();
+    }
+    function zoomAt(fracX, fracY, factor) {
+      const vh = vw * (size().h / size().w);
+      const wx = cx - vw / 2 + fracX * vw, wy = cy - vh / 2 + fracY * vh;
+      vw *= factor;
+      const nvh = vw * (size().h / size().w);
+      cx = wx - (fracX - 0.5) * vw; cy = wy - (fracY - 0.5) * nvh;
+      apply();
+    }
+    // Rueda: zoom hacia el cursor
+    svg.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const r = svg.getBoundingClientRect();
+      zoomAt((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, e.deltaY > 0 ? 1.2 : 1 / 1.2);
+    }, { passive: false });
+    // Puntero: arrastre (pan) + pinza (zoom con 2 dedos)
+    const active = new Map();
+    let moved = 0, pinchDist = 0;
+    svg.addEventListener("pointerdown", (e) => {
+      try { svg.setPointerCapture(e.pointerId); } catch (_) {}
+      active.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      moved = 0;
+      if (active.size === 2) { const p = [...active.values()]; pinchDist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
+    });
+    svg.addEventListener("pointermove", (e) => {
+      const prev = active.get(e.pointerId); if (!prev) return;
+      const s = size();
+      if (active.size === 2) {
+        const pts = [...active.values()], nd = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        active.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pinchDist > 0 && nd > 0) {
+          const r = svg.getBoundingClientRect(), cxm = (pts[0].x + pts[1].x) / 2, cym = (pts[0].y + pts[1].y) / 2;
+          zoomAt((cxm - r.left) / r.width, (cym - r.top) / r.height, pinchDist / nd);
+        }
+        pinchDist = nd; return;
+      }
+      const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+      moved += Math.abs(dx) + Math.abs(dy);
+      active.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const vh = vw * (s.h / s.w);
+      cx -= dx * (vw / s.w); cy -= dy * (vh / s.h);
+      svg.classList.add("vmap-grab");
+      apply();
+    });
+    const endPtr = (e) => {
+      active.delete(e.pointerId);
+      if (active.size < 2) pinchDist = 0;
+      if (active.size === 0) svg.classList.remove("vmap-grab");
+    };
+    svg.addEventListener("pointerup", endPtr);
+    svg.addEventListener("pointercancel", endPtr);
+    // Distingue click de arrastre: si hubo arrastre, no se abre nada. En un click
+    // limpio se busca el pin bajo el cursor (elementFromPoint es fiable aunque la
+    // captura de puntero haya cambiado el target del evento click).
+    svg.addEventListener("click", (e) => {
+      if (moved > 6) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const pin = el && el.closest && el.closest(".vpin[data-match],.vpin[data-trip]");
+      if (pin && onPin) onPin(pin);
+    });
+    // Botones
+    const ctrl = svg.parentNode.querySelector(".vmap-ctrl");
+    if (ctrl) ctrl.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-vz]"); if (!b) return;
+      if (b.dataset.vz === "in") zoomAt(0.5, 0.5, 1 / 1.5);
+      else if (b.dataset.vz === "out") zoomAt(0.5, 0.5, 1.5);
+      else fit();
+    });
+    let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(apply, 120); });
+    fit();
   }
 
   FC.views.viajes = function () {
@@ -2056,44 +2131,46 @@
     const laps = lifeKm / 40075;
     const estVis = leagueTeams.filter(t => visited[t]).length; // rivales de liga visitados esta temporada
 
-    // Proyección equirectangular auto-ajustada a los equipos de la liga.
-    const W = 820, H = 500, px = 30, py = 26;
-    const cl = (v, a, b) => Math.max(a, Math.min(b, v));
-    const allCCs = [home, ...leagueTeams.map(t => FC.trips.cityOf(t, c))];
-    // Excluir outliers geográficos (ej. islas remotas) del bbox para que la zona continental llene el mapa.
-    // Se usan los equipos dentro de 2.2× el percentil 75 de distancia al club home.
-    const rivalDists = allCCs.slice(1).map(cc => FC.trips.distance(home, cc)).sort((a, b) => a - b);
-    const p75 = rivalDists.length ? rivalDists[Math.max(0, Math.floor(rivalDists.length * 0.75))] : Infinity;
-    const bboxCCs = rivalDists.length ? allCCs.filter((cc, i) => i === 0 || FC.trips.distance(home, cc) <= p75 * 2.2) : [home];
-    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
-    bboxCCs.forEach(cc => { minLat = Math.min(minLat, cc.lat); maxLat = Math.max(maxLat, cc.lat); minLon = Math.min(minLon, cc.lon); maxLon = Math.max(maxLon, cc.lon); });
-    const latPad = Math.max((maxLat - minLat) * 0.15, 1.0), lonPad = Math.max((maxLon - minLon) * 0.15, 1.0);
-    const LAT0 = minLat - latPad, LAT1 = maxLat + latPad, LON0 = minLon - lonPad, LON1 = maxLon + lonPad;
-    const proj = (lat, lon) => [cl(px + (lon - LON0) / (LON1 - LON0) * (W - 2 * px), 4, W - 4), cl(py + (LAT1 - lat) / (LAT1 - LAT0) * (H - 2 * py), 4, H - 4)];
+    // Mapa interactivo: proyección equirectangular sobre un lienzo de MUNDO fijo
+    // (10 uds/grado → 3600×1800). Todo el planeta se dibuja una vez; el viewBox
+    // (pan/zoom, ver initVMap) decide qué se ve. Nada de auto-bbox ni recortes:
+    // el usuario navega libremente, y la vista inicial "encaja" la zona relevante.
+    const proj = (lat, lon) => [(lon + 180) * 10, (90 - lat) * 10];
     const acc = (getComputedStyle(document.body).getPropertyValue("--accent") || "").trim() || "#00e1a0";
     const COL = { W: acc, D: "#ffd02e", L: "#ff5470", up: "#1f8fff", faint: "#46586e" };
-    const arc = (p1, p2) => { const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, dd = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]); return `M${p1[0].toFixed(1)},${p1[1].toFixed(1)} Q${mx.toFixed(1)},${(my - Math.max(14, dd * 0.16)).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; };
+    const arc = (p1, p2) => { const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, dd = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]); return `M${p1[0].toFixed(1)},${p1[1].toFixed(1)} Q${mx.toFixed(1)},${(my - Math.max(6, dd * 0.16)).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; };
     const hp = proj(home.lat, home.lon);
 
-    const lonRange = LON1 - LON0, latRange = LAT1 - LAT0;
-    const lonStep = lonRange > 25 ? 10 : lonRange > 12 ? 5 : 2;
-    const latStep = latRange > 20 ? 10 : latRange > 10 ? 5 : 2;
-    let grat = "";
-    for (let lon = Math.ceil(LON0 / lonStep) * lonStep; lon <= LON1; lon += lonStep) { const a = proj(LAT0, lon), b = proj(LAT1, lon); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
-    for (let lat = Math.ceil(LAT0 / latStep) * latStep; lat <= LAT1; lat += latStep) { const a = proj(lat, LON0), b = proj(lat, LON1); grat += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
+    // Vista inicial: bbox (en coords de mundo) que abarca club + toda la liga +
+    // rivales de esta temporada (incluidos los europeos/internacionales, así
+    // Londres o cualquier desplazamiento continental entra en el encuadre).
+    const focusCCs = [home];
+    leagueTeams.forEach(t => focusCCs.push(FC.trips.cityOf(t, c)));
+    Object.keys(visited).forEach(r => focusCCs.push(FC.trips.cityOf(r, c)));
+    Object.keys(upcoming).forEach(r => focusCCs.push(FC.trips.cityOf(r, c)));
+    let fLat0 = Infinity, fLat1 = -Infinity, fLon0 = Infinity, fLon1 = -Infinity;
+    focusCCs.forEach(cc => { if (cc.lat < fLat0) fLat0 = cc.lat; if (cc.lat > fLat1) fLat1 = cc.lat; if (cc.lon < fLon0) fLon0 = cc.lon; if (cc.lon > fLon1) fLon1 = cc.lon; });
+    const _tl = proj(fLat1, fLon0), _br = proj(fLat0, fLon1);
+    const FX0 = _tl[0].toFixed(1), FY0 = _tl[1].toFixed(1), FX1 = _br[0].toFixed(1), FY1 = _br[1].toFixed(1);
 
-    let faint = "", arcs = "", dots = "", labels = "";
-    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t, c), p = proj(cc.lat, cc.lon); faint += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${COL.faint}"/>`; });
+    // Retícula del mundo entero (meridianos/paralelos cada 15°).
+    let grat = "";
+    for (let lon = -180; lon <= 180; lon += 15) { const a = proj(85, lon), b = proj(-85, lon); grat += `<line x1="${a[0]}" y1="${a[1].toFixed(1)}" x2="${b[0]}" y2="${b[1].toFixed(1)}"/>`; }
+    for (let lat = -75; lat <= 75; lat += 15) { const a = proj(lat, -180), b = proj(lat, 180); grat += `<line x1="${a[0]}" y1="${a[1].toFixed(1)}" x2="${b[0]}" y2="${b[1].toFixed(1)}"/>`; }
+
+    // Pines (grupos .vpin translate(wx,wy)): contenido en px, contra-escalado por
+    // initVMap para tamaño constante en pantalla a cualquier zoom.
+    const pin = (p, attrs, inner) => `<g class="vpin" data-wx="${p[0].toFixed(1)}" data-wy="${p[1].toFixed(1)}"${attrs}>${inner}</g>`;
+    let faint = "", arcs = "", dots = "";
+    leagueTeams.forEach(t => { if (visited[t] || upcoming[t]) return; const cc = FC.trips.cityOf(t, c), p = proj(cc.lat, cc.lon); faint += pin(p, "", `<circle r="2.6" fill="${COL.faint}"/>`); });
     Object.keys(visited).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon), col = COL[visited[riv].r] || COL.faint;
       arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${col}" stroke-width="1.8" stroke-opacity=".55" stroke-linecap="round"/>`;
-      dots += `<g data-match="${visited[riv].id}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="6" fill="${col}" fill-opacity=".18"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="${col}"/></g>`;
-      labels += `<text x="${(p[0] + 6).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="#cdd9e6" font-size="10.5">${U.esc(cc.city)}</text>`; });
+      dots += pin(p, ` data-match="${visited[riv].id}" style="cursor:pointer"`, `<circle r="6" fill="${col}" fill-opacity=".18"/><circle r="3.6" fill="${col}"/><text class="vp-lbl" x="7" y="3.5" fill="#cdd9e6">${U.esc(cc.city)}</text>`); });
     Object.keys(upcoming).forEach(riv => { const cc = FC.trips.cityOf(riv, c), p = proj(cc.lat, cc.lon);
       arcs += `<path d="${arc(hp, p)}" fill="none" stroke="${COL.up}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>`;
-      dots += `<g data-trip="${upcoming[riv]}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="7" fill="${COL.up}" fill-opacity=".2"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${COL.up}"/></g>`;
-      labels += `<text x="${(p[0] + 7).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="${COL.up}" font-size="10.5">${U.esc(cc.city)}</text>`; });
-    const homeNode = `<circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="9" fill="${acc}" fill-opacity=".16"/><circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text x="${(hp[0] + 9).toFixed(1)}" y="${(hp[1] + 4).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(home.city)}</text>`;
-    const countryLayer = countryPathsSvg(LON0, LAT0, LON1, LAT1, proj);
+      dots += pin(p, ` data-trip="${upcoming[riv]}" style="cursor:pointer"`, `<circle r="7" fill="${COL.up}" fill-opacity=".2"/><circle r="4" fill="${COL.up}"/><text class="vp-lbl" x="8" y="3.5" fill="${COL.up}">${U.esc(cc.city)}</text>`); });
+    const homeNode = `<g class="vpin vpin-home" data-wx="${hp[0].toFixed(1)}" data-wy="${hp[1].toFixed(1)}"><circle r="9" fill="${acc}" fill-opacity=".16"/><circle r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text class="vp-lbl vp-lbl-home" x="9" y="4" fill="#eaf1f8">${U.esc(home.city)}</text></g>`;
+    const countryLayer = worldPathsSvg(proj);
 
     const codeOf = (s) => (s || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "···";
     const stamps = leagueTeams.map(t => { const cc = FC.trips.cityOf(t, c), on = visited[t]; return `<div class="vstamp${on ? " on" : ""}" title="${U.esc(t)}">${on ? '<span class="ni-icon" data-icon="check"></span>' : ""}${codeOf(cc.city)}</div>`; }).join("");
@@ -2182,12 +2259,23 @@
         ${tile(tr("travel.longestTrip"), Math.round(longest).toLocaleString("es-ES") + " km", longestCity || "—")}
       </div>
       <div class="card vmap">
-        <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${tr("travel.mapAriaLabel")}">
-          <rect x="0" y="0" width="${W}" height="${H}" fill="#0b141f"/>
-          <g stroke="#1b2738" stroke-width="1">${grat}</g>
-          <g class="vmap-countries" fill="#1c2b3d" stroke="#2c3f56" stroke-width="1">${countryLayer}</g>
-          ${faint}${arcs}${dots}${labels}${homeNode}
-        </svg>
+        <div class="vmap-wrap">
+          <svg class="vmap-svg" data-fx0="${FX0}" data-fy0="${FY0}" data-fx1="${FX1}" data-fy1="${FY1}" viewBox="0 0 3600 1800" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${tr("travel.mapAriaLabel")}">
+            <rect x="-400" y="-400" width="4400" height="2600" fill="#0b141f"/>
+            <g class="vmap-world">
+              <g class="vmap-grat" stroke="#16283c" stroke-width="1">${grat}</g>
+              <g class="vmap-countries" fill="#16324a" stroke="#2c5170" stroke-width="1">${countryLayer}</g>
+              <g class="vmap-arcs" fill="none">${arcs}</g>
+            </g>
+            <g class="vmap-pins">${faint}${dots}${homeNode}</g>
+          </svg>
+          <div class="vmap-ctrl">
+            <button type="button" data-vz="in" title="${tr("travel.zoomIn")}" aria-label="${tr("travel.zoomIn")}">+</button>
+            <button type="button" data-vz="out" title="${tr("travel.zoomOut")}" aria-label="${tr("travel.zoomOut")}">−</button>
+            <button type="button" data-vz="fit" title="${tr("travel.zoomFit")}" aria-label="${tr("travel.zoomFit")}"><span class="ni-icon" data-icon="target"></span></button>
+          </div>
+          <div class="vmap-hint">${tr("travel.mapHint")}</div>
+        </div>
         <div class="vmap-legend">
           <span>${dot(acc)} ${tr("travel.yourClub")}</span><span>${dot(COL.W)} ${tr("travel.win")}</span><span>${dot(COL.D)} ${tr("travel.draw")}</span><span>${dot(COL.L)} ${tr("travel.loss")}</span><span>${dot(COL.up)} ${tr("travel.next")}</span><span>${dot(COL.faint)} ${tr("travel.notVisited")}</span>
         </div>
@@ -2205,8 +2293,11 @@
         ${farBody}
       </div>
     `);
-    content().querySelectorAll(".vmap [data-trip]").forEach(g => g.addEventListener("click", () => UI.openTrip(c, findMatch(c, g.dataset.trip))));
-    content().querySelectorAll(".vmap [data-match]").forEach(g => g.addEventListener("click", () => UI.openMatchModal(c, findMatch(c, g.dataset.match))));
+    const svgEl = content().querySelector(".vmap-svg");
+    if (svgEl) initVMap(svgEl, (pin) => {
+      if (pin.dataset.trip) UI.openTrip(c, findMatch(c, pin.dataset.trip));
+      else if (pin.dataset.match) UI.openMatchModal(c, findMatch(c, pin.dataset.match));
+    });
     content().querySelectorAll(".postcards [data-match]").forEach(g => {
       const open = () => { const m = findMatch(c, g.dataset.match); if (m) UI.openTrip(c, m, { dir: "return" }); }; // revivir el viaje de vuelta
       g.addEventListener("click", open);
