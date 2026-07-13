@@ -1969,6 +1969,72 @@
      dependencias) con cada ciudad en su lat/lon, rutas de la
      temporada por resultado, métricas y pasaporte de estadios.
      ============================================================ */
+  // Recorte de Sutherland-Hodgman de un anillo contra un rectángulo
+  // [x0,x1]×[y0,y1]. Necesario porque `proj` pinza (clamp) los puntos fuera
+  // de rango a los bordes del lienzo: un país solo parcialmente visible (ej.
+  // Suiza asomando por el borde de una vista centrada en España) tendría la
+  // mayoría de sus puntos pinzados al mismo borde, y al unirlos con líneas
+  // rectas se dibujaría una mancha o astilla que no corresponde a ninguna
+  // costa real. Recortando en coordenadas lon/lat ANTES de proyectar, el
+  // contorno se corta limpio en el borde de la vista.
+  function clipRingToBox(ring, x0, y0, x1, y1) {
+    const clipEdge = (pts, inside, intersect) => {
+      if (!pts.length) return pts;
+      const out = [];
+      for (let i = 0; i < pts.length; i++) {
+        const cur = pts[i], prev = pts[(i - 1 + pts.length) % pts.length];
+        const curIn = inside(cur), prevIn = inside(prev);
+        if (curIn) { if (!prevIn) out.push(intersect(prev, cur)); out.push(cur); }
+        else if (prevIn) out.push(intersect(prev, cur));
+      }
+      return out;
+    };
+    const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    let pts = ring;
+    pts = clipEdge(pts, p => p[0] >= x0, (p, q) => lerp(p, q, (x0 - p[0]) / (q[0] - p[0])));
+    pts = clipEdge(pts, p => p[0] <= x1, (p, q) => lerp(p, q, (x1 - p[0]) / (q[0] - p[0])));
+    pts = clipEdge(pts, p => p[1] >= y0, (p, q) => lerp(p, q, (y0 - p[1]) / (q[1] - p[1])));
+    pts = clipEdge(pts, p => p[1] <= y1, (p, q) => lerp(p, q, (y1 - p[1]) / (q[1] - p[1])));
+    return pts;
+  }
+
+  // Contornos de países (fondo del mapa de Viajes). Filtra por solape de bbox
+  // contra la zona visible (con margen), recorta cada anillo a esa ventana y
+  // proyecta con `proj` (misma función que usan los puntos/rutas, así todo
+  // queda alineado). El bbox es POR POLÍGONO, no por país: un país con
+  // territorios de ultramar muy alejados (ej. Francia incluye la Guayana
+  // Francesa) o que cruza el antimeridiano (ej. Rusia) arrastraría ese trozo
+  // lejano si se filtrase por el bbox agregado del país entero. fill-rule
+  // evenodd: los agujeros (p.ej. Lesoto dentro de Sudáfrica) se recortan
+  // solos sin tener que distinguir anillo exterior de interior.
+  function countryPathsSvg(LON0, LAT0, LON1, LAT1, proj) {
+    const all = (FC.data && FC.data.WORLD_COUNTRIES) || [];
+    if (!all.length) return "";
+    const mLon = (LON1 - LON0) * 0.25, mLat = (LAT1 - LAT0) * 0.25;
+    const vx0 = LON0 - mLon, vx1 = LON1 + mLon, vy0 = LAT0 - mLat, vy1 = LAT1 + mLat;
+    let out = "";
+    for (const [, , polys] of all) {
+      for (const [bbox, rings] of polys) {
+        const [bx0, by0, bx1, by1] = bbox;
+        if (bx1 < vx0 || bx0 > vx1 || by1 < vy0 || by0 > vy1) continue; // sin solape
+        let d = "";
+        for (const ring of rings) {
+          const clipped = clipRingToBox(ring, vx0, vy0, vx1, vy1);
+          if (clipped.length < 3) continue;
+          let seg = "";
+          for (let i = 0; i < clipped.length; i++) {
+            const [lon, lat] = clipped[i];
+            const p = proj(lat, lon);
+            seg += (i === 0 ? "M" : "L") + p[0].toFixed(1) + "," + p[1].toFixed(1);
+          }
+          d += seg + "Z";
+        }
+        if (d) out += `<path d="${d}" fill-rule="evenodd"/>`;
+      }
+    }
+    return out;
+  }
+
   FC.views.viajes = function () {
     const tr = FC.t;
     const c = S.getActiveCareer();
@@ -2027,6 +2093,7 @@
       dots += `<g data-trip="${upcoming[riv]}" style="cursor:pointer"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="7" fill="${COL.up}" fill-opacity=".2"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${COL.up}"/></g>`;
       labels += `<text x="${(p[0] + 7).toFixed(1)}" y="${(p[1] + 3.5).toFixed(1)}" fill="${COL.up}" font-size="10.5">${U.esc(cc.city)}</text>`; });
     const homeNode = `<circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="9" fill="${acc}" fill-opacity=".16"/><circle cx="${hp[0].toFixed(1)}" cy="${hp[1].toFixed(1)}" r="5" fill="${acc}" stroke="#0b1015" stroke-width="1.5"/><text x="${(hp[0] + 9).toFixed(1)}" y="${(hp[1] + 4).toFixed(1)}" fill="#eaf1f8" font-size="12" font-weight="700">${U.esc(home.city)}</text>`;
+    const countryLayer = countryPathsSvg(LON0, LAT0, LON1, LAT1, proj);
 
     const codeOf = (s) => (s || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "···";
     const stamps = leagueTeams.map(t => { const cc = FC.trips.cityOf(t, c), on = visited[t]; return `<div class="vstamp${on ? " on" : ""}" title="${U.esc(t)}">${on ? '<span class="ni-icon" data-icon="check"></span>' : ""}${codeOf(cc.city)}</div>`; }).join("");
@@ -2118,6 +2185,7 @@
         <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${tr("travel.mapAriaLabel")}">
           <rect x="0" y="0" width="${W}" height="${H}" fill="#0b141f"/>
           <g stroke="#1b2738" stroke-width="1">${grat}</g>
+          <g class="vmap-countries" fill="#1c2b3d" stroke="#2c3f56" stroke-width="1">${countryLayer}</g>
           ${faint}${arcs}${dots}${labels}${homeNode}
         </svg>
         <div class="vmap-legend">
