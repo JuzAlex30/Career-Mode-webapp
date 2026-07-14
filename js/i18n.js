@@ -22,6 +22,9 @@
       "chrome.themeToggle": "Cambiar tema",
       "chrome.menu": "Menú",
       "chrome.addMatch": "Partido",
+      "chrome.createAccount": "Crear cuenta",
+      "chrome.createAccount.sub": "Guarda y comparte tu carrera",
+      "chrome.account": "Tu cuenta",
       "chrome.langLabel": "Idioma",
       // —— Nav (sidebar) ——
       "nav.dashboard": "Panel",
@@ -1586,6 +1589,9 @@
       "chrome.themeToggle": "Toggle theme",
       "chrome.menu": "Menu",
       "chrome.addMatch": "Match",
+      "chrome.createAccount": "Create account",
+      "chrome.createAccount.sub": "Save and share your career",
+      "chrome.account": "Your account",
       "chrome.langLabel": "Language",
       // —— Nav (sidebar) ——
       "nav.dashboard": "Dashboard",

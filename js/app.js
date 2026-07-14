@@ -36,6 +36,23 @@
       U.hydrateIcons(cs);
       document.getElementById("careerChip").addEventListener("click", () => careerSwitcher());
     } else cs.innerHTML = "";
+    // Acceso directo de cuenta: si no has iniciado sesión, un CTA claro para
+    // crearla (la creación de cuenta vive en Comunidad, pero antes no se veía).
+    // Con sesión iniciada, un chip discreto con tu email que lleva al mismo sitio.
+    const na = document.getElementById("navAccount");
+    if (na) {
+      const CL = FC.cloud;
+      if (CL && CL.isConfigured() && !CL.isLoggedIn()) {
+        na.innerHTML = `<button class="nav-cta" id="navAccountBtn"><span class="ni-icon" data-icon="cloud"></span>
+          <span class="nc-txt"><b>${FC.t("chrome.createAccount")}</b><small>${FC.t("chrome.createAccount.sub")}</small></span></button>`;
+      } else if (CL && CL.isLoggedIn()) {
+        const email = (CL.user() || {}).email || "";
+        na.innerHTML = `<button class="nav-acc" id="navAccountBtn"><span class="ni-icon" data-icon="check"></span>
+          <span class="na-txt"><b>${FC.t("chrome.account")}</b><small>${U.esc(email)}</small></span></button>`;
+      } else na.innerHTML = "";
+      const nab = document.getElementById("navAccountBtn");
+      if (nab) { U.hydrateIcons(na); nab.addEventListener("click", () => R.go("cloud")); }
+    }
     // active nav
     const cur = R.current || "dashboard";
     U.els("#mainNav .nav-item, .nav-bottom .nav-item").forEach(a => a.classList.toggle("active", a.dataset.route === cur));

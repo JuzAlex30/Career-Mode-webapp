@@ -45,6 +45,7 @@ const BODY = `
         <a class="nav-item" data-route="tools"><span class="ni-icon" data-icon="dice"></span><span data-i18n="nav.tools">Generador</span></a>
       </nav>
       <div class="nav-bottom">
+        <div class="nav-account" id="navAccount"></div>
         <a class="nav-item" data-route="cloud"><span class="ni-icon" data-icon="cloud"></span><span data-i18n="nav.community">Comunidad</span></a>
         <a class="nav-item" data-route="settings"><span class="ni-icon" data-icon="gear"></span><span data-i18n="nav.settings">Ajustes y datos</span></a>
         <div class="lang-switch" id="langSwitch">

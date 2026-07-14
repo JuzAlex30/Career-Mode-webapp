@@ -5475,7 +5475,9 @@
     const T = FC.t;
     const CL = FC.cloud, cfg = CL.config(), configured = CL.isConfigured(), logged = CL.isLoggedIn();
     if (!logged) cloudFeedRows = null;
-    const rerender = () => FC.views.cloud();
+    // refreshChrome: el acceso directo de cuenta del sidebar depende de la sesión,
+    // y este rerender salta el envoltorio de ruta (que es quien lo llamaría).
+    const rerender = () => { FC.views.cloud(); if (FC.app) FC.app.refreshChrome(); };
     const fmtBackup = cfg.lastBackup ? U.fmtDate(cfg.lastBackup) : T("community.neverBackup");
     let body;
     if (!configured) {
