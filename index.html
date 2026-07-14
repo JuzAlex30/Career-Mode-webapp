@@ -12224,7 +12224,10 @@ body.tour-on { overflow: hidden; }
   function api(path, opts) { return apiWith(C.config(), path, opts); }
 
   /* ---------- auth passwordless (código OTP por email) ---------- */
-  C.sendCode = (email) => api("/auth/v1/otp?redirect_to=" + encodeURIComponent("https://juzalex30.github.io/Career-Mode-webapp/"), { method: "POST", body: { email: String(email || "").trim(), create_user: true } });
+  // redirect_to debe coincidir con el Site URL / Redirect URLs de Supabase. Se dejó
+  // apuntando al github.io antiguo tras el rebrand: quien pulsaba el enlace del email
+  // (en vez de teclear el código) aterrizaba en el dominio viejo.
+  C.sendCode = (email) => api("/auth/v1/otp?redirect_to=" + encodeURIComponent("https://boardhubfc.com/"), { method: "POST", body: { email: String(email || "").trim(), create_user: true } });
   // verifyCode: el usuario teclea el código de 6 dígitos del email (en vez de pulsar el enlace).
   // Inicia sesión directamente sin depender del redirect. Tras éxito, deja la sesión lista.
   C.verifyCode = async (email, token) => {
