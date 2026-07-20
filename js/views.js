@@ -5589,7 +5589,11 @@
       </div>`;
     UI.mount(`<div class="page-head"><div><h1>${T("nav.community")}</h1><div class="sub">${T("community.pageSubtitle")}</div></div></div>${body}`);
 
-    const busy = (id, fn) => async () => { const el = document.getElementById(id); if (el) el.disabled = true; try { await fn(); } catch (e) { UI.toast(e.message || T("common.error"), "err"); if (el) el.disabled = false; } };
+    // finally: el botón SIEMPRE se rehabilita. Antes solo se rehabilitaba en el
+    // catch, así que una salida por validación (return sin excepción, p.ej. no
+    // marcar el consentimiento) lo dejaba muerto y ya no se podía reintentar.
+    // En los caminos de éxito hay rerender, así que rehabilitar el nodo viejo es inocuo.
+    const busy = (id, fn) => async () => { const el = document.getElementById(id); if (el) el.disabled = true; try { await fn(); } catch (e) { UI.toast(e.message || T("common.error"), "err"); } finally { if (el) el.disabled = false; } };
     const $ = (id) => document.getElementById(id);
     if (!configured) {
       $("cl-connect").addEventListener("click", () => {
