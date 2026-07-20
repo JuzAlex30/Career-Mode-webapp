@@ -12880,6 +12880,13 @@ body.tour-on { overflow: hidden; }
 
   FC.views.onboarding = function () {
     const CL = FC.cloud;
+    // obBusy es de módulo y solo se rearmaba a false en los catch (error) o en
+    // finish(). En el camino de ÉXITO se llama a go(), que re-renderiza dejándolo
+    // en true para siempre: el siguiente paso hacía `if (obBusy) return` y sus
+    // botones morían en silencio (enviar código → la pantalla del código no
+    // entraba al pulsar Entrar). Cada render es una pantalla nueva con handlers
+    // nuevos, así que cualquier "ocupado" anterior ya no aplica.
+    obBusy = false;
     document.getElementById("app").style.display = "none";
     let host = document.getElementById("onboardHost");
     if (!host) { host = U.h("div", { id: "onboardHost" }, []); document.body.appendChild(host); }
