@@ -5511,13 +5511,17 @@
         ${!cloudCodeSent
           ? `<div class="field"><label>${T("common.email")}</label><input type="email" id="cl-email" value="${U.esc(cloudPendingEmail)}" placeholder="email@example.com"/></div>
              <label style="display:flex;align-items:flex-start;gap:8px;margin:2px 0 12px;font-size:12.5px;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="cl-consent" style="margin-top:2px;flex:none" /> <span>${T("ob.consent.pre")}<button type="button" class="btn-link" id="cl-terms-link" style="display:inline;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline">${T("legal.terms")}</button>${T("ob.consent.mid")}<button type="button" class="btn-link" id="cl-privacy-link" style="display:inline;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline">${T("legal.privacy")}</button>${T("ob.consent.post")}</span></label>
-             <button class="btn btn-primary" id="cl-send"><span class="ni-icon" data-icon="bell"></span> ${T("community.sendLink")}</button>`
-          : `<div style="background:var(--card-alt,rgba(255,255,255,.06));border-radius:10px;padding:16px;text-align:center">
-               <div style="font-size:28px;margin-bottom:8px">📬</div>
-               <b>${T("community.checkEmail")}</b>
-               <p class="muted" style="margin:6px 0 0">${T("community.emailSent", { email: "<b>" + U.esc(cloudPendingEmail) + "</b>" })}</p>
-             </div>
-             <button class="btn btn-ghost" style="margin-top:10px;width:100%" id="cl-back">${T("ob.changeEmail")}</button>`}
+             <button class="btn btn-primary" id="cl-send"><span class="ni-icon" data-icon="bell"></span> ${T("ob.sendCode")}</button>`
+          // Entrada del código, igual que el onboarding: el email lleva un código
+          // de un solo uso, no un enlace, así que aquí tiene que poder teclearse.
+          : `<p class="muted">${T("ob.auth.sent", { email: "<b>" + U.esc(cloudPendingEmail) + "</b>" })}</p>
+             <div class="field"><label>${T("ob.code6")}</label>
+               <input type="text" id="cl-code" inputmode="numeric" maxlength="8" placeholder="000000" class="wl-otp" /></div>
+             <button class="btn btn-primary" id="cl-verify"><span class="ni-icon" data-icon="check"></span> ${T("ob.enter")}</button>
+             <div class="flex between center" style="margin-top:10px">
+               <button class="btn btn-ghost btn-sm" id="cl-resend">${T("ob.resend")}</button>
+               <button class="btn btn-ghost btn-sm" id="cl-back">${T("ob.changeEmail")}</button>
+             </div>`}
         <div class="divider"></div>
         <div class="flex between center"><span class="faint" style="font-size:12px">${T("community.connectedTo", { url: U.esc((cfg.url||"").replace(/^https?:\/\//,"")) })}</span>
           <button class="btn btn-ghost btn-sm" id="cl-disconnect">${T("community.disconnectCloud")}</button></div></div>`;
@@ -5600,8 +5604,29 @@
       if ($("cl-send")) $("cl-send").addEventListener("click", busy("cl-send", async () => {
         const email = $("cl-email").value.trim(); if (!email) { UI.toast(T("community.emailRequired"), "err"); return; }
         if (!$("cl-consent") || !$("cl-consent").checked) { UI.toast(T("community.termsRequired"), "err"); return; }
-        await CL.sendCode(email); cloudPendingEmail = email; cloudCodeSent = true; UI.toast(T("community.linkSent"), "ok"); rerender();
+        await CL.sendCode(email); cloudPendingEmail = email; cloudCodeSent = true; UI.toast(T("ob.toast.codeSent"), "ok"); rerender();
       }));
+      if ($("cl-verify")) {
+        // La validación va FUERA de busy: busy deshabilita el botón y solo lo
+        // rehabilita si salta una excepción, así que salir con `return` desde
+        // dentro lo dejaría muerto hasta el siguiente render.
+        const doVerify = () => {
+          const code = ($("cl-code").value || "").trim();
+          if (code.length < 4) { UI.toast(T("ob.toast.codePrompt"), "err"); return; }
+          busy("cl-verify", async () => {
+            await CL.verifyCode(cloudPendingEmail, code);
+            cloudCodeSent = false;
+            UI.toast(T("ob.toast.signedIn"), "ok");
+            FC.app.refreshChrome(); // el acceso directo del sidebar pasa a "Tu cuenta"
+            rerender();
+          })();
+        };
+        $("cl-verify").addEventListener("click", doVerify);
+        $("cl-code").addEventListener("keydown", (e) => { if (e.key === "Enter") doVerify(); });
+        $("cl-resend").addEventListener("click", busy("cl-resend", async () => {
+          await CL.sendCode(cloudPendingEmail); UI.toast(T("ob.toast.codeResent"), "ok");
+        }));
+      }
       if ($("cl-back")) $("cl-back").addEventListener("click", () => { cloudCodeSent = false; rerender(); });
       $("cl-disconnect").addEventListener("click", () => UI.confirm(T("community.confirmDisconnect"), () => { CL.disconnect(); cloudCodeSent = false; UI.toast(T("community.cloudDisconnected")); rerender(); }, true));
     } else {
