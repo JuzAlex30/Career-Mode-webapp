@@ -66,8 +66,22 @@
   // verifyCode: el usuario teclea el código de 6 dígitos del email (en vez de pulsar el enlace).
   // Inicia sesión directamente sin depender del redirect. Tras éxito, deja la sesión lista.
   C.verifyCode = async (email, token) => {
-    const data = await api("/auth/v1/verify", { method: "POST", body: { type: "email", email: String(email || "").trim(), token: String(token || "").trim() } });
-    if (!data || !data.access_token) throw new Error("Código no válido o caducado");
+    email = String(email || "").trim(); token = String(token || "").trim();
+    // El TIPO del token depende de qué email mandó Supabase, y desde el cliente
+    // no sabemos cuál fue: una cuenta nueva (aún sin confirmar) recibe el correo
+    // de "Confirm signup" y su token es de tipo `signup`; una cuenta que ya
+    // existía recibe "Magic Link" (`magiclink`/`email`). Verificar siempre con
+    // "email" fallaba en el alta de cuentas nuevas — justo el caso de registro.
+    // Probamos en orden y nos quedamos con el primero que valide; un intento con
+    // el tipo equivocado se rechaza sin consumir el código.
+    let data = null, lastErr = null;
+    for (const type of ["email", "signup", "magiclink"]) {
+      try {
+        const r = await api("/auth/v1/verify", { method: "POST", body: { type, email, token } });
+        if (r && r.access_token) { data = r; break; }
+      } catch (e) { lastErr = e; }
+    }
+    if (!data || !data.access_token) throw new Error((lastErr && lastErr.message) || "Código no válido o caducado");
     saveSession({
       access_token: data.access_token,
       refresh_token: data.refresh_token || "",
